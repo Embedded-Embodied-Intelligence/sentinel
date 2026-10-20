@@ -33,7 +33,7 @@ class Activity(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: NonNegativeInt
-    # SPEC-Q: may a real activity have p_j = 0? Read as yes (p_j in N, N includes 0 as for t).
+    # p_j = 0 is allowed for real activities too (zero-duration milestones, spec section 1).
     duration: NonNegativeInt
     demands: tuple[NonNegativeInt, ...]
     successors: tuple[NonNegativeInt, ...]

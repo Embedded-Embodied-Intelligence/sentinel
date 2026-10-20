@@ -18,7 +18,7 @@ A project is `P = (J, E, K, W, p, r, D, B)`.
 | `K` | roles = renewable resource types (e.g. backend, frontend, QA, DevOps) | `Role` |
 | `W` | workers; worker `w` has exactly one role `κ(w) ∈ K` | `Worker` |
 | `R_k` | nominal capacity of role `k` = number of workers with that role | `Role.capacity` |
-| `p_j ∈ ℕ` | nominal duration of activity `j` (days) | `Activity.duration` |
+| `p_j ∈ ℕ` | nominal duration of activity `j` (days); `ℕ` includes 0, so a real activity may have `p_j = 0` (zero-duration milestone) | `Activity.duration` |
 | `r_jk ∈ ℕ` | workers of role `k` required by activity `j` | `Activity.demands[k]` |
 | `D` | deadline (§1.2) | `ProjectInstance.deadline` (optional) |
 | `B` | budget (§1.2) | `ProjectInstance.budget` (optional) |
@@ -78,8 +78,8 @@ times `LF_j` from a backward pass with horizon `T` (default `T = LB0` unless sta
 
 ### §2.1 Durations
 
-Actual duration `P_j = max(1, round(p_j · X_j))` for non-dummy `j`, with
-`X_j ~ PERT(a, m, b) = (0.8, 1.0, 1.6)` (Beta-PERT, shape λ = 4; Malcolm et al. 1959).
+Actual duration `P_j = 0` if `p_j = 0` (dummies and zero-duration milestones), otherwise
+`P_j = max(1, round(p_j · X_j))`, with `X_j ~ PERT(a, m, b) = (0.8, 1.0, 1.6)` (Beta-PERT, shape λ = 4; Malcolm et al. 1959).
 `P_j` is **hidden**; the agent observes only work performed so far `e_j(t)`.
 
 ### §2.2 Disruption events (each day, independently)

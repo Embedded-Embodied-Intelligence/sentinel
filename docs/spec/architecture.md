@@ -38,7 +38,7 @@ Modules for later WPs are created when their WP starts, not before.
 ## Interfaces (stable contracts)
 
 - `ProjectInstance` (pydantic, frozen): activities, roles, workers; derived helpers
-  (`predecessors`, `topological_order`, `n_real_activities`). Constructed via validated
+  (`predecessors`, `topological_order`, `n_real`). Constructed via validated
   factory functions only.
 - `Schedule`: mapping activity id → start time; `makespan(instance)`.
 - `validate_schedule(instance, schedule) -> list[Violation]`: empty list means feasible (§1.3).
