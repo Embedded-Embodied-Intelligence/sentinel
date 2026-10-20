@@ -1,6 +1,6 @@
 """Daily execution semantics of the simulator (spec sections 2-3, 3.1)."""
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 
 import pytest
 
@@ -457,6 +457,55 @@ def test_observations_do_not_depend_on_true_durations(build: Builder) -> None:
     obs = views[0][-1]
     assert obs.status[1] == "running" and obs.work_done[1] == 5
     assert Observation.model_validate(obs.model_dump()) == obs
+
+
+def busy_run(
+    instance: ProjectInstance,
+    seed: int,
+    policy: NoReaction | Recorder,
+    *,
+    review_period: int = 5,
+    observe_days: Collection[int] = (),
+) -> SimulationResult:
+    """A run of the LFT plan with every disruption on, a deadline and the trace."""
+    plan = lft_plan(instance)
+    return simulate(
+        instance,
+        plan,
+        policy,
+        seed,
+        pert=PertParams(),
+        disruptions=BUSY,
+        deadline=plan.makespan(instance) + 3,
+        review_period=review_period,
+        record_trace=True,
+        observe_days=observe_days,
+    )
+
+
+def test_observing_days_leaves_the_results_unchanged(
+    eight: ProjectInstance, tiny: ProjectInstance
+) -> None:
+    """Checkpoint observations (spec section 5.2) are a by-product: the result, events and trace
+    included, is identical with and without them, and they are the step-3 view of their day."""
+    checked = 0
+    for instance in (eight, tiny):
+        for seed in range(8):
+            for policy in (NoReaction, Recorder):
+                plain = busy_run(instance, seed, policy())
+                every_day = range(plain.max_days + 1)
+                observed = busy_run(instance, seed, policy(), observe_days=every_day)
+                assert observed.model_dump() == plain.model_dump()
+                assert "observations" not in plain.model_dump() and plain.observations == ()
+                assert [o.day for o in observed.observations] == list(range(plain.makespan + 1))
+                some = busy_run(instance, seed, policy(), observe_days={0, 3, plain.max_days + 7})
+                assert [o.day for o in some.observations] == [0, 3]
+                assert some.model_dump() == plain.model_dump()
+                recorder = Recorder()  # every day is an epoch, so it sees every step-3 view
+                busy_run(instance, seed, recorder, review_period=1)
+                assert observed.observations == tuple(recorder.seen)
+                checked += 1
+    assert checked == 32
 
 
 def test_result_round_trips_through_validation(eight: ProjectInstance) -> None:

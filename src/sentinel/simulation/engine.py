@@ -11,10 +11,10 @@ of a fresh state, and rollouts continue a state rebuilt from an observation (`Ru
 
 import math
 from bisect import insort
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import assert_never
 
-from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat, NonNegativeInt
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
@@ -37,6 +37,7 @@ from sentinel.simulation.state import (
     UNSTARTED,
     EngineState,
     InsertedActivity,
+    Observation,
     WorkSegment,
     day_limit,
 )
@@ -63,6 +64,8 @@ class SimulationResult(BaseModel):
     every started activity, reserved from its start to its finish (spec section 3.1 a), and
     `segments` the days on which it progressed and with which present members. A truncated run
     reports `makespan = max_days` (right-censored); its unstarted activities have no start.
+    `observations` holds the agent's view of each requested day the run reached (`simulate`'s
+    `observe_days`); it is a by-product, left out of `model_dump` and serialisation.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -83,6 +86,7 @@ class SimulationResult(BaseModel):
     truncated: bool
     max_days: NonNegativeInt
     trace: tuple[DayRecord, ...] | None = None
+    observations: tuple[Observation, ...] = Field(default=(), exclude=True, repr=False)
 
 
 def simulate(
@@ -97,6 +101,7 @@ def simulate(
     review_period: int = 5,
     costs: Sequence[float] | None = None,
     record_trace: bool = False,
+    observe_days: Collection[int] = (),
 ) -> SimulationResult:
     """Execute `plan` under `policy` for one replication seed (spec sections 2-3).
 
@@ -104,7 +109,9 @@ def simulate(
     deadline) with `truncated = True`. Decision epochs are the days with a D1 or D3 event, the
     days after a D2 event and the days t with t % review_period == 0; a passive policy (see
     `Policy`) is not consulted there. Each worker-day of work costs c_k (default 1.0); absent
-    crew members do not work and cost nothing.
+    crew members do not work and cost nothing. For every day in `observe_days` that the run
+    reaches, the observation of step 3 (after any decision) is kept in `result.observations`
+    (checkpoints of spec section 5.2); recording changes nothing else.
     """
     if len(plan.starts) != instance.n_activities:
         raise ValueError(
@@ -128,7 +135,14 @@ def simulate(
         deadline=deadline,
         max_days=day_limit(instance, deadline),
     )
-    run = Run(state, streams, policy, review_period=review_period, record_trace=record_trace)
+    run = Run(
+        state,
+        streams,
+        policy,
+        review_period=review_period,
+        record_trace=record_trace,
+        observe_days=observe_days,
+    )
     run.days(0)
     return run.result(seed)
 
@@ -140,12 +154,14 @@ class Run:
     `days(0)` runs a fresh state to the end (`simulate`). `resume()` continues a state observed at
     step 3 of its day, e.g. one rebuilt by `state_from_observation` for a rollout: it closes that
     day and runs the following ones. Without `record_events` no events are logged, which rollouts
-    do not need.
+    do not need. The observations of step 3 on `observe_days` are collected in `observations`.
     """
 
     __slots__ = (
         "events",
         "n_epochs",
+        "observations",
+        "observe_days",
         "passive",
         "policy",
         "returns",
@@ -166,6 +182,7 @@ class Run:
         review_period: int = 5,
         record_events: bool = True,
         record_trace: bool = False,
+        observe_days: Collection[int] = (),
     ) -> None:
         self.state = state
         self.streams = streams
@@ -173,6 +190,8 @@ class Run:
         self.review_period = review_period
         self.events: list[Event] | None = [] if record_events else None
         self.trace: list[DayRecord] | None = [] if record_trace else None
+        self.observe_days = frozenset(observe_days)
+        self.observations: list[Observation] = []
         self.returns: dict[int, list[int]] = {}  # day -> workers back that day
         for w, day in enumerate(state.return_day):
             if day >= 0:
@@ -219,6 +238,8 @@ class Run:
             self.n_epochs += 1
             if not self.passive:
                 _apply(state, self.policy.decide(state.observe()))
+        if t in self.observe_days:
+            self.observations.append(state.observe())
         return epoch
 
     def close_day(self, t: int, epoch: bool) -> bool:
@@ -285,6 +306,7 @@ class Run:
             truncated=truncated,
             max_days=max_days,
             trace=None if self.trace is None else tuple(self.trace),
+            observations=tuple(self.observations),
         )
 
 
