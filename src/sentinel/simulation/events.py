@@ -7,7 +7,16 @@ from typing import Annotated, Literal, NamedTuple, Self
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveInt, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveFloat,
+    PositiveInt,
+    model_validator,
+)
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.simulation.uncertainty import PertParams, pert_multipliers, realise_durations
@@ -58,17 +67,20 @@ class Absence(BaseModel):
 
 
 class WorkIncrease(BaseModel):
-    """D2: after `work_done` work-days the remaining work of `activity` became ceil(before * F)."""
+    """D2: before progress on its `work_day`-th work day, the remaining work of `activity` became
+    before * F (spec section 2.2); work is in full-crew days, `work_done` is e_j before the shock.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     kind: Literal["work_increase"] = "work_increase"
     day: NonNegativeInt
     activity: NonNegativeInt
-    work_done: PositiveInt
+    work_day: PositiveInt
+    work_done: NonNegativeFloat
     factor: float
-    remaining_before: PositiveInt  # hidden
-    remaining_after: PositiveInt  # hidden
+    remaining_before: PositiveFloat  # hidden
+    remaining_after: PositiveFloat  # hidden
 
 
 class NewActivity(BaseModel):
@@ -219,8 +231,8 @@ class ScenarioStreams:
                 announced = 1 + int(float(stream.values[h + 2]) * length)  # Uniform{1, ..., L}
                 onsets.setdefault(onset, []).append(AbsenceDraw(w, length, announced))
                 pos = h + 3
-                # SPEC-Q: absent on days onset .. onset+L-1, back on onset+L without a draw on
-                # that day; draws resume the day after the return (spec section 2.2 D1).
+                # Absent on days onset .. onset+L-1 and back on onset+L, a day without a draw;
+                # draws resume the day after the return (spec section 2.2 D1).
                 day = onset + length + 1
             self._absence_at[w], self._absence_pos[w], self._absence_next[w] = at, pos, day
         self._absence_horizon = end
@@ -234,14 +246,14 @@ class ScenarioStreams:
     def work_shock(self, activity: int, first: int, last: int) -> tuple[int, float] | None:
         """First work-day counter k in [first, last] with a D2 shock of `activity`, and its F.
 
-        Check k of an activity reads uniforms 2k - 2 (Bernoulli) and 2k - 1 (factor) of the
-        activity's stream (spec section 2.3 (iii)).
+        The check of the k-th work day reads uniforms 2k - 2 (Bernoulli) and 2k - 1 (factor) of
+        the activity's stream (spec section 2.3 (iii)).
         """
         if last < first or not self._work_seqs:
             return None
         if activity >= self._n_original:
-            # SPEC-Q: D2 streams exist per original activity only (spec section 2.3 (iii)), so
-            # activities inserted by D3 never get work increases.
+            # D2 streams exist per original activity only, so activities inserted by D3 never
+            # get work increases (spec sections 2.2 D2, 2.3 (iii)).
             return None
         stream = self._work_streams[activity]
         if stream is None:

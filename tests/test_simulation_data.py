@@ -46,5 +46,10 @@ def test_default_disruptions_on_30_j30_instances(psplib_root: Path) -> None:
             realised, schedule = realised_instance(inst, result)
             assert validate_schedule(realised, schedule) == [], (stem, seed)
             assert execution_violations(inst, result) == [], (stem, seed)
+            # Railway starts for p_j > 0; milestones and the sink may complete early.
             planned = plan.starts
-            assert all(result.starts[j] >= planned[j] for j in range(inst.n_activities))  # type: ignore[operator]
+            assert all(
+                result.starts[j] >= planned[j]  # type: ignore[operator]
+                for j, act in enumerate(inst.activities)
+                if act.duration > 0
+            )

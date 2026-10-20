@@ -1,20 +1,19 @@
 """Day-by-day execution of a plan under hidden durations and disruptions (spec sections 2-3).
 
-Every day t runs the six steps of spec section 3: (1) realise D1-D3, (2) pause activities with
-an absent worker, (3) let the policy decide at a decision epoch, (4) dispatch in order of the
-planned start, (5) progress every running activity by one unit of work, (6) close activities
-without remaining work; section 3.1 fixes the details. The loop works on the plain lists of
-`EngineState`; pydantic models are built only for events, observations and the result.
+Every day t runs the six steps of spec section 3: (1) realise D1 and D3, (2) update the crews
+whose presence changed, (3) let the policy decide at a decision epoch, (4) dispatch in order of
+the planned start, (5) draw D2 and progress every running activity by its present share of the
+crew, (6) close activities without remaining work; section 3.1 fixes the details, (a) the
+partial crews. The loop works on the plain lists of `EngineState`; pydantic models are built
+only for events, observations and the result.
 """
 
-import heapq
 import math
-import operator
 from bisect import insort
 from collections.abc import Sequence
 from typing import assert_never
 
-from pydantic import BaseModel, ConfigDict, NonNegativeInt
+from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
@@ -42,7 +41,8 @@ from sentinel.simulation.uncertainty import PertParams, realised_duration, role_
 
 
 class DayRecord(BaseModel):
-    """Trace of one day: activities that progressed and their workers, absent workers, epoch."""
+    """Trace of one day: activities that progressed with their present crew members, absent
+    workers, epoch."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -56,8 +56,10 @@ class SimulationResult(BaseModel):
     """Outcome of one run for evaluation, hidden quantities included (spec section 3).
 
     Activities `0 .. n_original - 1` are the instance's; later ids were inserted by D3. `work`
-    is the true duration plus all D2 increases. A truncated run reports `makespan = max_days`
-    (right-censored); its unstarted activities have no start.
+    is the true duration plus all D2 increases, in full-crew days. `crews` holds the crew of
+    every started activity, reserved from its start to its finish (spec section 3.1 a), and
+    `segments` the days on which it progressed and with which present members. A truncated run
+    reports `makespan = max_days` (right-censored); its unstarted activities have no start.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -66,7 +68,8 @@ class SimulationResult(BaseModel):
     n_original: NonNegativeInt
     starts: tuple[int | None, ...]
     finishes: tuple[int | None, ...]
-    work: tuple[NonNegativeInt, ...]
+    work: tuple[NonNegativeFloat, ...]
+    crews: tuple[tuple[NonNegativeInt, ...], ...]
     segments: tuple[WorkSegment, ...]
     makespan: NonNegativeInt
     deadline: NonNegativeInt | None
@@ -95,9 +98,10 @@ def simulate(
     """Execute `plan` under `policy` for one replication seed (spec sections 2-3).
 
     The run ends when the sink completes, or after day `max_days` = 5 D (5 sum p_j without a
-    deadline) with `truncated = True`. Decision epochs are the days with a D1-D3 event and the
-    days t with t % review_period == 0; a passive policy (see `Policy`) is not consulted there.
-    Each worker-day of work costs c_k (default 1.0).
+    deadline) with `truncated = True`. Decision epochs are the days with a D1 or D3 event, the
+    days after a D2 event and the days t with t % review_period == 0; a passive policy (see
+    `Policy`) is not consulted there. Each worker-day of work costs c_k (default 1.0); absent
+    crew members do not work and cost nothing.
     """
     if len(plan.starts) != instance.n_activities:
         raise ValueError(
@@ -124,6 +128,7 @@ def simulate(
         pert=pert,
         disruptions=disruptions,
         deadline=deadline,
+        max_days=max_days,
     )
     events: list[Event] = []
     trace: list[DayRecord] | None = [] if record_trace else None
@@ -131,20 +136,23 @@ def simulate(
     shocks = disruptions.lambda_s > 0
     passive = getattr(policy, "passive", False) is True
     status, running, sink = state.status, state.running, state.sink
-    work_done, remaining, daily_cost = state.work_done, state.remaining, state.daily_cost
+    done, remaining, rate, work_cost = state.done, state.remaining, state.rate, state.work_cost
+    work_days, next_shock = state.work_days, state.next_shock
     n_epochs = 0
+    shocked = False  # a D2 shock on the previous day
     for t in range(max_days + 1):
         state.day = t
-        # Step 1: disruptions D1-D3 (spec section 2.2).
-        absence, to_pause = _absences(state, streams, t, returns, events)
-        shocked = shocks and _work_increases(state, streams, t, events)
+        # Step 1: D1 returns and absences, D3 new activities (spec section 2.2).
+        absence, crews = _absences(state, streams, t, returns, events)
         draw = streams.new_activity(t)
         inserted = draw is not None and _new_activity(state, t, draw, events)
-        # Step 2: pause activities with an absent worker.
-        for j in to_pause:
-            _pause(state, j, t)
+        # Step 2: crews whose presence changed go on at a new rate, pause or resume.
+        for j in dict.fromkeys(crews):
+            _update_crew(state, j, t)
         # Step 3: decision epoch (spec section 3.1 g).
-        epoch = absence or shocked or inserted or t % review_period == 0
+        # SPEC-Q: D2 is drawn in step 5, after the decision of the day (spec section 2.2), so a
+        # shock on day t - 1 makes day t a decision epoch.
+        epoch = absence or inserted or shocked or t % review_period == 0
         if epoch:
             n_epochs += 1
             if not passive:
@@ -155,14 +163,22 @@ def simulate(
             trace.append(_day_record(state, t, epoch))
         if status[sink] == DONE:
             break
-        # Steps 5-6: one unit of work per running activity, then close finished ones.
+        # Steps 5-6: the D2 draw of the work day, then progress by the present crew members;
+        # close activities without remaining work.
+        shocked = False
         finished: list[int] = []
         day_cost = 0.0
         for j in running:
-            work_done[j] += 1
-            remaining[j] -= 1
-            day_cost += daily_cost[j]
-            if remaining[j] == 0:
+            k = work_days[j] + 1
+            work_days[j] = k
+            if k == next_shock[j]:
+                _work_increase(state, streams, j, t, events)
+                shocked = True
+            units = rate[j]
+            done[j] += units
+            remaining[j] -= units
+            day_cost += work_cost[j]
+            if remaining[j] <= 0:
                 finished.append(j)
         state.cost += day_cost
         for j in finished:
@@ -172,7 +188,7 @@ def simulate(
     truncated = sink_start is None
     if truncated:
         for j in running:
-            segment = WorkSegment(j, state.open_since[j], max_days + 1, state.assigned[j])
+            segment = WorkSegment(j, state.open_since[j], max_days + 1, state.working[j])
             state.segments.append(segment)
     makespan = max_days if sink_start is None else sink_start
     # Built from the engine's own lists, so validation is skipped for speed.
@@ -181,7 +197,8 @@ def simulate(
         n_original=instance.n_activities,
         starts=tuple(state.start),
         finishes=tuple(state.finish),
-        work=tuple(map(operator.add, work_done, remaining)),
+        work=tuple((d + r) / u for d, r, u in zip(done, remaining, state.unit, strict=True)),
+        crews=tuple(state.assigned),
         segments=tuple(sorted(state.segments)),
         makespan=makespan,
         deadline=deadline,
@@ -202,17 +219,20 @@ def _absences(
     returns: dict[int, list[int]],
     events: list[Event],
 ) -> tuple[bool, list[int]]:
-    """D1: returns of day t, then onsets; returns (any onset, activities to pause in step 2)."""
+    """D1: returns of day t, then onsets; returns (any onset, activities whose crew changed)."""
     present, idle, role, busy = state.present, state.idle, state.role, state.busy
+    crews: list[int] = []
     for w in returns.pop(t, []):
-        state.changed = True
         present[w] = True
         state.return_day[w] = -1
         state.absent_since[w] = None
         state.announced[w] = None
-        insort(idle[role[w]], w)
+        if busy[w] >= 0:
+            crews.append(busy[w])  # rejoins its crew (spec section 3.1 a)
+        else:
+            state.changed = True
+            insort(idle[role[w]], w)
     onsets = streams.absence_onsets(t)
-    to_pause: list[int] = []
     for w, length, announced in onsets:
         present[w] = False
         state.return_day[w] = t + length
@@ -220,49 +240,73 @@ def _absences(
         state.announced[w] = announced
         returns.setdefault(t + length, []).append(w)
         if busy[w] >= 0:
-            to_pause.append(busy[w])
+            crews.append(busy[w])  # stays reserved for its crew
         else:
             idle[role[w]].remove(w)
         events.append(Absence(day=t, worker=w, length=length, announced=announced))
-    return bool(onsets), to_pause
+    return bool(onsets), crews
 
 
-def _work_increases(
-    state: EngineState, streams: ScenarioStreams, t: int, events: list[Event]
-) -> bool:
-    """D2: shock every running activity whose work-day counter reached its next shock."""
-    # SPEC-Q: activities running at step 1 use check k = e_j (days progressed so far), so a
-    # shock never hits an activity's first day and a one-day activity is never shocked.
-    shocked = False
-    for j in state.running:
-        k = state.work_done[j]
-        if k != state.next_shock[j]:
-            continue
-        before = state.remaining[j]
-        factor = state.shock_factor[j]
-        # ceil(before * F); the tolerance keeps integral products such as 5 * 1.2 integral.
-        after = math.ceil(before * factor - 1e-9)
-        state.remaining[j] = after
-        state.work_increases.append((j, k, factor))
-        events.append(
-            WorkIncrease(
-                day=t,
-                activity=j,
-                work_done=k,
-                factor=factor,
-                remaining_before=before,
-                remaining_after=after,
-            )
+def _update_crew(state: EngineState, j: int, t: int) -> None:
+    """Step 2 and spec section 3.1 a: from day t on, j works with its present crew members.
+
+    The rate becomes their number (rho_j = rate / M_j) and the daily cost theirs; without a
+    present member j is paused, and it resumes when one returns. Every change of the present
+    members ends the current work segment.
+    """
+    present, role, role_costs = state.present, state.role, state.role_costs
+    workers = tuple(w for w in state.assigned[j] if present[w])
+    if state.status[j] == RUNNING:
+        state.segments.append(WorkSegment(j, state.open_since[j], t, state.working[j]))
+        if not workers:
+            state.status[j] = PAUSED
+            state.running.remove(j)
+    elif workers:
+        state.status[j] = RUNNING
+        insort(state.running, j)
+    state.working[j] = workers
+    state.open_since[j] = t if workers else -1
+    state.rate[j] = len(workers)
+    state.work_cost[j] = sum(role_costs[role[w]] for w in workers)
+
+
+def _work_increase(
+    state: EngineState, streams: ScenarioStreams, j: int, t: int, events: list[Event]
+) -> None:
+    """D2 (spec section 2.2): before progress on this work day, j's remaining work times F."""
+    unit = state.unit[j]
+    before = state.remaining[j]
+    factor = state.shock_factor[j]
+    after = before * factor
+    state.remaining[j] = after
+    work_done = state.done[j] / unit
+    state.work_increases.append((j, work_done, factor))
+    events.append(
+        WorkIncrease(
+            day=t,
+            activity=j,
+            work_day=state.work_days[j],
+            work_done=work_done,
+            factor=factor,
+            remaining_before=before / unit,
+            remaining_after=after / unit,
         )
-        _plan_next_shock(state, streams, j)
-        shocked = True
-    return shocked
+    )
+    _plan_next_shock(state, streams, j, t + 1)
 
 
-def _plan_next_shock(state: EngineState, streams: ScenarioStreams, j: int) -> None:
-    """Look up the next D2 shock of j among its remaining checks e_j + 1 .. e_j + remaining - 1."""
-    done = state.work_done[j]
-    shock = streams.work_shock(j, done + 1, done + state.remaining[j] - 1)
+def _plan_next_shock(state: EngineState, streams: ScenarioStreams, j: int, day: int) -> None:
+    """Look up the next D2 shock of j among the work days it can still have from `day` on.
+
+    Every work day does at least one unit and none comes after max_days, so after k work days
+    the checks k + 1 .. k + min(ceil(remaining units), days left) cover all of them.
+    """
+    k = state.work_days[j]
+    remaining = state.remaining[j]
+    span = state.max_days + 1 - day
+    if remaining < span:
+        span = math.ceil(remaining)
+    shock = streams.work_shock(j, k + 1, k + span)
     if shock is None:
         state.next_shock[j] = 0
     else:
@@ -280,8 +324,8 @@ def _new_activity(state: EngineState, t: int, draw: NewActivityDraw, events: lis
     unstarted = [j for j in range(1, len(status)) if j != sink and status[j] == UNSTARTED]
     successor = unstarted[_index(draw.successor, len(unstarted))] if unstarted else sink
     below = _descendants(state.successors, successor)
-    # SPEC-Q: "activities" read literally, so the source and finished activities are valid
-    # predecessors and the skip below only happens for instances without real activities.
+    # The source and finished activities are valid predecessors (spec section 2.2 D3), so the
+    # skip below only happens for instances without real activities.
     allowed = [i for i in range(len(status)) if i != successor and i != sink and i not in below]
     if not allowed:
         events.append(NewActivitySkipped(day=t, reason=f"no valid predecessor of {successor}"))
@@ -339,17 +383,6 @@ def _descendants(successors: list[list[int]], j: int) -> set[int]:
     return seen
 
 
-def _pause(state: EngineState, j: int, t: int) -> None:
-    """Step 2 and spec section 3.1 a: pause j, keep its work and release its present workers."""
-    if state.status[j] != RUNNING:
-        return
-    state.status[j] = PAUSED
-    state.running.remove(j)
-    state.segments.append(WorkSegment(j, state.open_since[j], t, state.assigned[j]))
-    state.release(j)
-    state.eligible.add(j)
-
-
 def _apply(state: EngineState, decision: Decision) -> None:
     """Step 3 hook: apply the policy's operations; WP4 adds SUBST, RESEQ, OVERTIME, ... here."""
     for op in decision.operations:
@@ -361,90 +394,77 @@ def _apply(state: EngineState, decision: Decision) -> None:
 
 
 def _dispatch(state: EngineState, streams: ScenarioStreams, t: int, shocks: bool) -> None:
-    """Step 4: start or resume eligible activities in order of planned start (spec 3.1 b-c).
+    """Step 4: complete milestones, then start activities in order of planned start (3.1 b-d).
 
-    Ties go to the smallest id. Paused activities resume only with all their original workers;
-    unstarted ones take the lowest-id idle workers of each role. Zero-duration activities need
-    no workers and complete at once, and the successors they release join the same pass. If no
-    worker became idle and no activity eligible since the last dispatch, every candidate that
-    failed then fails again, so only activities whose planned start is today are tried.
+    Zero-duration activities complete as soon as their predecessors are complete, whatever
+    their planned start, and the activities they release join the same pass. Activities with
+    p_j > 0 start no earlier than planned, in order of (planned start, id), each with the
+    lowest-id idle present workers of every role it needs. If no worker became idle and no
+    activity eligible since the last dispatch, every candidate that failed then fails again, so
+    only activities whose planned start is today are tried.
     """
-    plan = state.plan
-    # SPEC-Q: "never start earlier than planned" holds for the sink too, so a project that
-    # finishes its work early still completes on its planned makespan.
+    plan, eligible = state.plan, state.eligible
     if state.changed:
-        ready = [(plan[j], j) for j in state.eligible if plan[j] <= t]
-    else:
-        ready = [(plan[j], j) for j in state.eligible if plan[j] == t]
-    state.changed = False
-    if not ready:
-        return
-    heapq.heapify(ready)
-    status, eligible, idle, busy, present, role = (
-        state.status,
-        state.eligible,
-        state.idle,
-        state.busy,
-        state.present,
-        state.role,
-    )
-    while ready:
-        j = heapq.heappop(ready)[1]
-        if status[j] == PAUSED:
-            workers = state.assigned[j]
-            for w in workers:
-                if busy[w] >= 0 or not present[w]:
-                    break
-            else:
-                for w in workers:
-                    busy[w] = j
-                    idle[role[w]].remove(w)
-                _start_work(state, j, t)
-        elif state.remaining[j] == 0:
-            status[j] = DONE
+        state.changed = False
+        duration, pending = state.duration, state.pending
+        milestones = [j for j in eligible if duration[j] == 0]
+        ready = [(plan[j], j) for j in eligible if plan[j] <= t and duration[j] > 0]
+        while milestones:
+            j = milestones.pop()
+            state.status[j] = DONE
             state.start[j] = state.finish[j] = t
             eligible.discard(j)
-            state.segments.append(WorkSegment(j, t, t, ()))
             for s in state.successors[j]:
-                state.pending[s] -= 1
-                if state.pending[s] == 0:
+                pending[s] -= 1
+                if pending[s] == 0:
                     eligible.add(s)
-                    if plan[s] <= t:
-                        heapq.heappush(ready, (plan[s], s))
+                    if duration[s] == 0:
+                        milestones.append(s)
+                    elif plan[s] <= t:
+                        ready.append((plan[s], s))
+    else:
+        ready = [(plan[j], j) for j in eligible if plan[j] == t]
+    if not ready:
+        return
+    # Starts release nothing, so the candidates of this pass are known: try them in order.
+    ready.sort()
+    idle, busy, demands = state.idle, state.busy, state.demands
+    for _, j in ready:
+        needs = demands[j]
+        for k, r in needs:
+            if len(idle[k]) < r:
+                break
         else:
-            needs = state.demands[j]
+            taken: list[int] = []
             for k, r in needs:
-                if len(idle[k]) < r:
-                    break
-            else:
-                taken: list[int] = []
-                for k, r in needs:
-                    pool = idle[k]
-                    taken += pool[:r]
-                    del pool[:r]
-                for w in taken:
-                    busy[w] = j
-                state.assigned[j] = tuple(taken)
-                state.start[j] = t
-                _start_work(state, j, t)
-                if shocks:
-                    _plan_next_shock(state, streams, j)
+                pool = idle[k]
+                taken += pool[:r]
+                del pool[:r]
+            for w in taken:
+                busy[w] = j
+            _start(state, j, t, tuple(taken))
+            if shocks:
+                _plan_next_shock(state, streams, j, t)
 
 
-def _start_work(state: EngineState, j: int, t: int) -> None:
-    """Mark j as running from day t on (start or resume)."""
+def _start(state: EngineState, j: int, t: int, crew: tuple[int, ...]) -> None:
+    """Start j on day t with its crew, all present, so rho_j = 1 (spec section 3.1 a-b)."""
     state.status[j] = RUNNING
     insort(state.running, j)
     state.eligible.discard(j)
+    state.start[j] = t
     state.open_since[j] = t
+    state.assigned[j] = state.working[j] = crew
+    state.rate[j] = state.unit[j]  # M_j present members; 1 unit without demands
+    state.work_cost[j] = state.daily_cost[j]
 
 
 def _finish(state: EngineState, j: int, t: int) -> None:
-    """Step 6 and spec section 3.1 d: j worked on day t for the last time, so F_j = t + 1."""
+    """Step 6 and spec section 3.1 d: j's remaining work reached zero on day t, so F_j = t + 1."""
     state.running.remove(j)
     state.status[j] = DONE
     state.finish[j] = t + 1
-    state.segments.append(WorkSegment(j, state.open_since[j], t + 1, state.assigned[j]))
+    state.segments.append(WorkSegment(j, state.open_since[j], t + 1, state.working[j]))
     state.release(j)
     for s in state.successors[j]:
         state.pending[s] -= 1
@@ -456,7 +476,7 @@ def _finish(state: EngineState, j: int, t: int) -> None:
 def _day_record(state: EngineState, t: int, epoch: bool) -> DayRecord:
     return DayRecord(
         day=t,
-        working=tuple((j, state.assigned[j]) for j in state.running),
+        working=tuple((j, state.working[j]) for j in state.running),
         absent=tuple(w for w, here in enumerate(state.present) if not here),
         epoch=epoch,
     )

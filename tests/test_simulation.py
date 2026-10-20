@@ -1,6 +1,5 @@
 """Daily execution semantics of the simulator (spec sections 2-3, 3.1)."""
 
-import math
 from collections.abc import Callable, Sequence
 
 import pytest
@@ -133,6 +132,24 @@ def test_milestones_add_no_delay(build: Builder) -> None:
     assert result.finishes == (0, 2, 3, 2, 3)
 
 
+def test_zero_duration_activities_complete_early_so_projects_can_finish_early(
+    build: Builder, tiny: ProjectInstance
+) -> None:
+    # 0 -> 1 (p 2) -> 2 (milestone) -> 3 (p 3) -> 4; the plan leaves slack before 2, 3 and 4.
+    inst = build([0, 2, 0, 3, 0], [[0], [1], [0], [1], [0]], [[1], [2], [3], [4], []])
+    plan = Schedule(starts=(0, 0, 4, 5, 10))
+    result = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=NONE)
+    # The milestone completes when 1 finishes, 3 still waits for its planned start (railway),
+    # and the sink completes when 3 finishes (spec 3.1 c-d).
+    assert result.starts == (0, 0, 2, 5, 8)
+    assert result.makespan == 8 < plan.makespan(inst)
+    assert_feasible(inst, result)
+    # Without disruptions and with X = 1, a late sink no longer delays the project.
+    late_sink = Schedule(starts=(*lft_plan(tiny).starts[:-1], 12))
+    finished = simulate(tiny, late_sink, NoReaction(), 0, pert=EXACT, disruptions=NONE)
+    assert finished.makespan == lft_plan(tiny).makespan(tiny) == 7 < late_sink.makespan(tiny)
+
+
 def test_stochastic_durations_give_feasible_schedules(
     tiny: ProjectInstance, eight: ProjectInstance
 ) -> None:
@@ -142,10 +159,13 @@ def test_stochastic_durations_give_feasible_schedules(
             result = simulate(
                 instance, plan, NoReaction(), seed, pert=PertParams(), disruptions=NONE
             )
-            realised = with_durations(instance, result.work)
+            realised = with_durations(instance, [round(w) for w in result.work])
             assert validate_schedule(realised, Schedule(starts=result.starts)) == []
+            # Railway starts for p_j > 0 only; milestones and the sink may complete early.
             assert all(
-                s is not None and s >= p for s, p in zip(result.starts, plan.starts, strict=True)
+                s is not None and s >= p
+                for s, p, act in zip(result.starts, plan.starts, instance.activities, strict=True)
+                if act.duration > 0
             )
             assert not result.events
 
@@ -177,27 +197,135 @@ def test_common_random_numbers_across_policies_and_plans(eight: ProjectInstance)
         assert [x for x in first if x[0] <= horizon] == [x for x in second if x[0] <= horizon]
 
 
-def test_absence_pauses_and_resumes_with_the_same_workers(
+def segments_of(result: SimulationResult, j: int) -> list[tuple[int, int, tuple[int, ...]]]:
+    return [(s.start, s.end, s.workers) for s in result.segments if s.activity == j]
+
+
+def absent_member_run(
     build: Builder, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # A (p 5) needs both workers, B (p 2) one; B is planned for day 1 while A runs.
+) -> tuple[ProjectInstance, SimulationResult]:
+    """A (p 5) needs both workers, B (p 2) one and is planned for day 1; worker 1 is out on
+    days 1-2."""
     inst = build([0, 5, 2, 0], [[0], [2], [1], [0]], [[1, 2], [3], [3], []], capacities=(2,))
     plan = Schedule(starts=(0, 0, 1, 5))
     onsets = {1: [AbsenceDraw(worker=1, length=2, announced=1)]}
     monkeypatch.setattr(engine, "ScenarioStreams", forced_streams(onsets=onsets))
     result = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=NONE, record_trace=True)
-    # Paused on day 1, worker 0 released to B (days 1-2), back on day 3 = 1 + L, A resumes.
-    a_segments = [(s.start, s.end, s.workers) for s in result.segments if s.activity == 1]
-    assert a_segments == [(0, 1, (0, 1)), (3, 7, (0, 1))]
-    assert [(s.start, s.end, s.workers) for s in result.segments if s.activity == 2] == [
-        (1, 3, (0,))
-    ]
+    return inst, result
+
+
+def test_absent_member_slows_the_crew_and_stays_reserved(
+    build: Builder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    inst, result = absent_member_run(build, monkeypatch)
+    # A goes on at rho = 1/2 with worker 0, who is not released to B (spec 3.1 a): e_A = 1,
+    # 1.5, 2, 3, 4, 5, so F_A = 6, and B starts only then.
+    assert segments_of(result, 1) == [(0, 1, (0, 1)), (1, 3, (0,)), (3, 6, (0, 1))]
+    assert segments_of(result, 2) == [(6, 8, (0,))]
+    assert result.crews[1] == (0, 1)
     assert result.work[1] == 5  # completed work is kept
-    assert result.finishes[1] == 7 and result.makespan == 7
+    assert result.finishes[1] == 6 and result.makespan == 8
+    assert result.total_cost == 12.0  # worker-days worked: A 2 + 2 + 6, B 2; absent ones free
     assert result.events == (Absence(day=1, worker=1, length=2, announced=1),)
     assert result.n_epochs == 3  # days 0, 1 (absence) and 5
     assert result.trace is not None
     assert [day.absent for day in result.trace[:4]] == [(), (1,), (1,), ()]
+    assert result.trace[1].working == ((1, (0,)),)  # B waits although worker 0 is present
+    assert_feasible(inst, result)
+
+
+def test_feasibility_checks_count_reserved_absent_members(
+    build: Builder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    inst, result = absent_member_run(build, monkeypatch)
+    # B on days 1-2 with worker 0 would overbook the role: A still reserves absent worker 1.
+    early_b = result.model_copy(update={"starts": (0, 0, 1, 8), "finishes": (0, 6, 3, 8)})
+    realised, schedule = realised_instance(inst, early_b)
+    assert [(v.kind, v.time) for v in validate_schedule(realised, schedule)] == [
+        ("resource", 1),
+        ("resource", 2),
+    ]
+    problems = execution_violations(inst, early_b)
+    assert "worker 0 is in the crews of 1 and 2 on day 1" in problems
+    assert "activity 2 works on day 6 outside its reservation" in problems
+    # An absence on a worked day: worker 0 would have worked while absent.
+    absent = Absence(day=4, worker=0, length=1, announced=1)
+    late_absence = result.model_copy(update={"events": (*result.events, absent)})
+    assert execution_violations(inst, late_absence) == [
+        "activity 1 works with (0, 1) on day 4, present (1,)"
+    ]
+
+
+def test_one_person_activity_pauses_and_resumes_with_the_same_worker(
+    build: Builder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A (p 4) and B (p 2) need one worker each of a role with two; both start on day 0, and
+    # A's worker 0 is out on days 1-2. B ends on day 2, yet its worker 1 does not take over A.
+    inst = build([0, 4, 2, 0], [[0], [1], [1], [0]], [[1, 2], [3], [3], []], capacities=(2,))
+    plan = Schedule(starts=(0, 0, 0, 4))
+    onsets = {1: [AbsenceDraw(worker=0, length=2, announced=1)]}
+    monkeypatch.setattr(engine, "ScenarioStreams", forced_streams(onsets=onsets))
+    recorder = Recorder()
+    result = simulate(inst, plan, recorder, 0, pert=EXACT, disruptions=NONE, review_period=1)
+    statuses = [obs.status[1] for obs in recorder.seen[:4]]
+    assert statuses == ["unstarted", "paused", "paused", "running"]
+    assert [obs.work_done[1] for obs in recorder.seen] == [0, 1, 1, 1, 2, 3, 4]  # work kept
+    assert segments_of(result, 1) == [(0, 1, (0,)), (3, 6, (0,))]
+    assert segments_of(result, 2) == [(0, 2, (1,))]
+    assert result.crews[1] == (0,)
+    assert result.finishes[1] == 6 and result.makespan == 6
+    assert_feasible(inst, result)
+
+
+@pytest.mark.parametrize(("p", "finish"), [(4, 5), (5, 7)])
+def test_partial_crew_progresses_at_the_present_share(
+    build: Builder, monkeypatch: pytest.MonkeyPatch, p: int, finish: int
+) -> None:
+    # A crew of four (M_j = 4); member 3 is out from day 1 to beyond the end. Dispatch takes
+    # present workers only, so day 0 has the full crew and then rho_j = 3/4: with P_j = 4,
+    # e_j = 1, 1.75, 2.5, 3.25, 4 and F = 5; with P_j = 5 the last 4 full-crew days take
+    # ceil(4 / 0.75) = 6 days, so F = 7.
+    inst = build([0, p, 0], [[0], [4], [0]], [[1], [2], []], capacities=(4,))
+    plan = Schedule(starts=(0, 0, p))
+    onsets = {1: [AbsenceDraw(worker=3, length=30, announced=30)]}
+    monkeypatch.setattr(engine, "ScenarioStreams", forced_streams(onsets=onsets))
+    recorder = Recorder()
+    result = simulate(inst, plan, recorder, 0, pert=EXACT, disruptions=NONE, review_period=1)
+    assert [obs.work_done[1] for obs in recorder.seen] == [0] + [
+        1 + 0.75 * d for d in range(finish)
+    ]
+    assert recorder.seen[2].assigned[1] == (0, 1, 2, 3)  # the absent member stays in the crew
+    assert recorder.seen[2].present[3] is False
+    assert segments_of(result, 1) == [(0, 1, (0, 1, 2, 3)), (1, finish, (0, 1, 2))]
+    assert result.finishes[1] == finish == result.makespan
+    assert result.total_cost == 4 + 3 * (finish - 1)
+    assert_feasible(inst, result)
+
+
+def test_whole_crew_absent_pauses_and_resumes_at_the_reduced_rate(
+    build: Builder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A crew of four of the five workers leaves on day 1; they return on days 3, 4, 4 and 5.
+    inst = build([0, 4, 0], [[0], [4], [0]], [[1], [2], []], capacities=(5,))
+    plan = Schedule(starts=(0, 0, 4))
+    lengths = (2, 3, 3, 4)
+    onsets = {1: [AbsenceDraw(worker=w, length=n, announced=1) for w, n in enumerate(lengths)]}
+    monkeypatch.setattr(engine, "ScenarioStreams", forced_streams(onsets=onsets))
+    recorder = Recorder()
+    result = simulate(inst, plan, recorder, 0, pert=EXACT, disruptions=NONE, review_period=1)
+    # No progress on days 1-2; from the first return rho = 1/4, then 3/4, then 1.
+    statuses = [obs.status[1] for obs in recorder.seen[:4]]
+    assert statuses == ["unstarted", "paused", "paused", "running"]
+    assert [obs.work_done[1] for obs in recorder.seen] == [0, 1, 1, 1, 1.25, 2, 3, 4]
+    assert segments_of(result, 1) == [
+        (0, 1, (0, 1, 2, 3)),
+        (3, 4, (0,)),
+        (4, 5, (0, 1, 2)),
+        (5, 7, (0, 1, 2, 3)),
+    ]
+    assert result.finishes[1] == 7
+    assert result.total_cost == 4 + 1 + 3 + 4 + 4
+    assert all(4 not in s.workers for s in result.segments)  # nobody is reassigned
     assert_feasible(inst, result)
 
 
@@ -222,31 +350,56 @@ def test_forced_work_increase_extends_the_duration(
     shocks_on = DisruptionParams(lambda_a=0, mean_absence=1, lambda_s=0.5, lambda_n=0)
     plan = Schedule(starts=(0, 0, 6))
     result = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=shocks_on)
-    # After 2 work-days 4 units remain; ceil(4 * 1.5) = 6, so 2 + 6 = 8 work-days in total.
+    # The shock of the second work day (day 1) comes before its progress: 5 full-crew days
+    # remain and become 5 * 1.5 = 7.5, so 1 + 7.5 = 8.5 in total, done with the ninth day.
     assert result.events == (
         WorkIncrease(
-            day=2, activity=1, work_done=2, factor=1.5, remaining_before=4, remaining_after=6
+            day=1,
+            activity=1,
+            work_day=2,
+            work_done=1.0,
+            factor=1.5,
+            remaining_before=5.0,
+            remaining_after=7.5,
         ),
     )
-    assert result.work[1] == 8
-    assert result.finishes[1] == 8 and result.makespan == 8
+    assert result.work[1] == 8.5
+    assert result.finishes[1] == 9 and result.makespan == 9
+    assert result.n_epochs == 3  # days 0 and 5, and day 2 after the shock
 
 
-def test_random_work_increases_follow_the_ceil_rule(eight: ProjectInstance) -> None:
+def test_work_increase_can_hit_a_one_day_activity(build: Builder) -> None:
+    inst = build([0, 1, 0], [[0], [1], [0]], [[1], [2], []], capacities=(1,))
+    always = DisruptionParams(lambda_a=0, mean_absence=1, lambda_s=1, lambda_n=0)
+    plan = Schedule(starts=(0, 0, 1))
+    result = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=always, deadline=10)
+    shocks = [e for e in result.events if isinstance(e, WorkIncrease)]
+    # Drawn on the first work day before progress (spec 2.2): nothing done yet, one day left.
+    first = shocks[0]
+    assert (first.day, first.activity, first.work_day, first.work_done) == (0, 1, 1, 0.0)
+    assert first.remaining_before == 1.0 and first.remaining_after == first.factor
+    # lambda_S = 1 hits every work day until the remaining work runs out.
+    assert [(e.day, e.work_day) for e in shocks] == [(d, d + 1) for d in range(len(shocks))]
+    assert result.finishes[1] == len(shocks) >= 2 and result.work[1] > 1
+    assert result.n_epochs == result.makespan + 1  # day 0 and every day after a shock
+
+
+def test_random_work_increases_scale_the_remaining_work(eight: ProjectInstance) -> None:
     plan = lft_plan(eight)
     params = DisruptionParams(lambda_a=0, mean_absence=1, lambda_s=0.3, lambda_n=0)
     shocks = 0
     for seed in range(20):
         result = simulate(eight, plan, NoReaction(), seed, pert=PertParams(), disruptions=params)
         durations = ScenarioStreams(seed, eight, params, PertParams()).durations
-        added = [0] * eight.n_activities
+        added = [0.0] * eight.n_activities
         for event in result.events:
             assert isinstance(event, WorkIncrease)
             shocks += 1
             assert 1.2 <= event.factor <= 2.0
-            assert event.remaining_after == math.ceil(event.remaining_before * event.factor)
+            assert event.remaining_after == pytest.approx(event.remaining_before * event.factor)
             added[event.activity] += event.remaining_after - event.remaining_before
-        assert list(result.work) == [p + a for p, a in zip(durations, added, strict=True)]
+        expected = [p + a for p, a in zip(durations, added, strict=True)]
+        assert list(result.work) == pytest.approx(expected)
     assert shocks > 10
 
 
@@ -267,7 +420,9 @@ def test_new_activities_keep_the_graph_acyclic(eight: ProjectInstance) -> None:
         for e in new:
             assert result.finishes[e.predecessor] <= result.starts[e.activity]  # type: ignore[operator]
             assert result.finishes[e.activity] <= result.starts[e.successor]  # type: ignore[operator]
-            assert result.starts[e.activity] >= e.day + 1  # type: ignore[operator]
+            # Planned no earlier than the next day; a zero-duration copy completes at once.
+            earliest = e.day + 1 if e.duration > 0 else e.day
+            assert result.starts[e.activity] >= earliest  # type: ignore[operator]
     assert inserted > 10
 
 
