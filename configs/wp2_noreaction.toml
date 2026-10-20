@@ -1,0 +1,40 @@
+# WP2b: NoReaction on baseline plans across disruption scenarios (scenario difficulty for WP4-WP7).
+# Baselines first: uv run sentinel baselines --set j30 --method cpsat_det (then --set j60)
+# Run: uv run python -m sentinel.experiments.simulation_study --config configs/wp2_noreaction.toml --out results/wp2
+name = "wp2_noreaction"
+base_seed = 2026         # seed of (instance, replication) = derive_seed(base_seed, set, instance, replication)
+max_workers = 4          # processes; one task per instance
+data_root = "data/psplib"
+baseline_cache = "data/derived/baselines"
+replications = 20
+deltas = [0.1, 0.2, 0.3] # deadline slacks delta_D, evaluated post hoc; max_days from the largest
+beta = 0.10              # budget reserve of B (spec section 1.2)
+review_period = 5        # T_r (spec section 8)
+
+baseline = "cpsat_det"   # plan every policy starts from
+
+[baselines.cpsat_det]    # also read by `sentinel baselines`
+deterministic_time_limit = 5.0  # CP-SAT max_deterministic_time; no wall-clock limit (ADR-0008)
+random_seed = 2026
+num_workers = 1
+
+[pert]                   # duration multiplier X ~ PERT(a, m, b) with shape lam (spec section 2.1)
+a = 0.8
+m = 1.0
+b = 1.6
+lam = 4.0
+
+[scenarios]              # lambda_a x mean_absence (only the first mean_absence at lambda_a = 0)
+lambda_a = [0.0, 0.0025, 0.005, 0.01, 0.02]
+mean_absence = [3, 5]
+lambda_s = 0.01
+lambda_n = 0.02
+durations_only = true    # extra scenario with every disruption off
+
+[[sets]]
+name = "j30"
+reference = "opt"        # C* = proven optimum
+
+[[sets]]
+name = "j60"
+reference = "hrs"        # C* = best known makespan

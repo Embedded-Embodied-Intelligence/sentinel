@@ -1,4 +1,4 @@
-"""`sentinel inspect` command."""
+"""`sentinel inspect` and `sentinel baselines` commands."""
 
 from pathlib import Path
 
@@ -54,3 +54,43 @@ def test_inspect_psplib_instance_with_reference(
     reference = dict(item.split("=") for item in fields["reference"].split(", "))
     assert int(reference["opt"]) == 43  # PSPLIB optimum of j301_1
     assert int(reference["opt"]) >= int(fields["LB0"]) == 38
+
+
+def test_baselines_on_a_limited_set(
+    capsys: pytest.CaptureFixture[str], fake_study: Path, tmp_path: Path
+) -> None:
+    cache = tmp_path / "cli-cache"
+    argv = ["baselines", "--set", "tiny", "--method", "cpsat_det", "--config", str(fake_study)]
+    argv += ["--limit", "1", "--workers", "1", "--cache", str(cache)]
+    assert main(argv) == 0
+    out = capsys.readouterr().out
+    assert "1 computed, 0 cached; statuses: OPTIMAL 1" in out
+    assert "plan / C* (opt): mean 1.0000, max 1.0000, at C* 1 of 1" in out
+    assert (cache / "tiny" / "tiny1_1.json").is_file()
+    assert not (cache / "tiny" / "tiny1_2.json").exists()
+    assert main(argv) == 0
+    assert "0 computed, 1 cached" in capsys.readouterr().out
+
+
+def test_baselines_in_parallel_use_the_config_cache(
+    capsys: pytest.CaptureFixture[str], fake_study: Path, tmp_path: Path
+) -> None:
+    argv = ["baselines", "--set", "tiny", "--method", "sgs_lft", "--config", str(fake_study)]
+    assert main([*argv, "--workers", "2"]) == 0
+    assert "2 computed, 0 cached; statuses: FEASIBLE 2" in capsys.readouterr().out
+    for stem in ("tiny1_1", "tiny1_2"):
+        assert "sgs_lft" in (tmp_path / "cache" / "tiny" / f"{stem}.json").read_text("utf-8")
+
+
+def test_baselines_errors(
+    capsys: pytest.CaptureFixture[str], fake_study: Path, tmp_path: Path
+) -> None:
+    base = ["baselines", "--method", "sgs_lft"]
+    assert main([*base, "--set", "tiny", "--config", str(tmp_path / "none.toml")]) == 1
+    assert "not found" in capsys.readouterr().err
+    assert main([*base, "--set", "j99", "--config", str(fake_study)]) == 1
+    assert "j99 not found" in capsys.readouterr().err
+    with pytest.raises(SystemExit) as excinfo:
+        main([*base, "--set", "tiny", "--config", str(fake_study), "--limit", "0"])
+    assert excinfo.value.code == 2
+    capsys.readouterr()

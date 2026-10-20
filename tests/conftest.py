@@ -1,5 +1,7 @@
-"""Shared fixtures: the hand-made tiny instance, an instance builder and the PSPLIB data root."""
+"""Shared fixtures: the hand-made tiny instance, an instance builder, a fake study set and the
+PSPLIB data root."""
 
+import shutil
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
@@ -52,3 +54,46 @@ def psplib_root() -> Path:
     if not root.is_dir():
         pytest.skip("PSPLIB data not found in data/psplib; run scripts/fetch_psplib.py")
     return root
+
+
+FAKE_STUDY_CONFIG = """
+name = "fake_wp2"
+base_seed = 11
+max_workers = 2
+data_root = "{root}"
+baseline_cache = "{cache}"
+replications = 2
+deltas = [0.1, 0.2, 0.3]
+baseline = "cpsat_det"
+
+[baselines.cpsat_det]
+deterministic_time_limit = 1.0
+random_seed = 5
+
+[scenarios]
+lambda_a = [0.0, 0.05]
+mean_absence = [3, 5]
+lambda_s = 0.05
+lambda_n = 0.05
+
+[[sets]]
+name = "tiny"
+reference = "opt"
+"""
+
+
+@pytest.fixture
+def fake_study(tmp_path: Path, tiny_path: Path) -> Path:
+    """Config file for a set `tiny` of two copies of the tiny fixture with optimum 7."""
+    root = tmp_path / "psplib"
+    (root / "tiny").mkdir(parents=True)
+    (root / "solutions").mkdir()
+    for stem in ("tiny1_1", "tiny1_2"):
+        shutil.copy(tiny_path, root / "tiny" / f"{stem}.sm")
+    (root / "solutions" / "tiny_opt.sm").write_text(
+        "Paramter Instance Makespan CPU-Time[sec.]\n1 1 7 0.0\n1 2 7 0.0\n", encoding="utf-8"
+    )
+    config = tmp_path / "fake.toml"
+    text = FAKE_STUDY_CONFIG.format(root=root.as_posix(), cache=(tmp_path / "cache").as_posix())
+    config.write_text(text, encoding="utf-8")
+    return config
