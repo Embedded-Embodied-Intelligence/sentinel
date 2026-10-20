@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
 from sentinel.simulation.events import DisruptionParams
-from sentinel.simulation.uncertainty import PertParams
+from sentinel.simulation.uncertainty import PertParams, role_costs
 
 ActivityStatus = Literal["unstarted", "running", "paused", "done"]
 UNSTARTED: Final = "unstarted"
@@ -28,6 +28,20 @@ class WorkSegment(NamedTuple):
     start: int
     end: int
     workers: tuple[int, ...]
+
+
+class SampledWorld(NamedTuple):
+    """The hidden quantities of a state (spec section 5.1): what an `Observation` leaves out.
+
+    `remaining` is the remaining work of every activity in crew-member days, the engine's unit
+    (M_j per full-crew day, 1 without demands), so P_j M_j for an unstarted activity. `return_day`
+    is the day each absent worker is back, -1 for present workers. `fallbacks` counts conditions
+    of the belief that had probability zero and were replaced by the smallest feasible value.
+    """
+
+    remaining: tuple[float, ...]
+    return_day: tuple[int, ...]
+    fallbacks: int = 0
 
 
 class InsertedActivity(BaseModel):
@@ -246,6 +260,14 @@ class EngineState:
             if present[w]:
                 insort(idle[role[w]], w)
 
+    def hidden(self) -> SampledWorld:
+        """The true hidden quantities: the perfect-information test hook of the forecaster.
+
+        Never passed to a policy; together with `observe()` it gives back this state through
+        `state_from_observation`.
+        """
+        return SampledWorld(tuple(self.remaining), tuple(self.return_day))
+
     def observe(self) -> Observation:
         """The agent's view of the current day (spec section 3); hidden fields are left out."""
         # The engine maintains the invariants, so validation is skipped for speed.
@@ -268,3 +290,113 @@ class EngineState:
             pert=self.pert,
             disruptions=self.disruptions,
         )
+
+
+def day_limit(instance: ProjectInstance, deadline: int | None) -> int:
+    """Last simulated day max_days = ceil(5 D) = 5 D, or 5 sum p_j without a deadline (3.1 f)."""
+    if deadline is None:
+        return 5 * sum(act.duration for act in instance.activities)
+    return 5 * deadline
+
+
+def state_from_observation(
+    observation: Observation,
+    world: SampledWorld,
+    *,
+    plan: Sequence[int] | None = None,
+    costs: Sequence[float] | None = None,
+) -> EngineState:
+    """The engine state at step 3 of the observed day, completed by the hidden `world`.
+
+    `plan` replaces the observed plan (one start per activity id, D3 activities included) and
+    `costs` are the daily role costs c_k (default 1.0). The D2 work-day counters restart at 0 and
+    no D2 shock is planned yet: the run that continues the state looks them up in its own streams
+    (`Run.resume`). Work segments before the day are not reconstructed.
+    """
+    instance = observation.instance
+    n_original = instance.n_activities
+    starts = list(observation.plan if plan is None else plan)
+    n = len(observation.status)
+    if not len(starts) == len(world.remaining) == n:
+        raise ValueError(
+            f"need one plan start and one remaining work per activity ({n}), got "
+            f"{len(starts)} and {len(world.remaining)}"
+        )
+    if len(world.return_day) != len(observation.present):
+        raise ValueError(f"need one return day per worker, got {len(world.return_day)}")
+    state = EngineState(
+        instance,
+        Schedule(starts=tuple(starts[:n_original])),
+        [0] * n_original,
+        role_costs(instance, costs),
+        pert=observation.pert,
+        disruptions=observation.disruptions,
+        deadline=observation.deadline,
+        max_days=day_limit(instance, observation.deadline),
+    )
+    for act in observation.inserted:
+        new = state.add_activity(
+            act.duration, act.demands, 0, starts[act.id], act.predecessor, act.successor
+        )
+        if new != act.id:
+            raise ValueError(f"inserted activity {act.id} would get id {new}")
+    t = observation.day
+    state.day = t
+    state.cost = observation.cost
+    state.inserted = list(observation.inserted)
+    state.work_increases = list(observation.work_increases)
+    status = state.status = list(observation.status)
+    state.start = list(observation.start)
+    state.finish = list(observation.finish)
+    state.remaining = list(world.remaining)
+    state.done = [
+        crew_member_days(e, u) for e, u in zip(observation.work_done, state.unit, strict=True)
+    ]
+    pending = [0] * n
+    for i in range(n):
+        if status[i] != DONE:
+            for j in state.successors[i]:
+                pending[j] += 1
+    state.pending = pending
+    state.eligible = {j for j in range(n) if status[j] == UNSTARTED and pending[j] == 0}
+
+    present = state.present = list(observation.present)
+    state.return_day = list(world.return_day)
+    state.absent_since = list(observation.absent_since)
+    state.announced = list(observation.announced)
+    role, busy = state.role, state.busy
+    for j in range(n):
+        crew = state.assigned[j] = observation.assigned[j]
+        if status[j] in (DONE, UNSTARTED):
+            continue
+        for w in crew:
+            busy[w] = j
+        workers = tuple(w for w in crew if present[w])
+        state.working[j] = workers
+        if not state.demands[j]:
+            workers_rate, cost = state.unit[j], state.daily_cost[j]
+        else:
+            workers_rate = len(workers)
+            cost = sum(state.role_costs[role[w]] for w in workers)
+        if (status[j] == RUNNING) != (workers_rate > 0):
+            raise ValueError(f"activity {j} is {status[j]} with {len(workers)} present members")
+        if status[j] == RUNNING:
+            state.running.append(j)
+            state.open_since[j] = t
+            state.rate[j] = workers_rate
+            state.work_cost[j] = cost
+    state.idle = [
+        [w for w, k in enumerate(role) if k == r.id and present[w] and busy[w] < 0]
+        for r in instance.roles
+    ]
+    return state
+
+
+def crew_member_days(work: float, unit: int) -> int:
+    """Work done in crew-member days from full-crew days `work` = done / M_j (an observation's
+    `work_done`); every work day adds whole crew-member days, so the result is an integer."""
+    units = work * unit
+    rounded = round(units)
+    if abs(units - rounded) > 1e-6:
+        raise ValueError(f"work done {work} is not a whole number of crew-member days of {unit}")
+    return rounded

@@ -3,7 +3,7 @@
 import math
 from bisect import bisect_left
 from collections.abc import Sequence
-from typing import Annotated, Literal, NamedTuple, Self
+from typing import Annotated, Literal, NamedTuple, Protocol, Self
 
 import numpy as np
 import numpy.typing as npt
@@ -129,6 +129,25 @@ class NewActivityDraw(NamedTuple):
     multiplier: float  # PERT multiplier of the true duration
     successor: float  # uniform mapped onto the successor candidates
     predecessor: float  # uniform mapped onto the predecessor candidates
+
+
+class DisruptionStreams(Protocol):
+    """The engine's queries for D1-D3 draws: `ScenarioStreams` (the world, spec section 2.3) or
+    the rollout layout of the forecaster (ADR-0009). Answers must not depend on query order."""
+
+    params: DisruptionParams
+
+    def absence_onsets(self, day: int) -> Sequence[AbsenceDraw]:
+        """Absences that start on `day`, by increasing worker id."""
+        ...
+
+    def work_shock(self, activity: int, first: int, last: int) -> tuple[int, float] | None:
+        """First work-day counter in [first, last] with a D2 shock of `activity`, and its F."""
+        ...
+
+    def new_activity(self, day: int) -> NewActivityDraw | None:
+        """The D3 draws of `day` if a new activity arrives that day."""
+        ...
 
 
 def _generator(seq: np.random.SeedSequence) -> np.random.Generator:
