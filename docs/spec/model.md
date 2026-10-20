@@ -1,7 +1,12 @@
-# Sentinel — formal model (v1.0)
+# Sentinel — formal model (v1.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
-and explicit approval (see `spec-guard` skill). Section numbers are referenced by WP prompts.
+and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
+prompt are entered directly and need no ADR; semantic changes proposed by the implementer do.
+Section numbers are referenced by WP prompts.
+
+Versions: v1.0 initial model; v1.1 (WP2a) simulator semantics: `p̄_j` (§1.2), D1–D3 details
+(§2.2), common random numbers (§2.3), execution details (§3.1).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -47,7 +52,8 @@ PSPLIB defines neither. They are derived:
 - `D = ceil((1 + δ_D) · C*)`, where `C*` is the optimal or best-known makespan of the
   deterministic instance (from PSPLIB solution files) and `δ_D` is the deadline slack.
 - `B = (1 + β) · Σ_j Σ_k c_k · r_jk · p̄_j`, with daily cost `c_k` of a worker of role `k`
-  (default 1.0) and `p̄_j = E[P_j]` (§2.1).
+  (default 1.0) and `p̄_j := p_j · (a + 4m + b) / 6`, the nominal duration times the mean of
+  the PERT multiplier of §2.1 (the rounding of §2.1 is ignored).
 
 ### §1.3 Static schedule
 
@@ -84,16 +90,37 @@ Actual duration `P_j = 0` if `p_j = 0` (dummies and zero-duration milestones), o
 
 ### §2.2 Disruption events (each day, independently)
 
-- **D1 absence:** each present worker becomes unavailable with probability `λ_A` for
-  `L ~ 1 + Geom(q)` days. The agent receives a lower bound `L_low ≤ L` (e.g. "out until
-  Friday"). True `L` is revealed on return. Only availability is stored, never the reason.
-- **D2 work increase:** each running activity, with probability `λ_S`, has its remaining work
-  multiplied by `F ~ U[1.2, 2.0]`; the agent observes `F`.
-- **D3 new activity:** with probability `λ_N` a new activity is inserted; duration and demands
-  are drawn from the instance's empirical distribution; insertion preserves acyclicity.
+- **D1 absence:** each present worker becomes unavailable with probability `λ_A` for `L` days,
+  where `L` is geometric on `{1, 2, …}` with mean `E[L]` (numpy `geometric(p = 1/E[L])`). The
+  agent receives the announced lower bound `L_low ~ Uniform{1, …, L}` (e.g. "out until
+  Friday"). True `L` is revealed on return. An absent worker is not drawn again until the day
+  after their return. Only availability is stored, never the reason.
+- **D2 work increase:** each running activity, with probability `λ_S`, has its hidden remaining
+  work replaced by `ceil(remaining · F)`, `F ~ U[f_low, f_high] = U[1.2, 2.0]`; the agent
+  observes `F`. The shock is indexed by the activity's own work-day counter (the k-th day on
+  which the activity progresses), not by calendar day.
+- **D3 new activity:** with probability `λ_N` a new activity is inserted. Template: the duration
+  and demands of a uniformly drawn real *original* activity; its true duration uses a pre-drawn
+  PERT multiplier (§2.1). Its successor `s` is uniform among unstarted real activities (the
+  sink if none); its predecessor is uniform among activities that are neither `s`, the sink,
+  nor descendants of `s`, so insertion preserves acyclicity. New ids are `n+2, n+3, …`; the
+  sink keeps id `n+1`. If no valid predecessor exists, the event is skipped (logged).
+
+### §2.3 Common random numbers
 
 A replication is fully determined by a seed `ξ`. All compared policies receive the same `ξ`
-(common random numbers).
+(common random numbers). Each replication seed spawns independent child streams
+(`numpy.random.SeedSequence.spawn`):
+
+- (i) durations of original activities;
+- (ii) one stream per worker for absences (one Bernoulli and, on onset, `L` and `L_low` draws
+  per present day);
+- (iii) one stream per original activity for D2 (one Bernoulli + factor per work-day);
+- (iv) one stream for D3 (per calendar day: occurrence, template choice, PERT multiplier, two
+  uniforms mapped onto the current candidate lists).
+
+Exogenous events that do not depend on the project state are therefore identical across
+policies for the same seed.
 
 ---
 
@@ -121,6 +148,22 @@ so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantiti
 from conditional distributions, e.g. `P_j | P_j > e_j`.
 
 **Decision epochs:** after every D1–D3 event and every `T_r` days (periodic review).
+
+### §3.1 Execution details
+
+- (a) A paused activity releases its present workers, who may take other work; it resumes only
+  when all its original workers are present and idle, unless the policy orders a
+  substitution.
+- (b) Dispatch assigns the lowest-id idle present workers of each required role.
+- (c) Zero-duration activities complete inside dispatch, and dispatch repeats until no further
+  activity can start on that day, so milestones add no delay.
+- (d) An activity that progresses on days `S, …, S+P−1` finishes at `F = S + P`; its successors
+  may start on day `F`.
+- (e) Under `NoReaction`, a D3 activity is added to the plan at the earliest precedence-feasible
+  day `≥ t + 1` given current plan starts and realised finishes; no other plan entry changes.
+- (f) The simulation ends when the sink completes, or at `max_days = ceil(5 · D)` (or
+  `5 · Σ p_j` if `D` is undefined), with a `truncated` flag.
+- (g) Decision epochs: any day with a D1–D3 event, and every day `t` with `t % T_r == 0`.
 
 ---
 

@@ -32,8 +32,9 @@ description: Rules for implementing and running experiments reproducibly (config
 
 ## Randomness
 
-- Derive per-(instance, method, replication) seeds deterministically from a base seed with
-  `numpy.random.SeedSequence(base).spawn(...)` or a stable hash; record them in `results.csv`.
+- Derive one seed per (instance, replication), shared by all methods (common random numbers),
+  deterministically from a base seed with `numpy.random.SeedSequence(base).spawn(...)` or a
+  stable hash; record them in `results.csv`.
 - Never use global random state. For OR-Tools CP-SAT set `random_seed` and
   `num_workers` explicitly and record them.
 
