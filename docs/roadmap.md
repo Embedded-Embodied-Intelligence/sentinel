@@ -6,7 +6,7 @@
 | WP0 | Project scaffold, domain model (§1), PSPLIB fetch + loader, CPM bounds, tests | 2026-10-22 | done |
 | WP1 | Serial SGS + priority rules, CP-SAT, RQ2 benchmark on J30/J60 | 2026-10-26 | done |
 | WP2 | Simulator: stochastic durations, disruptions, daily semantics, NoReaction (§2–§3) | 2026-11-02 | done |
-| WP3 | Monte Carlo forecasts and calibration (RQ3) | 2026-11-06 | todo |
+| WP3 | Monte Carlo forecasts and calibration (RQ3) | 2026-11-06 | in progress: WP3a done |
 | WP4 | Baseline reactive policies (§7) | 2026-11-10 | todo |
 | WP5 | Goal & Needs Engine, candidates, rollout selector, permission gate (§4–§6) | 2026-11-16 | todo |
 | WP6 | LLM layer: client, cache, schemas; WBS extraction (RQ1), event parser, candidates, explanations | 2026-11-21 | todo |
