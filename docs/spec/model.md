@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.1)
+# Sentinel — formal model (v1.2)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -6,7 +6,9 @@ prompt are entered directly and need no ADR; semantic changes proposed by the im
 Section numbers are referenced by WP prompts.
 
 Versions: v1.0 initial model; v1.1 (WP2a) simulator semantics: `p̄_j` (§1.2), D1–D3 details
-(§2.2), common random numbers (§2.3), execution details (§3.1).
+(§2.2), common random numbers (§2.3), execution details (§3.1); v1.2 (WP2a.1) partial crews
+(§3, §3.1 a), handover cost (§3), D2 timing (§2.2), early completion of zero-duration
+activities (§3.1 c–d), accepted readings of the WP2a questions (§2.2), `λ_A` grid (§8).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -86,25 +88,32 @@ times `LF_j` from a backward pass with horizon `T` (default `T = LB0` unless sta
 
 Actual duration `P_j = 0` if `p_j = 0` (dummies and zero-duration milestones), otherwise
 `P_j = max(1, round(p_j · X_j))`, with `X_j ~ PERT(a, m, b) = (0.8, 1.0, 1.6)` (Beta-PERT, shape λ = 4; Malcolm et al. 1959).
-`P_j` is **hidden**; the agent observes only work performed so far `e_j(t)`.
+`P_j` is **hidden**; the agent observes only work performed so far `e_j(t)` (in full-crew days,
+§3.1 a).
 
 ### §2.2 Disruption events (each day, independently)
 
 - **D1 absence:** each present worker becomes unavailable with probability `λ_A` for `L` days,
   where `L` is geometric on `{1, 2, …}` with mean `E[L]` (numpy `geometric(p = 1/E[L])`). The
   agent receives the announced lower bound `L_low ~ Uniform{1, …, L}` (e.g. "out until
-  Friday"). True `L` is revealed on return. An absent worker is not drawn again until the day
-  after their return. Only availability is stored, never the reason.
-- **D2 work increase:** each running activity, with probability `λ_S`, has its hidden remaining
-  work replaced by `ceil(remaining · F)`, `F ~ U[f_low, f_high] = U[1.2, 2.0]`; the agent
-  observes `F`. The shock is indexed by the activity's own work-day counter (the k-th day on
-  which the activity progresses), not by calendar day.
+  Friday"). True `L` is revealed on return. A worker absent on days `t, …, t+L−1` is back on
+  day `t+L`; no Bernoulli is drawn on the return day, so draws resume on day `t+L+1`. Only
+  availability is stored, never the reason.
+- **D2 work increase:** on each of its work days (days with `ρ_j > 0`, §3.1 a), an activity has,
+  with probability `λ_S`, its hidden remaining work (in full-crew days) replaced by
+  `remaining · F` (no rounding), `F ~ U[f_low, f_high] = U[1.2, 2.0]`; the agent observes `F`.
+  The Bernoulli of the k-th work day is drawn on that day before progress (step 5 of §3), so a
+  one-day activity can be hit. The shock is indexed by the activity's own work-day counter `k`,
+  not by calendar day. Activities inserted by D3 receive no work increases (documented
+  simplification: §2.3 (iii) has streams for original activities only).
 - **D3 new activity:** with probability `λ_N` a new activity is inserted. Template: the duration
   and demands of a uniformly drawn real *original* activity; its true duration uses a pre-drawn
   PERT multiplier (§2.1). Its successor `s` is uniform among unstarted real activities (the
   sink if none); its predecessor is uniform among activities that are neither `s`, the sink,
-  nor descendants of `s`, so insertion preserves acyclicity. New ids are `n+2, n+3, …`; the
-  sink keeps id `n+1`. If no valid predecessor exists, the event is skipped (logged).
+  nor descendants of `s`, the source and finished activities included, so insertion preserves
+  acyclicity. New ids are `n+2, n+3, …`; the sink keeps id `n+1`. If no valid predecessor
+  exists, the event is skipped (logged); since the source is always valid, this happens only
+  for an instance without real activities.
 
 ### §2.3 Common random numbers
 
@@ -114,8 +123,9 @@ A replication is fully determined by a seed `ξ`. All compared policies receive 
 
 - (i) durations of original activities;
 - (ii) one stream per worker for absences (one Bernoulli and, on onset, `L` and `L_low` draws
-  per present day);
-- (iii) one stream per original activity for D2 (one Bernoulli + factor per work-day);
+  per present day, the return day excepted);
+- (iii) one stream per original activity for D2 (one Bernoulli + factor per work day, i.e. per
+  day with `ρ_j > 0`);
 - (iv) one stream for D3 (per calendar day: occurrence, template choice, PERT multiplier, two
   uniforms mapped onto the current candidate lists).
 
@@ -128,37 +138,49 @@ policies for the same seed.
 
 A plan `π_t` gives a planned start `S_j` for every unstarted activity. Each day `t`:
 
-1. realise disruptions D1–D3;
-2. **pause:** an activity with any assigned worker absent is paused; completed work is kept
-   (no voluntary preemption);
+1. realise D1 (returns, then new absences) and D3; D2 is realised in step 5 (§2.2);
+2. **crews:** recompute `ρ_j` (§3.1 a) of every activity whose assigned workers' presence
+   changed; an activity with `ρ_j = 0` is paused, a paused one with `ρ_j > 0` resumes with its
+   own crew; completed work is kept (no voluntary preemption);
 3. if `t` is a decision epoch, the policy decides;
-4. **dispatch:** in order of `S_j`, start or resume activities whose predecessors are complete,
-   with `S_j ≤ t` and enough idle workers of every required role. Never start earlier than
-   planned. A paused activity resumes with its original workers unless the policy ordered a
-   handover;
-5. **progress:** each running activity performs one unit of work;
-6. close activities with zero remaining work.
+4. **dispatch:** in order of `S_j`, start unstarted activities whose predecessors are complete,
+   with `S_j ≤ t` and enough idle present workers of every required role. Activities with
+   `p_j > 0` never start earlier than planned; zero-duration activities complete as soon as
+   their predecessors are complete (§3.1 c–d);
+5. **progress:** each running activity first draws its D2 shock for this work day (§2.2), then
+   progresses by `ρ_j` full-crew days;
+6. close activities whose remaining work is `≤ 0`.
 
-**Handover cost:** resuming a paused activity `j` with different workers adds work
-`h_j = max(1, ceil(α · e_j))`.
+**Handover cost:** when SUBST (§4) replaces `m_j ≥ 1` absent members of activity `j`, `j` gets
+additional work `h_j = max(1, ceil(α · e_j · m_j / M_j))` full-crew days, with crew size `M_j`
+(§3.1 a); for a one-person activity this is `max(1, ceil(α · e_j))`.
 
 **State** `s_t`: day `t`; per activity status (done / running with `e_j` / paused with `e_j` /
-unstarted); worker assignments; worker availability with announced `L_low`; plan `π_t`; cost
-so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantities are sampled
-from conditional distributions, e.g. `P_j | P_j > e_j`.
+unstarted); crews (assigned workers); worker availability with announced `L_low`; plan `π_t`;
+cost so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantities are
+sampled from conditional distributions, e.g. `P_j | P_j > e_j`.
 
 **Decision epochs:** after every D1–D3 event and every `T_r` days (periodic review).
 
 ### §3.1 Execution details
 
-- (a) A paused activity releases its present workers, who may take other work; it resumes only
-  when all its original workers are present and idle, unless the policy orders a
-  substitution.
+- (a) **Partial crews.** An activity keeps all its assigned workers until it completes; nobody
+  is released on absence, and assigned workers stay reserved (count against `R_k`) while
+  absent. Work is measured in *full-crew days*: the remaining work of `j` starts at `P_j`, and
+  on each day `j` runs it progresses by `ρ_j = present_assigned_j / M_j`, where
+  `M_j = Σ_k r_jk` is its crew size and `present_assigned_j` the number of its assigned workers
+  present that day. `e_j` is the work done so far in full-crew days. If `ρ_j = 0` (whole crew
+  absent) the activity is paused; absent workers rejoin automatically on return. Under
+  `NoReaction` nobody is reassigned.
 - (b) Dispatch assigns the lowest-id idle present workers of each required role.
-- (c) Zero-duration activities complete inside dispatch, and dispatch repeats until no further
-  activity can start on that day, so milestones add no delay.
-- (d) An activity that progresses on days `S, …, S+P−1` finishes at `F = S + P`; its successors
-  may start on day `F`.
+- (c) Zero-duration activities (`p_j = 0`) complete inside dispatch as soon as all their
+  predecessors are complete, whatever their planned start, and dispatch repeats until no
+  further activity can start on that day, so milestones add no delay.
+- (d) An activity finishes at the end of the first day on which its remaining work is `≤ 0`:
+  if that day is `t`, `F_j = t + 1`, and its successors may start on day `F_j`. The railway rule
+  "never start earlier than planned" applies only to activities with `p_j > 0`; zero-duration
+  activities, the sink included, complete as soon as all predecessors are done, so a project
+  can finish earlier than planned.
 - (e) Under `NoReaction`, a D3 activity is added to the plan at the earliest precedence-feasible
   day `≥ t + 1` given current plan starts and realised finishes; no other plan entry changes.
 - (f) The simulation ends when the sink completes, or at `max_days = ceil(5 · D)` (or
@@ -244,7 +266,7 @@ Rollouts decode plans with the serial SGS.
 | `δ_D` | deadline slack vs `C*` | {0.1, 0.2, 0.3} |
 | `β` | budget reserve | 0.10 |
 | `(a, m, b)` | PERT multiplier | (0.8, 1.0, 1.6) |
-| `λ_A` | daily absence probability per worker | {0.005, 0.01, 0.02} |
+| `λ_A` | daily absence probability per worker | {0.0025, 0.005, 0.01, 0.02} |
 | `E[L]` | mean absence length (days) | {3, 5} |
 | `λ_S` | daily work-increase probability per running activity | 0.01 |
 | `λ_N` | daily new-activity probability | 0.02 |
@@ -260,6 +282,10 @@ Rollouts decode plans with the serial SGS.
 | `Λ` | autonomy level | {0,1,2,3}, default 2 |
 | `δ_h` | human approval delay (days) | 1 |
 | `c_k` | daily cost per worker | 1.0 |
+
+`λ_A` is per worker and day. A worker alternates between present spells of mean `1/λ_A` days
+and absences of mean `E[L]`, so with `E[L] = 3`, `λ_A = 0.01` means about 3 % of worker-days
+absent (`E[L] / (1/λ_A + E[L])`).
 
 ---
 
