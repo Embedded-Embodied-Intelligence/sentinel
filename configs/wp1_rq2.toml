@@ -1,0 +1,60 @@
+# WP1 / RQ2: does CP-SAT produce better schedules than priority-rule heuristics?
+# Run: uv run python -m sentinel.experiments.rcpsp_benchmark --config configs/wp1_rq2.toml --out results/wp1
+name = "wp1_rq2"
+base_seed = 2026
+max_workers = 4          # processes; each solver runs single-threaded inside its process
+data_root = "data/psplib"
+
+[[sets]]
+name = "j30"
+reference = "opt"        # proven optima
+
+[[sets]]
+name = "j60"
+reference = "hrs"        # best known upper bounds
+dev_lb0 = true           # also report the deviation from LB0 (Kolisch & Hartmann 2006)
+
+[[methods]]
+name = "sgs_lft"
+label = "SGS-LFT"
+kind = "sgs"
+rule = "lft"
+
+[[methods]]
+name = "sgs_lst"
+label = "SGS-LST"
+kind = "sgs"
+rule = "lst"
+
+[[methods]]
+name = "sgs_mts"
+label = "SGS-MTS"
+kind = "sgs"
+rule = "mts"
+
+[[methods]]
+name = "sgs_grpw"
+label = "SGS-GRPW"
+kind = "sgs"
+rule = "grpw"
+
+[[methods]]
+name = "rbrs_1000"
+label = "RBRS-1000"
+kind = "rbrs"
+n_schedules = 1000
+alpha = 1.0
+
+[[methods]]
+name = "cpsat_1s"
+label = "CP-SAT 1 s"
+kind = "cpsat"
+time_limit_s = 1.0
+num_workers = 1
+
+[[methods]]
+name = "cpsat_10s"
+label = "CP-SAT 10 s"
+kind = "cpsat"
+time_limit_s = 10.0
+num_workers = 1
