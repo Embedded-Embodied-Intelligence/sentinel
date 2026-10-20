@@ -503,7 +503,9 @@ def compute_cells(analysis: Analysis, config: ForecastStudyConfig) -> Cells:
 
 
 def _num(value: float, digits: int = 3) -> str:
-    return f"{value:.{digits}f}" if math.isfinite(value) else "--"
+    if not math.isfinite(value):
+        return "--"
+    return f"{round(value, digits) + 0.0:.{digits}f}"  # + 0.0 turns -0.0 into 0.0
 
 
 def _est(estimate: Estimate, digits: int = 3, scale: float = 1.0) -> str:

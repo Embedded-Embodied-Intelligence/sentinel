@@ -341,11 +341,15 @@ def execute(tasks: Sequence[Task], max_workers: int, n_rows: int) -> list[Outcom
                 now = time.monotonic()
                 if pending and now - last_report >= PROGRESS_INTERVAL_S:
                     elapsed = now - started
-                    remaining = elapsed / max(1, done_rows) * (n_rows - done_rows)
+                    if done_rows:
+                        rest = elapsed / done_rows * (n_rows - done_rows)
+                        remaining = f"~{format_duration(rest)} remaining"
+                    else:  # an instance takes up to a minute: nothing to extrapolate yet
+                        remaining = "first instances running"
                     print(
                         f"[{format_duration(elapsed)}] {len(outcomes)}/{len(tasks)} instances, "
                         f"{done_rows}/{n_rows} forecasts ({100 * done_rows / n_rows:.1f}%), "
-                        f"~{format_duration(remaining)} remaining",
+                        f"{remaining}",
                         flush=True,
                     )
                     last_report = now
