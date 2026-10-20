@@ -150,8 +150,8 @@ def simulate(
         for j in dict.fromkeys(crews):
             _update_crew(state, j, t)
         # Step 3: decision epoch (spec section 3.1 g).
-        # SPEC-Q: D2 is drawn in step 5, after the decision of the day (spec section 2.2), so a
-        # shock on day t - 1 makes day t a decision epoch.
+        # D2 is drawn in step 5, after the decision of its day, so a shock on day t - 1 makes
+        # day t a decision epoch (spec section 3.1 g).
         epoch = absence or inserted or shocked or t % review_period == 0
         if epoch:
             n_epochs += 1
