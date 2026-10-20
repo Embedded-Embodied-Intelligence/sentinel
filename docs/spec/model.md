@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.3)
+# Sentinel — formal model (v1.4)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -11,7 +11,8 @@ Versions: v1.0 initial model; v1.1 (WP2a) simulator semantics: `p̄_j` (§1.2), 
 activities (§3.1 c–d), accepted readings of the WP2a questions (§2.2), `λ_A` grid (§8); v1.3
 (WP2b) answers to the WP2a.1 questions: decision epoch after D2 (§3, §3.1 g), SUBST for paused
 and running activities with absent members (§4, §5, §7), cost of partial crews (§3),
-activities without demands (§3.1 a).
+activities without demands (§3.1 a); v1.4 (WP3a) beliefs and rollouts (§5.1), urgency of running
+activities (§5), SUBST candidates and rollout CRN (§5.1, §6).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -165,7 +166,7 @@ not add cost.
 **State** `s_t`: day `t`; per activity status (done / running with `e_j` / paused with `e_j` /
 unstarted); crews (assigned workers); worker availability with announced `L_low`; plan `π_t`;
 cost so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantities are
-sampled from conditional distributions, e.g. `P_j | P_j > e_j`.
+sampled from conditional distributions, e.g. `P_j | P_j > e_j` (§5.1).
 
 **Decision epochs:** after every D1–D3 event and every `T_r` days (periodic review); the exact
 days are given in §3.1 (g).
@@ -242,8 +243,33 @@ G4 stability (small `Δ`).
 **Needs** are evaluated for NOOP: `n_D = max(0, θ_D − p̂_NOOP)`, `n_B = o_NOOP`. If
 `n_D ≤ ε_D` and `n_B ≤ ε_B`, the agent returns NOOP.
 
-**Urgency** `τ_t = min_j (LS_j − t)` over unstarted and paused activities and running
-activities with absent members (`LS_j` latest start w.r.t. `D`). If the best action needs approval and `τ_t > τ_def`, the decision is deferred.
+**Urgency** `τ_t = min_j τ_j` with `τ_j = LS_j − t` for unstarted and paused activities and
+`τ_j = LF_j − t − E[remaining_j]` for running activities, the expectation under the belief of
+§5.1 (`LS_j`, `LF_j` latest start and finish w.r.t. `D`). If the best action needs approval and
+`τ_t > τ_def`, the decision is deferred.
+
+### §5.1 Beliefs
+
+The rollouts of §5 start from a state sampled from the belief given the observation of day `t`.
+
+- **Durations.** The pmf of `P_j` is the distribution of the sampler of §2.1: `P_j = 0` if
+  `p_j = 0`, else `max(1, round(p_j · X))`, `X ~ PERT` (ties have probability zero). Work is
+  measured in full-crew days (§3.1 a), `e_j` included. For an activity with observed work `e_j`
+  and shocks `(e_1, F_1), …, (e_m, F_m)` (work done at each shock, factor), the belief samples
+  `P_j` from this pmf conditioned on the activity not being finished: with `R_0 = P_j`,
+  `R_i = (R_{i−1} − (e_i − e_{i−1})) · F_i` (`e_0 = 0`), require `R_i > 0` for all shocks and
+  current remaining `R_m − (e_j − e_m) > 0`; the sampled remaining work is that last value.
+  Unstarted original activities sample `P_j` from the unconditional pmf; inserted activities use
+  their nominal duration as `p_j`.
+- **Absences.** For an absent worker with absence start `s`, announced bound `L_low` and today
+  `t`, the posterior of `L` is `∝ q(1−q)^{L−1} · (1/L)` (geometric prior with `q = 1/E[L]`,
+  likelihood of a uniform announcement) on `L ≥ max(L_low, t − s + 1)`, truncated at
+  `L ≤ 365`. The worker returns on day `s + L`.
+- **Future.** Disruptions after day `t` follow the priors of §2.2 with fresh random numbers.
+- **Rollout.** From a sampled state, the remaining project is simulated with the base policy
+  `NoReaction` (§6) exactly by the engine semantics of §3 and §3.1.
+- **Rollout CRN.** Rollout `i` uses seed `ξ_i` for both the belief sample and the future, so
+  every candidate sees the same `N` sampled worlds.
 
 ---
 
@@ -258,9 +284,10 @@ Differences in the first component smaller than two standard errors of the paire
 differences are ties. Scalarised ablation: `U_a = p̂_a − λ_B · o_a − λ_Δ · Δ_a`.
 
 **Candidates** `C(s_t)`: rules (SHIFT; two RESEQ variants from CP-SAT: min makespan and min
-deviation subject to makespan not worse than current; SUBST per paused activity, optionally
-combined with RESEQ; OVERTIME for the most backlogged role; DESCOPE only if no other candidate
-reaches `θ_D`) plus LLM proposals in the same JSON action grammar, filtered for feasibility.
+deviation subject to makespan not worse than current; SUBST per paused activity and per running
+activity with absent members (§4), optionally combined with RESEQ; OVERTIME for the most
+backlogged role; DESCOPE only if no other candidate reaches `θ_D`) plus LLM proposals in the
+same JSON action grammar, filtered for feasibility.
 Rollouts decode plans with the serial SGS.
 
 ---
