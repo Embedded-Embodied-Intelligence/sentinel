@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.2)
+# Sentinel — formal model (v1.3)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -8,7 +8,10 @@ Section numbers are referenced by WP prompts.
 Versions: v1.0 initial model; v1.1 (WP2a) simulator semantics: `p̄_j` (§1.2), D1–D3 details
 (§2.2), common random numbers (§2.3), execution details (§3.1); v1.2 (WP2a.1) partial crews
 (§3, §3.1 a), handover cost (§3), D2 timing (§2.2), early completion of zero-duration
-activities (§3.1 c–d), accepted readings of the WP2a questions (§2.2), `λ_A` grid (§8).
+activities (§3.1 c–d), accepted readings of the WP2a questions (§2.2), `λ_A` grid (§8); v1.3
+(WP2b) answers to the WP2a.1 questions: decision epoch after D2 (§3, §3.1 g), SUBST for paused
+and running activities with absent members (§4, §5, §7), cost of partial crews (§3),
+activities without demands (§3.1 a).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -155,12 +158,17 @@ A plan `π_t` gives a planned start `S_j` for every unstarted activity. Each day
 additional work `h_j = max(1, ceil(α · e_j · m_j / M_j))` full-crew days, with crew size `M_j`
 (§3.1 a); for a one-person activity this is `max(1, ceil(α · e_j))`.
 
+**Cost:** each day, every *present* member of a running activity's crew costs `c_k` of its role
+`k`; absent members cost nothing. Absences are therefore budget-neutral: they delay work but do
+not add cost.
+
 **State** `s_t`: day `t`; per activity status (done / running with `e_j` / paused with `e_j` /
 unstarted); crews (assigned workers); worker availability with announced `L_low`; plan `π_t`;
 cost so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantities are
 sampled from conditional distributions, e.g. `P_j | P_j > e_j`.
 
-**Decision epochs:** after every D1–D3 event and every `T_r` days (periodic review).
+**Decision epochs:** after every D1–D3 event and every `T_r` days (periodic review); the exact
+days are given in §3.1 (g).
 
 ### §3.1 Execution details
 
@@ -169,8 +177,9 @@ sampled from conditional distributions, e.g. `P_j | P_j > e_j`.
   absent. Work is measured in *full-crew days*: the remaining work of `j` starts at `P_j`, and
   on each day `j` runs it progresses by `ρ_j = present_assigned_j / M_j`, where
   `M_j = Σ_k r_jk` is its crew size and `present_assigned_j` the number of its assigned workers
-  present that day. `e_j` is the work done so far in full-crew days. If `ρ_j = 0` (whole crew
-  absent) the activity is paused; absent workers rejoin automatically on return. Under
+  present that day. `e_j` is the work done so far in full-crew days. An activity with `M_j = 0`
+  and `p_j > 0` progresses at rate `ρ_j = 1`. If `ρ_j = 0` (whole crew absent) the activity is
+  paused; absent workers rejoin automatically on return unless SUBST replaced them (§4). Under
   `NoReaction` nobody is reassigned.
 - (b) Dispatch assigns the lowest-id idle present workers of each required role.
 - (c) Zero-duration activities (`p_j = 0`) complete inside dispatch as soon as all their
@@ -185,7 +194,8 @@ sampled from conditional distributions, e.g. `P_j | P_j > e_j`.
   day `≥ t + 1` given current plan starts and realised finishes; no other plan entry changes.
 - (f) The simulation ends when the sink completes, or at `max_days = ceil(5 · D)` (or
   `5 · Σ p_j` if `D` is undefined), with a `truncated` flag.
-- (g) Decision epochs: any day with a D1–D3 event, and every day `t` with `t % T_r == 0`.
+- (g) Decision epochs: any day with a D1 or D3 event, the day after a D2 event (D2 is drawn in
+  step 5, after the decision of its day), and every day `t` with `t % T_r == 0`.
 
 ---
 
@@ -199,9 +209,14 @@ its operations.
 | `NOOP` | no change | — | 0 |
 | `SHIFT(π')` | shift starts, same order, forecast makespan not increased | — | 0 |
 | `RESEQ(π')` | repaired plan (CP-SAT or SGS), order may change | — | 1 |
-| `SUBST(j, W')` | resume paused `j` with idle workers `W'` of the same roles | `h_j` | 2 |
+| `SUBST(j, W')` | replace `m_j` absent members of a paused or running `j` by idle present workers `W'` of the same roles | `h_j` | 2 |
 | `OVERTIME(k, u, H)` | `+u ≤ floor(γ R_k)` capacity of role `k` for `H` days | premium `c_OT_k` per unit-day | 2 |
 | `DESCOPE(j)` | remove unstarted optional activity `j ∈ O` | value `v_j` | 2* |
+
+SUBST applies to paused activities and to running activities with absent members. It replaces
+`m_j ≥ 1` absent members by idle present workers of the same role, with handover cost
+`h_j = max(1, ceil(α · e_j · m_j / M_j))` (§3). A replaced member who returns becomes idle and
+leaves the crew; the substitute keeps the slot.
 
 Levels: 0 automatic, 1 automatic with report, 2 human approval. `*` DESCOPE always needs
 approval. Autonomy level `Λ ∈ {0,1,2,3}`: an action runs without approval iff `ℓ(a) < Λ` and
@@ -227,8 +242,8 @@ G4 stability (small `Δ`).
 **Needs** are evaluated for NOOP: `n_D = max(0, θ_D − p̂_NOOP)`, `n_B = o_NOOP`. If
 `n_D ≤ ε_D` and `n_B ≤ ε_B`, the agent returns NOOP.
 
-**Urgency** `τ_t = min_j (LS_j − t)` over unstarted and paused activities (`LS_j` latest start
-w.r.t. `D`). If the best action needs approval and `τ_t > τ_def`, the decision is deferred.
+**Urgency** `τ_t = min_j (LS_j − t)` over unstarted and paused activities and running
+activities with absent members (`LS_j` latest start w.r.t. `D`). If the best action needs approval and `τ_t > τ_def`, the decision is deferred.
 
 ---
 
@@ -253,7 +268,8 @@ Rollouts decode plans with the serial SGS.
 ## §7 Baseline policies (WP4)
 
 - `NoReaction`: keep the plan; paused activities wait for their workers (rollout base policy).
-- `AlwaysSubstitute`: hand over every paused activity immediately if idle workers exist.
+- `AlwaysSubstitute`: replace every absent crew member (of paused and running activities)
+  immediately when an idle present worker of the same role exists.
 - `FullResolve`: after every disruption, CP-SAT re-solves for minimum makespan; handovers allowed.
 - `StableResolve`: as FullResolve with a deviation penalty.
 
