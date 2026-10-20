@@ -231,6 +231,8 @@ def _work_increases(
     state: EngineState, streams: ScenarioStreams, t: int, events: list[Event]
 ) -> bool:
     """D2: shock every running activity whose work-day counter reached its next shock."""
+    # SPEC-Q: activities running at step 1 use check k = e_j (days progressed so far), so a
+    # shock never hits an activity's first day and a one-day activity is never shocked.
     shocked = False
     for j in state.running:
         k = state.work_done[j]
@@ -278,6 +280,8 @@ def _new_activity(state: EngineState, t: int, draw: NewActivityDraw, events: lis
     unstarted = [j for j in range(1, len(status)) if j != sink and status[j] == UNSTARTED]
     successor = unstarted[_index(draw.successor, len(unstarted))] if unstarted else sink
     below = _descendants(state.successors, successor)
+    # SPEC-Q: "activities" read literally, so the source and finished activities are valid
+    # predecessors and the skip below only happens for instances without real activities.
     allowed = [i for i in range(len(status)) if i != successor and i != sink and i not in below]
     if not allowed:
         events.append(NewActivitySkipped(day=t, reason=f"no valid predecessor of {successor}"))
@@ -366,6 +370,8 @@ def _dispatch(state: EngineState, streams: ScenarioStreams, t: int, shocks: bool
     failed then fails again, so only activities whose planned start is today are tried.
     """
     plan = state.plan
+    # SPEC-Q: "never start earlier than planned" holds for the sink too, so a project that
+    # finishes its work early still completes on its planned makespan.
     if state.changed:
         ready = [(plan[j], j) for j in state.eligible if plan[j] <= t]
     else:
