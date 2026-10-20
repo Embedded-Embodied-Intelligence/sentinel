@@ -1,0 +1,65 @@
+# WP3b (RQ3): robustness of mc_full to misspecified priors; the world keeps the true parameters.
+# Run: uv run python -m sentinel.experiments.forecast_study --config configs/wp3_misspec.toml --out results/wp3
+name = "wp3_misspec"
+base_seed = 2026         # world seeds as in WP2b
+max_workers = 4
+data_root = "data/psplib"
+baseline_cache = "data/derived/baselines"
+replications = 4
+deltas = [0.2, 0.3]
+review_period = 5
+checkpoints = [0.0, 0.2, 0.4, 0.6, 0.8]
+wp2b_results = "results/wp2/20261020-181559-6534a712/results.csv.gz"
+
+baseline = "cpsat_det"
+
+[baselines.cpsat_det]
+deterministic_time_limit = 5.0
+random_seed = 2026
+num_workers = 1
+
+[pert]                   # the true PERT of the world
+a = 0.8
+m = 1.0
+b = 1.6
+lam = 4.0
+
+[scenarios]              # true world: lambda_A = 0.01, E[L] = 3, lambda_S = 0.01, lambda_N = 0.02
+lambda_a = [0.01]
+mean_absence = [3]
+lambda_s = 0.01
+lambda_n = 0.02
+durations_only = false
+
+[[sets]]
+name = "j30"
+reference = "opt"
+stride = 4               # 120 instances: every 4th
+
+# kappa scales the forecaster's (lambda_A, lambda_S, lambda_N) jointly
+[[forecasters]]
+name = "mc_k0.5"
+kind = "monte_carlo"
+prior_scale = 0.5
+
+[[forecasters]]
+name = "mc_k1"           # correct priors, i.e. mc_full
+kind = "monte_carlo"
+prior_scale = 1.0
+
+[[forecasters]]
+name = "mc_k2"
+kind = "monte_carlo"
+prior_scale = 2.0
+
+[[forecasters]]
+name = "mc_pert_wide"    # duration prior widened to PERT(0.7, 1, 2.0)
+kind = "monte_carlo"
+prior_pert = { a = 0.7, m = 1.0, b = 2.0, lam = 4.0 }
+
+[summary]
+differences = [["mc_k0.5", "mc_k1"], ["mc_k2", "mc_k1"], ["mc_pert_wide", "mc_k1"]]
+reliability_checkpoints = [0.0, 0.4, 0.8]
+table = "table_wp3_misspec"
+warning_table = "table_wp3_misspec_warning"
+figure_prefix = "fig_wp3_misspec"

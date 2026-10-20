@@ -1,0 +1,72 @@
+# WP3b (RQ3): calibration of Monte Carlo makespan forecasts against NoReaction worlds (spec 5.2).
+# Baselines are the cached cpsat_det plans of WP2b (uv run sentinel baselines --set j30 --method cpsat_det).
+# Run: uv run python -m sentinel.experiments.forecast_study --config configs/wp3_calibration.toml --out results/wp3
+name = "wp3_calibration"
+base_seed = 2026         # world seed of (instance, replication) as in WP2b; forecast seeds derived from it
+max_workers = 4          # processes; one task per instance
+data_root = "data/psplib"
+baseline_cache = "data/derived/baselines"
+replications = 4         # replications 0-3 of WP2b (same world seeds)
+deltas = [0.2, 0.3]      # deadline slacks delta_D, both scored from the same forecasts
+review_period = 5        # T_r (spec section 8)
+checkpoints = [0.0, 0.2, 0.4, 0.6, 0.8]  # t_f = floor(f * C_plan)
+wp2b_results = "results/wp2/20261020-181559-6534a712/results.csv.gz"  # makespans must match
+
+baseline = "cpsat_det"
+
+[baselines.cpsat_det]    # as in configs/wp2_noreaction.toml, so the cached plans are reused
+deterministic_time_limit = 5.0
+random_seed = 2026
+num_workers = 1
+
+[pert]                   # true duration multiplier, also the forecasters' prior
+a = 0.8
+m = 1.0
+b = 1.6
+lam = 4.0
+
+[scenarios]              # primary grid of docs/experiments/plan.md
+lambda_a = [0.0, 0.005, 0.01, 0.02]
+mean_absence = [3]
+lambda_s = 0.01
+lambda_n = 0.02
+durations_only = false
+
+[[sets]]
+name = "j30"
+reference = "opt"        # C* = proven optimum
+stride = 1               # all 480 instances
+
+[[sets]]
+name = "j60"
+reference = "hrs"        # C* = best known makespan
+stride = 1
+
+[[forecasters]]
+name = "mc_full"         # spec 5.1 forecaster, future disruptions on
+kind = "monte_carlo"
+n_rollouts = 200
+future_disruptions = true
+
+[[forecasters]]
+name = "mc_no_future"    # belief about the current hidden state only
+kind = "monte_carlo"
+n_rollouts = 200
+future_disruptions = false
+
+[[forecasters]]
+name = "deterministic"   # plan-based point forecast of classical PM tools
+kind = "deterministic"
+
+[summary]
+bins = 10
+thresholds = [0.5, 0.8]  # early warning: p_on_time < theta
+log_clip = 0.005
+bootstrap_resamples = 1000
+bootstrap_seed = 2026
+pit_seed = 2026
+differences = [["mc_full", "deterministic"], ["mc_full", "mc_no_future"]]
+reliability_checkpoints = [0.0, 0.4, 0.8]
+table = "table_wp3_calibration"
+warning_table = "table_wp3_warning"
+figure_prefix = "fig_wp3"

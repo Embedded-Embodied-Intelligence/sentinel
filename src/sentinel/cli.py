@@ -2,6 +2,7 @@
 
 `sentinel baselines --set j30 --method cpsat_det` precomputes the cached baseline plans of a set
 with the method parameters of a study config (default `configs/wp2_noreaction.toml`).
+`sentinel summarise-forecasts results/wp3/<run_id>` regenerates the summaries of a forecast study.
 """
 
 import argparse
@@ -47,6 +48,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _inspect(parser, args)
     if args.command == "baselines":
         return _baselines(parser, args)
+    if args.command == "summarise-forecasts":
+        return _summarise_forecasts(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -74,6 +77,10 @@ def _build_parser() -> argparse.ArgumentParser:
     baselines.add_argument("--workers", type=int, help="processes (default: the config's)")
     baselines.add_argument("--root", type=Path, help="PSPLIB data root (default: the config's)")
     baselines.add_argument("--cache", type=Path, help="cache root (default: the config's)")
+    summarise = commands.add_parser(
+        "summarise-forecasts", help="regenerate the summaries of a forecast study run"
+    )
+    summarise.add_argument("run_dir", type=Path, help="run directory with manifest.json")
     return parser
 
 
@@ -148,6 +155,21 @@ def _baselines(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int
                 f"plan / C* ({reference}): mean {statistics.fmean(ratios):.4f}, "
                 f"max {max(ratios):.4f}, at C* {at_c_star} of {len(ratios)}"
             )
+    return 0
+
+
+def _summarise_forecasts(args: argparse.Namespace) -> int:
+    run_dir: Path = args.run_dir
+    if not (run_dir / "manifest.json").is_file():
+        print(f"error: {run_dir / 'manifest.json'} not found", file=sys.stderr)
+        return 1
+    # Imported here so that the other commands do not load matplotlib.
+    from sentinel.experiments.forecast_summary import regenerate
+
+    outputs = regenerate(run_dir)
+    for name in outputs.files:
+        print(run_dir / name)
+    print(outputs.seed_check.line().removeprefix("- "))
     return 0
 
 

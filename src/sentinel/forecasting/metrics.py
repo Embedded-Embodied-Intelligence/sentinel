@@ -163,12 +163,17 @@ def sharpness(p: ArrayLike) -> float:
     return float(np.var(np.asarray(p, dtype=np.float64)))
 
 
-def log_score(p: ArrayLike, y: ArrayLike, clip: float = LOG_CLIP) -> float:
-    """Mean negative log likelihood -(1/N) sum [y ln p' + (1 - y) ln(1 - p')] with p clipped to
-    [clip, 1 - clip] (lower is better)."""
+def log_losses(p: ArrayLike, y: ArrayLike, clip: float = LOG_CLIP) -> FloatArray:
+    """Per forecast -[y ln p' + (1 - y) ln(1 - p')] with p clipped to [clip, 1 - clip]."""
     q = np.clip(np.asarray(p, dtype=np.float64), clip, 1 - clip)
     y_arr = np.asarray(y, dtype=np.float64)
-    return float(-np.mean(y_arr * np.log(q) + (1 - y_arr) * np.log1p(-q)))
+    losses: FloatArray = -(y_arr * np.log(q) + (1 - y_arr) * np.log1p(-q))
+    return losses
+
+
+def log_score(p: ArrayLike, y: ArrayLike, clip: float = LOG_CLIP) -> float:
+    """Mean negative log likelihood of the clipped forecasts (lower is better)."""
+    return float(np.mean(log_losses(p, y, clip)))
 
 
 def randomised_pit(cdf_below: ArrayLike, cdf_at: ArrayLike, rng: np.random.Generator) -> FloatArray:
