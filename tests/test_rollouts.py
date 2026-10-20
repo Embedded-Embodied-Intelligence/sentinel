@@ -9,7 +9,8 @@ import numpy as np
 import pytest
 
 from sentinel.forecasting import forecast as forecast_module
-from sentinel.forecasting.forecast import Forecast, forecast
+from sentinel.forecasting.deterministic import deterministic_forecast, nominal_world
+from sentinel.forecasting.forecast import Forecast, Priors, forecast
 from sentinel.forecasting.streams import RolloutStreams
 from sentinel.model import ProjectInstance, Schedule
 from sentinel.policies.no_reaction import NoReaction
@@ -318,7 +319,8 @@ def test_forecasts_with_the_same_seed_share_samples_across_plans(
 
 
 def test_forecast_sees_only_the_observation(build: Builder) -> None:
-    """Hidden state reaches the forecaster only through the explicit `_true_world` test hook."""
+    """Hidden state reaches the forecasters only through the explicit `_true_world` test hook;
+    `priors` are assumptions of the same kind as the observation's `pert` and `disruptions`."""
     names = list(inspect.signature(forecast).parameters)
     assert names == [
         "observation",
@@ -326,8 +328,15 @@ def test_forecast_sees_only_the_observation(build: Builder) -> None:
         "n_rollouts",
         "seed",
         "include_future_disruptions",
+        "priors",
         "_true_world",
     ]
+    assert list(inspect.signature(deterministic_forecast).parameters) == [
+        "observation",
+        "plan",
+        "seed",
+    ]
+    assert set(Priors.model_fields) == {"pert", "disruptions"}
     instance, obs = observation_with_absences(build)
     plan = Schedule(starts=obs.plan)
     run = world_at(instance, lft_plan(instance), 0, BUSY, 3)
@@ -339,11 +348,16 @@ def test_forecast_sees_only_the_observation(build: Builder) -> None:
     ):
         with pytest.raises(TypeError):
             forecast(hidden, plan, n_rollouts=1, seed=0)  # type: ignore[arg-type]
+        with pytest.raises(TypeError):
+            deterministic_forecast(hidden, plan, seed=0)  # type: ignore[arg-type]
     with pytest.raises(TypeError):
         forecast(obs, obs.plan, n_rollouts=1, seed=0)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        deterministic_forecast(obs, obs.plan, seed=0)  # type: ignore[arg-type]
     hidden_fields = {"remaining", "return_day", "durations", "next_shock", "shock_factor"}
     assert not hidden_fields & set(Observation.model_fields)
     assert not hidden_fields & set(Schedule.model_fields)
+    assert not hidden_fields & set(Priors.model_fields)
 
 
 def test_forecast_statistics_and_determinism(build: Builder) -> None:
@@ -381,3 +395,106 @@ def test_sampled_worlds_are_the_only_hidden_input(build: Builder) -> None:
         state_from_observation(obs, world._replace(remaining=world.remaining[:-1]))
     with pytest.raises(ValueError):
         state_from_observation(obs, world._replace(return_day=world.return_day[:-1]))
+
+
+def test_deterministic_forecast_is_exact_without_uncertainty(build: Builder) -> None:
+    """With X = 1 and no disruptions the nominal state is the true one, so the plan-based
+    forecast (spec section 5.2) gives the true makespan from every day of the run."""
+    exact, quiet = PertParams(a=1.0, m=1.0, b=1.0), DisruptionParams.none()
+    instances = [random_instance(build, seed=i) for i in range(4)] + [one_person_crews(build)]
+    checked = 0
+    for instance in instances:
+        plan = lft_plan(instance)
+        world = simulate(
+            instance,
+            plan,
+            NoReaction(),
+            0,
+            pert=exact,
+            disruptions=quiet,
+            deadline=plan.makespan(instance) + 5,
+            observe_days=range(plan.makespan(instance) + 1),
+        )
+        assert len(world.observations) == world.makespan + 1
+        for obs in world.observations:
+            result = deterministic_forecast(obs, Schedule(starts=obs.plan), seed=3)
+            assert result.makespans == (world.makespan,)
+            assert (result.n_rollouts, result.truncated, result.fallbacks) == (1, 0, 0)
+            assert result.p_on_time(world.makespan) == 1.0
+            assert result.p_on_time(world.makespan - 1) == 0.0
+            checked += 1
+    assert checked > 50
+
+
+def test_nominal_world_follows_the_spec(build: Builder) -> None:
+    """Hand-computed nominal remaining work (crew-member days) and return days (spec 5.2)."""
+    instance = build(
+        [0, 4, 2, 3, 2, 0],
+        [[0], [2], [1], [1], [1], [0]],
+        [[1, 2, 3, 4], [5], [5], [5], [5], []],
+        capacities=(5,),
+    )
+    start = EngineState(
+        instance,
+        lft_plan(instance),
+        [0] * 6,
+        role_costs(instance, None),
+        pert=PERT,
+        disruptions=BUSY,
+        deadline=20,
+        max_days=100,
+    ).observe()
+    obs = start.model_copy(
+        update={
+            "day": 6,
+            "status": ("done", "running", "paused", "running", "unstarted", "unstarted"),
+            "work_done": (0.0, 2.5, 3.0, 4.0, 0.0, 0.0),
+            "assigned": ((), (0, 1), (2,), (3,), (), ()),
+            # Activity 1: shock F = 1.5 after 1 full-crew day; activity 3: F = 3 after 3 days.
+            "work_increases": ((1, 1.0, 1.5), (3, 3.0, 3.0)),
+            "present": (True, False, False, True, True),
+            "absent_since": (None, 5, 2, None, None),
+            "announced": (None, 4, 1, None, None),
+        }
+    )
+    world = nominal_world(obs)
+    # 1: max(8 - 2, 1) * 1.5 = 9, then max(9 - (5 - 2), 1) = 6; 2: overran, max(2 - 3, 1) = 1;
+    # 3: max(3 - 3, 1) * 3 = 3, then 3 - (4 - 3) = 2; 4: unstarted, p_j M_j = 2.
+    assert world.remaining == (0.0, 6.0, 1.0, 2.0, 2.0, 0.0)
+    # Worker 1: 5 + max(4, 2) = 9 (announced bound); worker 2: 2 + max(1, 5) = 7 (tomorrow).
+    assert world.return_day == (-1, 9, 7, -1, -1)
+    assert world.fallbacks == 0
+    result = deterministic_forecast(obs, Schedule(starts=obs.plan), seed=0)
+    assert result.makespans[0] > obs.day and not result.include_future_disruptions
+
+
+def test_priors_replace_the_forecasters_assumptions(build: Builder) -> None:
+    """The observation's own priors change nothing; zero rates switch the future off; exact
+    durations and no disruptions from day 0 turn every rollout into the nominal run."""
+    instance, obs = observation_with_absences(build)
+    plan = Schedule(starts=obs.plan)
+    own = Priors(pert=obs.pert, disruptions=obs.disruptions)
+    base = forecast(obs, plan, n_rollouts=30, seed=5)
+    assert forecast(obs, plan, n_rollouts=30, seed=5, priors=own).makespans == base.makespans
+    zero_rates = {"lambda_a": 0.0, "lambda_s": 0.0, "lambda_n": 0.0}  # E[L] kept for the belief
+    silent = Priors(pert=obs.pert, disruptions=obs.disruptions.model_copy(update=zero_rates))
+    no_future = forecast(obs, plan, n_rollouts=30, seed=5, include_future_disruptions=False)
+    assert forecast(obs, plan, n_rollouts=30, seed=5, priors=silent).makespans == (
+        no_future.makespans
+    )
+    assert no_future.makespans != base.makespans
+    lft = lft_plan(instance)
+    day0 = simulate(
+        instance,
+        lft,
+        NoReaction(),
+        1,
+        pert=PERT,
+        disruptions=DisruptionParams.none(),
+        deadline=lft.makespan(instance) + 5,
+        observe_days=(0,),
+    ).observations[0]
+    nominal = deterministic_forecast(day0, lft, seed=2).makespans[0]
+    exact = Priors(pert=PertParams(a=1.0, m=1.0, b=1.0), disruptions=DisruptionParams.none())
+    assert set(forecast(day0, lft, n_rollouts=20, seed=2, priors=exact).makespans) == {nominal}
+    assert len(set(forecast(day0, lft, n_rollouts=20, seed=2).makespans)) > 1
