@@ -1,6 +1,7 @@
 """Disruption events D1-D3 (spec section 2.2) and their common random numbers (section 2.3)."""
 
 import math
+from bisect import bisect_left
 from collections.abc import Sequence
 from typing import Annotated, Literal, NamedTuple, Self
 
@@ -13,9 +14,11 @@ from sentinel.simulation.uncertainty import PertParams, pert_multipliers, realis
 
 Rate = Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)]
 
-# Days of absences and D3 draws materialised at a time, and spare uniforms per buffer refill.
+# Days of absences and D3 draws materialised at a time, and uniforms drawn per buffer refill
+# for one worker (absences) or one activity (64 work-day checks of D2).
 _CHUNK = 128
-_SLACK = 16
+_ABSENCE_BLOCK = 512
+_WORK_BLOCK = 128
 
 
 class DisruptionParams(BaseModel):
@@ -123,6 +126,32 @@ def _generator(seq: np.random.SeedSequence) -> np.random.Generator:
 _NO_DRAWS: npt.NDArray[np.float64] = np.empty(0)
 
 
+class _Uniforms:
+    """A growing buffer of one stream's uniforms and the positions of those below `rate`.
+
+    With `step = 2` only even positions are tested (the Bernoulli of a (Bernoulli, factor) pair).
+    Blocks continue the same stream, so a value depends only on its position.
+    """
+
+    __slots__ = ("hits", "rate", "rng", "step", "values")
+
+    def __init__(self, rng: np.random.Generator, rate: float, step: int = 1) -> None:
+        self.rng = rng
+        self.rate = rate
+        self.step = step
+        self.values = _NO_DRAWS
+        self.hits: list[int] = []  # increasing positions p (multiples of step), values[p] < rate
+
+    def ensure(self, n: int, block: int) -> None:
+        """Draw blocks of `block` uniforms (a multiple of `step`) until n are available."""
+        while len(self.values) < n:
+            start, step = len(self.values), self.step
+            new = self.rng.random(block)
+            self.values = np.concatenate((self.values, new)) if start else new
+            tested = new if step == 1 else new[::step]
+            self.hits.extend(start + step * i for i in np.flatnonzero(tested < self.rate).tolist())
+
+
 class ScenarioStreams:
     """The child streams of one replication seed (spec section 2.3) and the engine's queries.
 
@@ -131,8 +160,7 @@ class ScenarioStreams:
     original activity. An answer depends only on the seed, the instance, the parameters and the
     queried day or work-day counter, never on the order of queries or the project state, so
     exogenous events are identical for every policy (common random numbers). Absences and work
-    increases transform one uniform per variate, so their streams are read positionally from
-    buffers that are refilled as needed.
+    increases transform one uniform per variate, so their streams are read positionally.
     """
 
     def __init__(
@@ -145,9 +173,11 @@ class ScenarioStreams:
         self._n_original = instance.n_activities
 
         n_workers = len(instance.workers) if params.lambda_a > 0 else 0
-        self._absence_rngs = [_generator(seq) for seq in absence_seq.spawn(n_workers)]
-        self._absence_buffers = [_NO_DRAWS] * n_workers
-        self._absence_pos = [0] * n_workers  # next unread uniform of each worker's stream
+        self._absence_streams = [
+            _Uniforms(_generator(seq), params.lambda_a) for seq in absence_seq.spawn(n_workers)
+        ]
+        self._absence_at = [0] * n_workers  # index of the next candidate in the worker's hits
+        self._absence_pos = [0] * n_workers  # next unread position of the worker's stream
         self._absence_next = [0] * n_workers  # next day that needs a Bernoulli draw
         self._absence_horizon = 0  # onsets are known for all days before it
         self._onsets: dict[int, list[AbsenceDraw]] = {}
@@ -156,8 +186,7 @@ class ScenarioStreams:
 
         n_work = instance.n_activities if params.lambda_s > 0 else 0
         self._work_seqs = work_seq.spawn(n_work)
-        self._work_rngs: list[np.random.Generator | None] = [None] * n_work
-        self._work_draws = [_NO_DRAWS] * n_work
+        self._work_streams: list[_Uniforms | None] = [None] * n_work
 
         self._new_rng = _generator(new_seq) if params.lambda_n > 0 else None
         self._new_chunks: list[dict[int, NewActivityDraw]] = []
@@ -171,33 +200,29 @@ class ScenarioStreams:
     def _extend_absences(self) -> None:
         """Walk every worker's stream over the next chunk of days (one Bernoulli per day)."""
         end = self._absence_horizon + _CHUNK
-        rate = self.params.lambda_a
-        for w, rng in enumerate(self._absence_rngs):
-            buffer, pos, day = self._absence_buffers[w], self._absence_pos[w], self._absence_next[w]
+        onsets = self._onsets
+        for w, stream in enumerate(self._absence_streams):
+            hits = stream.hits
+            at, pos, day = self._absence_at[w], self._absence_pos[w], self._absence_next[w]
             while day < end:
-                span = end - day
-                if pos + span + 2 > len(buffer):  # room for the Bernoullis, L and L_low
-                    buffer = np.concatenate((buffer[pos:], rng.random(span + 2 + _SLACK)))
-                    pos = 0
-                hits = np.flatnonzero(buffer[pos : pos + span] < rate)
-                if hits.size == 0:
-                    pos += span
+                # Bernoullis for days day .. end-1, plus L and L_low of an onset on day end-1.
+                stream.ensure(pos + end - day + 2, _ABSENCE_BLOCK)
+                while at < len(hits) and hits[at] < pos:
+                    at += 1
+                if at == len(hits) or hits[at] - pos >= end - day:
+                    pos += end - day
                     day = end
                     break
-                i = int(hits[0])
-                onset = day + i
-                length = self._absence_length(float(buffer[pos + i + 1]))
-                announced = 1 + int(float(buffer[pos + i + 2]) * length)  # Uniform{1, ..., L}
-                pos += i + 3
-                self._onsets.setdefault(onset, []).append(AbsenceDraw(w, length, announced))
+                h = hits[at]
+                onset = day + h - pos
+                length = self._absence_length(float(stream.values[h + 1]))
+                announced = 1 + int(float(stream.values[h + 2]) * length)  # Uniform{1, ..., L}
+                onsets.setdefault(onset, []).append(AbsenceDraw(w, length, announced))
+                pos = h + 3
                 # SPEC-Q: absent on days onset .. onset+L-1, back on onset+L without a draw on
                 # that day; draws resume the day after the return (spec section 2.2 D1).
                 day = onset + length + 1
-            self._absence_buffers[w], self._absence_pos[w], self._absence_next[w] = (
-                buffer,
-                pos,
-                day,
-            )
+            self._absence_at[w], self._absence_pos[w], self._absence_next[w] = at, pos, day
         self._absence_horizon = end
 
     def _absence_length(self, u: float) -> int:
@@ -218,19 +243,22 @@ class ScenarioStreams:
             # SPEC-Q: D2 streams exist per original activity only (spec section 2.3 (iii)), so
             # activities inserted by D3 never get work increases.
             return None
-        draws = self._work_draws[activity]
-        if len(draws) < 2 * last:
-            rng = self._work_rngs[activity]
-            if rng is None:
-                rng = self._work_rngs[activity] = _generator(self._work_seqs[activity])
-            extra = max(2 * last - len(draws), 2 * _SLACK)
-            draws = self._work_draws[activity] = np.concatenate((draws, rng.random(extra)))
-        hits = np.flatnonzero(draws[2 * first - 2 : 2 * last : 2] < self.params.lambda_s)
-        if hits.size == 0:
+        stream = self._work_streams[activity]
+        if stream is None:
+            rng = _generator(self._work_seqs[activity])
+            stream = self._work_streams[activity] = _Uniforms(rng, self.params.lambda_s, step=2)
+        # Draw block by block until a hit at or after check `first` appears or the window is
+        # covered, so a long window (large remaining work) costs about 1 / lambda_S checks.
+        while True:
+            i = bisect_left(stream.hits, 2 * first - 2)
+            if i < len(stream.hits) or len(stream.values) >= 2 * last:
+                break
+            stream.ensure(len(stream.values) + _WORK_BLOCK, _WORK_BLOCK)
+        if i == len(stream.hits) or stream.hits[i] > 2 * last - 2:
             return None
-        k = first + int(hits[0])
+        h = stream.hits[i]
         f_low, f_high = self.params.f_low, self.params.f_high
-        return k, f_low + (f_high - f_low) * float(draws[2 * k - 1])
+        return h // 2 + 1, f_low + (f_high - f_low) * float(stream.values[h + 1])
 
     def new_activity(self, day: int) -> NewActivityDraw | None:
         """The D3 draws of `day` if a new activity arrives that day (spec section 2.3 (iv))."""
