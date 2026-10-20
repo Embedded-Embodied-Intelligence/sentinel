@@ -1,0 +1,2173 @@
+{
+ "written_with": "engine of commit 68ba82a (WP2b), before the WP3a refactor",
+ "setups": [
+  {
+   "instance": {
+    "name": "fixtures/tiny",
+    "activities": [
+     {
+      "id": 0,
+      "duration": 0,
+      "demands": [
+       0
+      ],
+      "successors": [
+       1,
+       2
+      ],
+      "name": ""
+     },
+     {
+      "id": 1,
+      "duration": 3,
+      "demands": [
+       2
+      ],
+      "successors": [
+       3
+      ],
+      "name": ""
+     },
+     {
+      "id": 2,
+      "duration": 2,
+      "demands": [
+       2
+      ],
+      "successors": [
+       4
+      ],
+      "name": ""
+     },
+     {
+      "id": 3,
+      "duration": 4,
+      "demands": [
+       1
+      ],
+      "successors": [
+       4
+      ],
+      "name": ""
+     },
+     {
+      "id": 4,
+      "duration": 0,
+      "demands": [
+       0
+      ],
+      "successors": [],
+      "name": ""
+     }
+    ],
+    "roles": [
+     {
+      "id": 0,
+      "name": "R1",
+      "capacity": 3
+     }
+    ],
+    "workers": [
+     {
+      "id": 0,
+      "role": 0,
+      "name": "R1-0"
+     },
+     {
+      "id": 1,
+      "role": 0,
+      "name": "R1-1"
+     },
+     {
+      "id": 2,
+      "role": 0,
+      "name": "R1-2"
+     }
+    ],
+    "deadline": null,
+    "budget": null,
+    "source": "psplib"
+   },
+   "plan": [
+    0,
+    0,
+    3,
+    3,
+    7
+   ]
+  },
+  {
+   "instance": {
+    "name": "eight",
+    "activities": [
+     {
+      "id": 0,
+      "duration": 0,
+      "demands": [
+       0,
+       0
+      ],
+      "successors": [
+       1,
+       2,
+       6
+      ],
+      "name": ""
+     },
+     {
+      "id": 1,
+      "duration": 3,
+      "demands": [
+       1,
+       0
+      ],
+      "successors": [
+       3
+      ],
+      "name": ""
+     },
+     {
+      "id": 2,
+      "duration": 2,
+      "demands": [
+       1,
+       1
+      ],
+      "successors": [
+       4
+      ],
+      "name": ""
+     },
+     {
+      "id": 3,
+      "duration": 0,
+      "demands": [
+       0,
+       0
+      ],
+      "successors": [
+       5
+      ],
+      "name": ""
+     },
+     {
+      "id": 4,
+      "duration": 2,
+      "demands": [
+       2,
+       1
+      ],
+      "successors": [
+       7
+      ],
+      "name": ""
+     },
+     {
+      "id": 5,
+      "duration": 2,
+      "demands": [
+       1,
+       1
+      ],
+      "successors": [
+       7
+      ],
+      "name": ""
+     },
+     {
+      "id": 6,
+      "duration": 4,
+      "demands": [
+       0,
+       1
+      ],
+      "successors": [
+       7
+      ],
+      "name": ""
+     },
+     {
+      "id": 7,
+      "duration": 0,
+      "demands": [
+       0,
+       0
+      ],
+      "successors": [],
+      "name": ""
+     }
+    ],
+    "roles": [
+     {
+      "id": 0,
+      "name": "R1",
+      "capacity": 2
+     },
+     {
+      "id": 1,
+      "name": "R2",
+      "capacity": 2
+     }
+    ],
+    "workers": [
+     {
+      "id": 0,
+      "role": 0,
+      "name": "R1-0"
+     },
+     {
+      "id": 1,
+      "role": 0,
+      "name": "R1-1"
+     },
+     {
+      "id": 2,
+      "role": 1,
+      "name": "R2-0"
+     },
+     {
+      "id": 3,
+      "role": 1,
+      "name": "R2-1"
+     }
+    ],
+    "deadline": null,
+    "budget": null,
+    "source": null
+   },
+   "plan": [
+    0,
+    0,
+    0,
+    3,
+    3,
+    5,
+    0,
+    7
+   ]
+  },
+  {
+   "instance": {
+    "name": "random20",
+    "activities": [
+     {
+      "id": 0,
+      "duration": 0,
+      "demands": [
+       0,
+       0,
+       0
+      ],
+      "successors": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       8,
+       9,
+       14
+      ],
+      "name": ""
+     },
+     {
+      "id": 1,
+      "duration": 4,
+      "demands": [
+       3,
+       1,
+       1
+      ],
+      "successors": [
+       7,
+       18
+      ],
+      "name": ""
+     },
+     {
+      "id": 2,
+      "duration": 4,
+      "demands": [
+       0,
+       3,
+       2
+      ],
+      "successors": [
+       10,
+       19
+      ],
+      "name": ""
+     },
+     {
+      "id": 3,
+      "duration": 2,
+      "demands": [
+       0,
+       3,
+       3
+      ],
+      "successors": [
+       7,
+       12
+      ],
+      "name": ""
+     },
+     {
+      "id": 4,
+      "duration": 6,
+      "demands": [
+       2,
+       1,
+       0
+      ],
+      "successors": [
+       10,
+       11
+      ],
+      "name": ""
+     },
+     {
+      "id": 5,
+      "duration": 8,
+      "demands": [
+       3,
+       1,
+       0
+      ],
+      "successors": [
+       6,
+       7
+      ],
+      "name": ""
+     },
+     {
+      "id": 6,
+      "duration": 1,
+      "demands": [
+       3,
+       2,
+       2
+      ],
+      "successors": [
+       19,
+       20
+      ],
+      "name": ""
+     },
+     {
+      "id": 7,
+      "duration": 0,
+      "demands": [
+       2,
+       2,
+       4
+      ],
+      "successors": [
+       13,
+       19
+      ],
+      "name": ""
+     },
+     {
+      "id": 8,
+      "duration": 2,
+      "demands": [
+       3,
+       0,
+       2
+      ],
+      "successors": [
+       13,
+       16
+      ],
+      "name": ""
+     },
+     {
+      "id": 9,
+      "duration": 1,
+      "demands": [
+       3,
+       4,
+       1
+      ],
+      "successors": [
+       13,
+       17
+      ],
+      "name": ""
+     },
+     {
+      "id": 10,
+      "duration": 3,
+      "demands": [
+       1,
+       2,
+       4
+      ],
+      "successors": [
+       11,
+       13
+      ],
+      "name": ""
+     },
+     {
+      "id": 11,
+      "duration": 3,
+      "demands": [
+       1,
+       0,
+       0
+      ],
+      "successors": [
+       16,
+       19
+      ],
+      "name": ""
+     },
+     {
+      "id": 12,
+      "duration": 2,
+      "demands": [
+       0,
+       1,
+       5
+      ],
+      "successors": [
+       18,
+       20
+      ],
+      "name": ""
+     },
+     {
+      "id": 13,
+      "duration": 2,
+      "demands": [
+       1,
+       4,
+       3
+      ],
+      "successors": [
+       16,
+       18
+      ],
+      "name": ""
+     },
+     {
+      "id": 14,
+      "duration": 2,
+      "demands": [
+       0,
+       0,
+       4
+      ],
+      "successors": [
+       15,
+       16
+      ],
+      "name": ""
+     },
+     {
+      "id": 15,
+      "duration": 5,
+      "demands": [
+       3,
+       1,
+       1
+      ],
+      "successors": [
+       17,
+       19
+      ],
+      "name": ""
+     },
+     {
+      "id": 16,
+      "duration": 7,
+      "demands": [
+       2,
+       2,
+       2
+      ],
+      "successors": [
+       18,
+       20
+      ],
+      "name": ""
+     },
+     {
+      "id": 17,
+      "duration": 6,
+      "demands": [
+       1,
+       0,
+       2
+      ],
+      "successors": [
+       18,
+       20
+      ],
+      "name": ""
+     },
+     {
+      "id": 18,
+      "duration": 0,
+      "demands": [
+       2,
+       4,
+       3
+      ],
+      "successors": [
+       19,
+       20
+      ],
+      "name": ""
+     },
+     {
+      "id": 19,
+      "duration": 6,
+      "demands": [
+       3,
+       4,
+       3
+      ],
+      "successors": [
+       20
+      ],
+      "name": ""
+     },
+     {
+      "id": 20,
+      "duration": 5,
+      "demands": [
+       2,
+       1,
+       4
+      ],
+      "successors": [
+       21
+      ],
+      "name": ""
+     },
+     {
+      "id": 21,
+      "duration": 0,
+      "demands": [
+       0,
+       0,
+       0
+      ],
+      "successors": [],
+      "name": ""
+     }
+    ],
+    "roles": [
+     {
+      "id": 0,
+      "name": "R1",
+      "capacity": 3
+     },
+     {
+      "id": 1,
+      "name": "R2",
+      "capacity": 4
+     },
+     {
+      "id": 2,
+      "name": "R3",
+      "capacity": 5
+     }
+    ],
+    "workers": [
+     {
+      "id": 0,
+      "role": 0,
+      "name": "R1-0"
+     },
+     {
+      "id": 1,
+      "role": 0,
+      "name": "R1-1"
+     },
+     {
+      "id": 2,
+      "role": 0,
+      "name": "R1-2"
+     },
+     {
+      "id": 3,
+      "role": 1,
+      "name": "R2-0"
+     },
+     {
+      "id": 4,
+      "role": 1,
+      "name": "R2-1"
+     },
+     {
+      "id": 5,
+      "role": 1,
+      "name": "R2-2"
+     },
+     {
+      "id": 6,
+      "role": 1,
+      "name": "R2-3"
+     },
+     {
+      "id": 7,
+      "role": 2,
+      "name": "R3-0"
+     },
+     {
+      "id": 8,
+      "role": 2,
+      "name": "R3-1"
+     },
+     {
+      "id": 9,
+      "role": 2,
+      "name": "R3-2"
+     },
+     {
+      "id": 10,
+      "role": 2,
+      "name": "R3-3"
+     },
+     {
+      "id": 11,
+      "role": 2,
+      "name": "R3-4"
+     }
+    ],
+    "deadline": null,
+    "budget": null,
+    "source": null
+   },
+   "plan": [
+    0,
+    9,
+    0,
+    9,
+    0,
+    13,
+    32,
+    21,
+    21,
+    23,
+    6,
+    24,
+    13,
+    24,
+    4,
+    27,
+    33,
+    33,
+    40,
+    40,
+    46,
+    51
+   ]
+  },
+  {
+   "instance": {
+    "name": "random30",
+    "activities": [
+     {
+      "id": 0,
+      "duration": 0,
+      "demands": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "successors": [
+       1,
+       2,
+       3,
+       5,
+       7,
+       11,
+       12,
+       13
+      ],
+      "name": ""
+     },
+     {
+      "id": 1,
+      "duration": 8,
+      "demands": [
+       1,
+       1,
+       7,
+       5
+      ],
+      "successors": [
+       4,
+       8
+      ],
+      "name": ""
+     },
+     {
+      "id": 2,
+      "duration": 0,
+      "demands": [
+       2,
+       4,
+       5,
+       2
+      ],
+      "successors": [
+       14,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 3,
+      "duration": 5,
+      "demands": [
+       6,
+       0,
+       3,
+       6
+      ],
+      "successors": [
+       20,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 4,
+      "duration": 7,
+      "demands": [
+       8,
+       3,
+       10,
+       6
+      ],
+      "successors": [
+       10,
+       24
+      ],
+      "name": ""
+     },
+     {
+      "id": 5,
+      "duration": 6,
+      "demands": [
+       10,
+       5,
+       5,
+       7
+      ],
+      "successors": [
+       6,
+       14
+      ],
+      "name": ""
+     },
+     {
+      "id": 6,
+      "duration": 6,
+      "demands": [
+       5,
+       3,
+       3,
+       7
+      ],
+      "successors": [
+       9,
+       10
+      ],
+      "name": ""
+     },
+     {
+      "id": 7,
+      "duration": 2,
+      "demands": [
+       6,
+       1,
+       4,
+       10
+      ],
+      "successors": [
+       21,
+       23
+      ],
+      "name": ""
+     },
+     {
+      "id": 8,
+      "duration": 7,
+      "demands": [
+       6,
+       6,
+       4,
+       5
+      ],
+      "successors": [
+       14,
+       15
+      ],
+      "name": ""
+     },
+     {
+      "id": 9,
+      "duration": 1,
+      "demands": [
+       10,
+       5,
+       4,
+       2
+      ],
+      "successors": [
+       24,
+       28
+      ],
+      "name": ""
+     },
+     {
+      "id": 10,
+      "duration": 1,
+      "demands": [
+       9,
+       4,
+       4,
+       3
+      ],
+      "successors": [
+       16,
+       18
+      ],
+      "name": ""
+     },
+     {
+      "id": 11,
+      "duration": 8,
+      "demands": [
+       6,
+       5,
+       7,
+       4
+      ],
+      "successors": [
+       19,
+       26
+      ],
+      "name": ""
+     },
+     {
+      "id": 12,
+      "duration": 3,
+      "demands": [
+       10,
+       0,
+       3,
+       6
+      ],
+      "successors": [
+       17,
+       23
+      ],
+      "name": ""
+     },
+     {
+      "id": 13,
+      "duration": 2,
+      "demands": [
+       7,
+       6,
+       4,
+       2
+      ],
+      "successors": [
+       17,
+       22
+      ],
+      "name": ""
+     },
+     {
+      "id": 14,
+      "duration": 7,
+      "demands": [
+       2,
+       8,
+       4,
+       5
+      ],
+      "successors": [
+       24,
+       28
+      ],
+      "name": ""
+     },
+     {
+      "id": 15,
+      "duration": 8,
+      "demands": [
+       1,
+       9,
+       6,
+       7
+      ],
+      "successors": [
+       23,
+       24
+      ],
+      "name": ""
+     },
+     {
+      "id": 16,
+      "duration": 2,
+      "demands": [
+       5,
+       1,
+       9,
+       8
+      ],
+      "successors": [
+       18,
+       21
+      ],
+      "name": ""
+     },
+     {
+      "id": 17,
+      "duration": 7,
+      "demands": [
+       6,
+       2,
+       4,
+       1
+      ],
+      "successors": [
+       19,
+       23
+      ],
+      "name": ""
+     },
+     {
+      "id": 18,
+      "duration": 5,
+      "demands": [
+       1,
+       5,
+       4,
+       3
+      ],
+      "successors": [
+       20,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 19,
+      "duration": 8,
+      "demands": [
+       2,
+       5,
+       5,
+       7
+      ],
+      "successors": [
+       23,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 20,
+      "duration": 8,
+      "demands": [
+       2,
+       10,
+       4,
+       7
+      ],
+      "successors": [
+       23,
+       25
+      ],
+      "name": ""
+     },
+     {
+      "id": 21,
+      "duration": 3,
+      "demands": [
+       9,
+       0,
+       4,
+       10
+      ],
+      "successors": [
+       23,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 22,
+      "duration": 5,
+      "demands": [
+       10,
+       10,
+       3,
+       0
+      ],
+      "successors": [
+       24,
+       25
+      ],
+      "name": ""
+     },
+     {
+      "id": 23,
+      "duration": 3,
+      "demands": [
+       9,
+       2,
+       9,
+       2
+      ],
+      "successors": [
+       26,
+       28
+      ],
+      "name": ""
+     },
+     {
+      "id": 24,
+      "duration": 4,
+      "demands": [
+       8,
+       2,
+       9,
+       7
+      ],
+      "successors": [
+       26,
+       28
+      ],
+      "name": ""
+     },
+     {
+      "id": 25,
+      "duration": 3,
+      "demands": [
+       6,
+       3,
+       6,
+       1
+      ],
+      "successors": [
+       26,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 26,
+      "duration": 4,
+      "demands": [
+       3,
+       6,
+       7,
+       1
+      ],
+      "successors": [
+       27,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 27,
+      "duration": 1,
+      "demands": [
+       10,
+       4,
+       6,
+       5
+      ],
+      "successors": [
+       28,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 28,
+      "duration": 5,
+      "demands": [
+       10,
+       5,
+       0,
+       0
+      ],
+      "successors": [
+       29,
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 29,
+      "duration": 3,
+      "demands": [
+       3,
+       3,
+       4,
+       5
+      ],
+      "successors": [
+       30
+      ],
+      "name": ""
+     },
+     {
+      "id": 30,
+      "duration": 0,
+      "demands": [
+       9,
+       5,
+       0,
+       5
+      ],
+      "successors": [
+       31
+      ],
+      "name": ""
+     },
+     {
+      "id": 31,
+      "duration": 0,
+      "demands": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "successors": [],
+      "name": ""
+     }
+    ],
+    "roles": [
+     {
+      "id": 0,
+      "name": "R1",
+      "capacity": 10
+     },
+     {
+      "id": 1,
+      "name": "R2",
+      "capacity": 10
+     },
+     {
+      "id": 2,
+      "name": "R3",
+      "capacity": 10
+     },
+     {
+      "id": 3,
+      "name": "R4",
+      "capacity": 10
+     }
+    ],
+    "workers": [
+     {
+      "id": 0,
+      "role": 0,
+      "name": "R1-0"
+     },
+     {
+      "id": 1,
+      "role": 0,
+      "name": "R1-1"
+     },
+     {
+      "id": 2,
+      "role": 0,
+      "name": "R1-2"
+     },
+     {
+      "id": 3,
+      "role": 0,
+      "name": "R1-3"
+     },
+     {
+      "id": 4,
+      "role": 0,
+      "name": "R1-4"
+     },
+     {
+      "id": 5,
+      "role": 0,
+      "name": "R1-5"
+     },
+     {
+      "id": 6,
+      "role": 0,
+      "name": "R1-6"
+     },
+     {
+      "id": 7,
+      "role": 0,
+      "name": "R1-7"
+     },
+     {
+      "id": 8,
+      "role": 0,
+      "name": "R1-8"
+     },
+     {
+      "id": 9,
+      "role": 0,
+      "name": "R1-9"
+     },
+     {
+      "id": 10,
+      "role": 1,
+      "name": "R2-0"
+     },
+     {
+      "id": 11,
+      "role": 1,
+      "name": "R2-1"
+     },
+     {
+      "id": 12,
+      "role": 1,
+      "name": "R2-2"
+     },
+     {
+      "id": 13,
+      "role": 1,
+      "name": "R2-3"
+     },
+     {
+      "id": 14,
+      "role": 1,
+      "name": "R2-4"
+     },
+     {
+      "id": 15,
+      "role": 1,
+      "name": "R2-5"
+     },
+     {
+      "id": 16,
+      "role": 1,
+      "name": "R2-6"
+     },
+     {
+      "id": 17,
+      "role": 1,
+      "name": "R2-7"
+     },
+     {
+      "id": 18,
+      "role": 1,
+      "name": "R2-8"
+     },
+     {
+      "id": 19,
+      "role": 1,
+      "name": "R2-9"
+     },
+     {
+      "id": 20,
+      "role": 2,
+      "name": "R3-0"
+     },
+     {
+      "id": 21,
+      "role": 2,
+      "name": "R3-1"
+     },
+     {
+      "id": 22,
+      "role": 2,
+      "name": "R3-2"
+     },
+     {
+      "id": 23,
+      "role": 2,
+      "name": "R3-3"
+     },
+     {
+      "id": 24,
+      "role": 2,
+      "name": "R3-4"
+     },
+     {
+      "id": 25,
+      "role": 2,
+      "name": "R3-5"
+     },
+     {
+      "id": 26,
+      "role": 2,
+      "name": "R3-6"
+     },
+     {
+      "id": 27,
+      "role": 2,
+      "name": "R3-7"
+     },
+     {
+      "id": 28,
+      "role": 2,
+      "name": "R3-8"
+     },
+     {
+      "id": 29,
+      "role": 2,
+      "name": "R3-9"
+     },
+     {
+      "id": 30,
+      "role": 3,
+      "name": "R4-0"
+     },
+     {
+      "id": 31,
+      "role": 3,
+      "name": "R4-1"
+     },
+     {
+      "id": 32,
+      "role": 3,
+      "name": "R4-2"
+     },
+     {
+      "id": 33,
+      "role": 3,
+      "name": "R4-3"
+     },
+     {
+      "id": 34,
+      "role": 3,
+      "name": "R4-4"
+     },
+     {
+      "id": 35,
+      "role": 3,
+      "name": "R4-5"
+     },
+     {
+      "id": 36,
+      "role": 3,
+      "name": "R4-6"
+     },
+     {
+      "id": 37,
+      "role": 3,
+      "name": "R4-7"
+     },
+     {
+      "id": 38,
+      "role": 3,
+      "name": "R4-8"
+     },
+     {
+      "id": 39,
+      "role": 3,
+      "name": "R4-9"
+     }
+    ],
+    "deadline": null,
+    "budget": null,
+    "source": null
+   },
+   "plan": [
+    0,
+    0,
+    0,
+    42,
+    14,
+    8,
+    21,
+    62,
+    35,
+    64,
+    27,
+    47,
+    28,
+    31,
+    55,
+    65,
+    33,
+    55,
+    42,
+    78,
+    86,
+    94,
+    73,
+    97,
+    100,
+    104,
+    107,
+    111,
+    112,
+    117,
+    120,
+    120
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "setup": 0,
+   "params": "none",
+   "seed": 101,
+   "recorder": true,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 3,
+   "costs": false,
+   "result": "e65e08ca717c5c82ab95d1bf9599170c576aa400c063d10d8c6560aafd4dbfe2",
+   "observations": "a86c032d5c2eccbaaf8cab550170065908bff4c48b2103c1aebac8060c19bca8",
+   "makespan": 9,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "none",
+   "seed": 138,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "c6fe3cca87ec4f57ef88b1bebf30000f80b7f41bb8ab6b1fb72c83033f8051d1",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 8,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "none",
+   "seed": 175,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "aa64e1dea5072dfc70d3eb4f1c83397ca3563b7ad3596bfac5cf60f7f4cad9ea",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 56,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "none",
+   "seed": 212,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": true,
+   "result": "561167a357fc9e994148021c81abc9c85690cf19b86e575fa15a0a220afd0f75",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 129,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 0,
+   "params": "primary",
+   "seed": 249,
+   "recorder": false,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "cc41ba5eb2eec7a39a8d03de18510409b9abaa0d394763176a56b798440de86b",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 11,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "primary",
+   "seed": 286,
+   "recorder": false,
+   "trace": true,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "84b46d05be029940fd7117dac6ae7a17799d8f55ebbdec1e0d89340e5cdbd5db",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 8,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "primary",
+   "seed": 323,
+   "recorder": true,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "63b0560abdf0c3f6b9cb8f6b64f530620d4d915f6f81eaf01949a15e504b58fa",
+   "observations": "67a72eb56976b80a3452e5db01be3d51b893fe24d7843473a01155b16518b1a0",
+   "makespan": 75,
+   "events": 10,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "primary",
+   "seed": 360,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "e778e8051df9283004908a7be1ed265c3d37ae06a5f0d997aaab3e9b481d1522",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 83,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "busy",
+   "seed": 397,
+   "recorder": false,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "831fd0fb6484f4510e13a0b469f28f60691c3de6f0d1305041900fc3d77a5bed",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 38,
+   "events": 15,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "busy",
+   "seed": 434,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "6525637efab802e05db3083f1bad74a112939be112adb6b8ed80a7821cee63ad",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 19,
+   "events": 8,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "busy",
+   "seed": 471,
+   "recorder": false,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 3,
+   "costs": true,
+   "result": "d8c3add0cf8a74c1e4def7ffaeef37b0783a746b9ceb1f7d0d3ecbd78beab97c",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 65,
+   "events": 55,
+   "truncated": true
+  },
+  {
+   "setup": 3,
+   "params": "busy",
+   "seed": 508,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "b4c4557fa79dd515299e04a3cffb65867935828e1af7ffa5a943c0232aaa7636",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 305,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "long",
+   "seed": 545,
+   "recorder": true,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "a5a7103ec5eb7ffe92885cae0767705219fa30b9f8b9aeecb864110e1783c119",
+   "observations": "a7643ec25820899ca9b2dc6d19fbed8613a50c5089872a1a344548311ff8f65c",
+   "makespan": 14,
+   "events": 2,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "long",
+   "seed": 582,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "dd4b3a992683ff23c79bdb5b80e5ab1f74cd737f8e3ed4f7ab9f6004b5500c6e",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 9,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "long",
+   "seed": 619,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "d688527ba4bd7ee2f39e535951f3b3ee791f8c1cfce6a6da7245abba1d34a976",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 68,
+   "events": 19,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "long",
+   "seed": 656,
+   "recorder": false,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "d4b1007f6b91fa528d94d13f80e8c09bd5e86ff6775c66ffd3231d773f26158a",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 123,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "none",
+   "seed": 693,
+   "recorder": false,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "9d59090fef2bcae5ea4fed73b32420ff0854a987acc73336cf5b14681eb91719",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 8,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "none",
+   "seed": 730,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": true,
+   "result": "b412c31c34ee1c51a1aa6dc26250d774bd3fcc3bdff6cf0b7e13d3b79cbfb12c",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "none",
+   "seed": 767,
+   "recorder": true,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "3d9effd7ae3c39144acabd034eaac172b37b0a1f5d7810c3916159f7037746c1",
+   "observations": "059276baf58905cfc601449ba7d352795056069ff01081a2a1947988a955f250",
+   "makespan": 53,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "none",
+   "seed": 804,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "fd1dff36ba462dcd815caf19a5e9309cbfc6ceea1f7433993b5017b11e951c29",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 128,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 0,
+   "params": "primary",
+   "seed": 841,
+   "recorder": false,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 3,
+   "costs": false,
+   "result": "91dbe1cb4f2c946093528581b3bd1d80b45fe1b16cf24763de117a2e22468cbb",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "primary",
+   "seed": 878,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "6f39fe41cdabf0fd11976fc9144168b59aae74010886f9435dbc8ba570287180",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "primary",
+   "seed": 915,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "b2bf7d3179706fc2ef66198417e15e57ad3cc7009ccfd923d52f3545cc3bde2b",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 74,
+   "events": 13,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "primary",
+   "seed": 952,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "5ee141879da55a6987c5cb93502db74a96e86e0f8e8bddc477abe03454aafd7c",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 66,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "busy",
+   "seed": 989,
+   "recorder": true,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": true,
+   "result": "98cfd1ae8487c7f4d2e2ed54aa931e4af865f603c86b3e1ea8a56e4636452a6f",
+   "observations": "7a05edee1a643b09893c74644e692f9d6ccdc6d075df78556fccefcd5241a3bb",
+   "makespan": 45,
+   "events": 19,
+   "truncated": true
+  },
+  {
+   "setup": 1,
+   "params": "busy",
+   "seed": 1026,
+   "recorder": false,
+   "trace": true,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "0b92c657f65be82f8724d177add9ce5d9216232272e44022444576220f9fc1ef",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 11,
+   "events": 4,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "busy",
+   "seed": 1063,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "9ff3b3e516e07f8da9cf8716bf0b457f870cc7795da74dfb18251f67ba9ad617",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 147,
+   "events": 97,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "busy",
+   "seed": 1100,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "31fbb4a41984df396c15f4740b484769384052655d1b3211b64cedceb489cf6f",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 289,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "long",
+   "seed": 1137,
+   "recorder": false,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "c03042271e3c88ff292036b6a7411a9ea007af457d4dec6209fa366f20d6dbf8",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 8,
+   "events": 2,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "long",
+   "seed": 1174,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "c06a6e75607d15a0c25b1adb8385151e3a6081451e1f29afa2c0f550361b5ef8",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "long",
+   "seed": 1211,
+   "recorder": true,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 3,
+   "costs": false,
+   "result": "0e90e370bf88ed13bd0eac6a98514cb2fa73e4bfb29afbf51cc88c04338c6c1a",
+   "observations": "326bbf1c9160415bef2b822d494275ffa5d9d53ebfa29365aa46d37b0b837bd1",
+   "makespan": 65,
+   "events": 27,
+   "truncated": true
+  },
+  {
+   "setup": 3,
+   "params": "long",
+   "seed": 1248,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": true,
+   "result": "be157423ca18d6041ab56456fd51c21dc789ca587d5e870d9a9cb5c3ec7c7eb8",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 143,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "none",
+   "seed": 1285,
+   "recorder": false,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "29d8d9088b52c801fe2d6a733a75e3c25ce42c6679f22e27baedb8497b05d696",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "none",
+   "seed": 1322,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "534be9e276032a578d1977f250554ebbc87414146862f482332f81f91062f04a",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "none",
+   "seed": 1359,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "f12e1b1e3d77bd0573dd1148987bb7fb53daf7549723220a65b8026df9ae5f96",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 55,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "none",
+   "seed": 1396,
+   "recorder": false,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "ab52d8a17451ee9679e67187333f68221070d2ada1f149635d815a1c4890a299",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 130,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 0,
+   "params": "primary",
+   "seed": 1433,
+   "recorder": true,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "7cf64a8014a4c09739c58276ba19024c5289c2160cb03df3189ee28f5744df5e",
+   "observations": "51df6a70e681deebbb54def681b80b30b4b6b76a0d1aac36a6734aef0a335e99",
+   "makespan": 10,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "primary",
+   "seed": 1470,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "3aef5b8b916aa23f3d5a76ab395ce016c931a3ab64bb70a9e5d27fc59bc21fa7",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 9,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "primary",
+   "seed": 1507,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": true,
+   "result": "49fa90d76033a738f664c5fde1533106d8daefb9a781421dab118350b4883951",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 54,
+   "events": 10,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "primary",
+   "seed": 1544,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "43fc4a92f56d6384fcfd2a4e692875773a65c30fcd7093d92b817d60769b9c62",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 53,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "busy",
+   "seed": 1581,
+   "recorder": false,
+   "trace": true,
+   "deadline": "truncating",
+   "review_period": 3,
+   "costs": false,
+   "result": "e7116900d8524fee0be1d08324bfa3f0c3bcb7667a0dc4572f5e747a0b7d4bc7",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 9,
+   "events": 1,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "busy",
+   "seed": 1618,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "a23d7472e5fe075ef1ff245391ef34cd5090efbe9094063d1a88337c33035ba4",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 14,
+   "events": 4,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "busy",
+   "seed": 1655,
+   "recorder": true,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "a87d4fc90330ff99f02ccbb1274a6875cfb537f6a8016143d855a96871286ae8",
+   "observations": "d7fdfa07e1c9f8e2ca2a609c9a69d51f1b4764741c88f545f2eee93cdd944adc",
+   "makespan": 137,
+   "events": 94,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "busy",
+   "seed": 1692,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "89ec1501d71be07ad5bbc995384e00b2ef2088de4f9f519ec650262ee6eaba3e",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 304,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "long",
+   "seed": 1729,
+   "recorder": false,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "0a1691f6030b74265f26e88ccc06a06ef1c24ab8abc988f3f067cc5db66d994e",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 10,
+   "events": 2,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "long",
+   "seed": 1766,
+   "recorder": false,
+   "trace": true,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": true,
+   "result": "7dff3a95452f01a3f55e143725b31c7893088fe67ee565c967e63441ed8098a8",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 2,
+   "params": "long",
+   "seed": 1803,
+   "recorder": false,
+   "trace": false,
+   "deadline": "tight",
+   "review_period": 3,
+   "costs": false,
+   "result": "e8e472f2e40d80dae572cc29454e9772c402055e016c7882d00549a7e06bc512",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 104,
+   "events": 34,
+   "truncated": false
+  },
+  {
+   "setup": 3,
+   "params": "long",
+   "seed": 1840,
+   "recorder": false,
+   "trace": false,
+   "deadline": "truncating",
+   "review_period": 5,
+   "costs": false,
+   "result": "3ad19a0a95e987fef2b8aeb348b099a6c0b2c871552bec67f6ab6c8d7429365e",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 150,
+   "events": 116,
+   "truncated": true
+  },
+  {
+   "setup": 0,
+   "params": "none",
+   "seed": 1877,
+   "recorder": true,
+   "trace": false,
+   "deadline": "none",
+   "review_period": 3,
+   "costs": false,
+   "result": "a2bbbfa1b0734eb7a087b3f9d61d10e832cd4b262980b1b8770c7b7965621630",
+   "observations": "7aeb2e95a332454c73d5f0abf7bbbf6e5c148a97880730aba34a9d086926e484",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  },
+  {
+   "setup": 1,
+   "params": "none",
+   "seed": 1914,
+   "recorder": false,
+   "trace": false,
+   "deadline": "loose",
+   "review_period": 5,
+   "costs": false,
+   "result": "d80e8238a3e3398f945ed0e7cf0099c0d1ad0724e6c5b184a2e26017a2e62c0a",
+   "observations": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "makespan": 7,
+   "events": 0,
+   "truncated": false
+  }
+ ]
+}
