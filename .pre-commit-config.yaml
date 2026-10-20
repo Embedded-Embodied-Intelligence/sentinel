@@ -1,0 +1,27 @@
+# Install once per clone: uv run pre-commit install
+# Local hooks call `uv run` so tool versions match uv.lock.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=5000"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-toml
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --force-exclude
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format --check
+        entry: uv run ruff format --check --force-exclude
+        language: system
+        types_or: [python, pyi]
+      - id: detect-secrets
+        name: detect-secrets
+        entry: uv run detect-secrets-hook --baseline .secrets.baseline
+        language: system
