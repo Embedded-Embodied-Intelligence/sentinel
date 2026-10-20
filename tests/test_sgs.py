@@ -1,6 +1,6 @@
 """Serial SGS and regret-based biased random sampling."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import pytest
@@ -8,7 +8,7 @@ import pytest
 from sentinel.model import ProjectInstance, Schedule, validate_schedule
 from sentinel.scheduling.bounds import critical_path_lower_bound, earliest_starts
 from sentinel.scheduling.priority_rules import PRIORITY_RULES, lft_priorities
-from sentinel.scheduling.sgs import regret_biased_sampling, serial_sgs
+from sentinel.scheduling.sgs import _regret_selector, regret_biased_sampling, serial_sgs
 
 Builder = Callable[..., ProjectInstance]
 
@@ -127,3 +127,73 @@ def test_rbrs_draws_n_plus_two_uniforms_per_schedule(crowded: ProjectInstance) -
 def test_rbrs_rejects_empty_budget(tiny: ProjectInstance) -> None:
     with pytest.raises(ValueError, match="at least 1"):
         regret_biased_sampling(tiny, 0, np.random.default_rng(0))
+
+
+def reference_serial_sgs(
+    instance: ProjectInstance, priorities: Sequence[float], lower_is_better: bool
+) -> tuple[int, ...]:
+    """Brute-force serial SGS: try every start from the precedence bound upwards."""
+    acts = instance.activities
+    starts: dict[int, int] = {}
+
+    def fits(j: int, t: int) -> bool:
+        for day in range(t, t + acts[j].duration):
+            for k, role in enumerate(instance.roles):
+                used = sum(
+                    acts[i].demands[k] for i, s in starts.items() if s <= day < s + acts[i].duration
+                )
+                if used + acts[j].demands[k] > role.capacity:
+                    return False
+        return True
+
+    while len(starts) < len(acts):
+        eligible = [
+            j
+            for j in range(len(acts))
+            if j not in starts and all(i in starts for i in instance.predecessors(j))
+        ]
+        j = min(eligible, key=lambda e: (priorities[e] if lower_is_better else -priorities[e], e))
+        t = max((starts[i] + acts[i].duration for i in instance.predecessors(j)), default=0)
+        while not fits(j, t):
+            t += 1
+        starts[j] = t
+    return tuple(starts[j] for j in range(len(acts)))
+
+
+def random_instance(build: Builder, rng: np.random.Generator) -> ProjectInstance:
+    """Random valid instance: 6-10 real activities, 1-2 roles, durations 0-5 (milestones too)."""
+    n = int(rng.integers(6, 11))
+    capacities = [int(c) for c in rng.integers(2, 6, size=int(rng.integers(1, 3)))]
+    successors: list[set[int]] = [set() for _ in range(n + 2)]
+    for j in range(1, n + 1):
+        for i in rng.choice(j, size=min(j, int(rng.integers(1, 3))), replace=False):
+            successors[int(i)].add(j)
+    for j in range(1, n + 1):
+        if not successors[j]:
+            successors[j].add(n + 1)
+    durations = [0, *(int(d) for d in rng.integers(0, 6, size=n)), 0]
+    demands = [[0] * len(capacities)]
+    demands += [[int(rng.integers(0, c + 1)) for c in capacities] for _ in range(n)]
+    demands += [[0] * len(capacities)]
+    return build(durations, demands, [sorted(s) for s in successors], capacities)
+
+
+def test_matches_brute_force_reference_on_random_instances(build: Builder) -> None:
+    rng = np.random.default_rng(2026)
+    for _ in range(40):
+        inst = random_instance(build, rng)
+        vectors = [(r.priorities(inst), r.lower_is_better) for r in PRIORITY_RULES.values()]
+        vectors.append((rng.random(inst.n_activities).tolist(), True))
+        for priorities, lower in vectors:
+            schedule = serial_sgs(inst, priorities, lower_is_better=lower)
+            assert schedule.starts == reference_serial_sgs(inst, priorities, lower)
+            assert validate_schedule(inst, schedule) == []
+
+
+def test_regret_weights_follow_lft(tiny: ProjectInstance) -> None:
+    # Eligible {1, 2} with LF = (3, 7): regrets (4, 0), weights (5, 1), P(1) = 5/6.
+    lf = lft_priorities(tiny)
+    picks = [_regret_selector(lf, 1.0, [u])([1, 2], 0) for u in (0.0, 0.83, 0.84, 0.99)]
+    assert picks == [1, 1, 2, 2]
+    # alpha = 2: weights (25, 1), P(1) = 25/26 ~ 0.9615.
+    assert [_regret_selector(lf, 2.0, [u])([1, 2], 0) for u in (0.96, 0.97)] == [1, 2]

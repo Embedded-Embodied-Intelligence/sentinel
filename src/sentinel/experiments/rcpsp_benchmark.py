@@ -212,9 +212,8 @@ def execute(tasks: Sequence[Task], max_workers: int) -> list[Row]:
         pending: set[Future[Row]] = {pool.submit(run_task, task) for task in tasks}
         try:
             while pending:
-                done, pending = wait(
-                    pending, timeout=PROGRESS_INTERVAL_S, return_when=FIRST_COMPLETED
-                )
+                due_in = max(0.0, last_report + PROGRESS_INTERVAL_S - time.monotonic())
+                done, pending = wait(pending, timeout=due_in, return_when=FIRST_COMPLETED)
                 rows.extend(future.result() for future in done)
                 now = time.monotonic()
                 if pending and now - last_report >= PROGRESS_INTERVAL_S:
