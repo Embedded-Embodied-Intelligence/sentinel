@@ -23,7 +23,8 @@ _STATUSES: dict[cp_model.CpSolverStatus, SolveStatus] = {
 
 
 class SolveResult(BaseModel):
-    """Outcome of a solve; `lower_bound` is the best objective bound (None if infeasible)."""
+    """Outcome of a solve; `lower_bound` is the best objective bound (None if infeasible) and
+    `deterministic_time` the search effort in CP-SAT's machine-independent units."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -32,6 +33,7 @@ class SolveResult(BaseModel):
     makespan: int | None
     lower_bound: int | None
     wall_time_s: float
+    deterministic_time: float | None = None
 
 
 def solve_cpsat(
@@ -41,12 +43,17 @@ def solve_cpsat(
     num_workers: int = 1,
     random_seed: int = 0,
     horizon: int | None = None,
+    deterministic_time_limit: float | None = None,
 ) -> SolveResult:
     """Minimise the sink start with CP-SAT: one interval per activity, a cumulative per role.
 
     All start times lie in [0, horizon]; the default horizon is the makespan of the serial SGS
     with the LFT rule, a valid upper bound. No solution hints are given. `wall_time_s` covers
-    the whole call (horizon, model building and search).
+    the whole call (horizon, model building and search). `deterministic_time_limit` also sets
+    CP-SAT's `max_deterministic_time`, a limit in machine-independent work units: with one
+    worker and a fixed seed, a search stopped by it returns the same schedule whatever the
+    machine load, provided the wall-clock limit does not stop it first (`math.inf` disables
+    that limit).
     """
     started = time.perf_counter()
     if horizon is None:
@@ -76,6 +83,8 @@ def solve_cpsat(
 
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = time_limit_s
+    if deterministic_time_limit is not None:
+        solver.parameters.max_deterministic_time = deterministic_time_limit
     solver.parameters.num_workers = num_workers
     solver.parameters.random_seed = random_seed
     code = solver.solve(model)
@@ -95,4 +104,5 @@ def solve_cpsat(
         makespan=None if schedule is None else schedule.makespan(instance),
         lower_bound=bound,
         wall_time_s=time.perf_counter() - started,
+        deterministic_time=solver.deterministic_time,
     )

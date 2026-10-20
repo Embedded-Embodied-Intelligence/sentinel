@@ -1,5 +1,8 @@
 """SGS and CP-SAT on the downloaded PSPLIB J30 data; skipped when data/psplib is absent."""
 
+import math
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -43,3 +46,23 @@ def test_cpsat_reaches_the_optimum_of_j301_1(psplib_root: Path, j30_optima: dict
     assert result.makespan == j30_optima["j30/j301_1"] == 43
     assert result.schedule is not None
     assert validate_schedule(inst, result.schedule) == []
+
+
+def _solve_j6013_1(root: Path) -> tuple[str, tuple[int, ...] | None]:
+    inst = load_psplib(instance_path("j60", "j6013_1", root))
+    result = solve_cpsat(
+        inst, time_limit_s=math.inf, random_seed=2026, deterministic_time_limit=0.5
+    )
+    return result.status, None if result.schedule is None else result.schedule.starts
+
+
+def test_deterministic_limit_does_not_depend_on_machine_load(psplib_root: Path) -> None:
+    # j6013_1 is not solved to optimality within the limit, so the limit stops the search.
+    if not (psplib_root / "j60").is_dir():
+        pytest.skip("J60 instances missing; run scripts/fetch_psplib.py")
+    alone = _solve_j6013_1(psplib_root)
+    assert alone[0] == "FEASIBLE"
+    context = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=3, mp_context=context) as pool:
+        loaded = list(pool.map(_solve_j6013_1, [psplib_root] * 3))  # three solves at once
+    assert loaded == [alone] * 3
