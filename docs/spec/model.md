@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.4)
+# Sentinel — formal model (v1.4.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -12,7 +12,9 @@ activities (§3.1 c–d), accepted readings of the WP2a questions (§2.2), `λ_A
 (WP2b) answers to the WP2a.1 questions: decision epoch after D2 (§3, §3.1 g), SUBST for paused
 and running activities with absent members (§4, §5, §7), cost of partial crews (§3),
 activities without demands (§3.1 a); v1.4 (WP3a) beliefs and rollouts (§5.1), urgency of running
-activities (§5), SUBST candidates and rollout CRN (§5.1, §6).
+activities (§5), SUBST candidates and rollout CRN (§5.1, §6); v1.4.1 (WP3b) answers to the WP3a
+questions: urgency of running activities regardless of absences (§5), empty absence support
+(§5.1); forecast evaluation (§5.2).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -244,9 +246,9 @@ G4 stability (small `Δ`).
 `n_D ≤ ε_D` and `n_B ≤ ε_B`, the agent returns NOOP.
 
 **Urgency** `τ_t = min_j τ_j` with `τ_j = LS_j − t` for unstarted and paused activities and
-`τ_j = LF_j − t − E[remaining_j]` for running activities, the expectation under the belief of
-§5.1 (`LS_j`, `LF_j` latest start and finish w.r.t. `D`). If the best action needs approval and
-`τ_t > τ_def`, the decision is deferred.
+`τ_j = LF_j − t − E[remaining_j]` for running activities regardless of absences, the
+expectation under the belief of §5.1 (`LS_j`, `LF_j` latest start and finish w.r.t. `D`). If
+the best action needs approval and `τ_t > τ_def`, the decision is deferred.
 
 ### §5.1 Beliefs
 
@@ -264,12 +266,66 @@ The rollouts of §5 start from a state sampled from the belief given the observa
 - **Absences.** For an absent worker with absence start `s`, announced bound `L_low` and today
   `t`, the posterior of `L` is `∝ q(1−q)^{L−1} · (1/L)` (geometric prior with `q = 1/E[L]`,
   likelihood of a uniform announcement) on `L ≥ max(L_low, t − s + 1)`, truncated at
-  `L ≤ 365`. The worker returns on day `s + L`.
+  `L ≤ 365`. The worker returns on day `s + L`. If no `L` in that range has positive
+  probability (`max(L_low, t − s + 1) > 365`, or `E[L] = 1` while `L ≥ 2` is required), the
+  belief takes the smallest admissible length `L = max(L_low, t − s + 1)` and counts a fallback.
 - **Future.** Disruptions after day `t` follow the priors of §2.2 with fresh random numbers.
 - **Rollout.** From a sampled state, the remaining project is simulated with the base policy
   `NoReaction` (§6) exactly by the engine semantics of §3 and §3.1.
 - **Rollout CRN.** Rollout `i` uses seed `ξ_i` for both the belief sample and the future, so
   every candidate sees the same `N` sampled worlds.
+
+### §5.2 Forecast evaluation (WP3b)
+
+Forecasts of the makespan `C` of a NoReaction run are scored against its realised value (RQ3).
+
+- **Checkpoints.** The world executes the baseline plan (makespan `C_plan`) under NoReaction.
+  At step 3 of day `t_f = floor(f · C_plan)`, `f ∈ {0, 0.2, 0.4, 0.6, 0.8}`, each forecaster
+  receives the observation and its current plan only; `C` is used after the forecast is
+  returned. A checkpoint with `C ≤ t_f` (project complete by day `t_f`) is skipped. Recording
+  observations does not change the run.
+- **Forecasters.** All forecasters of one checkpoint use the same forecast seed (CRN).
+  - `mc_full`: the forecaster of §5.1 with `N = 200` rollouts.
+  - `mc_no_future`: the same without disruptions after day `t_f` (belief about the current
+    hidden state only).
+  - `deterministic` (plan-based estimate of classical PM tools): one NoReaction run from the
+    observation with nominal hidden values and no disruptions after day `t_f`. Unstarted
+    activities (inserted ones included) have remaining work `p_j`. A started activity has
+    remaining work that starts at `p_j`, decreases by the work done, never falls below one
+    crew-member day `1/M_j`, and is multiplied by `F` at each observed D2 shock:
+    `R_0 = p_j`, `R_i = max(R_{i−1} − (e_i − e_{i−1}), 1/M_j) · F_i`,
+    `R = max(R_m − (e_j − e_m), 1/M_j)`; without shocks `max(p_j − e_j, 1/M_j)`. An absent
+    worker returns on day `s + max(L_low, t − s + 1)`: after the announced bound, or tomorrow if
+    the bound has passed. Its point forecast `Ĉ` is a point-mass distribution, so
+    `P(C ≤ D) = 1[Ĉ ≤ D]`.
+  - Misspecified priors: `mc_full` with the rates `(λ_A, λ_S, λ_N)` of its future multiplied
+    by `κ`, or with another PERT `(a, m, b)` in its belief and future, while the world keeps
+    the true parameters.
+- **Binary forecasts.** Per forecast, `p = P̂(C ≤ D)` and `y = 1[C ≤ D]` (a truncated run is
+  late), for `δ_D ∈ {0.2, 0.3}` from the same samples. Over `N` forecasts, with `K = 10` bins
+  `[k/10, (k+1)/10)` (the last one closed), `n_k` forecasts in bin `k`, their mean `p̄_k`,
+  their outcome frequency `ȳ_k` and the overall frequency `ȳ`:
+  - Brier score `BS = (1/N) Σ (p − y)²` (Brier 1950); `REL = (1/N) Σ_k n_k (p̄_k − ȳ_k)²`,
+    `RES = (1/N) Σ_k n_k (ȳ_k − ȳ)²`, `UNC = ȳ(1 − ȳ)`, so `BS = REL − RES + UNC` up to the
+    within-bin term (binning error, reported separately; Murphy 1973);
+  - `ECE = Σ_k (n_k / N) |p̄_k − ȳ_k|`; sharpness `(1/N) Σ (p − p̄)²`; log score
+    `−(1/N) Σ [y ln p' + (1 − y) ln(1 − p')]` with `p' = min(max(p, 0.005), 0.995)` (lower
+    is better).
+- **Makespan distribution.** `F` is the empirical CDF of the samples `x_1, …, x_n` (a point
+  mass for `deterministic`), `q_α` the smallest `x` with `F(x) ≥ α`:
+  - `CRPS = (1/n) Σ_i |x_i − C| − (1/(2n²)) Σ_i Σ_k |x_i − x_k|`, the CRPS of `F` (Gneiting &
+    Raftery 2007); a point mass gives `|Ĉ − C|`. Reported as `CRPS / C*`, with
+    `MAE / C* = |q_0.5 − C| / C*`;
+  - coverage `1[q_0.1 ≤ C ≤ q_0.9]` of the central 80 % interval;
+  - randomised PIT `u = F(C − 1) + V · (F(C) − F(C − 1))`, `V ~ U(0, 1)`, uniform for a
+    calibrated forecast of an integer quantity (Czado et al. 2009), shown with 10 equal bins.
+- **Early warning** with threshold `θ ∈ {0.5, 0.8}`: a run is warned if `p < θ` at some
+  non-skipped checkpoint, first on day `t_w`. Among late runs: the share warned and the mean
+  lead time `D − t_w` of the warned ones; among on-time runs: the share warned (false alarms).
+- **Uncertainty.** 95 % percentile intervals from a cluster bootstrap over instances (1,000
+  resamples, fixed seed; instances are drawn with replacement within each set and every row of
+  a drawn instance enters the statistic). Paired differences between forecasters use the same
+  resamples.
 
 ---
 
@@ -343,3 +399,7 @@ absent (`E[L] / (1/λ_A + E[L])`).
 - Simon 1955 — satisficing, QJE 69(1). doi:10.2307/1884852
 - Malcolm et al. 1959 — PERT, Oper. Res. 7(5). doi:10.1287/opre.7.5.646
 - Brooks 1995 — The Mythical Man-Month, Addison-Wesley.
+- Brier 1950 — probability forecast verification, Mon. Weather Rev. 78(1). doi:10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2
+- Murphy 1973 — vector partition of the probability score, J. Appl. Meteorol. 12(4). doi:10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2
+- Gneiting & Raftery 2007 — strictly proper scoring rules, JASA 102(477). doi:10.1198/016214506000001437
+- Czado, Gneiting & Held 2009 — predictive model assessment for count data, Biometrics 65(4). doi:10.1111/j.1541-0420.2009.01191.x
