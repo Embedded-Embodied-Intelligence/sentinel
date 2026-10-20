@@ -1,10 +1,10 @@
 # WP2b — Baseline plans and the NoReaction scenario study
 
-Run after WP2a is done (all acceptance criteria PASS). Start a fresh session (`/clear`).
+Run after WP2a and WP2a.1 are done (all acceptance criteria PASS). Start a fresh session (`/clear`).
 
 <context>
-Read: `CLAUDE.md`, `docs/spec/model.md` (v1.1, especially §1.2, §2, §3, §3.1, §8),
-`docs/reports/WP2a.md`, `docs/notes/WP2a.md`, skills `experiment-run` and `wp-report`.
+Read: `CLAUDE.md`, `docs/spec/model.md` (v1.2, especially §1.2, §2, §3, §3.1, §8),
+`docs/reports/WP2a.md`, `docs/reports/WP2a.1.md` (calibration table), `docs/notes/WP2a.md`, skills `experiment-run` and `wp-report`.
 
 Purpose: (1) give every instance a reproducible **baseline plan** that all policies start from;
 (2) measure how the project behaves when nobody reacts (`NoReaction`) across a grid of
@@ -28,9 +28,9 @@ those are the scenarios where a reactive agent can make a measurable difference.
    `configs/wp2_noreaction.toml` (follow the `experiment-run` skill):
    - sets `j30` and `j60` (all 480 instances each), baseline `cpsat_det`;
    - `C*` per instance = PSPLIB reference (j30 `opt`, j60 `hrs`);
-   - scenario grid: `lambda_a ∈ {0.0, 0.005, 0.01, 0.02}` × `mean_absence ∈ {3, 5}` (only `3`
-     when `lambda_a = 0`), with `lambda_s = 0.01`, `lambda_n = 0.02`; plus one scenario
-     `durations_only` with all disruptions off;
+   - scenario grid: `lambda_a ∈ {0.0, 0.0025, 0.005, 0.01, 0.02}` × `mean_absence ∈ {3, 5}`
+     (only `3` when `lambda_a = 0`), with `lambda_s = 0.01`, `lambda_n = 0.02`; plus one
+     scenario `durations_only` with all disruptions off;
    - replications `R = 20` per (instance, scenario); seed per (instance, replication) shared by
      all scenarios (common random numbers, §2.3);
    - simulate once per (instance, scenario, replication) and evaluate `deadline_met` post hoc
