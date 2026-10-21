@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.4.1)
+# Sentinel — formal model (v1.4.2)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -14,7 +14,8 @@ and running activities with absent members (§4, §5, §7), cost of partial crew
 activities without demands (§3.1 a); v1.4 (WP3a) beliefs and rollouts (§5.1), urgency of running
 activities (§5), SUBST candidates and rollout CRN (§5.1, §6); v1.4.1 (WP3b) answers to the WP3a
 questions: urgency of running activities regardless of absences (§5), empty absence support
-(§5.1); forecast evaluation (§5.2).
+(§5.1); forecast evaluation (§5.2); v1.4.2 (WP3b.1) forecast summaries: early warning
+from `f ≥ 0.2`, plan-stage risk at `f = 0`, Brier skill score, AUC and PIT coverage (§5.2).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -310,21 +311,42 @@ Forecasts of the makespan `C` of a NoReaction run are scored against its realise
     within-bin term (binning error, reported separately; Murphy 1973);
   - `ECE = Σ_k (n_k / N) |p̄_k − ȳ_k|`; sharpness `(1/N) Σ (p − p̄)²`; log score
     `−(1/N) Σ [y ln p' + (1 − y) ln(1 − p')]` with `p' = min(max(p, 0.005), 0.995)` (lower
-    is better).
+    is better);
+  - Brier skill score `BSS = 1 − BS / UNC` (Murphy 1988): the reference is the constant
+    forecast `ȳ`, whose Brier score is `UNC`. `ȳ` is the base rate of the same `N` forecasts
+    (same set, `f` and `λ_A` cell), so the reference is in-sample: it knows the frequency that
+    the forecaster has to estimate. `BSS = 1` for perfect forecasts, 0 for the base rate,
+    negative below it; undefined if `UNC = 0`;
+  - AUC (area under the ROC curve) of `p` for separating on-time from late forecasts, in the
+    Mann–Whitney form `AUC = (1/(N_1 N_0)) Σ_{i: y_i = 1} Σ_{j: y_j = 0} (1[p_i > p_j] +
+    ½ · 1[p_i = p_j])` with `N_1` on-time and `N_0` late forecasts (ties count ½; Hanley &
+    McNeil 1982). 0.5 is no discrimination; AUC ignores calibration; undefined if `N_1 = 0` or
+    `N_0 = 0`.
 - **Makespan distribution.** `F` is the empirical CDF of the samples `x_1, …, x_n` (a point
   mass for `deterministic`), `q_α` the smallest `x` with `F(x) ≥ α`:
   - `CRPS = (1/n) Σ_i |x_i − C| − (1/(2n²)) Σ_i Σ_k |x_i − x_k|`, the CRPS of `F` (Gneiting &
     Raftery 2007); a point mass gives `|Ĉ − C|`. Reported as `CRPS / C*`, with
     `MAE / C* = |q_0.5 − C| / C*`;
-  - coverage `1[q_0.1 ≤ C ≤ q_0.9]` of the central 80 % interval;
+  - quantile coverage `1[q_0.1 ≤ C ≤ q_0.9]` of the central 80 % interval. It over-covers an
+    integer `C`: both bounds enter with their whole probability mass, and `F(q_0.9) ≥ 0.9`,
+    `F(q_0.1 − 1) < 0.1`, so a calibrated forecast covers `C` with probability
+    `F(q_0.9) − F(q_0.1 − 1) > 0.8`, the more so the more concentrated `F` is;
   - randomised PIT `u = F(C − 1) + V · (F(C) − F(C − 1))`, `V ~ U(0, 1)`, uniform for a
-    calibrated forecast of an integer quantity (Czado et al. 2009), shown with 10 equal bins.
+    calibrated forecast of an integer quantity (Czado et al. 2009), shown with 10 equal bins;
+  - PIT coverage of the central 80 % interval: the share of forecasts with `u ∈ [0.1, 0.9]`,
+    exactly 0.8 for a calibrated forecast, so it is the exact check of that interval.
 - **Early warning** with threshold `θ ∈ {0.5, 0.8}`: a run is warned if `p < θ` at some
-  non-skipped checkpoint, first on day `t_w`. Among late runs: the share warned and the mean
-  lead time `D − t_w` of the warned ones; among on-time runs: the share warned (false alarms).
+  non-skipped checkpoint with `f ≥ 0.2`, first on day `t_w`. Among late runs: the share warned
+  and the mean lead time `D − t_w` of the warned ones; among on-time runs: the share warned
+  (false alarms). The checkpoint `f = 0` does not count: before execution has revealed any
+  deviation, a calibrated forecaster reports roughly the base rate, which is below `θ` for
+  nearly every run when most runs are late. That is plan-stage risk, not early warning.
+- **Plan-stage risk** with the same `θ`: the share of runs with `p < θ` at `f = 0`, among late
+  runs and among on-time runs, reported separately from early warning.
 - **Uncertainty.** 95 % percentile intervals from a cluster bootstrap over instances (1,000
   resamples, fixed seed; instances are drawn with replacement within each set and every row of
-  a drawn instance enters the statistic). Paired differences between forecasters use the same
+  a drawn instance enters the statistic). Every statistic, BSS and AUC included, is recomputed
+  from the rows of each resample. Paired differences between forecasters use the same
   resamples.
 
 ---
@@ -403,3 +425,5 @@ absent (`E[L] / (1/λ_A + E[L])`).
 - Murphy 1973 — vector partition of the probability score, J. Appl. Meteorol. 12(4). doi:10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2
 - Gneiting & Raftery 2007 — strictly proper scoring rules, JASA 102(477). doi:10.1198/016214506000001437
 - Czado, Gneiting & Held 2009 — predictive model assessment for count data, Biometrics 65(4). doi:10.1111/j.1541-0420.2009.01191.x
+- Murphy 1988 — skill scores based on the mean square error, Mon. Weather Rev. 116(12). doi:10.1175/1520-0493(1988)116<2417:SSBOTM>2.0.CO;2
+- Hanley & McNeil 1982 — area under the ROC curve, Radiology 143(1). doi:10.1148/radiology.143.1.7063747
