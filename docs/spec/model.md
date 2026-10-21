@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.4.2)
+# Sentinel — formal model (v1.5)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -15,7 +15,9 @@ activities without demands (§3.1 a); v1.4 (WP3a) beliefs and rollouts (§5.1), 
 activities (§5), SUBST candidates and rollout CRN (§5.1, §6); v1.4.1 (WP3b) answers to the WP3a
 questions: urgency of running activities regardless of absences (§5), empty absence support
 (§5.1); forecast evaluation (§5.2); v1.4.2 (WP3b.1) forecast summaries: early warning
-from `f ≥ 0.2`, plan-stage risk at `f = 0`, Brier skill score, AUC and PIT coverage (§5.2).
+from `f ≥ 0.2`, plan-stage risk at `f = 0`, Brier skill score, AUC and PIT coverage (§5.2);
+v1.5 (WP4a) interventions: SUBST details and RESEQ (§4), planning view and residual problem
+(§4.1), the baseline policies made precise (§7), evaluation metrics (§7.1), `T_cp` (§8).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -219,8 +221,17 @@ its operations.
 
 SUBST applies to paused activities and to running activities with absent members. It replaces
 `m_j ≥ 1` absent members by idle present workers of the same role, with handover cost
-`h_j = max(1, ceil(α · e_j · m_j / M_j))` (§3). A replaced member who returns becomes idle and
-leaves the crew; the substitute keeps the slot.
+`h_j = max(1, ceil(α · e_j · m_j / M_j))` (§3). An *idle* worker is present and in no crew.
+SUBST(j, W') takes, per replaced member, an idle present worker of the same role; the replaced
+member leaves the crew at once (on return they are idle) and the substitute keeps the slot;
+`h_j` full-crew days are added to `j`'s remaining work; `ρ_j` is recomputed immediately, so the
+new crew can progress on the same day.
+
+RESEQ(π') replaces the planned starts of all unstarted activities by a feasible solution of the
+residual problem (§4.1). Dispatch semantics (§3 step 4) are unchanged.
+
+Operations are applied in step 3 in the order given, each validated against the state left by
+the previous one; an invalid operation is rejected (logged, counted), the others still apply.
 
 Levels: 0 automatic, 1 automatic with report, 2 human approval. `*` DESCOPE always needs
 approval. Autonomy level `Λ ∈ {0,1,2,3}`: an action runs without approval iff `ℓ(a) < Λ` and
@@ -228,6 +239,22 @@ it contains no DESCOPE. A simulated human approves escalated actions after `δ_h
 Optional activities `O`: a random share `φ` of activities whose only successor is `n+1`, each
 with value `v_j`. No classical crashing: adding people to a late software task is modelled by
 the handover cost (Brooks's law).
+
+### §4.1 Planning view
+
+What a planner assumes at day `t`: the same assumptions as the deterministic forecaster of §5.2.
+
+- Started activities (running or paused) keep their whole crew reserved until their *estimated
+  finish* `F̂_j`, their finish in the deterministic forecast from the current observation.
+- Absent idle workers are unavailable until their announced return (`s + L_low`, or `t + 1` if
+  that has passed).
+- Unstarted activities take their nominal duration `p_j` (inserted ones: their nominal
+  duration).
+- The capacity of role `k` on day `τ ≥ t` is `R_k` minus reserved crew members minus
+  unavailable idle workers.
+
+The **residual problem** schedules all unstarted activities on days `≥ t` under this capacity
+profile and precedence (finished predecessors: realised finish; started ones: `F̂_j`).
 
 ---
 
@@ -373,10 +400,26 @@ Rollouts decode plans with the serial SGS.
 ## §7 Baseline policies (WP4)
 
 - `NoReaction`: keep the plan; paused activities wait for their workers (rollout base policy).
-- `AlwaysSubstitute`: replace every absent crew member (of paused and running activities)
-  immediately when an idle present worker of the same role exists.
-- `FullResolve`: after every disruption, CP-SAT re-solves for minimum makespan; handovers allowed.
-- `StableResolve`: as FullResolve with a deviation penalty.
+- `AlwaysSubstitute`: at every decision epoch, for paused and running activities with absent
+  members, in increasing `τ_j` (§5 urgency, ties by id), substitute every absent member for
+  which an idle present worker of the same role exists (lowest ids first). Plan unchanged.
+- `FullResolve(subst)`: at every decision epoch that has a D1 (onset or return), D2 or D3 event
+  (not purely periodic epochs): if `subst`, first the SUBST operations of `AlwaysSubstitute`;
+  then RESEQ with minimum residual makespan.
+- `StableResolve(subst)`: as FullResolve, but RESEQ is lexicographic: stage 1 minimum residual
+  makespan `C₁`; stage 2 minimum `Σ_j |S_j − S_j^t|` over unstarted activities (`S_j^t` the
+  current plan; inserted activities without a planned start are excluded from the sum) subject
+  to makespan `≤ C₁` (Van de Vonder et al. 2007 style robust repair).
+- CP-SAT in policies: 1 worker, fixed seed, deterministic limit `T_cp` per stage, solution
+  hint = the current plan where feasible; if no feasible solution is found within the limit,
+  fall back to the residual SGS with LFT priority and count it.
+
+### §7.1 Evaluation metrics (WP4b, WP7)
+
+- on-time for each `δ_D`, makespan / `C*`, cost / `B`;
+- *realised deviation* `(1/n) Σ_{j ≤ n} |S_j^real − S_j^0|` against the baseline plan;
+- *nervousness* = total number of (epoch, activity) pairs whose planned start changed;
+- number of substitutions and handover days; number of RESEQs and CP-SAT fallbacks.
 
 ---
 
@@ -399,6 +442,7 @@ Rollouts decode plans with the serial SGS.
 | `κ_h` | handover weight in instability | 2 |
 | `τ_def` | deferral urgency threshold (days) | 3 |
 | `T_r` | periodic review (days) | 5 |
+| `T_cp` | CP-SAT deterministic time limit per stage in policies (§7) | 0.5 deterministic seconds |
 | `N` | rollouts per candidate | 200 |
 | `Λ` | autonomy level | {0,1,2,3}, default 2 |
 | `δ_h` | human approval delay (days) | 1 |
