@@ -1,8 +1,8 @@
 {
   "run_id": "20261021-062709-2a8ba557",
   "generator": "sentinel.experiments.forecast_summary",
-  "generated_utc": "2026-10-21T10:16:15+00:00",
-  "git_commit": "e81584c8159571db21a165fdfd397b3dca8b9711",
+  "generated_utc": "2026-10-21T11:04:06+00:00",
+  "git_commit": "081264321e8200b6107b0a2bec5edcd8134f821f",
   "git_dirty": false,
   "git_dirty_ignores": [
     "results"

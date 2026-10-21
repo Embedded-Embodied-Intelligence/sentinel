@@ -1,6 +1,6 @@
 # wp3_calibration: run 20261021-062709-2a8ba557
 
-Generated from `forecasts.csv.gz` by `sentinel.experiments.forecast_summary` at commit `e81584c8159571db21a165fdfd397b3dca8b9711`; do not edit.
+Generated from `forecasts.csv.gz` by `sentinel.experiments.forecast_summary` at commit `081264321e8200b6107b0a2bec5edcd8134f821f`; do not edit.
 
 - NoReaction worlds on `cpsat_det` baseline plans, 4 replications per instance and scenario (15360 worlds); world seeds as in WP2b. Scenarios: la0_L3, la0.005_L3, la0.01_L3, la0.02_L3 (λ_S = 0.01, λ_N = 0.02).
 - Checkpoints t_f = floor(f · C_plan), f ∈ {0, 0.2, 0.4, 0.6, 0.8}; a checkpoint with C ≤ t_f is skipped. Forecasters: `mc_full` (200 rollouts, future disruptions), `mc_no_future` (200 rollouts, no future disruptions), `deterministic` (deterministic, nominal state, no future disruptions); one forecast seed per checkpoint (CRN).
