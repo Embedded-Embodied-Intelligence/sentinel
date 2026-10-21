@@ -2,10 +2,12 @@
 
 Binary forecasts p = P(C <= D) with outcomes y = 1[C <= D]: Brier score (Brier 1950), its
 reliability-resolution-uncertainty decomposition over equal-width bins (Murphy 1973), expected
-calibration error, sharpness and the clipped log score. Makespan distributions given by samples:
-CRPS of the empirical CDF (Gneiting & Raftery 2007), its quantiles and the PIT pair, and the
-randomised PIT of an integer quantity (Czado, Gneiting & Held 2009). Bin statistics accept leading
-resample axes, so the same code gives point estimates and bootstrap replicates.
+calibration error, sharpness, the clipped log score, the Brier skill score against the base rate
+(Murphy 1988) and the AUC (Hanley & McNeil 1982). Makespan distributions given by samples: CRPS of
+the empirical CDF (Gneiting & Raftery 2007), its quantiles and the PIT pair, and the randomised PIT
+of an integer quantity (Czado, Gneiting & Held 2009) with its central coverage. Bin and count
+statistics accept leading resample axes, so the same code gives point estimates and bootstrap
+replicates.
 """
 
 from collections.abc import Sequence
@@ -20,6 +22,7 @@ ArrayLike = npt.ArrayLike
 
 BINS = 10  # equal-width bins of [0, 1] for reliability and PIT histograms
 LOG_CLIP = 0.005  # log score clips p to [LOG_CLIP, 1 - LOG_CLIP]
+PIT_CENTRAL = (0.1, 0.9)  # PIT values of the central 80 % interval, both ends included
 # A value on a bin edge, e.g. p = 0.3 = 60/200, belongs to the upper bin despite rounding.
 EDGE_TOLERANCE = 1e-9
 
@@ -176,12 +179,66 @@ def log_score(p: ArrayLike, y: ArrayLike, clip: float = LOG_CLIP) -> float:
     return float(np.mean(log_losses(p, y, clip)))
 
 
+def brier_skill_score(brier: ArrayLike, uncertainty: ArrayLike) -> FloatArray:
+    """BSS = 1 - BS / UNC: skill against the constant base-rate forecast, whose Brier score is
+    UNC = y (1 - y) (Murphy 1988); NaN where UNC = 0. Accepts resample axes."""
+    bs = np.asarray(brier, dtype=np.float64)
+    unc = np.asarray(uncertainty, dtype=np.float64)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        result: FloatArray = np.where(unc > 0, 1 - bs / np.where(unc > 0, unc, 1), np.nan)
+    return result
+
+
+def auc_from_counts(on_time: ArrayLike, late: ArrayLike) -> FloatArray:
+    """AUC from the counts of on-time and late forecasts per distinct forecast value, values
+    ascending along the last axis (leading resample axes are kept): the share of (on-time, late)
+    pairs whose on-time forecast is higher, ties counting 1/2 (Mann-Whitney form; Hanley & McNeil
+    1982). NaN without on-time or without late forecasts."""
+    pos = np.asarray(on_time, dtype=np.float64)
+    neg = np.asarray(late, dtype=np.float64)
+    below = np.cumsum(neg, axis=-1) - neg  # late forecasts with a lower value
+    wins = (pos * (below + 0.5 * neg)).sum(axis=-1)
+    pairs = pos.sum(axis=-1) * neg.sum(axis=-1)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        result: FloatArray = np.where(pairs > 0, wins / np.where(pairs > 0, pairs, 1), np.nan)
+    return result
+
+
+def value_counts(p: ArrayLike, y: ArrayLike) -> tuple[FloatArray, FloatArray, IntArray]:
+    """Counts of on-time (y = 1) and late (y = 0) forecasts per distinct value of p, ascending,
+    and the index of every forecast's value; equal forecasts share a value (ties)."""
+    p_arr = np.asarray(p, dtype=np.float64)
+    y_arr = np.asarray(y, dtype=np.float64)
+    values, index = np.unique(p_arr, return_inverse=True)
+    index = index.reshape(-1).astype(np.int64)
+    on_time = np.bincount(index, weights=y_arr, minlength=values.size)
+    late = np.bincount(index, weights=1 - y_arr, minlength=values.size)
+    return on_time, late, index
+
+
+def auc(p: ArrayLike, y: ArrayLike) -> float:
+    """AUC of the forecasts p for separating on-time (y = 1) from late (y = 0) outcomes, ties
+    counting 1/2 (Hanley & McNeil 1982); NaN if either class is empty."""
+    on_time, late, _ = value_counts(p, y)
+    return float(auc_from_counts(on_time, late))
+
+
 def randomised_pit(cdf_below: ArrayLike, cdf_at: ArrayLike, rng: np.random.Generator) -> FloatArray:
     """u = F(C - 1) + V (F(C) - F(C - 1)), V ~ U(0, 1): uniform on [0, 1] when the forecast CDF F
     of an integer quantity is calibrated (Czado, Gneiting & Held 2009)."""
     below = np.asarray(cdf_below, dtype=np.float64)
     at = np.asarray(cdf_at, dtype=np.float64)
     result: FloatArray = below + rng.random(below.shape) * (at - below)
+    return result
+
+
+def pit_covered(pit: ArrayLike, interval: tuple[float, float] = PIT_CENTRAL) -> FloatArray:
+    """1.0 where a randomised PIT value lies in `interval` (both ends included), else 0.0; NaN
+    stays NaN. Its mean, the PIT coverage, is the interval's length for a calibrated forecast."""
+    u = np.asarray(pit, dtype=np.float64)
+    low, high = interval
+    inside = ((u >= low) & (u <= high)).astype(np.float64)
+    result: FloatArray = np.where(np.isnan(u), np.nan, inside)
     return result
 
 

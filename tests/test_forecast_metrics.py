@@ -168,3 +168,98 @@ def test_resampled_calibration_terms_match_replicated_rows() -> None:
         assert terms.resolution[b] == pytest.approx(expected.resolution)
         assert terms.uncertainty[b] == pytest.approx(expected.uncertainty)
         assert terms.ece[b] == pytest.approx(expected.ece)
+
+
+def test_auc_by_hand_with_ties() -> None:
+    """On time: p = 0.9, 0.6, 0.3; late: p = 0.6, 0.6, 0.1. Of the 9 pairs, 0.9 wins 3, 0.6 wins
+    1 and ties 2 (1/2 each), 0.3 wins 1: AUC = (3 + 2 + 1) / 9 = 2/3."""
+    p, y = [0.9, 0.6, 0.6, 0.3, 0.6, 0.1], [1, 1, 0, 1, 0, 0]
+    assert metrics.auc(p, y) == pytest.approx(2 / 3)
+    on_time, late, index = metrics.value_counts(p, y)
+    assert (on_time.tolist(), late.tolist()) == ([0, 1, 1, 1], [1, 0, 2, 0])
+    assert index.tolist() == [3, 2, 2, 1, 2, 0]
+    # A point-mass forecaster: AUC = (1 + TPR - FPR) / 2 = (1 + 2/3 - 1/3) / 2.
+    assert metrics.auc([1, 1, 0, 1, 0, 0], [1, 1, 1, 0, 0, 0]) == pytest.approx(2 / 3)
+    assert metrics.auc([0.5] * 4, [1, 0, 1, 0]) == 0.5  # all ties
+    assert metrics.auc([0.2, 0.8], [0, 1]) == 1.0 and metrics.auc([0.8, 0.2], [0, 1]) == 0.0
+    assert math.isnan(metrics.auc([0.3, 0.4], [1, 1]))  # no late forecast
+    # Leading axes: two resamples of the counts at once.
+    stacked = metrics.auc_from_counts(np.stack([on_time, on_time]), np.stack([late, 2 * late]))
+    assert stacked == pytest.approx([2 / 3, 2 / 3])
+
+
+def test_auc_matches_the_pairwise_count_and_ignores_monotone_transforms() -> None:
+    rng = np.random.default_rng(4)
+    p = rng.integers(0, 21, size=400) / 20  # many ties
+    y = (rng.random(400) < 0.3 + 0.4 * p).astype(float)
+    pos, neg = p[y == 1], p[y == 0]
+    pairs = (pos[:, None] > neg[None, :]).sum() + 0.5 * (pos[:, None] == neg[None, :]).sum()
+    assert metrics.auc(p, y) == pytest.approx(pairs / (pos.size * neg.size))
+    assert metrics.auc(p**3, y) == pytest.approx(metrics.auc(p, y))
+
+
+def test_brier_skill_score_of_the_base_rate_forecaster_is_zero() -> None:
+    rng = np.random.default_rng(6)
+    y = (rng.random(1000) < 0.3).astype(float)
+    base = y.mean()
+    unc = base * (1 - base)
+    assert float(metrics.brier_skill_score(metrics.brier_score([base] * 1000, y), unc)) == (
+        pytest.approx(0.0, abs=1e-12)
+    )
+    assert float(metrics.brier_skill_score(metrics.brier_score(y, y), unc)) == 1.0
+    worse = float(metrics.brier_skill_score(metrics.brier_score(1 - y, y), unc))
+    assert worse == pytest.approx(1 - 1 / unc)  # always wrong: BS = 1
+    assert math.isnan(float(metrics.brier_skill_score(0.1, 0.0)))  # no outcome variance
+    replicates = metrics.brier_skill_score([0.1, 0.2], [0.2, 0.25])
+    assert replicates == pytest.approx([0.5, 0.2])
+
+
+def test_resampled_auc_matches_replicated_rows() -> None:
+    """Value counts per cluster, weighted by a resample, give the AUC of the rows of the drawn
+    clusters repeated as often as they were drawn (pairs across copies included)."""
+    rng = np.random.default_rng(7)
+    clusters = [(rng.integers(0, 11, size=9) / 10, rng.random(9) < 0.5) for _ in range(5)]
+    values = np.unique(np.concatenate([p for p, _ in clusters]))
+    counts = [
+        [np.bincount(np.searchsorted(values, p[y == outcome]), minlength=values.size)
+         for p, y in clusters]
+        for outcome in (1, 0)
+    ]  # fmt: skip
+    weights = metrics.cluster_resamples(len(clusters), 4, rng)
+    resampled = metrics.auc_from_counts(
+        weights @ np.array(counts[0]), weights @ np.array(counts[1])
+    )
+    for b, row in enumerate(weights):
+        p = np.concatenate([np.repeat(c[0], int(w)) for c, w in zip(clusters, row, strict=True)])
+        y = np.concatenate([np.repeat(c[1], int(w)) for c, w in zip(clusters, row, strict=True)])
+        assert resampled[b] == pytest.approx(metrics.auc(p, y))
+
+
+def test_pit_coverage_of_the_true_distribution_is_eighty_percent() -> None:
+    """Poisson(4) outcomes. Exact CDF: PIT coverage 0.8 within 5 standard errors (n = 20,000),
+    while the quantile interval [q_0.1, q_0.9] = [2, 7] covers F(7) - F(1) = 0.857. Ensembles of
+    200 samples from the true distribution: within 0.035 of 0.8 (n = 2,000); a biased one is not."""
+    rng = np.random.default_rng(12)
+    outcomes = rng.poisson(4.0, size=20_000)
+    below = [poisson_cdf(int(c) - 1, 4.0) for c in outcomes]
+    at = [poisson_cdf(int(c), 4.0) for c in outcomes]
+    covered = metrics.pit_covered(metrics.randomised_pit(below, at, rng))
+    assert abs(covered.mean() - 0.8) < 5 * math.sqrt(0.8 * 0.2 / len(outcomes))
+    quantile_covered = ((outcomes >= 2) & (outcomes <= 7)).mean()
+    assert poisson_cdf(7, 4.0) - poisson_cdf(1, 4.0) == pytest.approx(0.857, abs=1e-3)
+    assert quantile_covered > 0.84  # over-covers: the bounds carry their whole mass
+
+    def ensemble_coverage(forecast_mean: float) -> float:
+        pairs = []
+        for _ in range(2000):
+            scores = metrics.sample_scores(
+                rng.poisson(forecast_mean, size=200).tolist(), int(rng.poisson(4.0)), (0.5,)
+            )
+            pairs.append((scores.cdf_below, scores.cdf_at))
+        lower, upper = zip(*pairs, strict=True)
+        return float(metrics.pit_covered(metrics.randomised_pit(lower, upper, rng)).mean())
+
+    assert abs(ensemble_coverage(4.0) - 0.8) < 0.035
+    assert ensemble_coverage(7.0) < 0.6  # forecasts too high: PIT values pile up near 0
+    edges = metrics.pit_covered([0.1, 0.9, 0.0999, 0.9001, np.nan])
+    assert edges[:4].tolist() == [1.0, 1.0, 0.0, 0.0] and math.isnan(edges[4])
