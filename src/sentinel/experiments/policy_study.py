@@ -273,27 +273,32 @@ def missing_baselines(config: PolicyStudyConfig, tasks: Sequence[Task]) -> list[
 
 
 def estimate_duration_s(config: PolicyStudyConfig, tasks: Sequence[Task]) -> float:
-    """Wall time from one timed replication of every policy in the busiest scenario on the first
-    instance of each set (its cached baseline, else SGS-LFT), scaled by the replications of
-    every task and divided by the workers. Quieter scenarios take less, so this is an upper
-    estimate; missing baselines are not counted."""
+    """Rough wall time: one replication of every policy in the busiest scenario, timed on up to
+    three instances spread over each set (first, middle, last; their cached baselines, else
+    SGS-LFT), averaged per set, scaled by the replications of every task and divided by the
+    workers. Run times differ by an order of magnitude between instances, and quieter scenarios
+    take less, so the estimate is rough and usually high; missing baselines are not counted."""
     busiest = max(config.scenarios.expand(), key=lambda s: (s.lambda_a, s.mean_absence or 0))
     per_replication: dict[str, float] = {}
     for set_cfg in config.sets:
-        first = next((t for t in tasks if t.set_name == set_cfg.name), None)
-        if first is None:
+        mine = list({t.instance: t for t in tasks if t.set_name == set_cfg.name}.values())
+        if not mine:
             continue
-        instance = load_psplib(instance_path(first.set_name, first.instance, config.data_root))
-        cached = read_cached(instance, config.baseline_method, config.baseline_cache)
-        plan = (
-            cached.schedule
-            if cached is not None
-            else serial_sgs(instance, lft_priorities(instance), lower_is_better=True)
-        )
-        probe = Task(first.set_name, first.instance, first.c_star, busiest, first.seeds, config)
-        started = time.perf_counter()
-        task_runs(probe, instance, plan, first.seeds[:1])
-        per_replication[set_cfg.name] = time.perf_counter() - started
+        probes = [mine[i] for i in sorted({0, len(mine) // 2, len(mine) - 1})]
+        elapsed = 0.0
+        for task in probes:
+            instance = load_psplib(instance_path(task.set_name, task.instance, config.data_root))
+            cached = read_cached(instance, config.baseline_method, config.baseline_cache)
+            plan = (
+                cached.schedule
+                if cached is not None
+                else serial_sgs(instance, lft_priorities(instance), lower_is_better=True)
+            )
+            probe = Task(task.set_name, task.instance, task.c_star, busiest, task.seeds, config)
+            started = time.perf_counter()
+            task_runs(probe, instance, plan, task.seeds[:1])
+            elapsed += time.perf_counter() - started
+        per_replication[set_cfg.name] = elapsed / len(probes)
     total = sum(per_replication[t.set_name] * len(t.seeds) for t in tasks)
     return total / max(1, min(config.max_workers, len(tasks)))
 
@@ -419,9 +424,9 @@ def run_study(
         "estimated_duration_s": round(estimate, 1),
     }
     print(
-        f"run {run_id} -> {run_dir}\nestimated duration: ~{format_duration(estimate)} (one "
-        "replication of every policy timed on the first instance of each set, busiest scenario; "
-        "an upper estimate)",
+        f"run {run_id} -> {run_dir}\nestimated duration: ~{format_duration(estimate)} (rough: one "
+        "replication of every policy in the busiest scenario, timed on up to 3 instances spread "
+        "over each set)",
         flush=True,
     )
     if missing:

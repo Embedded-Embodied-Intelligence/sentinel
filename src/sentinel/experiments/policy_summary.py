@@ -636,7 +636,7 @@ def ontime_figure(path_stem: Path, analysis: Analysis) -> list[str]:
         handles,
         labels,
         loc="outside upper center",
-        ncols=min(len(labels), 3),
+        ncols=min(len(labels), 3 if len(analysis.sets) > 1 else 2),  # one panel: narrower
         frameon=False,
         fontsize=7,
         labelcolor=_INK,
