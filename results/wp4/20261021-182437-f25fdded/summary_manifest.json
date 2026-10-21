@@ -1,0 +1,46 @@
+{
+  "run_id": "20261021-182437-f25fdded",
+  "generator": "sentinel.experiments.policy_summary",
+  "generated_utc": "2026-10-21T18:44:34+00:00",
+  "git_commit": "8211f5b686401f7cccffc168191198904a3ddd7e",
+  "git_dirty": false,
+  "git_dirty_ignores": [
+    "results"
+  ],
+  "summary_settings_source": "run config",
+  "summary_settings": {
+    "bootstrap_resamples": 1000,
+    "bootstrap_seed": 2026,
+    "reference_policy": "no_reaction",
+    "table": "table_wp4_sensitivity",
+    "figure_prefix": "fig_wp4_sensitivity"
+  },
+  "inputs": [
+    {
+      "path": "results.csv.gz",
+      "bytes": 205653,
+      "sha256": "8fc51efdfa43e0d5fdc4c8b1bbb2454e08e0dce27f5a48c412d94c6d014c338a"
+    },
+    {
+      "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",
+      "bytes": 3800112,
+      "sha256": "e62e45724725adb363fdf03ea473d32b31fdb44cc4071d84eb59796df90a10aa"
+    }
+  ],
+  "wp2b_check": {
+    "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",
+    "available": true,
+    "worlds_checked": 960,
+    "makespan_mismatches": 0,
+    "seed_mismatches": 0,
+    "missing": 0
+  },
+  "outputs": [
+    "summary.md",
+    "table_wp4_sensitivity.tex",
+    "fig_wp4_sensitivity_ontime.pdf",
+    "fig_wp4_sensitivity_ontime.png",
+    "fig_wp4_sensitivity_tradeoff.pdf",
+    "fig_wp4_sensitivity_tradeoff.png"
+  ]
+}
