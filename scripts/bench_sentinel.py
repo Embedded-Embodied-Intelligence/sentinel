@@ -301,7 +301,9 @@ def main() -> None:
         print(
             f"\n- {len(records)} runs in {wall:.1f} s wall with {args.workers} workers "
             f"({sum(r.wall_time_s for r in records):.1f} s of run time); "
-            f"{sum(r.rejected for r in records)} rejected operations; {wp2b_check(records)}\n"
+            f"{sum(r.rejected for r in records)} rejected operations, "
+            f"{sum(r.stats.fallbacks for r in records)} CP-SAT fallbacks, "
+            f"{sum(r.truncated for r in records)} truncated runs; {wp2b_check(records)}\n"
         )
     if args.lambdas:
         by_lambda: dict[float, list[PolicyRecord]] = {}
