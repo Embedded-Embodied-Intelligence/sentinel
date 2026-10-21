@@ -1,0 +1,132 @@
+{
+  "run_id": "20261021-091408-f3e5892e",
+  "generator": "sentinel.experiments.forecast_summary",
+  "generated_utc": "2026-10-21T10:16:21+00:00",
+  "git_commit": "e81584c8159571db21a165fdfd397b3dca8b9711",
+  "git_dirty": false,
+  "git_dirty_ignores": [
+    "results"
+  ],
+  "summary_settings_source": "configs/wp3_misspec.toml",
+  "summary_settings": {
+    "bins": 10,
+    "thresholds": [
+      0.5,
+      0.8
+    ],
+    "warning_from": 0.2,
+    "log_clip": 0.005,
+    "bootstrap_resamples": 1000,
+    "bootstrap_seed": 2026,
+    "pit_seed": 2026,
+    "differences": [
+      [
+        "mc_k0.5",
+        "mc_k1"
+      ],
+      [
+        "mc_k2",
+        "mc_k1"
+      ],
+      [
+        "mc_pert_wide",
+        "mc_k1"
+      ]
+    ],
+    "reliability_checkpoints": [
+      0.0,
+      0.4,
+      0.8
+    ],
+    "headline_checkpoints": [
+      0.0,
+      0.4,
+      0.8
+    ],
+    "reference_run": "results/wp3/20261021-062709-2a8ba557",
+    "reference_forecasters": [
+      "mc_no_future",
+      "deterministic"
+    ],
+    "table": "table_wp3_misspec",
+    "warning_table": "table_wp3_misspec_warning",
+    "plan_stage_table": "table_wp3_misspec_plan_stage",
+    "headline_table": "table_wp3_misspec_headline",
+    "figure_prefix": "fig_wp3_misspec"
+  },
+  "inputs": [
+    {
+      "path": "forecasts.csv.gz",
+      "bytes": 304627,
+      "sha256": "43a52556631aa53830a4c191280c597191529dacf785d7013a2058095a7696b7"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 19347,
+      "sha256": "5795af83e393211ffce5d5d6cb541f3b8bf646bb26d5424fa1392f188d4a0fe1"
+    },
+    {
+      "path": "configs/wp3_misspec.toml",
+      "bytes": 2098,
+      "sha256": "96296f069db29bea36cf6ee9b1f431221a89fbd77fa13b9af4d0898eadf88160"
+    },
+    {
+      "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",
+      "bytes": 3800112,
+      "sha256": "e62e45724725adb363fdf03ea473d32b31fdb44cc4071d84eb59796df90a10aa"
+    },
+    {
+      "path": "results/wp3/20261021-062709-2a8ba557/manifest.json",
+      "bytes": 111255,
+      "sha256": "4574c18f0469bbb17698b38af200f59dd85ecbf0f78eb7532822972c517ce0fa"
+    },
+    {
+      "path": "results/wp3/20261021-062709-2a8ba557/forecasts.csv.gz",
+      "bytes": 5747600,
+      "sha256": "8ff2714dc01763a208bf06d56f13d2de0b0a28939085ef73336c1d0dc41eb4f0"
+    },
+    {
+      "path": "configs/wp3_calibration.toml",
+      "bytes": 2636,
+      "sha256": "5afb9a7c17e42b7b300ea363491745a0f4bf38b87648e1a4f041a2c781aec60e"
+    }
+  ],
+  "wp2b_check": {
+    "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",
+    "available": true,
+    "worlds_checked": 480,
+    "makespan_mismatches": 0,
+    "seed_mismatches": 0,
+    "missing": 0
+  },
+  "reference_check": {
+    "path": "results/wp3/20261021-062709-2a8ba557",
+    "available": true,
+    "run_id": "20261021-062709-2a8ba557",
+    "forecasters": [
+      "mc_no_future",
+      "deterministic"
+    ],
+    "rows_joined": 4800,
+    "seed_mismatches": 0,
+    "makespan_mismatches": 0,
+    "missing": 0
+  },
+  "outputs": [
+    "summary.md",
+    "table_wp3_misspec.tex",
+    "table_wp3_misspec_warning.tex",
+    "table_wp3_misspec_plan_stage.tex",
+    "table_wp3_misspec_headline.tex",
+    "table_wp3_misspec_delta0.3.tex",
+    "table_wp3_misspec_warning_delta0.3.tex",
+    "table_wp3_misspec_plan_stage_delta0.3.tex",
+    "table_wp3_misspec_headline_delta0.3.tex",
+    "fig_wp3_misspec_reliability.pdf",
+    "fig_wp3_misspec_reliability.png",
+    "fig_wp3_misspec_brier.pdf",
+    "fig_wp3_misspec_brier.png",
+    "fig_wp3_misspec_pit.pdf",
+    "fig_wp3_misspec_pit.png"
+  ]
+}
