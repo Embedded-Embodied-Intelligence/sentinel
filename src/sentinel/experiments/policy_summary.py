@@ -410,7 +410,7 @@ def summary_markdown(
         f"{settings.bootstrap_seed}); on time in percentage points.",
         seed_check.line(),
         f"- Checks: {sum(r.rejected for r in rows)} rejected operations, "
-        f"{sum(r.fallbacks for r in rows)} CP-SAT fallbacks in {stages} stages, "
+        f"{sum(r.fallbacks for r in rows)} CP-SAT fallbacks in {stages:,} stages, "
         f"{sum(r.truncated for r in rows)} truncated runs.",
     ]
     deltas = config.deltas
@@ -584,30 +584,31 @@ def _marker(policy: str) -> str:
 
 def ontime_figure(path_stem: Path, analysis: Analysis) -> list[str]:
     """On time against 100 lambda_A, one line per policy with 95 % Wilson error bars (dodged
-    sideways so that they stay apart), a column of panels per set and a row per delta_D."""
+    sideways so that they stay apart), a column of panels per set and a row per delta_D with a
+    common y axis."""
     config = analysis.config
     deltas = config.deltas
     xs = [100 * s.lambda_a for s in analysis.scenarios]
     span = (max(xs) - min(xs)) or 1.0
     fig = Figure(figsize=(3.2 * len(analysis.sets), 2.3 * len(deltas)), layout="constrained")
-    axes = fig.subplots(len(deltas), len(analysis.sets), squeeze=False, sharex=True)
+    axes = fig.subplots(len(deltas), len(analysis.sets), squeeze=False, sharex=True, sharey="row")
     n = len(analysis.policies)
+    tops = [0.0] * len(deltas)
     for col, set_name in enumerate(analysis.sets):
         for row, delta in enumerate(deltas):
             ax = axes[row][col]
-            top = 0.0
             for k, policy in enumerate(analysis.policies):
                 cells = [analysis.cell(set_name, s.name, policy) for s in analysis.scenarios]
                 points = [(x, c) for x, c in zip(xs, cells, strict=True) if c is not None]
                 if not points:
                     continue
-                shift = (k - (n - 1) / 2) * 0.012 * span
+                shift = (k - (n - 1) / 2) * 0.02 * span
                 px = [x + shift for x, _ in points]
                 py = [100 * c.share(row) for _, c in points]
                 # Bar lengths; a Wilson bound at a share of 0 or 1 can miss it by rounding.
                 low = [max(0.0, 100 * (c.share(row) - c.interval(row)[0])) for _, c in points]
                 high = [max(0.0, 100 * (c.interval(row)[1] - c.share(row))) for _, c in points]
-                top = max(top, *(y + h for y, h in zip(py, high, strict=True)))
+                tops[row] = max(tops[row], *(y + h for y, h in zip(py, high, strict=True)))
                 ax.errorbar(
                     px,
                     py,
@@ -621,7 +622,6 @@ def ontime_figure(path_stem: Path, analysis: Analysis) -> list[str]:
                     clip_on=False,
                     label=POLICY_LABELS.get(policy, policy),
                 )
-            ax.set_ylim(0, max(10.0, 10 * math.ceil(top / 10)))
             ax.set_xticks(xs, [f"{x:g}" for x in xs])
             ax.set_title(rf"{set_name.upper()}, $\delta_D = {delta:g}$", fontsize=9, color=_INK)
             if row == len(deltas) - 1:
@@ -629,6 +629,8 @@ def ontime_figure(path_stem: Path, analysis: Analysis) -> list[str]:
             if col == 0:
                 ax.set_ylabel("On time [%]", fontsize=8, color=_INK)
             _style(ax)
+    for row, top in enumerate(tops):
+        axes[row][0].set_ylim(0, max(10.0, 10 * math.ceil(top / 10)))
     handles, labels = axes[0][0].get_legend_handles_labels()
     fig.legend(
         handles,
@@ -705,7 +707,11 @@ def tradeoff_figure(path_stem: Path, analysis: Analysis) -> list[str]:
             if col == 0:
                 ax.set_ylabel(rf"On time [%], $\delta_D = {delta:g}$", fontsize=7, color=_INK)
             _style(ax)
-    axes[0][0].legend(fontsize=6, frameon=False, loc="best", labelcolor=_INK)
+    legend = axes[0][0].legend(
+        fontsize=6, frameon=False, loc="best", labelcolor=_INK, title=r"labels: $\lambda_A$ [%]"
+    )
+    legend.get_title().set_fontsize(6)
+    legend.get_title().set_color(_INK_2)
     return _save(fig, path_stem)
 
 
