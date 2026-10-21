@@ -1,12 +1,13 @@
 """Checked runs of the compared policies on one PSPLIB instance (WP4a; spec sections 7, 7.1).
 
 `run_policies` takes the instance's cached baseline plan (computing and storing it if missing)
-and simulates every (replication, policy) in debug mode, so a RESEQ plan that fails
-`validate_residual` raises. Every realised schedule is checked (spec sections 1.3, 3.1 and 4)
-and a violation raises `InvalidScheduleError`. The seed of (instance, replication r) is the
-WP2b one, derive_seed(base_seed, set, instance, str(r)), shared by all policies (common random
-numbers, spec section 2.3), so the NoReaction runs are WP2b's worlds. A run uses max_days of the
-largest deadline slack; whether each deadline is met is evaluated post hoc, as in WP2b.
+and simulates every (replication, policy) with `run_checked`: in debug mode, so a RESEQ plan
+that fails `validate_residual` raises, and with every realised schedule checked (spec sections
+1.3, 3.1 and 4), a violation raising `InvalidScheduleError`. The seed of (instance, replication
+r) is the WP2b one, derive_seed(base_seed, set, instance, str(r)), shared by all policies
+(common random numbers, spec section 2.3), so the NoReaction runs are WP2b's worlds. A run uses
+max_days of the largest deadline slack; whether each deadline is met is evaluated post hoc, as
+in WP2b.
 """
 
 import time
@@ -68,7 +69,8 @@ class PolicyRecord:
     total_cost: float
     deviation: float
     substituted: int
-    handover_days: int
+    onboarding_days: int
+    handover_days: float
     reseqs: int
     nervousness: int
     rejected: int
@@ -88,22 +90,17 @@ def run_policies(task: PolicyTask) -> list[PolicyRecord]:
     records: list[PolicyRecord] = []
     for replication, seed in enumerate(task.seeds):
         for name in task.policies:
-            policy = make_policy(name, deterministic_time_limit=task.deterministic_time_limit)
-            began = time.perf_counter()
-            result = simulate(
+            result, stats, wall_time_s = run_checked(
                 instance,
                 plan.schedule,
-                policy,
+                name,
                 seed,
                 pert=task.pert,
                 disruptions=task.disruptions,
                 deadline=deadlines[-1],  # max_days of the largest delta_D
                 review_period=task.review_period,
-                debug=True,
+                deterministic_time_limit=task.deterministic_time_limit,
             )
-            wall_time_s = time.perf_counter() - began
-            check_run(instance, result, f"{instance.name}, {name}, seed {seed}")
-            stats = getattr(policy, "stats", None)
             records.append(
                 PolicyRecord(
                     set_name=task.set_name,
@@ -120,18 +117,55 @@ def run_policies(task: PolicyTask) -> list[PolicyRecord]:
                         for deadline in deadlines
                     ),
                     total_cost=result.total_cost,
-                    deviation=realised_deviation(result, plan.schedule, instance.n_real),
+                    deviation=realised_deviation(result, plan.schedule, instance),
                     substituted=result.n_substituted,
+                    onboarding_days=result.onboarding_days,
                     handover_days=result.handover_days,
                     reseqs=result.reseqs,
                     nervousness=result.nervousness,
                     rejected=len(result.rejected),
                     epochs=result.n_epochs,
-                    stats=stats if isinstance(stats, DecisionStats) else DecisionStats(),
+                    stats=stats,
                     wall_time_s=wall_time_s,
                 )
             )
     return records
+
+
+def run_checked(
+    instance: ProjectInstance,
+    plan: Schedule,
+    policy_name: str,
+    seed: int,
+    *,
+    pert: PertParams,
+    disruptions: DisruptionParams,
+    deadline: int,
+    review_period: int,
+    deterministic_time_limit: float,
+    cp_seed: int = 0,
+) -> tuple[SimulationResult, DecisionStats, float]:
+    """One run of a fresh policy in debug mode with its realised schedule checked: the result,
+    the policy's decision statistics (empty for NoReaction) and the wall time of `simulate`."""
+    policy = make_policy(
+        policy_name, deterministic_time_limit=deterministic_time_limit, seed=cp_seed
+    )
+    began = time.perf_counter()
+    result = simulate(
+        instance,
+        plan,
+        policy,
+        seed,
+        pert=pert,
+        disruptions=disruptions,
+        deadline=deadline,
+        review_period=review_period,
+        debug=True,
+    )
+    wall_time_s = time.perf_counter() - began
+    check_run(instance, result, f"{instance.name}, {policy_name}, seed {seed}")
+    stats = getattr(policy, "stats", None)
+    return result, stats if isinstance(stats, DecisionStats) else DecisionStats(), wall_time_s
 
 
 def check_run(instance: ProjectInstance, result: SimulationResult, where: str) -> None:
@@ -144,15 +178,18 @@ def check_run(instance: ProjectInstance, result: SimulationResult, where: str) -
         raise InvalidScheduleError(f"{where}: {len(problems)} violations, first: {problems[0]}")
 
 
-def realised_deviation(result: SimulationResult, baseline: Schedule, n_real: int) -> float:
-    """(1/n) sum_{j <= n} |S_j^real - S_j^0| against the baseline plan (spec section 7.1).
+def realised_deviation(
+    result: SimulationResult, baseline: Schedule, instance: ProjectInstance
+) -> float:
+    """(1/|J+|) sum_{j in J+} |S_j^real - S_j^0| against the baseline plan (spec section 7.1).
 
-    j runs over the source and the n real activities of the instance (the sink and D3
-    activities are left out); an activity that a truncated run never started counts with
-    S_j^real = max_days.
+    J+ holds the original activities with p_j > 0: the dummies, milestones and D3 activities are
+    left out. An activity that a truncated run never started counts with S_j^real = max_days.
     """
-    total = 0
-    for j in range(n_real + 1):
-        start = result.starts[j]
-        total += abs((result.max_days if start is None else start) - baseline.starts[j])
-    return total / n_real if n_real else 0.0
+    total = count = 0
+    for act in instance.activities:
+        if act.duration > 0:
+            start = result.starts[act.id]
+            total += abs((result.max_days if start is None else start) - baseline.starts[act.id])
+            count += 1
+    return total / count if count else 0.0

@@ -121,8 +121,8 @@ class ResidualSolution(BaseModel):
     limit falls back (`fallbacks` counts the stages, `fallback` says whether any did): stage 1
     to the residual SGS with LFT priority, stage 2 of "stable" to the stage-1 solution.
     `objective` is the makespan, or for "stable" the deviation sum |S_j - S_j^t| from the
-    current plan. `deterministic_time` adds up the CP-SAT stages; `wall_time_s` covers the
-    whole call.
+    current plan over the deviation set (`ResidualProblem.deviation`). `deterministic_time` adds
+    up the CP-SAT stages; `wall_time_s` covers the whole call.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -151,10 +151,12 @@ def solve_residual(
     which fixed intervals take away the unavailable units of each capacity step, and every start
     in [release, H] for H = the makespan of the residual SGS with LFT priority, a valid bound.
     Stage 1 minimises the makespan (the sink's start) C_1; "stable" then minimises
-    sum_j |S_j - S_j^t| over the residual activities subject to makespan <= C_1. Each stage runs
-    with one worker, `seed` and `deterministic_time_limit` (no wall-clock limit), so the result
-    does not depend on machine load. The hint is `hint` (the current plan) if it is a feasible
-    solution within H, else the SGS schedule; stage 2 is hinted with the stage-1 solution.
+    sum_j |S_j - S_j^t| over the deviation set U'_t (unstarted activities with p_j > 0 not
+    inserted today, `ResidualProblem.deviation_positions`) subject to makespan <= C_1. Each
+    stage runs with one worker, `seed` and `deterministic_time_limit` (no wall-clock limit), so
+    the result does not depend on machine load. The hint is `hint` (the current plan) if it is a
+    feasible solution within H, else the SGS schedule; stage 2 is hinted with the stage-1
+    solution.
     """
     began = time.perf_counter()
     sgs = residual_sgs(problem)
@@ -178,7 +180,8 @@ def solve_residual(
         model, starts = _model(problem, horizon)
         model.add(starts[sink] <= makespan)
         deviations = []
-        for i, (start, target) in enumerate(zip(starts, planned, strict=True)):
+        for i in problem.deviation_positions():
+            start, target = starts[i], planned[i]
             deviation = model.new_int_var(0, horizon + abs(target), f"D{ids[i]}")
             model.add(deviation >= start - target)
             model.add(deviation >= target - start)
@@ -191,7 +194,7 @@ def solve_residual(
         else:
             values = second
         makespan = values[problem.sink]
-        value = sum(abs(values[j] - target) for j, target in zip(ids, planned, strict=True))
+        value = problem.deviation(values)
     return ResidualSolution(
         status=status,
         starts=dict(values),

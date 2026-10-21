@@ -40,7 +40,8 @@ class ResidualProblem(BaseModel):
     holds the capacity of role k as steps (first day, capacity): the first on `day`, the last
     one lasts for ever and equals `capacities[k]` = R_k. `estimated_finish` lists (id, F-hat_j)
     of the started activities and `sink` is the id of the dummy end, whose start is the
-    residual makespan.
+    residual makespan. `inserted_today` holds the ids of the D3 activities inserted on `day`;
+    with the milestones and the sink they are left out of the deviation set (spec section 7).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -56,6 +57,7 @@ class ResidualProblem(BaseModel):
     profile: tuple[tuple[tuple[NonNegativeInt, NonNegativeInt], ...], ...]
     estimated_finish: tuple[tuple[NonNegativeInt, NonNegativeInt], ...]
     sink: NonNegativeInt
+    inserted_today: tuple[NonNegativeInt, ...] = ()
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -67,6 +69,8 @@ class ResidualProblem(BaseModel):
             raise ValueError("activity ids must be distinct and increasing")
         if self.sink not in self.activities:
             raise ValueError(f"the sink {self.sink} must be unstarted")
+        if not set(self.inserted_today) <= set(self.activities):
+            raise ValueError("activities inserted today must be unstarted")
         n_roles = len(self.capacities)
         if len(self.profile) != n_roles or any(len(d) != n_roles for d in self.demands):
             raise ValueError(f"need a profile and demands for each of {n_roles} roles")
@@ -90,6 +94,22 @@ class ResidualProblem(BaseModel):
     def planned_starts(self) -> dict[int, int]:
         """The current plan of the residual activities, by id."""
         return dict(zip(self.activities, self.planned, strict=True))
+
+    def deviation_positions(self) -> list[int]:
+        """Positions of the deviation set U'_t (spec section 7): the unstarted activities with
+        p_j > 0 that were not inserted on `day`; milestones, the sink and fresh D3 activities
+        are left out."""
+        fresh = set(self.inserted_today)
+        return [
+            i
+            for i, (j, p) in enumerate(zip(self.activities, self.durations, strict=True))
+            if p > 0 and j not in fresh
+        ]
+
+    def deviation(self, starts: Mapping[int, int]) -> int:
+        """sum_{j in U'_t} |S_j - S_j^t| of `starts` (by id) from the current plan (spec 7)."""
+        ids, planned = self.activities, self.planned
+        return sum(abs(starts[ids[i]] - planned[i]) for i in self.deviation_positions())
 
 
 def planning_view(observation: Observation) -> ResidualProblem:
@@ -169,6 +189,7 @@ def planning_view(observation: Observation) -> ResidualProblem:
         ),
         estimated_finish=tuple(estimated),
         sink=instance.sink_id,
+        inserted_today=tuple(act.id for act in observation.inserted if act.day == t),
     )
 
 

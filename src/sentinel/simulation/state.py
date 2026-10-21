@@ -1,5 +1,6 @@
 """Mutable engine state and the agent's frozen observation of it (spec section 3)."""
 
+import math
 import operator
 from bisect import insort
 from collections.abc import Sequence
@@ -18,6 +19,14 @@ RUNNING: Final = "running"
 PAUSED: Final = "paused"
 DONE: Final = "done"
 HANDOVER_FACTOR: Final = 0.3  # alpha of the handover cost h_j (spec sections 3 and 8)
+
+
+def onboarding_days(work: float, handover_factor: float = HANDOVER_FACTOR) -> int:
+    """o_j = max(1, ceil(alpha e_j)): the crew-member days a substitute needs before it
+    contributes, after e_j = `work` full-crew days (spec section 3); a SUBST replacing m_j
+    members adds m_j o_j crew-member days, h_j = m_j o_j / M_j full-crew days. The ceiling
+    ignores rounding noise below 1e-9."""
+    return max(1, math.ceil(handover_factor * work - 1e-9))
 
 
 def _unset(value: object) -> bool:
@@ -73,8 +82,8 @@ class Observation(BaseModel):
     `assigned` holds the crew of every started activity, reserved until it completes, absent
     members included (spec section 3.1 a); a member replaced by SUBST has left it (spec section
     4). `work_increases` lists every observed D2 shock as (activity, e_j before the shock,
-    factor F), and `handovers` every SUBST handover as (activity, e_j at the handover, h_j
-    full-crew days added).
+    factor F), and `handovers` every SUBST handover as (activity, e_j at the handover, work
+    added m_j o_j in crew-member days, i.e. h_j M_j; spec section 3).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -436,18 +445,19 @@ def work_history(observation: Observation) -> dict[int, list[tuple[int, float, f
     """Observed changes of the remaining work of every started activity, in crew-member days
     and in the order they happened: (work done at the change, factor, work added).
 
-    A D2 shock multiplies the remaining work by F and adds nothing; a SUBST handover adds
-    h_j M_j with factor 1. At equal work done a handover (step 3) comes before a shock (step 5
-    of the same day, before any progress); shocks and handovers keep their observed order.
+    A D2 shock multiplies the remaining work by F and adds nothing; a SUBST handover adds its
+    m_j o_j = h_j M_j crew-member days with factor 1. At equal work done a handover (step 3)
+    comes before a shock (step 5 of the same day, before any progress); shocks and handovers keep
+    their observed order (spec section 5.1).
     """
     changes: dict[int, list[tuple[int, int, int, float, float]]] = {}
     for i, (j, work_done, factor) in enumerate(observation.work_increases):
         unit = max(1, sum(nominal_activity(observation, j)[1]))
         entry = (crew_member_days(work_done, unit), 1, i, factor, 0.0)
         changes.setdefault(j, []).append(entry)
-    for i, (j, work_done, days) in enumerate(observation.handovers):
+    for i, (j, work_done, added) in enumerate(observation.handovers):
         unit = max(1, sum(nominal_activity(observation, j)[1]))
-        entry = (crew_member_days(work_done, unit), 0, i, 1.0, float(days * unit))
+        entry = (crew_member_days(work_done, unit), 0, i, 1.0, float(added))
         changes.setdefault(j, []).append(entry)
     return {
         j: [(at, factor, added) for at, _, _, factor, added in sorted(entries)]

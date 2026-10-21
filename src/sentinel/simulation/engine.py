@@ -4,20 +4,28 @@ Every day t runs the six steps of spec section 3: (1) realise D1 and D3, (2) upd
 whose presence changed, (3) let the policy decide at a decision epoch, (4) dispatch in order of
 the planned start, (5) draw D2 and progress every running activity by its present share of the
 crew, (6) close activities without remaining work; section 3.1 fixes the details, (a) the
-partial crews. Step 3 applies the operations of spec section 4 (`Run.apply`): SUBST and RESEQ.
-The loop works on the plain lists of `EngineState`; pydantic models are built only for events,
-observations and the result. `Run` holds the loop: `simulate` runs it from day 0 of a fresh
-state, and rollouts continue a state rebuilt from an observation (`Run.resume`), to which they
-may first apply a decision with the same `Run.apply`.
+partial crews and (g) the decision epochs, absence returns included. Step 3 applies the
+operations of spec section 4 (`Run.apply`): SUBST and RESEQ. The loop works on the plain lists
+of `EngineState`; pydantic models are built only for events, observations and the result. `Run`
+holds the loop: `simulate` runs it from day 0 of a fresh state, and rollouts continue a state
+rebuilt from an observation (`Run.resume`), to which they may first apply a decision with the
+same `Run.apply`.
 """
 
 import math
-import operator
 from bisect import insort
 from collections.abc import Collection, Sequence
 from typing import assert_never
 
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat, NonNegativeInt, PositiveInt
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveFloat,
+    PositiveInt,
+)
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
@@ -48,6 +56,7 @@ from sentinel.simulation.state import (
     WorkSegment,
     day_limit,
     nominal_world,
+    onboarding_days,
     state_from_observation,
 )
 from sentinel.simulation.uncertainty import PertParams, realised_duration, role_costs
@@ -73,8 +82,9 @@ def _unset(value: object) -> bool:
 
 class Substitution(BaseModel):
     """An applied SUBST (spec section 4): on `day` the absent members `replaced` of `activity`
-    left its crew and the idle `workers` took their slots (same order); `handover` full-crew
-    days h_j were added to its remaining work."""
+    left its crew and the idle `workers` took their slots (same order). Each substitute needs
+    `onboarding` crew-member days o_j, so m_j o_j crew-member days, `handover` = h_j =
+    m_j o_j / M_j full-crew days, were added to its remaining work (spec section 3)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -82,7 +92,8 @@ class Substitution(BaseModel):
     activity: NonNegativeInt
     replaced: tuple[NonNegativeInt, ...]
     workers: tuple[NonNegativeInt, ...]
-    handover: PositiveInt
+    onboarding: PositiveInt
+    handover: PositiveFloat
 
 
 class Rejection(BaseModel):
@@ -144,7 +155,12 @@ class SimulationResult(BaseModel):
         return sum(len(s.replaced) for s in self.substitutions)
 
     @property
-    def handover_days(self) -> int:
+    def onboarding_days(self) -> int:
+        """Crew-member days of onboarding added by SUBST, the sum of m_j o_j (spec 3, 7.1)."""
+        return sum(len(s.replaced) * s.onboarding for s in self.substitutions)
+
+    @property
+    def handover_days(self) -> float:
         """Full-crew days added by SUBST handovers, the sum of h_j (spec sections 3, 7.1)."""
         return sum(s.handover for s in self.substitutions)
 
@@ -168,8 +184,9 @@ def simulate(
     """Execute `plan` under `policy` for one replication seed (spec sections 2-3).
 
     The run ends when the sink completes, or after day `max_days` = 5 D (5 sum p_j without a
-    deadline) with `truncated = True`. Decision epochs are the days with a D1 or D3 event, the
-    days after a D2 event and the days t with t % review_period == 0; a passive policy (see
+    deadline) with `truncated = True`. Decision epochs are the days with a D1 event (an absence
+    onset or return) or a D3 event, the days after a D2 event and the days t with
+    t % review_period == 0; a passive policy (see
     `Policy`) is not consulted there. Each worker-day of work costs c_k (default 1.0); absent
     crew members do not work and cost nothing. SUBST handovers use alpha = `handover_factor`;
     with `debug`, a RESEQ plan that fails `validate_residual` raises instead of being rejected
@@ -335,7 +352,7 @@ class Run:
         its plan must pass `validate_residual` on the planning view of the current state, and
         one that does not is rejected and counted in `infeasible_reseqs`, or raises
         AssertionError in `debug` mode. The decision's changes of planned starts count towards
-        `nervousness`.
+        `nervousness` if they belong to the deviation set U'_t (`_replanned`).
         """
         state = self.state
         t = state.day
@@ -370,7 +387,7 @@ class Run:
                 case _:
                     assert_never(op)
         if before is not None:
-            self.nervousness += sum(map(operator.ne, before, state.plan))
+            self.nervousness += _replanned(state, before)
 
     def close_day(self, t: int, epoch: bool) -> bool:
         """Steps 4-6 of day t; returns True once the sink is complete."""
@@ -452,10 +469,12 @@ def _absences(
     returns: dict[int, list[int]],
     events: list[Event] | None,
 ) -> tuple[bool, list[int]]:
-    """D1: returns of day t, then onsets; returns (any onset, activities whose crew changed)."""
+    """D1: returns of day t, then onsets; returns (any return or onset, activities whose crew
+    changed). Both make day t a decision epoch (spec section 3.1 g)."""
     present, idle, role, busy = state.present, state.idle, state.role, state.busy
     crews: list[int] = []
-    for w in returns.pop(t, []):
+    back = returns.pop(t, [])
+    for w in back:
         present[w] = True
         state.return_day[w] = -1
         state.absent_since[w] = None
@@ -478,7 +497,7 @@ def _absences(
             idle[role[w]].remove(w)
         if events is not None:
             events.append(Absence(day=t, worker=w, length=length, announced=announced))
-    return bool(onsets), crews
+    return bool(back or onsets), crews
 
 
 def _update_crew(state: EngineState, j: int, t: int) -> None:
@@ -632,9 +651,10 @@ def _substitute(state: EngineState, op: Subst, t: int) -> Substitution | str:
     present worker in no crew, and per role there must be as many absent members as
     substitutes. Within a role, the substitutes in the given order replace the absent members
     in increasing id order and take their slots; the replaced members leave the crew at once
-    and are idle when they return. h_j = max(1, ceil(alpha e_j m_j / M_j)) full-crew days are
-    added to the remaining work (the ceiling ignores rounding noise below 1e-9), and the crew
-    goes on at its new rate from today (`_update_crew`).
+    and are idle when they return. Each of the m_j substitutes needs o_j = max(1, ceil(alpha
+    e_j)) crew-member days of onboarding (`onboarding_days`), so m_j o_j crew-member days,
+    h_j = m_j o_j / M_j full-crew days, are added to the remaining work, and the crew goes on at
+    its new rate from today (`_update_crew`).
     """
     j = op.activity
     status = state.status
@@ -666,22 +686,38 @@ def _substitute(state: EngineState, op: Subst, t: int) -> Substitution | str:
         replaced[slots.pop(0)] = w
     unit = state.unit[j]  # M_j
     work = state.done[j] / unit  # e_j in full-crew days
-    handover = max(1, math.ceil(state.handover_factor * work * len(replaced) / unit - 1e-9))
-    state.remaining[j] += handover * unit
+    onboarding = onboarding_days(work, state.handover_factor)  # o_j per substitute
+    added = len(replaced) * onboarding  # m_j o_j crew-member days = h_j M_j
+    state.remaining[j] += added
     idle = state.idle
     for old, new in replaced.items():
         busy[old] = -1
         busy[new] = j
         idle[role[new]].remove(new)
     state.assigned[j] = tuple(replaced.get(w, w) for w in crew)
-    state.handovers.append((j, work, handover))
+    state.handovers.append((j, work, added))
     _update_crew(state, j, t)
     return Substitution(
         day=t,
         activity=j,
         replaced=tuple(replaced),
         workers=tuple(replaced.values()),
-        handover=handover,
+        onboarding=onboarding,
+        handover=added / unit,
+    )
+
+
+def _replanned(state: EngineState, before: Sequence[int]) -> int:
+    """Activities of the deviation set U'_t whose planned start differs from `before` (spec
+    sections 7 and 7.1): p_j > 0 and not inserted on the current day, so milestones, the sink
+    and fresh D3 activities do not count; a RESEQ only moves unstarted activities."""
+    t = state.day
+    fresh = {act.id for act in state.inserted if act.day == t}
+    duration = state.duration
+    return sum(
+        1
+        for j, (old, new) in enumerate(zip(before, state.plan, strict=True))
+        if old != new and duration[j] > 0 and j not in fresh
     )
 
 

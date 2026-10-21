@@ -2,7 +2,7 @@
 
 Usage:
     uv run python scripts/bench_policies.py [--views 10] [--view-limits 0.5 0.05]
-        [--runs j30:20:3 --runs j60:20:3] [--cp-limit 0.5] [--policies ...]
+        [--runs j30:20:3 --runs j60:20:3] [--cp-limit 0.1] [--policies ...]
         [--lambdas j30:10 --lambdas j60:10] [--lambda-cp-limit 0.05] [--workers 4]
 
 1. Planning views (this process): NoReaction worlds of every (480 / views)-th instance (seed of
@@ -12,7 +12,8 @@ Usage:
    did not prove optimality and the mean change of the makespan and the deviation found.
 2. Policy runs (`--runs set:instances:seeds`): the five policies at lambda_A = 0.01 with T_cp =
    `--cp-limit`, every run checked in debug mode (`run_policies`); NoReaction makespans are
-   compared with the committed WP2b results.
+   compared with the committed WP2b results. Means per run, and the mean onboarding days o_j
+   per substituted member (spec section 3).
 3. lambda_A sample (`--lambdas set:instances`, one seed): the five policies at every lambda_A of
    spec section 8 with T_cp = `--lambda-cp-limit`, for the duration estimate.
 
@@ -39,6 +40,7 @@ from sentinel.experiments.policy_runs import WP2B_BASELINE, PolicyRecord, Policy
 from sentinel.experiments.runs import derive_seed
 from sentinel.policies.no_reaction import NoReaction
 from sentinel.policies.registry import COMPARED
+from sentinel.policies.resolve import T_CP
 from sentinel.scheduling.cpsat import solve_residual
 from sentinel.scheduling.residual import planning_view, residual_sgs
 from sentinel.simulation.baselines import DEFAULT_CACHE_ROOT, cached_baseline
@@ -102,9 +104,9 @@ def policy_table(records: Sequence[PolicyRecord]) -> None:
     print(
         "| Set | Policy | Runs | Mean s | p95 s | Max s | Epochs | Decision ms / epoch "
         "| RESEQs | Fallbacks / CP-SAT stages | On time δ=0.2 | Deviation | Nervousness "
-        "| Substituted | Handover days | C / C* |"
+        "| Substituted | Handover days | Onboarding days / substitution | C / C* |"
     )
-    print("| --- | --- |" + " ---: |" * 14)
+    print("| --- | --- |" + " ---: |" * 15)
     groups: dict[tuple[str, str], list[PolicyRecord]] = defaultdict(list)
     for record in records:
         groups[record.set_name, record.policy].append(record)
@@ -117,6 +119,8 @@ def policy_table(records: Sequence[PolicyRecord]) -> None:
         stages = reseqs * (2 if policy.startswith("stable") else 1)
         fallbacks = sum(r.stats.fallbacks for r in group)
         n = len(group)
+        substituted = sum(r.substituted for r in group)
+        onboarding = sum(r.onboarding_days for r in group) / substituted if substituted else 0.0
         print(
             f"| {set_name.upper()} | {policy} | {n} | {statistics.mean(times):.3f} | "
             f"{p95(times):.3f} | {max(times):.3f} | {statistics.mean(r.epochs for r in group):.1f}"
@@ -125,7 +129,7 @@ def policy_table(records: Sequence[PolicyRecord]) -> None:
             f"{statistics.mean(r.deviation for r in group):.2f} | "
             f"{statistics.mean(r.nervousness for r in group):.1f} | "
             f"{statistics.mean(r.substituted for r in group):.1f} | "
-            f"{statistics.mean(r.handover_days for r in group):.1f} | "
+            f"{statistics.mean(r.handover_days for r in group):.1f} | {onboarding:.2f} | "
             f"{statistics.mean(r.makespan / r.c_star for r in group):.3f} |"
         )
 
@@ -261,7 +265,7 @@ def main() -> None:
     parser.add_argument("--views", type=int, default=10, help="instances per set, 0 to skip")
     parser.add_argument("--view-limits", type=float, nargs="+", default=[0.5, 0.05])
     parser.add_argument("--runs", action="append", default=[], help="set:instances:seeds")
-    parser.add_argument("--cp-limit", type=float, default=0.5, help="T_cp of the policy runs")
+    parser.add_argument("--cp-limit", type=float, default=T_CP, help="T_cp of the policy runs")
     parser.add_argument("--policies", nargs="+", default=list(COMPARED), choices=COMPARED)
     parser.add_argument("--lambdas", action="append", default=[], help="set:instances")
     parser.add_argument("--lambda-cp-limit", type=float, default=0.05)

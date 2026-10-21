@@ -227,11 +227,34 @@ def test_absent_member_slows_the_crew_and_stays_reserved(
     assert result.finishes[1] == 6 and result.makespan == 8
     assert result.total_cost == 12.0  # worker-days worked: A 2 + 2 + 6, B 2; absent ones free
     assert result.events == (Absence(day=1, worker=1, length=2, announced=1),)
-    assert result.n_epochs == 3  # days 0, 1 (absence) and 5
+    assert result.n_epochs == 4  # days 0, 1 (absence), 3 (return) and 5
     assert result.trace is not None
     assert [day.absent for day in result.trace[:4]] == [(), (1,), (1,), ()]
     assert result.trace[1].working == ((1, (0,)),)  # B waits although worker 0 is present
     assert_feasible(inst, result)
+
+
+def test_a_return_day_is_a_decision_epoch(build: Builder, monkeypatch: pytest.MonkeyPatch) -> None:
+    # A (p 6) runs with worker 0; worker 1 is idle. Worker 1 is out on days 1-2 and worker 0 on
+    # day 4. With T_r = 10 the epochs are day 0, the onsets on days 1 and 4, and the returns on
+    # day 3 (to no crew) and day 5 (back to A's crew; spec section 3.1 g). A pauses on day 4.
+    inst = build([0, 6, 0], [[0], [1], [0]], [[1], [2], []], capacities=(2,))
+    plan = Schedule(starts=(0, 0, 6))
+    onsets = {
+        1: [AbsenceDraw(worker=1, length=2, announced=2)],
+        4: [AbsenceDraw(worker=0, length=1, announced=1)],
+    }
+    monkeypatch.setattr(engine, "ScenarioStreams", forced_streams(onsets=onsets))
+    recorder = Recorder()
+    result = simulate(
+        inst, plan, recorder, 0, pert=EXACT, disruptions=NONE, review_period=10, record_trace=True
+    )
+    assert result.finishes[1] == 7 and result.makespan == 7
+    assert result.trace is not None
+    assert [day.day for day in result.trace if day.epoch] == [0, 1, 3, 4, 5]
+    assert result.n_epochs == 5 and [obs.day for obs in recorder.seen] == [0, 1, 3, 4, 5]
+    passive = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=NONE, review_period=10)
+    assert passive.n_epochs == 5 and passive.makespan == 7
 
 
 def test_feasibility_checks_count_reserved_absent_members(

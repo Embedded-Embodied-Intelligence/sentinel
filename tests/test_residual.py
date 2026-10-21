@@ -236,9 +236,7 @@ def test_residual_plans_are_feasible_on_random_views(build: Builder, tiny: Proje
         assert full.makespan <= sgs[view.sink]
         assert full.status == "OPTIMAL"  # small problems
         assert stable.makespan == full.makespan
-        planned = dict(zip(view.activities, view.planned, strict=True))
-        deviation = sum(abs(full.starts[j] - planned[j]) for j in view.activities)
-        assert stable.objective <= deviation
+        assert stable.objective == view.deviation(stable.starts) <= view.deviation(full.starts)
         decoded = residual_sgs(view, {j: float(s) for j, s in full.starts.items()})
         assert all(decoded[j] <= full.starts[j] for j in view.activities)
 
@@ -253,7 +251,8 @@ def test_solver_falls_back_to_the_residual_sgs(
     assert full.starts == residual_sgs(view) and full.makespan == 7
     stable = solve_residual(view, "stable", deterministic_time_limit=LIMIT, seed=0)
     assert (stable.fallbacks, stable.starts) == (2, residual_sgs(view))
-    assert stable.objective == sum(abs(stable.starts[j] - p) for j, p in [(3, 4), (4, 3), (5, 7)])
+    # The deviation set leaves out the sink 5 (spec section 7).
+    assert stable.objective == sum(abs(stable.starts[j] - p) for j, p in [(3, 4), (4, 3)])
 
 
 def test_the_residual_solver_is_deterministic(build: Builder, tiny: ProjectInstance) -> None:

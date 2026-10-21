@@ -16,18 +16,18 @@ from sentinel.scheduling.residual import planning_view
 from sentinel.simulation.engine import preview
 from sentinel.simulation.state import HANDOVER_FACTOR, Observation
 
-T_CP = 0.5  # CP-SAT deterministic time limit per stage in policies (spec section 8)
+T_CP = 0.1  # CP-SAT deterministic time limit per stage in policies (spec section 8)
 
 
 class DisruptionMonitor:
     """Tells epochs with a new disruption from purely periodic ones (spec section 7).
 
     It keeps what the previous epoch showed: the absences (worker, first day), the number of D2
-    shocks and of D3 activities. Onsets, D3 insertions and the days after D2 shocks are decision
-    epochs, returns are not (spec section 3.1 g), so a return is seen at the next epoch. An
-    epoch has a new disruption iff any of these changed since the previous epoch; the first
-    epoch of a run (an earlier or the same day as the last one seen) compares with a project
-    without any.
+    shocks and of D3 activities. Absence onsets and returns, D3 insertions and the days after
+    D2 shocks are decision epochs (spec section 3.1 g), so each of them is seen on its own
+    epoch. An epoch has a new disruption iff any of these changed since the previous epoch; the
+    first epoch of a run (an earlier or the same day as the last one seen) compares with a
+    project without any.
     """
 
     __slots__ = ("_day", "_seen")
@@ -52,7 +52,8 @@ class DisruptionMonitor:
 class FullResolve:
     """FullResolve(subst) of spec section 7: at every decision epoch with a new disruption (D1
     onset or return, D2, D3; `DisruptionMonitor`), first the SUBST operations of
-    AlwaysSubstitute if `subst`, then a RESEQ with minimum residual makespan.
+    AlwaysSubstitute if `subst`, then a RESEQ with minimum residual makespan. It substitutes at
+    these epochs only; AlwaysSubstitute does at every epoch.
 
     CP-SAT runs with one worker, `seed` and `deterministic_time_limit` per stage, hinted with
     the current plan where it is feasible; a stage without a solution falls back

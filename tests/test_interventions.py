@@ -11,13 +11,26 @@ from sentinel.model import ProjectInstance, Schedule, validate_schedule
 from sentinel.policies.base import EMPTY_DECISION, Decision, Reseq, Subst
 from sentinel.policies.no_reaction import NoReaction
 from sentinel.policies.resolve import FullResolve
+from sentinel.scheduling.cpsat import solve_residual
 from sentinel.scheduling.priority_rules import lft_priorities
+from sentinel.scheduling.residual import planning_view
 from sentinel.scheduling.sgs import serial_sgs
 from sentinel.simulation import engine
 from sentinel.simulation.engine import Run, SimulationResult, Substitution, preview, simulate
-from sentinel.simulation.events import AbsenceDraw, DisruptionParams, ScenarioStreams
+from sentinel.simulation.events import (
+    AbsenceDraw,
+    DisruptionParams,
+    NewActivityDraw,
+    ScenarioStreams,
+)
 from sentinel.simulation.realised import execution_violations, realised_instance
-from sentinel.simulation.state import EngineState, Observation, day_limit, nominal_world
+from sentinel.simulation.state import (
+    EngineState,
+    Observation,
+    day_limit,
+    nominal_world,
+    onboarding_days,
+)
 from sentinel.simulation.uncertainty import PertParams, role_costs
 
 Builder = Callable[..., ProjectInstance]
@@ -70,8 +83,9 @@ def test_subst_on_a_paused_one_person_activity(
 ) -> None:
     # A (p 4) and B (p 2) need one worker each of a role with two; C (p 1) follows B and is
     # planned for day 4. A's worker 0 is out on days 1-3. On day 2 worker 1, idle since B ended,
-    # replaces it: h = max(1, ceil(0.3 * 1 * 1 / 1)) = 1, so A has 3 + 1 days of work left and
-    # does them on days 2-5 with worker 1. Worker 0 returns on day 4 as an idle worker and does C.
+    # replaces it: o = max(1, ceil(0.3 * 1)) = 1 crew-member day, h = 1 * 1 / 1 = 1, so A has
+    # 3 + 1 days of work left and does them on days 2-5 with worker 1. Worker 0 returns on day 4
+    # as an idle worker and does C.
     inst = build(
         [0, 4, 2, 1, 0], [[0], [1], [1], [1], [0]], [[1, 2], [4], [3], [4], []], capacities=(2,)
     )
@@ -83,12 +97,13 @@ def test_subst_on_a_paused_one_person_activity(
         inst, plan, policy, 0, pert=EXACT, disruptions=NONE, review_period=1, debug=True
     )
     assert result.substitutions == (
-        Substitution(day=2, activity=1, replaced=(0,), workers=(1,), handover=1),
+        Substitution(day=2, activity=1, replaced=(0,), workers=(1,), onboarding=1, handover=1.0),
     )
     assert segments_of(result, 1) == [(0, 1, (0,)), (2, 6, (1,))]  # works on the same day
     assert segments_of(result, 3) == [(4, 5, (0,))]  # the replaced worker is idle on return
     assert result.crews[1] == (1,) and result.crews[3] == (0,)
     assert result.work[1] == 5 and result.handover_days == 1 and result.n_substituted == 1
+    assert result.onboarding_days == 1
     assert result.finishes[1] == 6 and result.makespan == 6
     assert result.total_cost == 1 + 4 + 2 + 1
     assert (result.rejected, result.reseqs, result.nervousness) == ((), 0, 0)
@@ -101,13 +116,52 @@ def test_subst_on_a_paused_one_person_activity(
     assert simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=NONE).makespan == 7
 
 
+def test_onboarding_days_per_newcomer() -> None:
+    # o_j = max(1, ceil(0.3 e_j)) crew-member days (spec section 3): one day at e_j = 0, the
+    # ceiling ignores rounding noise (0.3 * 10 / 3 is 1.0000000000000002).
+    assert onboarding_days(0.0) == 1 and onboarding_days(1.5) == 1
+    assert onboarding_days(10 / 3) == 1 and onboarding_days(3.4) == 2 and onboarding_days(4.0) == 2
+    assert onboarding_days(4.0, handover_factor=1.0) == 4 and onboarding_days(0.0, 1.0) == 1
+
+
+@pytest.mark.parametrize(("crew", "replaced", "finish"), [(1, 1, 12), (10, 1, 11), (10, 3, 11)])
+def test_handover_is_onboarding_per_newcomer(
+    build: Builder, monkeypatch: pytest.MonkeyPatch, crew: int, replaced: int, finish: int
+) -> None:
+    # A (p 10) needs `crew` workers of a role with crew + 3; its members 0 .. replaced - 1 are
+    # out from day 4 for 30 days, and on day 4 (e_A = 4) as many idle workers replace them. Each
+    # needs o = max(1, ceil(0.3 * 4)) = 2 crew-member days, so 2 m crew-member days are added:
+    # h = 2 m / M full-crew days, 2 for one person, 0.2 for 1 of 10, 0.6 for 3 of 10 (the v1.5
+    # formula max(1, ceil(0.3 e m / M)) gave 2, 1 and 1). One person: 6 + 2 days left, F = 12;
+    # 10 present on 60 + 2 m crew-member days: F = 11.
+    inst = build([0, 10, 0], [[0], [crew], [0]], [[1], [2], []], capacities=(crew + 3,))
+    plan = Schedule(starts=(0, 0, 10))
+    onsets = {4: [AbsenceDraw(worker=w, length=30, announced=30) for w in range(replaced)]}
+    monkeypatch.setattr(engine, "ScenarioStreams", forced_absences(onsets))
+    substitutes = tuple(range(crew, crew + replaced))
+    policy = Scripted({4: subst(1, *substitutes)})
+    result = simulate(
+        inst, plan, policy, 0, pert=EXACT, disruptions=NONE, review_period=1, debug=True
+    )
+    (done,) = result.substitutions
+    assert (done.day, done.replaced, done.workers) == (4, tuple(range(replaced)), substitutes)
+    assert done.onboarding == 2 and done.handover == 2 * replaced / crew
+    assert result.onboarding_days == 2 * replaced and result.handover_days == 2 * replaced / crew
+    assert result.work[1] == pytest.approx(10 + 2 * replaced / crew)
+    seen = {obs.day: obs for obs in policy.seen}
+    assert seen[5].handovers == ((1, 4.0, 2 * replaced),)  # work added in crew-member days
+    assert nominal_world(seen[5]).remaining[1] == 10 * crew - 5 * crew + 2 * replaced
+    assert result.finishes[1] == finish
+    assert_feasible(inst, result)
+
+
 def test_subst_on_a_running_partial_crew_raises_its_rate(
     build: Builder, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # A (p 4) needs two of three workers; member 1 is out from day 1 for 30 days, so A runs at
-    # rho = 1/2. On day 2 the idle worker 2 takes its slot: e_A = 1.5 and h = max(1, ceil(0.3 *
-    # 1.5 * 1 / 2)) = 1, so 2.5 + 1 full-crew days remain, done at rho = 1 on days 2-5: F = 6
-    # instead of 7.
+    # rho = 1/2. On day 2 the idle worker 2 takes its slot: e_A = 1.5, o = max(1, ceil(0.3 *
+    # 1.5)) = 1 crew-member day and h = 1 * 1 / 2 = 0.5, so 2.5 + 0.5 full-crew days remain,
+    # done at rho = 1 on days 2-4: F = 5 instead of 7.
     inst = build([0, 4, 0], [[0], [2], [0]], [[1], [2], []], capacities=(3,))
     plan = Schedule(starts=(0, 0, 4))
     onsets = {1: [AbsenceDraw(worker=1, length=30, announced=30)]}
@@ -116,11 +170,12 @@ def test_subst_on_a_running_partial_crew_raises_its_rate(
     result = simulate(
         inst, plan, policy, 0, pert=EXACT, disruptions=NONE, review_period=1, debug=True
     )
-    assert [obs.work_done[1] for obs in policy.seen] == [0, 1, 1.5, 2.5, 3.5, 4.5, 5.5]
-    assert segments_of(result, 1) == [(0, 1, (0, 1)), (1, 2, (0,)), (2, 6, (0, 2))]
-    assert result.substitutions[0].handover == 1 and result.crews[1] == (0, 2)
-    assert result.finishes[1] == 6 and result.work[1] == 5
-    assert result.total_cost == 2 + 1 + 2 * 4
+    assert [obs.work_done[1] for obs in policy.seen] == [0, 1, 1.5, 2.5, 3.5, 4.5]
+    assert segments_of(result, 1) == [(0, 1, (0, 1)), (1, 2, (0,)), (2, 5, (0, 2))]
+    assert result.substitutions[0].onboarding == 1 and result.substitutions[0].handover == 0.5
+    assert result.crews[1] == (0, 2) and result.onboarding_days == 1
+    assert result.finishes[1] == 5 and result.work[1] == 4.5
+    assert result.total_cost == 2 + 1 + 2 * 3
     assert_feasible(inst, result)
     slow = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=NONE)
     assert slow.finishes[1] == 7
@@ -172,9 +227,9 @@ def test_invalid_operations_are_rejected_and_the_run_goes_on(
         assert rejection.operation == op
         assert rejection.reason.startswith(reason), rejection.reason
     assert result.infeasible_reseqs == 2 and result.reseqs == 0 and result.nervousness == 0
-    # The valid substitution after the rejected operations still applies: e_A = 1, h = 1.
+    # The valid substitution after the rejected operations still applies: e_A = 1, o = h = 1.
     assert result.substitutions == (
-        Substitution(day=2, activity=1, replaced=(0,), workers=(2,), handover=1),
+        Substitution(day=2, activity=1, replaced=(0,), workers=(2,), onboarding=1, handover=1.0),
     )
     assert result.finishes[1] == 6 and result.makespan == 6
     realised, schedule = realised_instance(inst, result)
@@ -209,6 +264,44 @@ def test_reseq_replaces_the_plan_and_counts_nervousness(tiny: ProjectInstance) -
     once = Scripted({0: Decision(operations=(later,))})
     moved = simulate(tiny, plan, once, 0, pert=EXACT, disruptions=NONE, review_period=1, debug=True)
     assert moved.starts == (0, 0, 5, 3, 7) and moved.nervousness == 1
+
+
+def test_deviation_set_leaves_out_milestones_the_sink_and_fresh_d3_activities(
+    build: Builder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A (p 3) -> milestone M -> B (p 2) -> sink, one worker each of a role with two. On day 1 a
+    # D3 copy N of A (id 5, p 3) arrives between the source and B, planned for day 2 (spec 3.1
+    # e). A RESEQ on day 1 moves M 3 -> 4, B 3 -> 5, the sink 5 -> 7 and N 2 -> 1; only B is in
+    # the deviation set U'_1 (spec section 7), so the nervousness is 1. On day 2 N is no longer
+    # fresh and counts.
+    inst = build([0, 3, 0, 2, 0], [[0], [1], [0], [1], [0]], [[1], [2], [3], [4], []], (2,))
+    plan = Schedule(starts=(0, 0, 3, 3, 5))
+
+    class Arrival(ScenarioStreams):
+        def new_activity(self, day: int) -> NewActivityDraw | None:
+            # template A, PERT multiplier 1, successor B (of M, B), predecessor the source
+            return NewActivityDraw(0.0, 1.0, 0.99, 0.0) if day == 1 else None
+
+    monkeypatch.setattr(engine, "ScenarioStreams", Arrival)
+    quiet = simulate(inst, plan, NoReaction(), 0, pert=EXACT, disruptions=NONE, observe_days=[1, 2])
+    first, second = quiet.observations
+    assert [(a.id, a.day, a.successor, a.predecessor) for a in first.inserted] == [(5, 1, 3, 0)]
+    view = planning_view(first)
+    assert view.activities == (2, 3, 4, 5) and view.inserted_today == (5,)
+    assert [view.activities[i] for i in view.deviation_positions()] == [3]
+    moved = {2: 4, 3: 5, 4: 7, 5: 1}
+    assert view.deviation(moved) == 2  # B only; M, the sink and N would add 1 + 2 + 1
+    stable = solve_residual(view, "stable", deterministic_time_limit=0.1, seed=0, hint=moved)
+    assert stable.objective == view.deviation(stable.starts)
+    later = planning_view(second)
+    assert later.inserted_today == () and 5 in [
+        later.activities[i] for i in later.deviation_positions()
+    ]
+    policy = Scripted({1: Decision(operations=(Reseq(starts=moved),))})
+    result = simulate(inst, plan, policy, 0, pert=EXACT, disruptions=NONE, debug=True)
+    assert (result.reseqs, result.nervousness, result.rejected) == (1, 1, ())
+    assert result.starts[5] == 1 and result.starts[3] == 5
+    assert_feasible(inst, result)
 
 
 def test_results_without_interventions_serialise_as_before(tiny: ProjectInstance) -> None:

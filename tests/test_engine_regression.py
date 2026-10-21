@@ -1,10 +1,12 @@
-"""Regression: 50 full runs of `simulate` stay bit for bit what they were before WP3a.
+"""Regression: 50 full runs of `simulate` stay bit for bit what they were in WP2b.
 
 `tests/fixtures/engine_regression.json` holds four instances with their plans and, for 50
 cases (instance, disruptions, seed, policy, trace, deadline, review period, costs), the SHA-256
-of the result and of every observation a recording policy saw. It was written with the engine
-of commit 68ba82a (WP2b), before WP3a split `simulate` into state initialisation and a run
-loop. Regenerate it only for an intended change of the semantics:
+of the result and of every observation a recording policy saw. It was first written with the
+engine of commit 68ba82a (WP2b), before WP3a split `simulate` into state initialisation and a
+run loop, and rewritten in WP4b for spec v1.6, where absence returns became decision epochs:
+only the epoch counts, the epoch flags of traced days and the observations a recording policy
+sees on return days changed. Regenerate it only for an intended change of the semantics:
 `uv run python tests/test_engine_regression.py`.
 """
 
@@ -185,7 +187,8 @@ def _write() -> None:
         outcome = _run(instance, plan, case)
         cases.append({**case, **outcome})
     data = {
-        "written_with": "engine of commit 68ba82a (WP2b), before the WP3a refactor",
+        "written_with": "engine of WP4b (spec v1.6: returns are decision epochs); otherwise "
+        "as written with commit 68ba82a (WP2b)",
         "setups": [
             {"instance": inst.model_dump(mode="json"), "plan": list(plan.starts)}
             for inst, plan in setups

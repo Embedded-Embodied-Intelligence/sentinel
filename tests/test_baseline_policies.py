@@ -193,7 +193,7 @@ def test_disruption_monitor_tells_disruptions_from_periodic_epochs(
     build: Builder, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Worker 0 is out on days 2-3 and back on day 4. With T_r = 3 the epochs are days 0, 2
-    # (onset), 3, 6, ...: day 2 has the onset, day 6 the first epoch after the return.
+    # (onset), 3, 4 (return), 6, ...: day 2 has the onset, day 4 the return (spec 3.1 g).
     inst = build([0, 9, 0], [[0], [1], [0]], [[1], [2], []], capacities=(2,))
     plan = Schedule(starts=(0, 0, 9))
     onsets = {2: [AbsenceDraw(worker=0, length=2, announced=1)]}
@@ -202,12 +202,12 @@ def test_disruption_monitor_tells_disruptions_from_periodic_epochs(
     simulate(inst, plan, recorder, 0, pert=EXACT, disruptions=NONE, review_period=3)
     monitor = DisruptionMonitor()
     seen = [(obs.day, monitor.new_disruption(obs)) for obs, _ in recorder.seen]
-    assert seen[:5] == [(0, False), (2, True), (3, False), (6, True), (9, False)]
+    assert seen[:5] == [(0, False), (2, True), (3, False), (4, True), (6, False)]
     first = recorder.seen[0][0]
     assert monitor.new_disruption(first) is False  # a new run starts from scratch
     shocked = first.model_copy(update={"day": 1, "work_increases": ((1, 0.0, 1.5),)})
     assert monitor.new_disruption(shocked) is True  # D2
-    later = recorder.seen[3][0]
+    later = recorder.seen[4][0]
     assert monitor.new_disruption(later) is True  # the absence seen in between ended
 
 
