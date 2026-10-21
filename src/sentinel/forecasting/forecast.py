@@ -155,16 +155,27 @@ def rollout(
     the disruptions `params` after the observed day drawn from `seq` (ADR-0009), and whether it
     was cut at max_days (then the makespan is max_days)."""
     state = state_from_observation(observation, world, plan=plan.starts)
-    streams = RolloutStreams(
-        seq,
-        params,
-        observation.pert,
-        day=observation.day,
-        n_original=observation.instance.n_activities,
-        return_day=world.return_day,
-    )
+    streams = rollout_streams(observation, world, params, seq)
     Run(state, streams, _BASE_POLICY, review_period=REVIEW_PERIOD, record_events=False).resume()
     finish = state.start[state.sink]
     if finish is None:
         return state.max_days, True
     return finish, False
+
+
+def rollout_streams(
+    observation: Observation,
+    world: SampledWorld,
+    params: DisruptionParams,
+    seq: np.random.SeedSequence,
+) -> RolloutStreams:
+    """The disruptions after the observed day of one rollout (ADR-0009); absences concern the
+    instance's workers only, since temporary workers have no absence stream (spec section 4)."""
+    return RolloutStreams(
+        seq,
+        params,
+        observation.pert,
+        day=observation.day,
+        n_original=observation.instance.n_activities,
+        return_day=world.return_day[: len(observation.instance.workers)],
+    )

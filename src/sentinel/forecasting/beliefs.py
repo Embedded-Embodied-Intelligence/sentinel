@@ -90,8 +90,8 @@ class Belief:
             self._durations.append(_Duration(j, conditional, table))
         self._returns: list[_Return] = []
         q = 1 / observation.disruptions.mean_absence
-        for w, present in enumerate(observation.present):
-            if present:
+        for w in range(len(instance.workers)):  # temporary workers are never absent
+            if observation.present[w]:
                 continue
             start, announced = observation.absent_since[w], observation.announced[w]
             if start is None or announced is None:

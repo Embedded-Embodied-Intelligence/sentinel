@@ -234,7 +234,7 @@ def test_invalid_operations_are_rejected_and_the_run_goes_on(
     assert result.finishes[1] == 6 and result.makespan == 6
     realised, schedule = realised_instance(inst, result)
     assert validate_schedule(realised, schedule) == []
-    assert execution_violations(inst, result) == ["2 RESEQ plans failed validate_residual"]
+    assert execution_violations(inst, result) == ["2 RESEQ or SHIFT plans failed their check"]
 
 
 def test_debug_mode_raises_on_an_infeasible_reseq(

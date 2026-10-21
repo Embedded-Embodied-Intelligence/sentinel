@@ -1,11 +1,11 @@
 """CP-SAT models (Perron & Didier, Google OR-Tools): the exact minimum-makespan RCPSP and the
 residual problem of a running project (spec section 4.1), for minimum makespan or for minimum
-deviation from the current plan (Van de Vonder et al. 2007)."""
+deviation from the current plan (Van de Vonder et al. 2007), the latter also within a given
+makespan (RESEQ-S of Sentinel, spec section 6)."""
 
 import math
 import time
 from collections.abc import Mapping, Sequence
-from itertools import pairwise
 from typing import Literal
 
 from ortools.sat.python import cp_model
@@ -18,7 +18,7 @@ from sentinel.scheduling.residual import ResidualProblem, residual_sgs, validate
 from sentinel.scheduling.sgs import serial_sgs
 
 SolveStatus = Literal["OPTIMAL", "FEASIBLE", "INFEASIBLE", "UNKNOWN"]
-Objective = Literal["makespan", "stable"]  # of the residual problem (spec section 7)
+Objective = Literal["makespan", "stable", "deviation"]  # of the residual problem (spec 6, 7)
 
 _STATUSES: dict[cp_model.CpSolverStatus, SolveStatus] = {
     cp_model.OPTIMAL: "OPTIMAL",
@@ -119,10 +119,11 @@ class ResidualSolution(BaseModel):
 
     `status` is CP-SAT's for the last stage it searched. A stage without a solution within its
     limit falls back (`fallbacks` counts the stages, `fallback` says whether any did): stage 1
-    to the residual SGS with LFT priority, stage 2 of "stable" to the stage-1 solution.
-    `objective` is the makespan, or for "stable" the deviation sum |S_j - S_j^t| from the
-    current plan over the deviation set (`ResidualProblem.deviation`). `deterministic_time` adds
-    up the CP-SAT stages; `wall_time_s` covers the whole call.
+    to the residual SGS with LFT priority, stage 2 of "stable" to the stage-1 solution, and
+    "deviation" to its hint. `objective` is the makespan, or for "stable" and "deviation" the
+    deviation sum |S_j - S_j^t| from the current plan over the deviation set
+    (`ResidualProblem.deviation`). `deterministic_time` adds up the CP-SAT stages;
+    `wall_time_s` covers the whole call.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -144,31 +145,56 @@ def solve_residual(
     deterministic_time_limit: float,
     seed: int,
     hint: Mapping[int, int] | None = None,
+    bound: int | None = None,
 ) -> ResidualSolution:
-    """Solve the residual problem with CP-SAT (spec sections 4.1 and 7).
+    """Solve the residual problem with CP-SAT (spec sections 4.1, 6 and 7).
 
-    One interval per activity of positive duration, a cumulative per role with capacity R_k in
-    which fixed intervals take away the unavailable units of each capacity step, and every start
-    in [release, H] for H = the makespan of the residual SGS with LFT priority, a valid bound.
-    Stage 1 minimises the makespan (the sink's start) C_1; "stable" then minimises
+    One interval per activity of positive duration, a cumulative per role whose capacity is the
+    profile's peak (R_k, or more while temporary workers are hired) and in which fixed
+    intervals take away the units each capacity step lacks, and every start in [release, H]
+    for H = the makespan of the residual SGS with LFT priority, a valid bound. Stage 1
+    minimises the makespan (the sink's start) C_1; "stable" then minimises
     sum_j |S_j - S_j^t| over the deviation set U'_t (unstarted activities with p_j > 0 not
-    inserted today, `ResidualProblem.deviation_positions`) subject to makespan <= C_1. Each
-    stage runs with one worker, `seed` and `deterministic_time_limit` (no wall-clock limit), so
-    the result does not depend on machine load. The hint is `hint` (the current plan) if it is a
+    inserted today, `ResidualProblem.deviation_positions`) subject to makespan <= C_1.
+    "deviation" is that second stage alone with makespan <= `bound` and H at least `bound`;
+    `hint` must then be a feasible solution within `bound` (Sentinel's SHIFT plan). Each stage
+    runs with one worker, `seed` and `deterministic_time_limit` (no wall-clock limit), so the
+    result does not depend on machine load. The hint is `hint` (the current plan) if it is a
     feasible solution within H, else the SGS schedule; stage 2 is hinted with the stage-1
     solution.
     """
     began = time.perf_counter()
     sgs = residual_sgs(problem)
     horizon = sgs[problem.sink]
+    sink = problem.activities.index(problem.sink)
+    ids = problem.activities
+    if objective == "deviation":
+        if bound is None or hint is None:
+            raise ValueError("the deviation objective needs a makespan bound and a hint")
+        if validate_residual(problem, hint) or hint[problem.sink] > bound:
+            raise ValueError(f"the hint is not a feasible residual solution within {bound}")
+        horizon = max(horizon, bound)
+        model, starts = _deviation_model(problem, horizon, bound)
+        status, values, effort = _search(model, ids, starts, hint, deterministic_time_limit, seed)
+        fallbacks = 0
+        if values is None:
+            values, fallbacks = dict(hint), 1
+        return ResidualSolution(
+            status=status,
+            starts=values,
+            makespan=values[problem.sink],
+            objective=problem.deviation(values),
+            fallback=fallbacks > 0,
+            fallbacks=fallbacks,
+            deterministic_time=effort,
+            wall_time_s=time.perf_counter() - began,
+        )
     if hint is not None and not validate_residual(problem, hint) and hint[problem.sink] <= horizon:
         first_hint: Mapping[int, int] = hint
     else:
         first_hint = sgs
     model, starts = _model(problem, horizon)
-    sink = problem.activities.index(problem.sink)
     model.minimize(starts[sink])
-    ids = problem.activities
     status, values, effort = _search(model, ids, starts, first_hint, deterministic_time_limit, seed)
     fallbacks = 0
     if values is None:
@@ -176,17 +202,7 @@ def solve_residual(
     makespan = values[problem.sink]
     value = makespan
     if objective == "stable":
-        planned = problem.planned
-        model, starts = _model(problem, horizon)
-        model.add(starts[sink] <= makespan)
-        deviations = []
-        for i in problem.deviation_positions():
-            start, target = starts[i], planned[i]
-            deviation = model.new_int_var(0, horizon + abs(target), f"D{ids[i]}")
-            model.add(deviation >= start - target)
-            model.add(deviation >= target - start)
-            deviations.append(deviation)
-        model.minimize(sum(deviations))
+        model, starts = _deviation_model(problem, horizon, makespan)
         status, second, more = _search(model, ids, starts, values, deterministic_time_limit, seed)
         effort += more
         if second is None:
@@ -207,11 +223,29 @@ def solve_residual(
     )
 
 
+def _deviation_model(
+    problem: ResidualProblem, horizon: int, bound: int
+) -> tuple[cp_model.CpModel, list[cp_model.IntVar]]:
+    """`_model` with makespan <= `bound`, minimising sum_j |S_j - S_j^t| over U'_t."""
+    model, starts = _model(problem, horizon)
+    ids, planned = problem.activities, problem.planned
+    model.add(starts[ids.index(problem.sink)] <= bound)
+    deviations = []
+    for i in problem.deviation_positions():
+        start, target = starts[i], planned[i]
+        deviation = model.new_int_var(0, horizon + abs(target), f"D{ids[i]}")
+        model.add(deviation >= start - target)
+        model.add(deviation >= target - start)
+        deviations.append(deviation)
+    model.minimize(sum(deviations))
+    return model, starts
+
+
 def _model(
     problem: ResidualProblem, horizon: int
 ) -> tuple[cp_model.CpModel, list[cp_model.IntVar]]:
     """Starts, precedences and the cumulative per role with the capacity profile as fixed
-    intervals."""
+    intervals below the profile's peak."""
     model = cp_model.CpModel()
     ids, durations = problem.activities, problem.durations
     starts = [
@@ -226,17 +260,20 @@ def _model(
         for i, p in enumerate(durations)
         if p > 0
     }
-    for k, (steps, capacity) in enumerate(zip(problem.profile, problem.capacities, strict=True)):
+    end_of_time = horizon + max(durations, default=0)  # no interval ends later
+    for k, steps in enumerate(problem.profile):
         users = [i for i in intervals if problem.demands[i][k] > 0]
         if not users:
             continue
         busy = [intervals[i] for i in users]
         demands = [problem.demands[i][k] for i in users]
-        for (start, level), (end, _) in pairwise(steps):
-            if level < capacity:  # the last step equals the capacity
+        peak = max(level for _, level in steps)  # R_k unless temporary workers lift it
+        ends = [day for day, _ in steps[1:]] + [end_of_time]
+        for (start, level), end in zip(steps, ends, strict=True):
+            if level < peak and end > start:
                 busy.append(model.new_fixed_size_interval_var(start, end - start, f"R{k}_{start}"))
-                demands.append(capacity - level)
-        model.add_cumulative(busy, demands, capacity)
+                demands.append(peak - level)
+        model.add_cumulative(busy, demands, peak)
     return model, starts
 
 

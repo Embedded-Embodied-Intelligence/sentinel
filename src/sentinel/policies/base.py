@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Annotated, Literal, Protocol, Self
 
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, model_validator
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveInt, model_validator
 
 from sentinel.simulation.state import Observation
 
@@ -47,7 +47,34 @@ class Reseq(BaseModel):
     starts: dict[NonNegativeInt, NonNegativeInt]
 
 
-Operation = Annotated[Noop | Subst | Reseq, Field(discriminator="kind")]
+class Shift(BaseModel):
+    """SHIFT(pi'): the order-preserving repair (spec section 4, level 0). New planned starts of
+    all unstarted activities, by activity id: a feasible solution of the residual problem whose
+    starts keep the order of the current plan (`sentinel.scheduling.residual.validate_shift`)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: Literal["shift"] = "shift"
+    starts: dict[NonNegativeInt, NonNegativeInt]
+
+
+class Overtime(BaseModel):
+    """OVERTIME(k, u, H): hire `workers` = u temporary workers of `role` k for the `days` = H days
+    from today (spec section 4, level 2); at most floor(gamma R_k) of a role are hired at once."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: Literal["overtime"] = "overtime"
+    role: NonNegativeInt
+    workers: PositiveInt
+    days: PositiveInt
+
+
+Operation = Annotated[Noop | Shift | Reseq | Subst | Overtime, Field(discriminator="kind")]
+
+# Permission level of each operation (spec section 4): 0 automatic, 1 automatic with report,
+# 2 human approval.
+LEVELS: dict[str, int] = {"noop": 0, "shift": 0, "reseq": 1, "subst": 2, "overtime": 2}
 
 
 class Decision(BaseModel):
@@ -56,6 +83,11 @@ class Decision(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     operations: tuple[Operation, ...] = ()
+
+    @property
+    def level(self) -> int:
+        """l(a): the maximum permission level of the operations, 0 without any (spec 4)."""
+        return max((LEVELS[op.kind] for op in self.operations), default=0)
 
 
 EMPTY_DECISION = Decision()

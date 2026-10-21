@@ -4,7 +4,7 @@ import time
 
 from sentinel.policies.base import EMPTY_DECISION, Decision, DecisionStats, Subst
 from sentinel.policies.urgency import urgencies
-from sentinel.simulation.state import PAUSED, RUNNING, Observation
+from sentinel.simulation.state import PAUSED, RUNNING, Observation, worker_roles
 
 
 class AlwaysSubstitute:
@@ -31,15 +31,16 @@ def substitutions(observation: Observation) -> tuple[Subst, ...]:
     Paused and running activities with absent members are taken in increasing urgency tau_j
     (spec section 5), ties by id. Each of their absent members, in increasing id order, is
     replaced by the lowest-id idle present worker of its role while one is left; an idle worker
-    is present and in no crew. One SUBST per activity lists its substitutes in that order, so
-    the engine pairs them with the same absent members (`Subst`).
+    is present and in no crew, a hired temporary worker included (spec section 4). One SUBST
+    per activity lists its substitutes in that order, so the engine pairs them with the same
+    absent members (`Subst`).
     """
     status, present, assigned = observation.status, observation.present, observation.assigned
     started = [j for j, state in enumerate(status) if state in (RUNNING, PAUSED)]
     candidates = [j for j in started if not all(present[w] for w in assigned[j])]
     if not candidates:
         return ()
-    roles = [worker.role for worker in observation.instance.workers]
+    roles = worker_roles(observation)
     busy = {w for j in started for w in assigned[j]}
     idle: dict[int, list[int]] = {}  # role -> idle present workers, increasing ids
     for w, here in enumerate(present):

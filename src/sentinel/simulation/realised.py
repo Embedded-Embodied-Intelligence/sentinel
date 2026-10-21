@@ -2,7 +2,7 @@
 
 from itertools import pairwise
 
-from sentinel.model.instance import Activity, ProjectInstance
+from sentinel.model.instance import Activity, ProjectInstance, Role, Worker
 from sentinel.model.schedule import Schedule
 from sentinel.simulation.engine import SimulationResult
 from sentinel.simulation.events import Absence, NewActivity
@@ -31,8 +31,9 @@ def realised_instance(
 
     Every activity of the run, D3 insertions included, keeps its demands and gets the duration
     F_j - S_j: its crew is reserved from start to finish, absent members included, so the
-    capacity check counts them. The sink is renumbered last. Capacities stay nominal;
-    `execution_violations` checks single workers.
+    capacity check counts them. The sink is renumbered last. Capacities are nominal plus every
+    temporary worker the run hired (spec section 4 OVERTIME), a bound over the whole run;
+    `execution_violations` checks single workers and the capacity of each day.
     """
     if result.truncated:
         raise ValueError(f"the run with seed {result.seed} was truncated at {result.max_days}")
@@ -51,11 +52,24 @@ def realised_instance(
             Activity(id=i, duration=finish - start, demands=demands[j], successors=links)
         )
         starts.append(start)
+    roles, workers = instance.roles, instance.workers
+    if result.temporary:
+        extra = [0] * len(roles)
+        for temp in result.temporary:
+            extra[temp.role] += 1
+        roles = tuple(
+            Role(id=role.id, name=role.name, capacity=role.capacity + extra[role.id])
+            for role in roles
+        )
+        workers += tuple(
+            Worker(id=temp.id, role=temp.role, name=f"temporary-{temp.id}")
+            for temp in result.temporary
+        )
     realised = ProjectInstance(
         name=f"{instance.name}/realised",
         activities=tuple(activities),
-        roles=instance.roles,
-        workers=instance.workers,
+        roles=roles,
+        workers=workers,
         source="simulation",
     )
     return realised, Schedule(starts=tuple(starts))
@@ -69,21 +83,27 @@ def execution_violations(instance: ProjectInstance, result: SimulationResult) ->
     included. A SUBST on day d replaces absent members by idle present workers of the same role
     in their slots, from day d on, so a crew never exceeds M_j. On each day of a reservation
     the crew members present that day work and nobody else does: no work while absent, no idle
-    present member, no work outside the reservation. A RESEQ plan that failed
-    `validate_residual` is a violation too.
+    present member, no work outside the reservation. A RESEQ or SHIFT plan that failed its
+    check is a violation too. A temporary worker (spec section 4 OVERTIME) is never absent, is
+    in a crew only while it is hired and joins one only during its window; on every day, the
+    crews of a role need at most R_k plus its temporary workers hired that day.
     """
     _, demands = project_graph(instance, result)
     role = [worker.role for worker in instance.workers]
+    role += [temp.role for temp in result.temporary]
+    first_temporary = len(instance.workers)
     absent: dict[int, set[int]] = {}
+    problems: list[str] = []
     for event in result.events:
         if isinstance(event, Absence):
             absent.setdefault(event.worker, set()).update(
                 range(event.day, event.day + event.length)
             )
+            if event.worker >= first_temporary:
+                problems.append(f"temporary worker {event.worker} is absent on day {event.day}")
     worked: dict[tuple[int, int], tuple[int, ...]] = {}  # (activity, day) -> who worked
-    problems: list[str] = []
     if result.infeasible_reseqs:
-        problems.append(f"{result.infeasible_reseqs} RESEQ plans failed validate_residual")
+        problems.append(f"{result.infeasible_reseqs} RESEQ or SHIFT plans failed their check")
     for segment in result.segments:
         j = segment.activity
         for day in range(segment.start, segment.end):
@@ -137,4 +157,48 @@ def execution_violations(instance: ProjectInstance, result: SimulationResult) ->
         for (_, end, i), (start, _, j) in pairwise(sorted(spans)):
             if start < end:
                 problems.append(f"worker {w} is in the crews of {i} and {j} on day {start}")
+    if result.temporary:
+        problems += _temporary_violations(instance, result, reserved, demands)
+    return problems
+
+
+def _temporary_violations(
+    instance: ProjectInstance,
+    result: SimulationResult,
+    reserved: dict[int, list[tuple[int, int, int]]],
+    demands: list[tuple[int, ...]],
+) -> list[str]:
+    """Temporary workers in crews only while hired, joining only in their window, and the crews
+    of each role within R_k plus the temporary workers hired that day (spec section 4)."""
+    problems: list[str] = []
+    end_of_run = result.max_days + 1
+    hired: dict[tuple[int, int], int] = {}  # (role, day) -> temporary workers hired
+    for temp in result.temporary:
+        gone = end_of_run if temp.left is None else temp.left
+        for day in range(temp.hired, gone):
+            hired[temp.role, day] = hired.get((temp.role, day), 0) + 1
+        for first, end, j in reserved.get(temp.id, ()):
+            if first < temp.hired or end > gone:
+                problems.append(
+                    f"temporary worker {temp.id} is in the crew of {j} on days {first}..{end - 1} "
+                    f"but hired on days {temp.hired}..{gone - 1}"
+                )
+            if first >= temp.until:
+                problems.append(
+                    f"temporary worker {temp.id} joined the crew of {j} on day {first}, after "
+                    f"its window ended on day {temp.until}"
+                )
+    used: dict[tuple[int, int], int] = {}  # (role, day) -> crew members reserved
+    for j, start in enumerate(result.starts):
+        if start is None:
+            continue
+        finish = result.finishes[j]
+        for day in range(start, end_of_run if finish is None else finish):
+            for k, r in enumerate(demands[j]):
+                if r:
+                    used[k, day] = used.get((k, day), 0) + r
+    for (k, day), units in sorted(used.items()):
+        capacity = instance.roles[k].capacity + hired.get((k, day), 0)
+        if units > capacity:
+            problems.append(f"role {k} on day {day}: crews need {units} of {capacity} workers")
     return problems

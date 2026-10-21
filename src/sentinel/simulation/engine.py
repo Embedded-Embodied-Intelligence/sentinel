@@ -5,11 +5,12 @@ whose presence changed, (3) let the policy decide at a decision epoch, (4) dispa
 the planned start, (5) draw D2 and progress every running activity by its present share of the
 crew, (6) close activities without remaining work; section 3.1 fixes the details, (a) the
 partial crews and (g) the decision epochs, absence returns included. Step 3 applies the
-operations of spec section 4 (`Run.apply`): SUBST and RESEQ. The loop works on the plain lists
-of `EngineState`; pydantic models are built only for events, observations and the result. `Run`
-holds the loop: `simulate` runs it from day 0 of a fresh state, and rollouts continue a state
-rebuilt from an observation (`Run.resume`), to which they may first apply a decision with the
-same `Run.apply`.
+operations of spec section 4 (`Run.apply`): SHIFT, RESEQ, SUBST and OVERTIME, whose temporary
+workers leave after their window (step 1, or when their crew is released). The loop works on
+the plain lists of `EngineState`; pydantic models are built only for events, observations and
+the result. `Run` holds the loop: `simulate` runs it from day 0 of a fresh state, and rollouts
+continue a state rebuilt from an observation (`Run.resume`), to which they may first apply a
+decision with the same `Run.apply`.
 """
 
 import math
@@ -29,9 +30,18 @@ from pydantic import (
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
-from sentinel.policies.base import Decision, Noop, Operation, Policy, Reseq, Subst
+from sentinel.policies.base import (
+    Decision,
+    Noop,
+    Operation,
+    Overtime,
+    Policy,
+    Reseq,
+    Shift,
+    Subst,
+)
 from sentinel.policies.no_reaction import NoReaction
-from sentinel.scheduling.residual import planning_view, validate_residual
+from sentinel.scheduling.residual import planning_view, validate_residual, validate_shift
 from sentinel.simulation.events import (
     Absence,
     AbsenceDraw,
@@ -53,10 +63,12 @@ from sentinel.simulation.state import (
     EngineState,
     InsertedActivity,
     Observation,
+    TemporaryWorker,
     WorkSegment,
     day_limit,
     nominal_world,
     onboarding_days,
+    overtime_cap,
     state_from_observation,
 )
 from sentinel.simulation.uncertainty import PertParams, realised_duration, role_costs
@@ -116,12 +128,15 @@ class SimulationResult(BaseModel):
     absent members left it and idle workers took their slots on some day (spec section 4).
     `segments` gives the days on which an activity progressed and with which present members.
     A truncated run reports `makespan = max_days` (right-censored); its unstarted activities
-    have no start. `rejected` lists invalid operations, `reseqs` counts the applied RESEQs,
-    `nervousness` the (epoch, activity) pairs whose planned start a decision changed and
-    `infeasible_reseqs` the RESEQ plans that failed `validate_residual` (also in `rejected`;
-    spec section 7.1); these fields are serialised only when set. `observations` holds the
-    agent's view of each requested day the run reached (`simulate`'s `observe_days`); it is a
-    by-product, left out of `model_dump` and serialisation.
+    have no start. `rejected` lists invalid operations, `reseqs` and `shifts` count the applied
+    RESEQs and SHIFTs, `nervousness` the (epoch, activity) pairs whose planned start a decision
+    changed and `infeasible_reseqs` the RESEQ and SHIFT plans that failed their check (also in
+    `rejected`; spec section 7.1). `temporary` lists the workers hired by OVERTIME (ids after
+    the instance's workers, in `crews` too), `temporary_days` the worker-days paid for them and
+    `overtime_cost` that part of `total_cost` (spec section 4). These fields are serialised only
+    when set. `observations` holds the agent's view of each requested day the run reached
+    (`simulate`'s `observe_days`); it is a by-product, left out of `model_dump` and
+    serialisation.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -148,6 +163,15 @@ class SimulationResult(BaseModel):
     reseqs: NonNegativeInt = Field(default=0, exclude_if=_unset)
     nervousness: NonNegativeInt = Field(default=0, exclude_if=_unset)
     infeasible_reseqs: NonNegativeInt = Field(default=0, exclude_if=_unset)
+    shifts: NonNegativeInt = Field(default=0, exclude_if=_unset)
+    temporary: tuple[TemporaryWorker, ...] = Field(default=(), exclude_if=_unset)
+    temporary_days: NonNegativeInt = Field(default=0, exclude_if=_unset)
+    overtime_cost: NonNegativeFloat = Field(default=0.0, exclude_if=_unset)
+
+    @property
+    def hired(self) -> int:
+        """Temporary workers hired by OVERTIME (spec section 4)."""
+        return len(self.temporary)
 
     @property
     def n_substituted(self) -> int:
@@ -240,7 +264,7 @@ class Run:
     do not need. The observations of step 3 on `observe_days` are collected in `observations`.
     `apply` is step 3's treatment of a decision; a rollout may also use it to apply a candidate
     action to a rebuilt state before `resume`. Applied and rejected operations are logged in
-    `substitutions`, `rejected`, `reseqs`, `nervousness` and `infeasible_reseqs`.
+    `substitutions`, `rejected`, `reseqs`, `shifts`, `nervousness` and `infeasible_reseqs`.
     """
 
     __slots__ = (
@@ -257,6 +281,7 @@ class Run:
         "reseqs",
         "returns",
         "review_period",
+        "shifts",
         "shocked",
         "shocks",
         "state",
@@ -297,6 +322,7 @@ class Run:
         self.substitutions: list[Substitution] = []
         self.rejected: list[Rejection] = []
         self.reseqs = 0
+        self.shifts = 0
         self.nervousness = 0
         self.infeasible_reseqs = 0
 
@@ -322,6 +348,8 @@ class Run:
         """Steps 1-3 of day t; returns whether t is a decision epoch (spec section 3.1 g)."""
         state = self.state
         state.day = t
+        if state.leaving:  # idle temporary workers whose window ended leave (spec 4 OVERTIME)
+            _window_end(state, t)
         # Step 1: D1 returns and absences, D3 new activities (spec section 2.2).
         absence, crews = _absences(state, self.streams, t, self.returns, self.events)
         draw = self.streams.new_activity(t)
@@ -348,15 +376,17 @@ class Run:
         previous ones; an invalid one is rejected and logged in `rejected`, and the others still
         apply. SUBST takes, per replaced absent member, an idle present worker of the same role,
         adds the handover h_j to the remaining work and recomputes rho_j at once, so the new
-        crew works on the same day. RESEQ sets the planned starts of all unstarted activities;
-        its plan must pass `validate_residual` on the planning view of the current state, and
-        one that does not is rejected and counted in `infeasible_reseqs`, or raises
-        AssertionError in `debug` mode. The decision's changes of planned starts count towards
-        `nervousness` if they belong to the deviation set U'_t (`_replanned`).
+        crew works on the same day. OVERTIME hires its temporary workers, idle and present from
+        today (`_hire`). RESEQ and SHIFT set the planned starts of all unstarted activities;
+        the plan must pass `validate_residual` (SHIFT: `validate_shift`) on the planning view of
+        the current state, and one that does not is rejected and counted in
+        `infeasible_reseqs`, or raises AssertionError in `debug` mode. The decision's changes of
+        planned starts count towards `nervousness` if they belong to the deviation set U'_t
+        (`_replanned`).
         """
         state = self.state
         t = state.day
-        before: list[int] | None = None  # planned starts before the first RESEQ
+        before: list[int] | None = None  # planned starts before the first RESEQ or SHIFT
         for op in decision.operations:
             match op:
                 case Noop():
@@ -369,11 +399,15 @@ class Run:
                     self.substitutions.append(outcome)
                     if self.shocks:  # more work: the next D2 shock may lie further on
                         _plan_next_shock(state, self.streams, op.activity, t)
-                case Reseq():
+                case Overtime():
+                    reason = _hire(state, op, t)
+                    if reason is not None:
+                        self.rejected.append(Rejection(day=t, operation=op, reason=reason))
+                case Reseq() | Shift():
                     reason = _infeasible_plan(state, op)
                     if reason is not None:
                         if self.debug:
-                            raise AssertionError(f"RESEQ on day {t}: {reason}")
+                            raise AssertionError(f"{op.kind.upper()} on day {t}: {reason}")
                         self.infeasible_reseqs += 1
                         self.rejected.append(Rejection(day=t, operation=op, reason=reason))
                         continue
@@ -383,7 +417,10 @@ class Run:
                     for j, day in op.starts.items():
                         plan[j] = day
                     state.changed = True  # dispatch tries every eligible activity again
-                    self.reseqs += 1
+                    if isinstance(op, Shift):
+                        self.shifts += 1
+                    else:
+                        self.reseqs += 1
                 case _:
                     assert_never(op)
         if before is not None:
@@ -418,6 +455,10 @@ class Run:
             if remaining[j] <= 0:
                 finished.append(j)
         state.cost += day_cost
+        if state.hired:  # every hired temporary worker is paid for the day (spec 4 OVERTIME)
+            state.cost += state.temp_cost
+            state.overtime_cost += state.temp_cost
+            state.temp_days += state.hired
         for j in finished:
             _finish(state, j, t)
         return False
@@ -459,6 +500,10 @@ class Run:
             reseqs=self.reseqs,
             nervousness=self.nervousness,
             infeasible_reseqs=self.infeasible_reseqs,
+            shifts=self.shifts,
+            temporary=tuple(state.temporary),
+            temporary_days=state.temp_days,
+            overtime_cost=state.overtime_cost,
         )
 
 
@@ -507,7 +552,7 @@ def _update_crew(state: EngineState, j: int, t: int) -> None:
     present member j is paused, and it resumes when one returns. Every change of the present
     members ends the current work segment.
     """
-    present, role, role_costs = state.present, state.role, state.role_costs
+    present, wage = state.present, state.wage
     workers = tuple(w for w in state.assigned[j] if present[w])
     if state.status[j] == RUNNING:
         if state.open_since[j] < t:  # a second change on one day (SUBST) adds no empty segment
@@ -521,7 +566,7 @@ def _update_crew(state: EngineState, j: int, t: int) -> None:
     state.working[j] = workers
     state.open_since[j] = t if workers else -1
     state.rate[j] = len(workers)
-    state.work_cost[j] = sum(role_costs[role[w]] for w in workers)
+    state.work_cost[j] = sum(wage[w] for w in workers)
 
 
 def _work_increase(
@@ -677,6 +722,8 @@ def _substitute(state: EngineState, op: Subst, t: int) -> Substitution | str:
         if w >= len(present):
             return f"worker {w} does not exist"
         if not present[w]:
+            if w >= state.first_temporary:
+                return f"temporary worker {w} has left"
             return f"worker {w} is absent"
         if busy[w] >= 0:
             return f"worker {w} is in the crew of activity {busy[w]}"
@@ -721,13 +768,47 @@ def _replanned(state: EngineState, before: Sequence[int]) -> int:
     )
 
 
-def _infeasible_plan(state: EngineState, op: Reseq) -> str | None:
+def _infeasible_plan(state: EngineState, op: Reseq | Shift) -> str | None:
     """Why the plan of a RESEQ is not a feasible solution of the residual problem of the
-    current state (spec section 4.1), or None if it is."""
-    violations = validate_residual(planning_view(state.observe()), op.starts)
+    current state (spec section 4.1), or that of a SHIFT also changes the order of the planned
+    starts (spec section 4); None if the plan is valid."""
+    problem = planning_view(state.observe())
+    if isinstance(op, Shift):
+        violations = validate_shift(problem, op.starts)
+    else:
+        violations = validate_residual(problem, op.starts)
     if not violations:
         return None
     return f"{len(violations)} residual violations, first: {violations[0].detail}"
+
+
+def _hire(state: EngineState, op: Overtime, t: int) -> str | None:
+    """OVERTIME(k, u, H) on day t (spec section 4): u temporary workers of role k, present and
+    idle on days t .. t + H - 1; None, or why the operation is invalid. At most floor(gamma R_k)
+    temporary workers of a role are hired at a time (`overtime_cap`)."""
+    roles = state.instance.roles
+    if op.role >= len(roles):
+        return f"role {op.role} does not exist"
+    cap = overtime_cap(roles[op.role].capacity)
+    hired = sum(1 for temp in state.temporary if temp.role == op.role and temp.left is None)
+    if hired + op.workers > cap:
+        return (
+            f"{op.workers} more temporary workers of role {op.role} exceed floor(gamma R_k) = "
+            f"{cap} with {hired} hired"
+        )
+    for _ in range(op.workers):
+        state.hire(op.role, t + op.days)
+    return None
+
+
+def _window_end(state: EngineState, t: int) -> None:
+    """Before day t: idle temporary workers whose window ends leave; those in a crew stay until
+    their activity completes (`EngineState.release`; spec section 4 OVERTIME)."""
+    present, busy = state.present, state.busy
+    for w in state.leaving.pop(t, ()):
+        if present[w] and busy[w] < 0:
+            state.idle[state.role[w]].remove(w)
+            state.leave(w, t)
 
 
 class _Quiet:
@@ -755,10 +836,19 @@ def preview(
     quantities are set to nominal values, which no observation shows. A policy uses this to see
     the state left by its own SUBST operations, e.g. before planning a RESEQ.
     """
+    return rehearse(observation, decision, handover_factor=handover_factor)[0]
+
+
+def rehearse(
+    observation: Observation, decision: Decision, *, handover_factor: float = HANDOVER_FACTOR
+) -> tuple[Observation, tuple[Rejection, ...]]:
+    """`preview` and the operations the engine would reject: an operation rejected here is
+    rejected in every state with this observation, whatever its hidden quantities."""
     world = nominal_world(observation)
     state = state_from_observation(observation, world, handover_factor=handover_factor)
-    Run(state, _Quiet(), NoReaction(), record_events=False).apply(decision)
-    return state.observe()
+    run = Run(state, _Quiet(), NoReaction(), record_events=False)
+    run.apply(decision)
+    return state.observe(), tuple(run.rejected)
 
 
 def _dispatch(state: EngineState, streams: DisruptionStreams, t: int, shocks: bool) -> None:
@@ -816,7 +906,8 @@ def _dispatch(state: EngineState, streams: DisruptionStreams, t: int, shocks: bo
 
 
 def _start(state: EngineState, j: int, t: int, crew: tuple[int, ...]) -> None:
-    """Start j on day t with its crew, all present, so rho_j = 1 (spec section 3.1 a-b)."""
+    """Start j on day t with its crew, all present, so rho_j = 1 (spec section 3.1 a-b); the
+    work of temporary workers in the crew costs nothing beyond their daily pay (spec 4)."""
     state.status[j] = RUNNING
     insort(state.running, j)
     state.eligible.discard(j)
@@ -824,7 +915,10 @@ def _start(state: EngineState, j: int, t: int, crew: tuple[int, ...]) -> None:
     state.open_since[j] = t
     state.assigned[j] = state.working[j] = crew
     state.rate[j] = state.unit[j]  # M_j present members; 1 unit without demands
-    state.work_cost[j] = state.daily_cost[j]
+    if state.temporary and crew and max(crew) >= state.first_temporary:
+        state.work_cost[j] = sum(state.wage[w] for w in crew)
+    else:
+        state.work_cost[j] = state.daily_cost[j]
 
 
 def _finish(state: EngineState, j: int, t: int) -> None:
@@ -842,9 +936,10 @@ def _finish(state: EngineState, j: int, t: int) -> None:
 
 
 def _day_record(state: EngineState, t: int, epoch: bool) -> DayRecord:
+    present = state.present
     return DayRecord(
         day=t,
         working=tuple((j, state.working[j]) for j in state.running),
-        absent=tuple(w for w, here in enumerate(state.present) if not here),
+        absent=tuple(w for w in range(state.first_temporary) if not present[w]),
         epoch=epoch,
     )

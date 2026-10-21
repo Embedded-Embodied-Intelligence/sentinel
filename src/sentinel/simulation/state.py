@@ -19,6 +19,14 @@ RUNNING: Final = "running"
 PAUSED: Final = "paused"
 DONE: Final = "done"
 HANDOVER_FACTOR: Final = 0.3  # alpha of the handover cost h_j (spec sections 3 and 8)
+OVERTIME_CAP: Final = 0.2  # gamma: at most floor(gamma R_k) temporary workers of role k (4, 8)
+OVERTIME_RATE: Final = 1.5  # c_OT_k / c_k, the daily cost of a temporary worker (spec 4, 8)
+
+
+def overtime_cap(capacity: int, cap: float = OVERTIME_CAP) -> int:
+    """floor(gamma R_k): the temporary workers of a role with R_k = `capacity` that may be hired
+    at once (spec section 4); the floor ignores rounding noise below 1e-9."""
+    return math.floor(cap * capacity + 1e-9)
 
 
 def onboarding_days(work: float, handover_factor: float = HANDOVER_FACTOR) -> int:
@@ -73,12 +81,29 @@ class InsertedActivity(BaseModel):
     successor: NonNegativeInt
 
 
+class TemporaryWorker(BaseModel):
+    """A worker hired by OVERTIME (spec section 4): worker id `id` of `role`, hired on day
+    `hired` for the window [hired, until). It is never absent; after the window it takes no new
+    assignment and leaves when idle. `left` is the first day it is no longer hired (None while
+    it is); it is paid for the days [hired, left)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: NonNegativeInt
+    role: NonNegativeInt
+    hired: NonNegativeInt
+    until: NonNegativeInt
+    left: NonNegativeInt | None = None
+
+
 class Observation(BaseModel):
     """What the agent may see on `day` (spec section 3): no true durations, no true absence
     lengths, no future events.
 
     Per-activity tuples are indexed by activity id (the instance's ids, then the D3 ids in
-    `inserted`); per-worker tuples by worker id. `work_done` is e_j in full-crew days.
+    `inserted`); per-worker tuples by worker id (the instance's workers, then the temporary
+    workers in `temporary`, spec section 4; a temporary worker is present while it is hired and
+    never absent). `work_done` is e_j in full-crew days.
     `assigned` holds the crew of every started activity, reserved until it completes, absent
     members included (spec section 3.1 a); a member replaced by SUBST has left it (spec section
     4). `work_increases` lists every observed D2 shock as (activity, e_j before the shock,
@@ -106,6 +131,13 @@ class Observation(BaseModel):
     pert: PertParams
     disruptions: DisruptionParams
     handovers: tuple[tuple[int, float, int], ...] = Field(default=(), exclude_if=_unset)
+    temporary: tuple[TemporaryWorker, ...] = Field(default=(), exclude_if=_unset)
+
+
+def worker_roles(observation: Observation) -> list[int]:
+    """The role of every worker id of an observation, temporary workers included."""
+    roles = [worker.role for worker in observation.instance.workers]
+    return roles + [temp.role for temp in observation.temporary]
 
 
 class EngineState:
@@ -117,7 +149,12 @@ class EngineState:
     zero exactly; only D2 factors make it fractional. Hidden: `remaining` (true remaining work),
     `return_day` (true end of an absence) and `next_shock`/`shock_factor` (the next D2 shock).
     Only `observe()` passes information to a policy. Per-activity lists are indexed by activity
-    id and grow with D3 insertions. `handover_factor` is alpha of the SUBST handover cost.
+    id and grow with D3 insertions; per-worker lists by worker id and grow with the temporary
+    workers of OVERTIME (`hire`, spec section 4), whose ids start at `first_temporary`. A crew
+    member's work costs `wage` per day, c_k of its role, but 0 for a temporary worker, which is
+    paid OVERTIME_RATE c_k for every day it is hired instead (`temp_cost` per day for all of them,
+    added up in `temp_days` and `overtime_cost`). `handover_factor` is alpha of the SUBST
+    handover cost.
     """
 
     __slots__ = (
@@ -136,14 +173,18 @@ class EngineState:
         "duration",
         "eligible",
         "finish",
+        "first_temporary",
         "handover_factor",
         "handovers",
+        "hired",
         "idle",
         "inserted",
         "instance",
+        "leaving",
         "max_days",
         "next_shock",
         "open_since",
+        "overtime_cost",
         "pending",
         "pert",
         "plan",
@@ -160,7 +201,11 @@ class EngineState:
         "start",
         "status",
         "successors",
+        "temp_cost",
+        "temp_days",
+        "temporary",
         "unit",
+        "wage",
         "work_cost",
         "work_days",
         "work_increases",
@@ -225,6 +270,7 @@ class EngineState:
         self.absent_since: list[int | None] = [None] * n_workers
         self.announced: list[int | None] = [None] * n_workers
         self.busy = [-1] * n_workers  # activity whose crew the worker is in, -1 if none
+        self.wage = [self.role_costs[k] for k in self.role]  # daily cost of a member's work
         # idle[k]: present workers of role k in no crew, in increasing id order
         self.idle = [[w for w, k in enumerate(self.role) if k == r.id] for r in instance.roles]
 
@@ -233,6 +279,14 @@ class EngineState:
         self.inserted: list[InsertedActivity] = []
         self.work_increases: list[tuple[int, float, float]] = []
         self.handovers: list[tuple[int, float, int]] = []
+
+        self.first_temporary = n_workers
+        self.temporary: list[TemporaryWorker] = []  # by id - first_temporary
+        self.leaving: dict[int, list[int]] = {}  # first day after a window -> its workers
+        self.hired = 0  # temporary workers hired now
+        self.temp_cost = 0.0  # their daily cost
+        self.temp_days = 0  # temporary worker-days paid so far
+        self.overtime_cost = 0.0
 
     def add_activity(
         self,
@@ -276,13 +330,50 @@ class EngineState:
         return new
 
     def release(self, j: int) -> None:
-        """Dissolve the crew of the completed activity j; its present members become idle."""
+        """Dissolve the crew of the completed activity j at the end of the current day; its
+        present members become idle, except temporary workers whose window is over, who leave
+        (spec section 4 OVERTIME)."""
         busy, present, idle, role = self.busy, self.present, self.idle, self.role
         self.changed = True
+        first, tomorrow = self.first_temporary, self.day + 1
         for w in self.assigned[j]:
             busy[w] = -1
             if present[w]:
-                insort(idle[role[w]], w)
+                if w >= first and self.temporary[w - first].until <= tomorrow:
+                    self.leave(w, tomorrow)
+                else:
+                    insort(idle[role[w]], w)
+
+    def hire(self, role: int, until: int) -> int:
+        """A temporary worker of `role`, present and idle from today to day `until` - 1 (the
+        window of spec section 4 OVERTIME); returns its id, the next free worker id."""
+        w = len(self.role)
+        self.role.append(role)
+        self.present.append(True)
+        self.return_day.append(-1)
+        self.absent_since.append(None)
+        self.announced.append(None)
+        self.busy.append(-1)
+        self.wage.append(0.0)
+        self.idle[role].append(w)  # the largest id, so the pool stays sorted
+        self.temporary.append(TemporaryWorker(id=w, role=role, hired=self.day, until=until))
+        self.leaving.setdefault(until, []).append(w)
+        self.changed = True
+        self.count_hired()
+        return w
+
+    def leave(self, w: int, day: int) -> None:
+        """Temporary worker w is no longer hired from `day` on: gone, and paid no more."""
+        i = w - self.first_temporary
+        self.temporary[i] = self.temporary[i].model_copy(update={"left": day})
+        self.present[w] = False
+        self.count_hired()
+
+    def count_hired(self) -> None:
+        """Recount the temporary workers hired now and their daily cost OVERTIME_RATE c_k."""
+        hired = [temp.role for temp in self.temporary if temp.left is None]
+        self.hired = len(hired)
+        self.temp_cost = sum(OVERTIME_RATE * self.role_costs[k] for k in hired)
 
     def hidden(self) -> SampledWorld:
         """The true hidden quantities: the perfect-information test hook of the forecaster.
@@ -314,6 +405,7 @@ class EngineState:
             pert=self.pert,
             disruptions=self.disruptions,
             handovers=tuple(self.handovers),
+            temporary=tuple(self.temporary),
         )
 
 
@@ -338,7 +430,8 @@ def state_from_observation(
     `costs` are the daily role costs c_k (default 1.0) and `handover_factor` the alpha of later
     SUBST operations (default 0.3, spec section 8). The D2 work-day counters restart at 0 and
     no D2 shock is planned yet: the run that continues the state looks them up in its own streams
-    (`Run.resume`). Work segments before the day are not reconstructed.
+    (`Run.resume`). Work segments before the day are not reconstructed, nor are the counts of
+    temporary worker-days and overtime cost (both in the observed cost).
     """
     instance = observation.instance
     n_original = instance.n_activities
@@ -370,6 +463,16 @@ def state_from_observation(
             raise ValueError(f"inserted activity {act.id} would get id {new}")
     t = observation.day
     state.day = t
+    for temp in observation.temporary:
+        if temp.id != len(state.role):
+            raise ValueError(f"temporary worker {temp.id} would get id {len(state.role)}")
+        state.role.append(temp.role)
+        state.busy.append(-1)
+        state.wage.append(0.0)
+        state.temporary.append(temp)
+        if temp.left is None and temp.until > t:
+            state.leaving.setdefault(temp.until, []).append(temp.id)
+    state.count_hired()
     state.cost = observation.cost
     state.inserted = list(observation.inserted)
     state.work_increases = list(observation.work_increases)
@@ -406,7 +509,7 @@ def state_from_observation(
             workers_rate, cost = state.unit[j], state.daily_cost[j]
         else:
             workers_rate = len(workers)
-            cost = sum(state.role_costs[role[w]] for w in workers)
+            cost = sum(state.wage[w] for w in workers)
         if (status[j] == RUNNING) != (workers_rate > 0):
             raise ValueError(f"activity {j} is {status[j]} with {len(workers)} present members")
         if status[j] == RUNNING:
@@ -474,7 +577,7 @@ def nominal_world(observation: Observation) -> SampledWorld:
     crew-member day; a D2 shock then multiplies the remaining work by F and a SUBST handover
     adds h_j M_j. After the last change it loses the work done since and again keeps at least
     one crew-member day. An absent worker returns on day s + max(L_low, t - s + 1): after the
-    announced bound, or tomorrow once it has passed.
+    announced bound, or tomorrow once it has passed. Temporary workers are never absent.
     """
     history = work_history(observation)
     remaining = [0.0] * len(observation.status)
@@ -494,8 +597,8 @@ def nominal_world(observation: Observation) -> SampledWorld:
         remaining[j] = units
     t = observation.day
     return_day = [-1] * len(observation.present)
-    for w, present in enumerate(observation.present):
-        if present:
+    for w in range(len(observation.instance.workers)):
+        if observation.present[w]:
             continue
         start, announced = observation.absent_since[w], observation.announced[w]
         if start is None or announced is None:
