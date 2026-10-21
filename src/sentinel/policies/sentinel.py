@@ -25,7 +25,8 @@ from sentinel.simulation.state import PAUSED, RUNNING, Observation
 class SentinelStats(DecisionStats):
     """`DecisionStats` (with `reseqs`: CP-SAT searches for RESEQ plans) and Sentinel's own
     counts: deliberations, needs-gate exits, epochs without deliberation, candidates evaluated,
-    rollouts, the wall time of each deliberation and the chosen candidates by kind."""
+    rollouts, the wall time of each deliberation, the chosen candidates by kind and the
+    decisions by reason (`DecisionRecord.reason`)."""
 
     deliberations: int = 0
     gate_exits: int = 0
@@ -34,6 +35,7 @@ class SentinelStats(DecisionStats):
     rollouts: int = 0
     deliberation_s: list[float] = field(default_factory=list)
     chosen: dict[str, int] = field(default_factory=dict)
+    reasons: dict[str, int] = field(default_factory=dict)
 
 
 class Sentinel:
@@ -78,6 +80,7 @@ class Sentinel:
                 decision=EMPTY_DECISION,
             )
         stats.decisions += 1
+        stats.reasons[record.reason] = stats.reasons.get(record.reason, 0) + 1
         stats.decide_time_s += time.perf_counter() - began
         if self.keep_records:
             self.records.append(record)
