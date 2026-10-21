@@ -54,7 +54,15 @@ mismatches in 120 runs). 0 CP-SAT fallbacks in 38,477 stages. The 300 runs per s
 λ_A ∈ {0, 0.005, 0.01, 0.02}, E[L] = 3, four WP2b replications, the five policies with common
 random numbers; on time evaluated post hoc for δ_D ∈ {0.2, 0.3}; sensitivity E[L] = 5 for J30.
 Paired differences against NoReaction share the world (instance, scenario, replication), and
-their 95 % intervals come from a cluster bootstrap over instances (1,000 resamples).
+their 95 % intervals come from a cluster bootstrap over instances (1,000 resamples; ADR-0013);
+on-time shares carry Wilson intervals over runs. Because every policy runs the same worlds, a
+paired difference of means equals the difference of the means. One run per world evaluates both
+deadlines post hoc, which is exact only because no baseline policy uses D. Cost: CP-SAT
+re-planning dominates. Measured on a spread sample, a J60 StableResolve(subst) run takes
+0.5 / 7.9 / 12.1 / 14.6 s at λ_A = 0 / 0.005 / 0.01 / 0.02 (J30: 0.2 / 2.2 / 3.5 / 5.8 s), so
+the primary study needs about 15 CPU hours, about 4–5 h on 4 workers. The first three instances
+of each set (parameter group 1) are about 12 times cheaper than this average (9–16 times by
+policy), so smoke runs cannot serve as duration estimates.
 
 **References.** Brooks 1995; Van de Vonder et al. 2007; Herroelen & Leus 2005; Wilson 1927;
 Davison & Hinkley 1997.
