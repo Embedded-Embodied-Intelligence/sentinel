@@ -24,6 +24,7 @@ repos:
       - id: detect-secrets
         name: detect-secrets
         entry: uv run detect-secrets-hook --baseline .secrets.baseline
-        # Generated files full of SHA-256 digests: run manifests, engine regression digests.
-        exclude: ^(results/.*/manifest\.json|tests/fixtures/engine_regression\.json)$
+        # Generated files full of SHA-256 digests: run and summary manifests, engine regression
+        # digests.
+        exclude: ^(results/.*/(summary_)?manifest\.json|tests/fixtures/engine_regression\.json)$
         language: system
