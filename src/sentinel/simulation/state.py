@@ -5,7 +5,7 @@ from bisect import insort
 from collections.abc import Sequence
 from typing import Final, Literal, NamedTuple
 
-from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat, NonNegativeInt
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
@@ -17,6 +17,13 @@ UNSTARTED: Final = "unstarted"
 RUNNING: Final = "running"
 PAUSED: Final = "paused"
 DONE: Final = "done"
+HANDOVER_FACTOR: Final = 0.3  # alpha of the handover cost h_j (spec sections 3 and 8)
+
+
+def _unset(value: object) -> bool:
+    """Leave a field out of serialisation while it is empty or zero, so that the dumps of runs
+    and observations without interventions are what they were before WP4a."""
+    return not value
 
 
 class WorkSegment(NamedTuple):
@@ -64,8 +71,10 @@ class Observation(BaseModel):
     Per-activity tuples are indexed by activity id (the instance's ids, then the D3 ids in
     `inserted`); per-worker tuples by worker id. `work_done` is e_j in full-crew days.
     `assigned` holds the crew of every started activity, reserved until it completes, absent
-    members included (spec section 3.1 a). `work_increases` lists every observed D2 shock as
-    (activity, e_j before the shock, factor F).
+    members included (spec section 3.1 a); a member replaced by SUBST has left it (spec section
+    4). `work_increases` lists every observed D2 shock as (activity, e_j before the shock,
+    factor F), and `handovers` every SUBST handover as (activity, e_j at the handover, h_j
+    full-crew days added).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -87,6 +96,7 @@ class Observation(BaseModel):
     deadline: int | None
     pert: PertParams
     disruptions: DisruptionParams
+    handovers: tuple[tuple[int, float, int], ...] = Field(default=(), exclude_if=_unset)
 
 
 class EngineState:
@@ -98,7 +108,7 @@ class EngineState:
     zero exactly; only D2 factors make it fractional. Hidden: `remaining` (true remaining work),
     `return_day` (true end of an absence) and `next_shock`/`shock_factor` (the next D2 shock).
     Only `observe()` passes information to a policy. Per-activity lists are indexed by activity
-    id and grow with D3 insertions.
+    id and grow with D3 insertions. `handover_factor` is alpha of the SUBST handover cost.
     """
 
     __slots__ = (
@@ -117,6 +127,8 @@ class EngineState:
         "duration",
         "eligible",
         "finish",
+        "handover_factor",
+        "handovers",
         "idle",
         "inserted",
         "instance",
@@ -157,12 +169,14 @@ class EngineState:
         disruptions: DisruptionParams,
         deadline: int | None,
         max_days: int,
+        handover_factor: float = HANDOVER_FACTOR,
     ) -> None:
         acts = instance.activities
         n = len(acts)
         self.instance = instance
         self.pert = pert
         self.disruptions = disruptions
+        self.handover_factor = handover_factor
         self.deadline = deadline
         self.max_days = max_days  # last simulated day
         self.role_costs = tuple(role_costs)
@@ -209,6 +223,7 @@ class EngineState:
         self.eligible = {j for j in range(n) if self.pending[j] == 0}  # unstarted only
         self.inserted: list[InsertedActivity] = []
         self.work_increases: list[tuple[int, float, float]] = []
+        self.handovers: list[tuple[int, float, int]] = []
 
     def add_activity(
         self,
@@ -289,6 +304,7 @@ class EngineState:
             deadline=self.deadline,
             pert=self.pert,
             disruptions=self.disruptions,
+            handovers=tuple(self.handovers),
         )
 
 
@@ -305,11 +321,13 @@ def state_from_observation(
     *,
     plan: Sequence[int] | None = None,
     costs: Sequence[float] | None = None,
+    handover_factor: float = HANDOVER_FACTOR,
 ) -> EngineState:
     """The engine state at step 3 of the observed day, completed by the hidden `world`.
 
-    `plan` replaces the observed plan (one start per activity id, D3 activities included) and
-    `costs` are the daily role costs c_k (default 1.0). The D2 work-day counters restart at 0 and
+    `plan` replaces the observed plan (one start per activity id, D3 activities included),
+    `costs` are the daily role costs c_k (default 1.0) and `handover_factor` the alpha of later
+    SUBST operations (default 0.3, spec section 8). The D2 work-day counters restart at 0 and
     no D2 shock is planned yet: the run that continues the state looks them up in its own streams
     (`Run.resume`). Work segments before the day are not reconstructed.
     """
@@ -333,6 +351,7 @@ def state_from_observation(
         disruptions=observation.disruptions,
         deadline=observation.deadline,
         max_days=day_limit(instance, observation.deadline),
+        handover_factor=handover_factor,
     )
     for act in observation.inserted:
         new = state.add_activity(
@@ -345,6 +364,7 @@ def state_from_observation(
     state.cost = observation.cost
     state.inserted = list(observation.inserted)
     state.work_increases = list(observation.work_increases)
+    state.handovers = list(observation.handovers)
     status = state.status = list(observation.status)
     state.start = list(observation.start)
     state.finish = list(observation.finish)
@@ -400,3 +420,75 @@ def crew_member_days(work: float, unit: int) -> int:
     if abs(units - rounded) > 1e-6:
         raise ValueError(f"work done {work} is not a whole number of crew-member days of {unit}")
     return rounded
+
+
+def nominal_activity(observation: Observation, j: int) -> tuple[int, tuple[int, ...]]:
+    """Nominal duration p_j and demands of activity j of an observation, D3 activities included."""
+    instance = observation.instance
+    if j < instance.n_activities:
+        act = instance.activities[j]
+        return act.duration, act.demands
+    inserted = observation.inserted[j - instance.n_activities]
+    return inserted.duration, inserted.demands
+
+
+def work_history(observation: Observation) -> dict[int, list[tuple[int, float, float]]]:
+    """Observed changes of the remaining work of every started activity, in crew-member days
+    and in the order they happened: (work done at the change, factor, work added).
+
+    A D2 shock multiplies the remaining work by F and adds nothing; a SUBST handover adds
+    h_j M_j with factor 1. At equal work done a handover (step 3) comes before a shock (step 5
+    of the same day, before any progress); shocks and handovers keep their observed order.
+    """
+    changes: dict[int, list[tuple[int, int, int, float, float]]] = {}
+    for i, (j, work_done, factor) in enumerate(observation.work_increases):
+        unit = max(1, sum(nominal_activity(observation, j)[1]))
+        entry = (crew_member_days(work_done, unit), 1, i, factor, 0.0)
+        changes.setdefault(j, []).append(entry)
+    for i, (j, work_done, days) in enumerate(observation.handovers):
+        unit = max(1, sum(nominal_activity(observation, j)[1]))
+        entry = (crew_member_days(work_done, unit), 0, i, 1.0, float(days * unit))
+        changes.setdefault(j, []).append(entry)
+    return {
+        j: [(at, factor, added) for at, _, _, factor, added in sorted(entries)]
+        for j, entries in changes.items()
+    }
+
+
+def nominal_world(observation: Observation) -> SampledWorld:
+    """The hidden state with nominal values (spec section 5.2), in crew-member days.
+
+    An unstarted activity has remaining work p_j M_j (inserted ones: their nominal duration).
+    A started one starts from p_j M_j and replays its observed changes (`work_history`): before
+    each change it loses the work done since the previous one and keeps at least one
+    crew-member day; a D2 shock then multiplies the remaining work by F and a SUBST handover
+    adds h_j M_j. After the last change it loses the work done since and again keeps at least
+    one crew-member day. An absent worker returns on day s + max(L_low, t - s + 1): after the
+    announced bound, or tomorrow once it has passed.
+    """
+    history = work_history(observation)
+    remaining = [0.0] * len(observation.status)
+    for j, status in enumerate(observation.status):
+        if status == DONE:
+            continue
+        nominal, demands = nominal_activity(observation, j)
+        unit = max(1, sum(demands))  # M_j crew-member days per full-crew day
+        units = float(nominal * unit)
+        if status != UNSTARTED:
+            before = 0
+            for at, factor, added in history.get(j, ()):
+                units = max(units - (at - before), 1.0) * factor + added
+                before = at
+            done = crew_member_days(observation.work_done[j], unit)
+            units = max(units - (done - before), 1.0)
+        remaining[j] = units
+    t = observation.day
+    return_day = [-1] * len(observation.present)
+    for w, present in enumerate(observation.present):
+        if present:
+            continue
+        start, announced = observation.absent_since[w], observation.announced[w]
+        if start is None or announced is None:
+            raise ValueError(f"absent worker {w} has no absence start or announced bound")
+        return_day[w] = start + max(announced, t - start + 1)
+    return SampledWorld(tuple(remaining), tuple(return_day))

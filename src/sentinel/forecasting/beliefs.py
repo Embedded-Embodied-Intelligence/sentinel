@@ -1,5 +1,6 @@
 """Belief over the hidden state given an observation, and samples from it (spec section 5.1)."""
 
+import math
 from typing import NamedTuple
 
 import numpy as np
@@ -11,6 +12,7 @@ from sentinel.simulation.state import (
     Observation,
     SampledWorld,
     crew_member_days,
+    work_history,
 )
 
 MAX_ABSENCE = 365  # the absence posterior is truncated at L <= 365 days (spec section 5.1)
@@ -43,6 +45,7 @@ class Belief:
     same world whatever is simulated from it afterwards. Conditions with probability zero under
     the prior (possible after large D2 shocks) fall back to the smallest feasible value and are
     counted in `fallbacks`; they depend on the observation only, so every sample has the same.
+    SUBST handovers enter the replay of the observed work like D2 shocks (`_remaining`).
     """
 
     __slots__ = ("_durations", "_fixed", "_returns", "fallbacks", "n_activities", "n_workers")
@@ -53,9 +56,7 @@ class Belief:
         self.n_activities = n = len(observation.status)
         self.n_workers = len(observation.present)
         self.fallbacks = 0
-        shocks: dict[int, list[tuple[float, float]]] = {}
-        for j, work_done, factor in observation.work_increases:
-            shocks.setdefault(j, []).append((work_done, factor))
+        changes = work_history(observation)
         self._fixed = [0.0] * n  # remaining work of finished activities and of fallbacks
         self._durations: list[_Duration] = []
         for j, status in enumerate(observation.status):
@@ -74,7 +75,7 @@ class Belief:
                 self._durations.append(_Duration(j, pmf, table))
                 continue
             done = crew_member_days(observation.work_done[j], unit)
-            history = [(crew_member_days(e, unit), f) for e, f in shocks.get(j, ())]
+            history = changes.get(j, [])
             values = range(pmf.first, pmf.last + 1)
             remaining = [_remaining(p * unit, done, history) for p in values]
             # Remaining work grows with P_j, so the feasible values are a top range of the pmf.
@@ -114,6 +115,13 @@ class Belief:
             return_day[w] = start + pmf.sample(uniforms[n + w])
         return SampledWorld(tuple(remaining), tuple(return_day), self.fallbacks)
 
+    def expected_remaining(self) -> tuple[float, ...]:
+        """E[remaining work] of every activity under the belief, in crew-member days."""
+        expected = self._fixed.copy()
+        for j, pmf, table in self._durations:
+            expected[j] = math.fsum(p * r for p, r in zip(pmf.probs, table, strict=True))
+        return tuple(expected)
+
 
 def sample_world(observation: Observation, rng: np.random.Generator) -> SampledWorld:
     """One sample of the hidden state given `observation` (spec section 5.1)."""
@@ -136,11 +144,22 @@ def absence_posterior(q: float, least: int) -> IntegerPmf | None:
     return IntegerPmf(least, weights.tolist())
 
 
-def _remaining(units: float, done: int, history: list[tuple[int, float]]) -> float:
+def _remaining(units: float, done: int, history: list[tuple[int, float, float]]) -> float:
     """R_m - (e_j - e_m) of spec section 5.1 in crew-member days: start from P_j M_j and replay
-    the work done between the observed D2 shocks (work done at the shock, factor)."""
+    the work done between the observed changes (work done, factor, work added; `work_history`).
+
+    A D2 shock multiplies the remaining work by F, a SUBST handover adds h_j M_j. The activity
+    must not have finished before a handover, else the value is -inf (infeasible); before a
+    shock that follows from the final condition, since every F >= 1.
+    """
     before = 0
-    for work_done, factor in history:
-        units = (units - (work_done - before)) * factor
+    for work_done, factor, added in history:
+        units -= work_done - before
+        if added:
+            if units <= FINISHED:
+                return -math.inf
+            units += added
+        else:
+            units *= factor
         before = work_done
     return units - (done - before)

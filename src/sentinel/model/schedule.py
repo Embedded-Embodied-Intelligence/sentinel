@@ -8,7 +8,9 @@ from pydantic import BaseModel, ConfigDict
 
 from sentinel.model.instance import ProjectInstance
 
-ViolationKind = Literal["length", "source_start", "negative_start", "precedence", "resource"]
+ViolationKind = Literal[
+    "length", "source_start", "negative_start", "precedence", "resource", "release"
+]
 
 
 class Schedule(BaseModel):
