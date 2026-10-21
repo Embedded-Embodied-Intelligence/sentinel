@@ -2,7 +2,8 @@
 
 `sentinel baselines --set j30 --method cpsat_det` precomputes the cached baseline plans of a set
 with the method parameters of a study config (default `configs/wp2_noreaction.toml`).
-`sentinel summarise-forecasts results/wp3/<run_id>` regenerates the summaries of a forecast study.
+`sentinel summarise-forecasts results/wp3/<run_id>` regenerates the summaries of a forecast study,
+`sentinel summarise-policies results/wp4/<run_id>` those of a policy study.
 """
 
 import argparse
@@ -50,6 +51,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _baselines(parser, args)
     if args.command == "summarise-forecasts":
         return _summarise_forecasts(args)
+    if args.command == "summarise-policies":
+        return _summarise_policies(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -81,6 +84,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "summarise-forecasts", help="regenerate the summaries of a forecast study run"
     )
     summarise.add_argument("run_dir", type=Path, help="run directory with manifest.json")
+    policies = commands.add_parser(
+        "summarise-policies", help="regenerate the summaries of a policy study run"
+    )
+    policies.add_argument("run_dir", type=Path, help="run directory with manifest.json")
     return parser
 
 
@@ -172,6 +179,21 @@ def _summarise_forecasts(args: argparse.Namespace) -> int:
     print(outputs.seed_check.line().removeprefix("- "))
     if outputs.reference_check is not None:
         print(outputs.reference_check.line().removeprefix("- "))
+    return 0
+
+
+def _summarise_policies(args: argparse.Namespace) -> int:
+    run_dir: Path = args.run_dir
+    if not (run_dir / "manifest.json").is_file():
+        print(f"error: {run_dir / 'manifest.json'} not found", file=sys.stderr)
+        return 1
+    # Imported here so that the other commands do not load matplotlib.
+    from sentinel.experiments.policy_summary import regenerate
+
+    outputs = regenerate(run_dir)
+    for name in outputs.files:
+        print(run_dir / name)
+    print(outputs.seed_check.line().removeprefix("- "))
     return 0
 
 

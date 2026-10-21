@@ -1,0 +1,53 @@
+# WP4b (RQ4): the five baseline policies of spec section 7 on the cpsat_det plans of WP2b, primary grid.
+# Instances, scenarios and seeds of docs/experiments/plan.md (RQ4 baseline study); WP7 reuses them.
+# Run: uv run python -m sentinel.experiments.policy_study --config configs/wp4_baselines.toml --out results/wp4
+name = "wp4_baselines"
+base_seed = 2026         # world seed of (instance, replication) as in WP2b, shared by all policies
+max_workers = 4          # processes; one task per (instance, scenario)
+data_root = "data/psplib"
+baseline_cache = "data/derived/baselines"
+replications = 4         # replications 0-3 of WP2b (same world seeds)
+deltas = [0.2, 0.3]      # deadline slacks delta_D, evaluated post hoc; max_days from the largest
+beta = 0.10              # budget reserve of B (spec section 1.2)
+review_period = 5        # T_r (spec section 8)
+policies = ["no_reaction", "always_substitute", "full_resolve", "full_resolve_subst", "stable_resolve_subst"]
+deterministic_time_limit = 0.1  # T_cp per CP-SAT stage in deterministic seconds (spec section 8)
+cp_seed = 0              # CP-SAT random seed; one CP-SAT worker
+wp2b_results = "results/wp2/20261020-181559-6534a712/results.csv.gz"  # NoReaction makespans must match
+
+baseline = "cpsat_det"
+
+[baselines.cpsat_det]    # as in configs/wp2_noreaction.toml, so the cached plans are reused
+deterministic_time_limit = 5.0
+random_seed = 2026
+num_workers = 1
+
+[pert]                   # duration multiplier X ~ PERT(a, m, b) with shape lam (spec section 2.1)
+a = 0.8
+m = 1.0
+b = 1.6
+lam = 4.0
+
+[scenarios]              # primary grid of docs/experiments/plan.md
+lambda_a = [0.0, 0.005, 0.01, 0.02]
+mean_absence = [3]
+lambda_s = 0.01
+lambda_n = 0.02
+durations_only = false
+
+[[sets]]
+name = "j30"
+reference = "opt"        # C* = proven optimum
+stride = 4               # every 4th instance: 120
+
+[[sets]]
+name = "j60"
+reference = "hrs"        # C* = best known makespan
+stride = 4
+
+[summary]
+bootstrap_resamples = 1000  # cluster bootstrap over instances (spec section 5.2 style)
+bootstrap_seed = 2026
+reference_policy = "no_reaction"  # paired differences are taken against it
+table = "table_wp4"
+figure_prefix = "fig_wp4"
