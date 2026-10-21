@@ -170,6 +170,8 @@ def _summarise_forecasts(args: argparse.Namespace) -> int:
     for name in outputs.files:
         print(run_dir / name)
     print(outputs.seed_check.line().removeprefix("- "))
+    if outputs.reference_check is not None:
+        print(outputs.reference_check.line().removeprefix("- "))
     return 0
 
 

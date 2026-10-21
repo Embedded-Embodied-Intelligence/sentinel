@@ -2,12 +2,16 @@
 
 import csv
 import gzip
+import hashlib
 import io
 import json
+import math
 import tomllib
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 
 from sentinel import cli
@@ -79,6 +83,11 @@ OUTPUTS = {
     "table_wp3_warning.tex",
     "table_wp3_calibration_delta0.3.tex",
     "table_wp3_warning_delta0.3.tex",
+    "table_wp3_plan_stage.tex",
+    "table_wp3_plan_stage_delta0.3.tex",
+    "table_wp3_headline.tex",
+    "table_wp3_headline_delta0.3.tex",
+    "summary_manifest.json",
     "fig_wp3_reliability.pdf",
     "fig_wp3_reliability.png",
     "fig_wp3_brier.pdf",
@@ -156,6 +165,8 @@ def test_wp3_configs_match_the_work_package() -> None:
         1000,
     )
     assert settings.differences == (("mc_full", "deterministic"), ("mc_full", "mc_no_future"))
+    assert (settings.warning_from, settings.headline_checkpoints) == (0.2, (0.0, 0.4, 0.8))
+    assert settings.reference_run is None and settings.headline_table == "table_wp3_headline"
 
     misspec = load(REPO_ROOT / "configs" / "wp3_misspec.toml")
     assert [(s.name, s.stride) for s in misspec.sets] == [("j30", 4)]
@@ -171,6 +182,12 @@ def test_wp3_configs_match_the_work_package() -> None:
         ("mc_pert_wide", 1.0, PertParams(a=0.7, m=1.0, b=2.0)),
     ]
     assert misspec.summary.table == "table_wp3_misspec"
+    assert misspec.summary.headline_table == "table_wp3_misspec_headline"
+    assert misspec.summary.reference_forecasters == ("mc_no_future", "deterministic")
+    reference = misspec.summary.reference_run  # the main run: same seeds, same worlds
+    assert reference is not None and (REPO_ROOT / reference / "forecasts.csv.gz").is_file()
+    manifest = json.loads((REPO_ROOT / reference / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["config"]["name"] == "wp3_calibration" and not manifest["smoke"]
 
 
 def test_checkpoint_days_and_seeds() -> None:
@@ -217,6 +234,10 @@ def test_forecaster_priors() -> None:
         ("forecasters", [{"name": "a", "kind": "deterministic"}] * 2, "duplicate"),
         ("summary", {"differences": [["mc_full", "nope"]]}, "unknown forecasters"),
         ("summary", {"reliability_checkpoints": [0.5]}, "not checkpoints"),
+        ("summary", {"headline_checkpoints": [0.5]}, "not checkpoints"),
+        ("summary", {"reference_forecasters": ["deterministic"]}, "given together"),
+        ("summary", {"reference_run": "x", "reference_forecasters": ["mc_full"]}, "of this run"),
+        ("summary", {"warning_from": 1.0}, "less than 1"),
     ],
 )
 def test_config_rejects_invalid_values(
@@ -289,12 +310,18 @@ def test_summaries_can_be_regenerated_through_the_cli(
     argv = ["--config", str(fake_forecasts), "--out", str(out), "--limit", "1"]
     assert study.main([*argv, "--replications", "1"]) == 0
     (run_dir,) = out.iterdir()
-    before = {p.name: p.read_bytes() for p in run_dir.iterdir()}
+    stamped = summary.SUMMARY_MANIFEST_FILE  # records the time of generation
+    before = {p.name: p.read_bytes() for p in run_dir.iterdir() if p.name != stamped}
     capsys.readouterr()
     assert cli.main(["summarise-forecasts", str(run_dir)]) == 0
     printed = capsys.readouterr().out
     assert "WP2b seed check: not run" in printed and "summary.md" in printed
-    assert {p.name: p.read_bytes() for p in run_dir.iterdir()} == before
+    assert {p.name: p.read_bytes() for p in run_dir.iterdir() if p.name != stamped} == before
+    record = json.loads((run_dir / stamped).read_text(encoding="utf-8"))
+    # --replications 1 is in the manifest's config, not in the file: the manifest's settings.
+    assert record["summary_settings_source"] == "manifest.json"
+    assert [entry["path"] for entry in record["inputs"]] == ["forecasts.csv.gz", "manifest.json"]
+    assert record["git_commit"] is None or len(record["git_commit"]) == 40
     assert cli.main(["summarise-forecasts", str(tmp_path / "missing")]) == 1
 
 
@@ -387,15 +414,15 @@ reliability_checkpoints = [0.0, 0.4]
 """
 
 
-def synthetic_rows() -> list[dict[str, object]]:
+def synthetic_rows(names: Sequence[str] = ("sharp", "vague")) -> list[dict[str, object]]:
     """C* = 10, C_plan = 10, D = 12 (delta 0.2) and 13 (0.3). Instance 1 finishes on day 8, on
     time, so its checkpoint f = 0.8 (day 8) is skipped; instance 2 finishes on day 14, late.
-    `sharp` forecasts the outcome exactly (p = 1 or 0, every quantile = C); `vague` says
-    p = 0.5 with quantiles 8, 9, 10, 12, 14, 15, 16 and CRPS 1.5."""
+    `vague` says p = 0.5 with quantiles 8, 9, 10, 12, 14, 15, 16 and CRPS 1.5; every other
+    forecaster, e.g. `sharp`, forecasts the outcome exactly (p = 1 or 0, every quantile = C)."""
     rows: list[dict[str, object]] = []
     for stem, makespan in (("tiny1_1", 8), ("tiny1_2", 14)):
         for f, day in ((0.0, 0), (0.4, 4), (0.8, 8)):
-            for name in ("sharp", "vague"):
+            for name in names:
                 row: dict[str, object] = {
                     "set": "tiny",
                     "instance": stem,
@@ -416,7 +443,7 @@ def synthetic_rows() -> list[dict[str, object]]:
                     "deadline_0.3": 13,
                 }
                 if makespan > day:
-                    sharp = name == "sharp"
+                    sharp = name != "vague"
                     p = float(makespan <= 12) if sharp else 0.5
                     quantiles = [makespan] * 7 if sharp else [8, 9, 10, 12, 14, 15, 16]
                     row |= {
@@ -435,25 +462,30 @@ def synthetic_rows() -> list[dict[str, object]]:
     return rows
 
 
-@pytest.fixture
-def synthetic_run(tmp_path: Path) -> Path:
-    run_dir = tmp_path / "synthetic-run"
+def write_run(run_dir: Path, rows: list[dict[str, object]], config_text: str) -> Path:
+    """A run directory with the forecasts file of `rows` and a manifest holding the config."""
     run_dir.mkdir()
     buffer = io.StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=study.columns((0.2, 0.3)), restval="")
     writer.writeheader()
-    writer.writerows(synthetic_rows())
+    writer.writerows(rows)
     (run_dir / "forecasts.csv.gz").write_bytes(gzip.compress(buffer.getvalue().encode()))
+    config = tomllib.loads(config_text)
+    manifest = {"run_id": run_dir.name, "config": config, "results_file": "forecasts.csv.gz"}
+    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return run_dir
+
+
+@pytest.fixture
+def synthetic_run(tmp_path: Path) -> Path:
     wp2b = tmp_path / "wp2b.csv"  # instance 2's makespan differs from the synthetic world
     wp2b.write_text(
         "set,instance,scenario,replication,seed,makespan\n"
         "tiny,tiny1_1,la0_L3,0,108,8\ntiny,tiny1_2,la0_L3,0,114,15\n",
         encoding="utf-8",
     )
-    config = tomllib.loads(SYNTHETIC_CONFIG.format(wp2b=wp2b.as_posix()))
-    manifest = {"run_id": "synthetic", "config": config, "results_file": "forecasts.csv.gz"}
-    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    return run_dir
+    config_text = SYNTHETIC_CONFIG.format(wp2b=wp2b.as_posix())
+    return write_run(tmp_path / "synthetic", synthetic_rows(), config_text)
 
 
 def test_summary_cli_on_a_tiny_synthetic_csv(
@@ -474,8 +506,9 @@ def test_summary_cli_on_a_tiny_synthetic_csv(
 
 def test_synthetic_scores_by_hand(synthetic_run: Path) -> None:
     """Hand-computed cells: vague has one bin (p = 0.5, outcome frequency 2/5 = 0.4), so
-    REL = 0.01, RES = 0, UNC = 0.24, ECE = 0.1; coverage 3/5 (instance 1 at C = 8 < q10 = 9);
-    sharp warns instance 2 on day 0 (lead 12 days), vague only at theta = 0.8."""
+    REL = 0.01, RES = 0, UNC = 0.24, ECE = 0.1; coverage 3/5 (instance 1 at C = 8 < q10 = 9).
+    Early warning counts f >= 0.2: sharp warns instance 2 at f = 0.4, on day 4 (lead
+    12 - 4 = 8 days); vague warns only at theta = 0.8, both instances on day 4."""
     manifest = json.loads((synthetic_run / "manifest.json").read_text(encoding="utf-8"))
     config = ForecastStudyConfig.model_validate(manifest["config"])
     table = summary.read_forecasts(synthetic_run / "forecasts.csv.gz")
@@ -494,11 +527,201 @@ def test_synthetic_scores_by_hand(synthetic_run: Path) -> None:
     assert cells.distribution[(0, 0, None, None)].crps.value == 0.0
     assert cells.differences[(0, 0, 0, None, None)].brier.value == pytest.approx(-0.25)
     warned = cells.warnings[(0, 0, 0, 0.5, None)]
-    assert (warned.late, warned.warned.value, warned.lead.value) == (1, 1.0, 12.0)
+    assert (warned.late, warned.warned.value, warned.lead.value) == (1, 1.0, 8.0)
     assert (warned.on_time, warned.false_alarms.value) == (1, 0.0)
     calm = cells.warnings[(0, 0, 1, 0.5, None)]
     assert (calm.warned.value, calm.false_alarms.value) == (0.0, 0.0)
     alarmed = cells.warnings[(0, 0, 1, 0.8, None)]
-    assert (alarmed.warned.value, alarmed.lead.value, alarmed.false_alarms.value) == (1, 12, 1)
+    assert (alarmed.warned.value, alarmed.lead.value, alarmed.false_alarms.value) == (1, 8, 1)
     pit = cells.distribution[(0, 0, None, None)].pit  # sharp: (0, 1) pairs, uniform draws
     assert int(pit.sum()) == 5
+
+
+def test_synthetic_skill_discrimination_coverage_and_plan_stage(synthetic_run: Path) -> None:
+    """At f = 0 and f = 0.4 one of the two forecasts is on time, so vague (p = 0.5) is the
+    base-rate forecaster of those cells: BSS 0. Pooled over checkpoints (base rate 0.4) its BSS
+    is 1 - 0.25 / 0.24. Sharp separates on-time from late forecasts (AUC 1), vague only ties
+    (AUC 0.5). Vague's PIT values lie in [0.25, 0.5], all inside [0.1, 0.9]. Plan stage (f = 0):
+    sharp has p = 0 for the late run and p = 1 for the on-time run; vague has p = 0.5 < 0.8."""
+    manifest = json.loads((synthetic_run / "manifest.json").read_text(encoding="utf-8"))
+    config = ForecastStudyConfig.model_validate(manifest["config"])
+    table = summary.read_forecasts(synthetic_run / "forecasts.csv.gz")
+    cells = summary.compute_cells(summary.Analysis(table, config), config)
+    sharp, vague = 0, 1
+    for share in (0.0, 0.4):
+        assert cells.binary[(0, 0, vague, share, None)].bss.value == pytest.approx(0, abs=1e-12)
+        assert cells.binary[(0, 0, sharp, share, None)].bss.value == 1.0
+        assert cells.binary[(0, 0, sharp, share, None)].auc.value == 1.0
+        assert cells.binary[(0, 0, vague, share, None)].auc.value == 0.5
+    late_only = cells.binary[(0, 0, vague, 0.8, None)]  # instance 1's f = 0.8 is skipped
+    assert math.isnan(late_only.bss.value) and math.isnan(late_only.auc.value)
+    pooled = cells.binary[(0, 0, vague, None, None)]
+    assert pooled.bss.value == pytest.approx(1 - 0.25 / 0.24)
+    assert (pooled.auc.value, cells.binary[(0, 0, sharp, None, None)].auc.value) == (0.5, 1.0)
+    assert cells.distribution[(0, vague, None, None)].pit_coverage.value == 1.0
+    # Sharp's PIT pairs are (0, 1), so u = V: V is drawn once per row in file order.
+    draws = np.random.default_rng(config.summary.pit_seed).random(table.n_rows)
+    rows = [i for i, r in enumerate(synthetic_rows()) if r["forecaster"] == "sharp" and "crps" in r]
+    expected = np.mean([0.1 <= draws[i] <= 0.9 for i in rows])
+    assert cells.distribution[(0, sharp, None, None)].pit_coverage.value == expected
+
+    plan = cells.plan_stage[(0, 0, sharp, 0.5, None)]
+    assert (plan.late, plan.late_below.value, plan.on_time, plan.on_time_below.value) == (
+        1,
+        1.0,
+        1,
+        0.0,
+    )
+    calm, alarmed = (
+        cells.plan_stage[(0, 0, vague, 0.5, None)],
+        cells.plan_stage[(0, 0, vague, 0.8, None)],
+    )
+    assert (calm.late_below.value, calm.on_time_below.value) == (0.0, 0.0)
+    assert (alarmed.late_below.value, alarmed.on_time_below.value) == (1.0, 1.0)
+
+    assert cli.main(["summarise-forecasts", str(synthetic_run)]) == 0
+    text = (synthetic_run / "summary.md").read_text(encoding="utf-8")
+    assert "### Plan-stage risk" in text and "at some checkpoint f ≥ 0.2" in text
+    assert "| all | vague | 0.8 | 1 | 1.000 [1.000, 1.000] | 1 | 1.000 [1.000, 1.000] |" in text
+    tex = (synthetic_run / "table_wp3_plan_stage.tex").read_text(encoding="utf-8")
+    assert r"TINY & sharp & 0.5 & 1 & 100.0 & {\scriptsize[100.0, 100.0]} & 1 & 0.0 &" in tex
+    headline = (synthetic_run / "table_wp3_headline.tex").read_text(encoding="utf-8")
+    assert r"TINY & 0 & sharp & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 &" in headline
+    assert headline.count(r"\\") == 2 * 6 + 1  # header + value and interval rows per forecast
+
+
+REFERENCED_CONFIG = """
+name = "referenced"
+base_seed = 1
+max_workers = 1
+data_root = "data/psplib"
+baseline = "cpsat_det"
+replications = 2
+deltas = [0.2, 0.3]
+checkpoints = [0.0, 0.4, 0.8]
+
+[baselines.cpsat_det]
+deterministic_time_limit = 1.0
+random_seed = 1
+
+[scenarios]
+lambda_a = [0.0]
+mean_absence = [3]
+lambda_s = 0.01
+lambda_n = 0.02
+durations_only = false
+
+[[sets]]
+name = "tiny"
+reference = "opt"
+
+[[forecasters]]
+name = "solo"
+kind = "monte_carlo"
+
+[summary]
+bootstrap_resamples = 20
+reliability_checkpoints = [0.0, 0.4]
+reference_run = "{reference}"
+reference_forecasters = ["vague"]
+"""
+
+
+def input_state(paths: Sequence[Path]) -> list[tuple[bytes, int]]:
+    return [(path.read_bytes(), path.stat().st_mtime_ns) for path in paths]
+
+
+def test_reference_rows_are_joined_checked_and_marked(
+    synthetic_run: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`solo` sees the worlds of the synthetic run; `vague` of that run is its reference. Of the
+    9 checkpoints of `solo`, 6 have a reference row (replication 1 of instance 1 has none); one
+    has another forecast seed and one another makespan. The inputs are only read."""
+    rows = synthetic_rows(("solo",))
+    for row in rows:
+        if (row["instance"], row["f"]) == ("tiny1_2", 0.4):
+            row["forecast_seed"] = 8
+        if (row["instance"], row["f"]) == ("tiny1_2", 0.8):
+            row["makespan"] = 15
+    rows += [row | {"replication": 1} for row in rows if row["instance"] == "tiny1_1"]
+    config_text = REFERENCED_CONFIG.format(reference=synthetic_run.as_posix())
+    run_dir = write_run(tmp_path / "referenced", rows, config_text)
+    inputs = [
+        d / name for d in (run_dir, synthetic_run) for name in ("forecasts.csv.gz", "manifest.json")
+    ]
+    before = input_state(inputs)
+    for path in inputs:
+        path.chmod(0o444)
+
+    assert cli.main(["summarise-forecasts", str(run_dir)]) == 0
+    printed = capsys.readouterr().out
+    assert (
+        f"Reference rows of `vague` from run `synthetic` (`{synthetic_run.as_posix()}`): 6 rows "
+        "joined on (set, instance, scenario, replication, f), **1 seed mismatches** (world or "
+        "forecast seed) and **1 makespan mismatches** (expected 0), 3 missing."
+    ) in printed
+    assert input_state(inputs) == before
+    record = json.loads((run_dir / "summary_manifest.json").read_text(encoding="utf-8"))
+    check = record["reference_check"]
+    assert (check["rows_joined"], check["seed_mismatches"], check["makespan_mismatches"]) == (
+        6,
+        1,
+        1,
+    )
+    assert check["missing"] == 3
+    digests = {entry["path"]: entry["sha256"] for entry in record["inputs"]}
+    for path in inputs:
+        shown = path.name if path.parent == run_dir else path.as_posix()
+        assert digests[shown] == hashlib.sha256(path.read_bytes()).hexdigest()
+
+    text = (run_dir / "summary.md").read_text(encoding="utf-8")
+    assert "| all | vague (ref.) | 5 | 0.400 | 0.250 [0.250, 0.250] |" in text  # 1 skipped
+    assert "| all | solo | 7 |" in text  # 9 checkpoints, 2 skipped
+    assert r"vague$^\dagger$" in (run_dir / "table_wp3_headline.tex").read_text(encoding="utf-8")
+    # Reference rows keep the randomised PIT values they have in their own run.
+    config = ForecastStudyConfig.model_validate(tomllib.loads(config_text))
+    own = summary.read_forecasts(run_dir / "forecasts.csv.gz")
+    reference = summary.load_reference(own, config.summary)
+    assert reference is not None and reference.table is not None
+    expected = summary.table_pit(reference.table, 2026)[reference.rows]
+    assert np.array_equal(reference.pit, expected, equal_nan=True)
+    assert [r["instance"] for r in synthetic_rows()[1::2]] == [
+        reference.table.names["instance"][c]
+        for c in reference.table.codes["instance"][reference.rows]
+    ]
+
+
+def test_summariser_never_writes_its_inputs(synthetic_run: Path) -> None:
+    """forecasts.csv.gz and manifest.json stay byte-identical with their modification times,
+    even when read-only, and the summary manifest records their SHA-256."""
+    inputs = [synthetic_run / "forecasts.csv.gz", synthetic_run / "manifest.json"]
+    before = input_state(inputs)
+    for path in inputs:
+        path.chmod(0o444)
+    outputs = summary.regenerate(synthetic_run)
+    outputs = summary.regenerate(synthetic_run)
+    assert input_state(inputs) == before
+    assert not {"forecasts.csv.gz", "manifest.json"} & set(outputs.files)
+    record = json.loads((synthetic_run / "summary_manifest.json").read_text(encoding="utf-8"))
+    recorded = {entry["path"]: entry["sha256"] for entry in record["inputs"]}
+    for path in inputs:
+        assert recorded[path.name] == hashlib.sha256(path.read_bytes()).hexdigest()
+    assert record["summary_settings_source"] == "manifest.json"  # no config file recorded
+    assert record["outputs"] == outputs.files[:-1] and outputs.files[-1] == "summary_manifest.json"
+
+
+def test_summary_settings_come_from_the_config_file_while_it_describes_the_run(
+    synthetic_run: Path, tmp_path: Path
+) -> None:
+    manifest = json.loads((synthetic_run / "manifest.json").read_text(encoding="utf-8"))
+    wp2b = manifest["config"]["wp2b_results"]
+    path = tmp_path / "synthetic.toml"
+    path.write_text(SYNTHETIC_CONFIG.format(wp2b=wp2b) + "thresholds = [0.6]\n", encoding="utf-8")
+    config, source = summary.run_config(manifest | {"config_path": str(path)})
+    assert (config.summary.thresholds, source) == ((0.6,), path)
+    changed = SYNTHETIC_CONFIG.format(wp2b=wp2b).replace("replications = 1", "replications = 2")
+    path.write_text(changed + "thresholds = [0.6]\n", encoding="utf-8")
+    config, source = summary.run_config(manifest | {"config_path": str(path)})
+    assert (config.summary.thresholds, source) == ((0.5, 0.8), None)  # not the same run
+    config, source = summary.run_config(manifest | {"config_path": str(tmp_path / "gone.toml")})
+    assert source is None

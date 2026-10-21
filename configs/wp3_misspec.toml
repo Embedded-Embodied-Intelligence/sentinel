@@ -60,6 +60,12 @@ prior_pert = { a = 0.7, m = 1.0, b = 2.0, lam = 4.0 }
 [summary]
 differences = [["mc_k0.5", "mc_k1"], ["mc_k2", "mc_k1"], ["mc_pert_wide", "mc_k1"]]
 reliability_checkpoints = [0.0, 0.4, 0.8]
+headline_checkpoints = [0.0, 0.4, 0.8]
+# References in every table: the main run's forecasts of the same worlds (same seeds); summaries only
+reference_run = "results/wp3/20261021-062709-2a8ba557"
+reference_forecasters = ["mc_no_future", "deterministic"]
 table = "table_wp3_misspec"
 warning_table = "table_wp3_misspec_warning"
+plan_stage_table = "table_wp3_misspec_plan_stage"
+headline_table = "table_wp3_misspec_headline"
 figure_prefix = "fig_wp3_misspec"

@@ -61,12 +61,16 @@ kind = "deterministic"
 [summary]
 bins = 10
 thresholds = [0.5, 0.8]  # early warning: p_on_time < theta
+warning_from = 0.2       # early warning counts checkpoints f >= 0.2; f = 0 is plan-stage risk
 log_clip = 0.005
 bootstrap_resamples = 1000
 bootstrap_seed = 2026
 pit_seed = 2026
 differences = [["mc_full", "deterministic"], ["mc_full", "mc_no_future"]]
 reliability_checkpoints = [0.0, 0.4, 0.8]
+headline_checkpoints = [0.0, 0.4, 0.8]
 table = "table_wp3_calibration"
 warning_table = "table_wp3_warning"
+plan_stage_table = "table_wp3_plan_stage"
+headline_table = "table_wp3_headline"
 figure_prefix = "fig_wp3"

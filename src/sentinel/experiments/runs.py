@@ -13,7 +13,7 @@ import socket
 import subprocess
 import sys
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
@@ -61,11 +61,13 @@ def derive_seed(base_seed: int, *keys: str) -> int:
     return int(state[0]) >> 1
 
 
-def git_state() -> dict[str, Any]:
-    """Current commit and whether the working tree has uncommitted changes (None without git)."""
+def git_state(exclude: Sequence[str] = ()) -> dict[str, Any]:
+    """Current commit and whether the working tree has uncommitted changes (None without git);
+    changes under the `exclude` paths (relative to the repository root) do not count."""
+    pathspec = [":(top)", *(f":(top,exclude){path}" for path in exclude)] if exclude else []
     try:
         commit = _run(["git", "rev-parse", "HEAD"])
-        changes = _run(["git", "status", "--porcelain"])
+        changes = _run(["git", "status", "--porcelain", "--", *pathspec])
     except (OSError, subprocess.CalledProcessError):
         return {"commit": None, "dirty": None}
     return {"commit": commit, "dirty": bool(changes)}

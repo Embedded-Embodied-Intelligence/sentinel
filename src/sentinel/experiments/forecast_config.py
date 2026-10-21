@@ -76,20 +76,37 @@ class SummarySettings(_Frozen):
     """Metric parameters (spec section 5.2) and output names of the generated summaries.
 
     `differences` lists forecaster pairs (a, b) whose paired differences a - b get intervals;
-    `reliability_checkpoints` are the shares f shown in the reliability diagrams.
+    `reliability_checkpoints` are the shares f shown in the reliability diagrams and
+    `headline_checkpoints` those of the headline table. Early warning counts the checkpoints
+    f >= `warning_from`; f = 0 is reported as plan-stage risk. `reference_run` is the directory
+    of another run on the same worlds whose `reference_forecasters` are added to every table.
     """
 
     bins: PositiveInt = 10
     thresholds: tuple[Threshold, ...] = Field(default=(0.5, 0.8), min_length=1)
+    warning_from: Share = 0.2
     log_clip: float = Field(default=0.005, gt=0, lt=0.5)
     bootstrap_resamples: PositiveInt = 1000
     bootstrap_seed: NonNegativeInt = 2026
     pit_seed: NonNegativeInt = 2026
     differences: tuple[tuple[str, str], ...] = ()
     reliability_checkpoints: tuple[Share, ...] = (0.0, 0.4, 0.8)
+    headline_checkpoints: tuple[Share, ...] = (0.0, 0.4, 0.8)
+    reference_run: Path | None = None
+    reference_forecasters: tuple[Name, ...] = ()
     table: Name = "table_wp3_calibration"
     warning_table: Name = "table_wp3_warning"
+    plan_stage_table: Name = "table_wp3_plan_stage"
+    headline_table: Name = "table_wp3_headline"
     figure_prefix: Name = "fig_wp3"
+
+    @model_validator(mode="after")
+    def _check_reference(self) -> Self:
+        if (self.reference_run is None) != (not self.reference_forecasters):
+            raise ValueError("reference_run and reference_forecasters must be given together")
+        if len(set(self.reference_forecasters)) != len(self.reference_forecasters):
+            raise ValueError(f"duplicate reference forecasters: {self.reference_forecasters}")
+        return self
 
 
 class ForecastStudyConfig(StudyConfig):
@@ -117,7 +134,14 @@ class ForecastStudyConfig(StudyConfig):
         unknown = {n for pair in self.summary.differences for n in pair} - set(names)
         if unknown:
             raise ValueError(f"differences name unknown forecasters: {sorted(unknown)}")
-        missing = set(self.summary.reliability_checkpoints) - set(self.checkpoints)
-        if missing:
-            raise ValueError(f"reliability checkpoints {sorted(missing)} are not checkpoints")
+        for kind, shares in (
+            ("reliability", self.summary.reliability_checkpoints),
+            ("headline", self.summary.headline_checkpoints),
+        ):
+            missing = set(shares) - set(self.checkpoints)
+            if missing:
+                raise ValueError(f"{kind} checkpoints {sorted(missing)} are not checkpoints")
+        clash = set(self.summary.reference_forecasters) & set(names)
+        if clash:
+            raise ValueError(f"reference forecasters {sorted(clash)} are forecasters of this run")
         return self
