@@ -45,3 +45,25 @@ NoReaction on time, `C ≤ D`, in % of 9,600 runs per cell, E[L] = 3:
 
 No run of the study was truncated. Intervals and the remaining scenarios are in the run's
 `summary.md`.
+
+## RQ4 baseline study (WP4b, reused in WP7)
+
+The five baseline policies of spec §7 (NoReaction, AlwaysSubstitute, FullResolve,
+FullResolve(subst), StableResolve(subst)) start from the `cpsat_det` baseline plans of WP2b.
+WP7 runs Sentinel on the same instances, scenarios and seeds, so its runs pair with these.
+
+| Item | Value |
+| --- | --- |
+| Instances | every 4th of J30 and of J60 in natural order (`stride = 4`): 120 per set, `j301_1`, `j301_5`, `j301_9`, `j302_3`, … |
+| Primary grid | J30 and J60, λ_A ∈ {0, 0.005, 0.01, 0.02}, E[L] = 3, λ_S = 0.01, λ_N = 0.02 |
+| Sensitivity | J30 only, E[L] = 5, λ_A ∈ {0.01, 0.02} |
+| Replications | R = 4: the WP2b seeds of replications 0–3, `derive_seed(2026, set, instance, r)`, shared by all policies and scenarios (common random numbers) |
+| Deadline | evaluated post hoc for δ_D ∈ {0.2, 0.3}; no baseline policy uses D (the urgency order of AlwaysSubstitute does not depend on it), max_days of δ_D = 0.3 as in WP2b |
+| Policy settings | T_r = 5, α = 0.3, T_cp = 0.1 deterministic s per CP-SAT stage, one CP-SAT worker, CP-SAT seed 0 |
+| Check | NoReaction reproduces the WP2b seeds and makespans of run `20261020-181559-6534a712` (0 mismatches expected) |
+| Size | primary 2 × 120 × 4 × 4 × 5 = 19,200 runs; sensitivity 120 × 2 × 4 × 5 = 4,800 runs |
+| Configs | `configs/wp4_baselines.toml` (primary), `configs/wp4_sensitivity.toml`; outputs in `results/wp4/<run_id>/` |
+
+Summaries: per set × λ_A × policy the on-time shares for both δ_D (95 % Wilson intervals), C / C*,
+realised deviation and nervousness (§7.1), substitutions and cost / B; paired differences against
+NoReaction (on time, C / C*, deviation) with 95 % cluster bootstrap intervals over instances.
