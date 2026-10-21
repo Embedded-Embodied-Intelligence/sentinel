@@ -11,6 +11,7 @@ from sentinel.data.reference import load_reference
 from sentinel.experiments.policy_runs import WP2B_BASELINE, PolicyTask, run_policies
 from sentinel.experiments.runs import derive_seed
 from sentinel.policies.no_reaction import NoReaction
+from sentinel.policies.resolve import T_CP
 from sentinel.scheduling.cpsat import solve_residual
 from sentinel.scheduling.residual import planning_view, residual_sgs, validate_residual
 from sentinel.simulation.baselines import cached_baseline
@@ -50,6 +51,7 @@ def tasks(root: Path, set_name: str, reference: str, count: int) -> list[PolicyT
     ]
 
 
+@pytest.mark.slow
 def test_reactive_policies_keep_every_realised_schedule_feasible(psplib_root: Path) -> None:
     """20 J30 + 10 J60 instances x 3 seeds x the four reactive policies at lambda_A = 0.01 (CP-SAT
     limit TEST_LIMIT): in debug mode every RESEQ plan passes validate_residual, every realised
@@ -71,7 +73,8 @@ def test_reactive_policies_keep_every_realised_schedule_feasible(psplib_root: Pa
 
 def test_residual_plans_are_feasible_on_j30_planning_views(psplib_root: Path) -> None:
     """At least 50 planning views of NoReaction J30 runs: the residual SGS and both CP-SAT
-    objectives give feasible plans and CP-SAT is never longer than the SGS."""
+    objectives at the policies' limit T_cp give feasible plans and CP-SAT is never longer than
+    the SGS."""
     references = load_reference("j30", "opt", psplib_root)
     found = 0
     for stem in list_instances("j30", psplib_root)[::40]:
@@ -97,7 +100,7 @@ def test_residual_plans_are_feasible_on_j30_planning_views(psplib_root: Path) ->
             hint = view.planned_starts()
             for objective in ("makespan", "stable"):
                 solution = solve_residual(
-                    view, objective, deterministic_time_limit=0.5, seed=0, hint=hint
+                    view, objective, deterministic_time_limit=T_CP, seed=0, hint=hint
                 )
                 assert validate_residual(view, solution.starts) == []
                 assert solution.makespan <= sgs[view.sink]

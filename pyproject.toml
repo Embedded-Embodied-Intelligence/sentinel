@@ -60,7 +60,8 @@ warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["-ra", "--strict-markers"]
+addopts = ["-ra", "--strict-markers", "-m", "not slow"]
 markers = [
     "data: needs downloaded PSPLIB data in data/psplib (run scripts/fetch_psplib.py)",
+    "slow: takes over 30 s; skipped by default, run with -m \"data or slow\"",
 ]

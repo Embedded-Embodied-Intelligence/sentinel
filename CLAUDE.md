@@ -69,6 +69,9 @@ uv run mypy src
 uv run pytest -q
 ```
 
+- `pytest -q` skips tests marked `slow` (over 30 s). The acceptance check of every WP also runs
+  `uv run pytest -q -m "data or slow"`: the tests that need the downloaded PSPLIB data and the
+  slow ones.
 - Python 3.12, full type hints, `mypy` clean, `ruff` clean.
 - Pydantic v2 models for domain data; frozen where values must not change.
 - Pure functions for algorithms; I/O at the edges (`data/`, `experiments/`, `cli.py`).

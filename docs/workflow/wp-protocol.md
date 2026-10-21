@@ -10,7 +10,10 @@ long experiments and makes final decisions.
    and pastes the WP prompt.
 2. Implementer reads `CLAUDE.md` and the files listed in `<context>`, then implements only
    the `<task>` within `<constraints>`.
-3. Implementer runs the quality gate and every check in `<acceptance_criteria>`.
+3. Implementer runs the quality gate and every check in `<acceptance_criteria>`. The gate's
+   `uv run pytest -q` skips tests marked `slow` (over 30 s); every WP's acceptance check also
+   runs `uv run pytest -q -m "data or slow"`, the tests that need the downloaded PSPLIB data
+   (`data`) and the slow ones.
 4. Long runs (> ~10 min) are not executed in-session: a smoke run is executed and the full
    command is written to the report.
 5. Implementer writes `docs/reports/WPx.md` (skill `wp-report`), adds `docs/notes/WPx.md`
