@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.6)
+# Sentinel — formal model (v1.7)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -21,7 +21,10 @@ v1.5 (WP4a) interventions: SUBST details and RESEQ (§4), planning view and resi
 (WP4b) handover cost per newcomer (§3, §4), absence returns as decision epochs (§3, §3.1 g),
 answers to the WP4a questions: replaced members (§4), handovers in the belief and the
 deterministic forecaster (§5.1, §5.2), CP-SAT hint, FullResolve(subst) epochs and the deviation
-set (§7, §7.1), `T_cp = 0.1` (§8).
+set (§7, §7.1), `T_cp = 0.1` (§8); v1.7 (WP5a) Sentinel core: SHIFT and OVERTIME with temporary
+workers (§4, §4.1), Δ over the deviation set and the needs gate (§5), candidates, racing
+evaluation and deliberation epochs (§6), parameters (§8); the readings of the WP4b questions
+(realised deviation over `J⁺`, return days without a crew) are accepted.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -222,10 +225,10 @@ its operations.
 | Operation | Effect | Cost | ℓ |
 | --- | --- | --- | --- |
 | `NOOP` | no change | — | 0 |
-| `SHIFT(π')` | shift starts, same order, forecast makespan not increased | — | 0 |
+| `SHIFT(π')` | order-preserving repair: re-time the unstarted activities, same order | — | 0 |
 | `RESEQ(π')` | repaired plan (CP-SAT or SGS), order may change | — | 1 |
 | `SUBST(j, W')` | replace `m_j` absent members of a paused or running `j` by idle present workers `W'` of the same roles | `h_j` | 2 |
-| `OVERTIME(k, u, H)` | `+u ≤ floor(γ R_k)` capacity of role `k` for `H` days | premium `c_OT_k` per unit-day | 2 |
+| `OVERTIME(k, u, H)` | hire `u ≤ floor(γ R_k)` temporary workers of role `k` for the window `[t, t + H)` | `c_OT_k` per temporary worker and day while hired | 2 |
 | `DESCOPE(j)` | remove unstarted optional activity `j ∈ O` | value `v_j` | 2* |
 
 SUBST applies to paused activities and to running activities with absent members. It replaces
@@ -241,6 +244,20 @@ progress on the same day.
 
 RESEQ(π') replaces the planned starts of all unstarted activities by a feasible solution of the
 residual problem (§4.1). Dispatch semantics (§3 step 4) are unchanged.
+
+SHIFT(π') is the order-preserving repair: the residual SGS (§4.1) with the current plan's planned
+starts as priority list (ties by id). It may start activities earlier than the current plan
+(left-justification under the railway rule) and never changes the order of planned starts.
+
+OVERTIME(k, u, H) hires `u ≤ floor(γ R_k)` *temporary workers* of role `k` (overtime or agency
+capacity), present every day of the window `[t, t + H)`, never absent, idle until assigned.
+During the window they can be dispatched or used in SUBST like any idle worker (SUBST onboarding
+applies; starting a new activity has no onboarding). A temporary worker assigned to a crew stays
+until that activity completes; after the window it takes no new assignment and leaves when idle.
+Cost `c_OT_k = 1.5 c_k` per temporary worker and day while hired (window days, plus any days
+after the window while still in a crew). Temporary workers have ids after the original workers;
+they have no absence stream, so the common random numbers of the original workers are unchanged
+(§2.3).
 
 Operations are applied in step 3 in the order given, each validated against the state left by
 the previous one; an invalid operation is rejected (logged, counted), the others still apply.
@@ -264,6 +281,9 @@ What a planner assumes at day `t`: the same assumptions as the deterministic for
   duration).
 - The capacity of role `k` on day `τ ≥ t` is `R_k` minus reserved crew members minus
   unavailable idle workers.
+- Temporary workers (§4 OVERTIME) extend the view: each adds one unit of its role while it is
+  hired, i.e. an idle one until the end of its window and one in a crew until the later of the
+  window's end and its activity's `F̂_j`, during which its crew reserves it as above.
 
 The **residual problem** schedules all unstarted activities on days `≥ t` under this capacity
 profile and precedence (finished predecessors: realised finish; started ones: `F̂_j`).
@@ -276,14 +296,18 @@ For candidate `a`, run `N` rollouts with common seeds `ξ_1..ξ_N`, giving makes
 and costs `Z_a^(i)`:
 
 - `p̂_a = (1/N) Σ_i 1[C_a^(i) ≤ D]`
-- `ẑ_a = (1/N) Σ_i Z_a^(i)`, `o_a = max(0, ẑ_a − B) / B`
-- `Δ_a = (1/|U_t|) Σ_{j∈U_t} |S_j^a − S_j^t| + κ_h · n_a^subst` (`U_t` = unstarted activities)
+- `ẑ_a = (1/N) Σ_i Z_a^(i)`, the mean total project cost including the cost so far,
+  `o_a = max(0, ẑ_a − B) / B`
+- `Δ_a = (1/|U'_t|) Σ_{j∈U'_t} |S_j^a − S_j^t| + κ_h · n_a^subst`: the candidate's plan `S^a`
+  against the current plan `S^t` over the deviation set `U'_t` of §7.1, plus `κ_h` per member
+  the candidate replaces (`n_a^subst`, §7.1 substitutions)
 
 Goal hierarchy: G1 feasibility (hard), G2 deadline `p̂ ≥ θ_D`, G3 budget `o = 0`,
 G4 stability (small `Δ`).
 
-**Needs** are evaluated for NOOP: `n_D = max(0, θ_D − p̂_NOOP)`, `n_B = o_NOOP`. If
-`n_D ≤ ε_D` and `n_B ≤ ε_B`, the agent returns NOOP.
+**Needs** are evaluated for NOOP: `n_D = max(0, θ_D − p̂_NOOP)`, `n_B = o_NOOP`. **Needs
+gate:** NOOP is evaluated first (`N₁` rollouts, then up to `N`); if `n_D ≤ ε_D` and
+`n_B ≤ ε_B`, the agent returns NOOP without generating candidates.
 
 **Urgency** `τ_t = min_j τ_j` with `τ_j = LS_j − t` for unstarted and paused activities and
 `τ_j = LF_j − t − E[remaining_j]` for running activities regardless of absences, the
@@ -405,12 +429,34 @@ Rollouts continue without further interventions after the candidate action.
 Differences in the first component smaller than two standard errors of the paired (CRN)
 differences are ties. Scalarised ablation: `U_a = p̂_a − λ_B · o_a − λ_Δ · Δ_a`.
 
-**Candidates** `C(s_t)`: rules (SHIFT; two RESEQ variants from CP-SAT: min makespan and min
-deviation subject to makespan not worse than current; SUBST per paused activity and per running
-activity with absent members (§4), optionally combined with RESEQ; OVERTIME for the most
-backlogged role; DESCOPE only if no other candidate reaches `θ_D`) plus LLM proposals in the
-same JSON action grammar, filtered for feasibility.
-Rollouts decode plans with the serial SGS.
+**Candidates** `C(s_t)`, at most these, each filtered for validity:
+- `NOOP`;
+- `SHIFT` (§4);
+- `RESEQ-M`: CP-SAT, minimum residual makespan;
+- `RESEQ-S`: minimum deviation subject to residual makespan ≤ that of SHIFT;
+- `SUBST(j)` for the up to 3 most urgent eligible activities (paused, or running with absent
+  members, §4; urgency `τ_j` of §5);
+- `SUBST-ALL`: every eligible substitution, in the order of AlwaysSubstitute (§7);
+- `SUBST-ALL + RESEQ-M`;
+- `OT(k*) + RESEQ-M`, with `k*` the most backlogged role, `u = floor(γ R_k*)`, `H = 2 T_r`; the
+  backlog of role `k` is `Σ r_jk · p_j / R_k` over the unstarted and paused activities with
+  `LS_j ≤ t + 2 T_r` (nominal durations).
+
+RESEQ plans with added capacity use the planning view extended by the temporary workers (§4.1).
+DESCOPE (only if no other candidate reaches `θ_D`) and LLM proposals in the same JSON action
+grammar, filtered for feasibility, extend this list later (WP5b, WP6).
+
+**Evaluation.** Each candidate is applied at step 3 of day `t` in every rollout; the rollout then
+continues under NoReaction (§5.1; rollout `i` uses seed `ξ_i`, shared by all candidates).
+**Racing:** stage 1 evaluates every candidate on `N₁` rollouts; candidates whose capped on-time
+estimate `min(p̂_a, θ_D)` is below the best by more than 2 paired standard errors are dropped;
+stage 2 extends the survivors to `N` rollouts. Ties and the lexicographic order are as above
+(`min(p̂, θ_D)`, then `−o`, then `−Δ`, then `−ℓ`); `ẑ` and `Δ` are those of §5.
+
+**Deliberation epochs.** Sentinel deliberates at decision epochs that have an event touching a
+crew (absence onset or return of a crew member, D2, D3) and at periodic epochs; at epochs whose
+only events concern idle workers it returns NOOP. This is the agent's own choice of when to
+think, not a change of the decision epochs of §3.1 (g).
 
 ---
 
@@ -469,6 +515,10 @@ Rollouts decode plans with the serial SGS.
 | `T_r` | periodic review (days) | 5 |
 | `T_cp` | CP-SAT deterministic time limit per stage in policies (§7) | 0.1 deterministic seconds |
 | `N` | rollouts per candidate | 200 |
+| `N₁` | rollouts per candidate in stage 1 of racing (§6) | 50 |
+| `c_OT_k` | daily cost of a temporary worker of role `k` (§4) | `1.5 c_k` |
+| `H` | OVERTIME window of the rule candidate (§6) | `2 T_r` |
+| — | single-activity SUBST candidates (§6) | at most 3 |
 | `Λ` | autonomy level | {0,1,2,3}, default 2 |
 | `δ_h` | human approval delay (days) | 1 |
 | `c_k` | daily cost per worker | 1.0 |
