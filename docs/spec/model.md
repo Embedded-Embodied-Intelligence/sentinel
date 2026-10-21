@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.5)
+# Sentinel — formal model (v1.6)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -17,7 +17,11 @@ questions: urgency of running activities regardless of absences (§5), empty abs
 (§5.1); forecast evaluation (§5.2); v1.4.2 (WP3b.1) forecast summaries: early warning
 from `f ≥ 0.2`, plan-stage risk at `f = 0`, Brier skill score, AUC and PIT coverage (§5.2);
 v1.5 (WP4a) interventions: SUBST details and RESEQ (§4), planning view and residual problem
-(§4.1), the baseline policies made precise (§7), evaluation metrics (§7.1), `T_cp` (§8).
+(§4.1), the baseline policies made precise (§7), evaluation metrics (§7.1), `T_cp` (§8); v1.6
+(WP4b) handover cost per newcomer (§3, §4), absence returns as decision epochs (§3, §3.1 g),
+answers to the WP4a questions: replaced members (§4), handovers in the belief and the
+deterministic forecaster (§5.1, §5.2), CP-SAT hint, FullResolve(subst) epochs and the deviation
+set (§7, §7.1), `T_cp = 0.1` (§8).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -160,9 +164,13 @@ A plan `π_t` gives a planned start `S_j` for every unstarted activity. Each day
    progresses by `ρ_j` full-crew days;
 6. close activities whose remaining work is `≤ 0`.
 
-**Handover cost:** when SUBST (§4) replaces `m_j ≥ 1` absent members of activity `j`, `j` gets
-additional work `h_j = max(1, ceil(α · e_j · m_j / M_j))` full-crew days, with crew size `M_j`
-(§3.1 a); for a one-person activity this is `max(1, ceil(α · e_j))`.
+**Handover cost** (onboarding per newcomer; Brooks 1995): when SUBST (§4) replaces `m_j ≥ 1`
+absent members of activity `j`, each substitute needs `o_j = max(1, ceil(α · e_j))` crew-member
+days of onboarding before contributing, `e_j` the work done so far in full-crew days (§3.1 a).
+`j` gets additional work `m_j · o_j` crew-member days, i.e.
+`h_j = m_j · o_j / M_j = m_j · max(1, ceil(α · e_j)) / M_j` full-crew days, with crew size `M_j`
+(§3.1 a); for a one-person activity `h_j = max(1, ceil(α · e_j))`. Replacing a member thus saves
+its crew work in expectation when the member's expected remaining absence exceeds `o_j` days.
 
 **Cost:** each day, every *present* member of a running activity's crew costs `c_k` of its role
 `k`; absent members cost nothing. Absences are therefore budget-neutral: they delay work but do
@@ -173,8 +181,8 @@ unstarted); crews (assigned workers); worker availability with announced `L_low`
 cost so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantities are
 sampled from conditional distributions, e.g. `P_j | P_j > e_j` (§5.1).
 
-**Decision epochs:** after every D1–D3 event and every `T_r` days (periodic review); the exact
-days are given in §3.1 (g).
+**Decision epochs:** after every D1–D3 event (absence onsets and returns included) and every
+`T_r` days (periodic review); the exact days are given in §3.1 (g).
 
 ### §3.1 Execution details
 
@@ -200,8 +208,9 @@ days are given in §3.1 (g).
   day `≥ t + 1` given current plan starts and realised finishes; no other plan entry changes.
 - (f) The simulation ends when the sink completes, or at `max_days = ceil(5 · D)` (or
   `5 · Σ p_j` if `D` is undefined), with a `truncated` flag.
-- (g) Decision epochs: any day with a D1 or D3 event, the day after a D2 event (D2 is drawn in
-  step 5, after the decision of its day), and every day `t` with `t % T_r == 0`.
+- (g) Decision epochs: any day with a D1 event (an absence onset or a return) or a D3 event, the
+  day after a D2 event (D2 is drawn in step 5, after the decision of its day), and every day `t`
+  with `t % T_r == 0`. A return day is an epoch whether or not the worker returns to a crew.
 
 ---
 
@@ -221,11 +230,14 @@ its operations.
 
 SUBST applies to paused activities and to running activities with absent members. It replaces
 `m_j ≥ 1` absent members by idle present workers of the same role, with handover cost
-`h_j = max(1, ceil(α · e_j · m_j / M_j))` (§3). An *idle* worker is present and in no crew.
-SUBST(j, W') takes, per replaced member, an idle present worker of the same role; the replaced
-member leaves the crew at once (on return they are idle) and the substitute keeps the slot;
-`h_j` full-crew days are added to `j`'s remaining work; `ρ_j` is recomputed immediately, so the
-new crew can progress on the same day.
+`h_j = m_j · max(1, ceil(α · e_j)) / M_j` full-crew days, i.e. `o_j = max(1, ceil(α · e_j))`
+crew-member days of onboarding per substitute (§3). An *idle* worker is present and in no crew.
+SUBST(j, W') takes, per replaced member, an idle present worker of the same role; if a role has
+more absent members than substitutes in `W'`, the substitutes, in the order given, replace its
+absent members in increasing id order. The replaced member leaves the crew at once (on return
+they are idle) and the substitute keeps the slot; `h_j` full-crew days (`m_j · o_j` crew-member
+days) are added to `j`'s remaining work; `ρ_j` is recomputed immediately, so the new crew can
+progress on the same day.
 
 RESEQ(π') replaces the planned starts of all unstarted activities by a feasible solution of the
 residual problem (§4.1). Dispatch semantics (§3 step 4) are unchanged.
@@ -289,6 +301,10 @@ The rollouts of §5 start from a state sampled from the belief given the observa
   `P_j` from this pmf conditioned on the activity not being finished: with `R_0 = P_j`,
   `R_i = (R_{i−1} − (e_i − e_{i−1})) · F_i` (`e_0 = 0`), require `R_i > 0` for all shocks and
   current remaining `R_m − (e_j − e_m) > 0`; the sampled remaining work is that last value.
+  SUBST handovers `(e_i, h_i)` (work done at the handover, `h_j` of §3) are replayed with the
+  shocks in order of work done, a handover before a shock at equal work (step 3 precedes step
+  5): `R_i = R_{i−1} − (e_i − e_{i−1}) + h_i`, requiring `R_{i−1} − (e_i − e_{i−1}) > 0` (the
+  activity had not finished before the handover).
   Unstarted original activities sample `P_j` from the unconditional pmf; inserted activities use
   their nominal duration as `p_j`.
 - **Absences.** For an absent worker with absence start `s`, announced bound `L_low` and today
@@ -322,10 +338,11 @@ Forecasts of the makespan `C` of a NoReaction run are scored against its realise
     remaining work that starts at `p_j`, decreases by the work done, never falls below one
     crew-member day `1/M_j`, and is multiplied by `F` at each observed D2 shock:
     `R_0 = p_j`, `R_i = max(R_{i−1} − (e_i − e_{i−1}), 1/M_j) · F_i`,
-    `R = max(R_m − (e_j − e_m), 1/M_j)`; without shocks `max(p_j − e_j, 1/M_j)`. An absent
-    worker returns on day `s + max(L_low, t − s + 1)`: after the announced bound, or tomorrow if
-    the bound has passed. Its point forecast `Ĉ` is a point-mass distribution, so
-    `P(C ≤ D) = 1[Ĉ ≤ D]`.
+    `R = max(R_m − (e_j − e_m), 1/M_j)`; without shocks `max(p_j − e_j, 1/M_j)`. SUBST
+    handovers are replayed with the shocks in the order of §5.1 and add `h_j` after the floor:
+    `R_i = max(R_{i−1} − (e_i − e_{i−1}), 1/M_j) + h_i`. An absent worker returns on day
+    `s + max(L_low, t − s + 1)`: after the announced bound, or tomorrow if the bound has passed.
+    Its point forecast `Ĉ` is a point-mass distribution, so `P(C ≤ D) = 1[Ĉ ≤ D]`.
   - Misspecified priors: `mc_full` with the rates `(λ_A, λ_S, λ_N)` of its future multiplied
     by `κ`, or with another PERT `(a, m, b)` in its belief and future, while the world keeps
     the true parameters.
@@ -405,21 +422,29 @@ Rollouts decode plans with the serial SGS.
   which an idle present worker of the same role exists (lowest ids first). Plan unchanged.
 - `FullResolve(subst)`: at every decision epoch that has a D1 (onset or return), D2 or D3 event
   (not purely periodic epochs): if `subst`, first the SUBST operations of `AlwaysSubstitute`;
-  then RESEQ with minimum residual makespan.
+  then RESEQ with minimum residual makespan. FullResolve(subst) thus substitutes at these event
+  epochs only, AlwaysSubstitute at every epoch.
 - `StableResolve(subst)`: as FullResolve, but RESEQ is lexicographic: stage 1 minimum residual
-  makespan `C₁`; stage 2 minimum `Σ_j |S_j − S_j^t|` over unstarted activities (`S_j^t` the
-  current plan; inserted activities without a planned start are excluded from the sum) subject
-  to makespan `≤ C₁` (Van de Vonder et al. 2007 style robust repair).
-- CP-SAT in policies: 1 worker, fixed seed, deterministic limit `T_cp` per stage, solution
-  hint = the current plan where feasible; if no feasible solution is found within the limit,
+  makespan `C₁`; stage 2 minimum `Σ_{j ∈ U'_t} |S_j − S_j^t|` subject to makespan `≤ C₁`
+  (Van de Vonder et al. 2007 style robust repair). `S_j^t` is the current plan and `U'_t` the
+  *deviation set*: the unstarted activities with `p_j > 0` that were not inserted on day `t`
+  (milestones, the sink and D3 activities of the current day are excluded).
+- CP-SAT in policies: 1 worker, fixed seed, deterministic limit `T_cp` per stage. The solution
+  hint is the whole current plan if it is a feasible solution of the residual problem within
+  the CP-SAT horizon (the makespan of the residual SGS with LFT priority), else the residual SGS
+  schedule; there are no partial hints. If no feasible solution is found within the limit,
   fall back to the residual SGS with LFT priority and count it.
 
 ### §7.1 Evaluation metrics (WP4b, WP7)
 
 - on-time for each `δ_D`, makespan / `C*`, cost / `B`;
-- *realised deviation* `(1/n) Σ_{j ≤ n} |S_j^real − S_j^0|` against the baseline plan;
-- *nervousness* = total number of (epoch, activity) pairs whose planned start changed;
-- number of substitutions and handover days; number of RESEQs and CP-SAT fallbacks.
+- *realised deviation* `(1/|J⁺|) Σ_{j ∈ J⁺} |S_j^real − S_j^0|` against the baseline plan, over
+  `J⁺`, the original activities with `p_j > 0` (milestones and the dummies are excluded as in
+  the deviation set of §7; D3 activities have no baseline start);
+- *nervousness* = total number of pairs (epoch `t`, activity `j ∈ U'_t`) whose planned start the
+  decision of epoch `t` changed (`U'_t` the deviation set of §7);
+- number of substitutions (replaced members), onboarding days `Σ m_j o_j` (crew-member days) and
+  handover days `Σ h_j` (full-crew days); number of RESEQs and CP-SAT fallbacks.
 
 ---
 
@@ -442,7 +467,7 @@ Rollouts decode plans with the serial SGS.
 | `κ_h` | handover weight in instability | 2 |
 | `τ_def` | deferral urgency threshold (days) | 3 |
 | `T_r` | periodic review (days) | 5 |
-| `T_cp` | CP-SAT deterministic time limit per stage in policies (§7) | 0.5 deterministic seconds |
+| `T_cp` | CP-SAT deterministic time limit per stage in policies (§7) | 0.1 deterministic seconds |
 | `N` | rollouts per candidate | 200 |
 | `Λ` | autonomy level | {0,1,2,3}, default 2 |
 | `δ_h` | human approval delay (days) | 1 |
