@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import math
+import re
 import tomllib
 from collections.abc import Sequence
 from pathlib import Path
@@ -588,6 +589,24 @@ def test_synthetic_skill_discrimination_coverage_and_plan_stage(synthetic_run: P
     headline = (synthetic_run / "table_wp3_headline.tex").read_text(encoding="utf-8")
     assert r"TINY & 0 & sharp & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 &" in headline
     assert headline.count(r"\\") == 2 * 6 + 1  # header + value and interval rows per forecast
+
+
+def test_latex_tables_typeset_negative_numbers(synthetic_run: Path) -> None:
+    """Negative values in LaTeX tables carry a math minus, `$-$0.425`, never a hyphen; "--"
+    (no value) and the Markdown formatting stay as they were."""
+    assert summary._tex_num(-0.425) == "$-$0.425"
+    assert summary._tex_num(0.425) == "0.425"
+    assert summary._tex_num(-0.0001) == "0.000"
+    assert summary._tex_num(math.nan) == "--"
+    assert summary._num(-0.425) == "-0.425"
+    estimate = summary.Estimate(value=0.0, low=-0.1234, high=0.05)
+    assert summary._tex_ci(estimate) == r"{\scriptsize[$-$0.123, 0.050]}"
+    assert summary._tex_short_ci(estimate) == r"{\scriptsize[$-$.123, .050]}"
+    hyphen_minus = re.compile(r"(?<![\w$-])-\.?\d")
+    for path in synthetic_run.glob("*.tex"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.startswith("%"):
+                assert not hyphen_minus.search(line), (path.name, line)
 
 
 REFERENCED_CONFIG = """

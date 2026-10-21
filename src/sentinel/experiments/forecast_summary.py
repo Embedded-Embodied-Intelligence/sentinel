@@ -1129,6 +1129,18 @@ def _tex(text: str) -> str:
     return text.replace("_", r"\_")
 
 
+def _tex_num(value: float, digits: int = 3) -> str:
+    """`_num` for LaTeX: a negative number gets a minus sign, `$-$0.425`, not a hyphen."""
+    return _tex_minus(_num(value, digits))
+
+
+def _tex_minus(text: str) -> str:
+    """Typeset the leading sign of a formatted number as a minus; "--" (no value) stays."""
+    if text.startswith("-") and text[1:2] != "-":
+        return "$-$" + text[1:]
+    return text
+
+
 def _tex_name(config: ForecastStudyConfig, k: int) -> str:
     """Forecaster k for LaTeX; reference forecasters carry a dagger."""
     name = _tex(table_forecasters(config)[k])
@@ -1137,12 +1149,14 @@ def _tex_name(config: ForecastStudyConfig, k: int) -> str:
 
 def _tex_ci(estimate: Estimate, digits: int = 3, scale: float = 1.0) -> str:
     low, high = estimate.low * scale, estimate.high * scale
-    return rf"{{\scriptsize[{_num(low, digits)}, {_num(high, digits)}]}}"
+    return rf"{{\scriptsize[{_tex_num(low, digits)}, {_tex_num(high, digits)}]}}"
 
 
 def _tex_short_ci(estimate: Estimate, digits: int = 3) -> str:
     """The interval in \\scriptsize without leading zeros, e.g. [.168, .181]."""
-    low, high = (_without_leading_zero(_num(v, digits)) for v in (estimate.low, estimate.high))
+    low, high = (
+        _tex_minus(_without_leading_zero(_num(v, digits))) for v in (estimate.low, estimate.high)
+    )
     return rf"{{\scriptsize[{low}, {high}]}}"
 
 
@@ -1189,12 +1203,12 @@ def calibration_table(run_id: str, config: ForecastStudyConfig, cells: Cells, i:
                 rows.append(
                     f"{set_cfg.name.upper() if not rows else ''} & "
                     f"{f'{share:g}' if k == 0 else ''} & {_tex_name(config, k)} & "
-                    f"{_num(binary.brier.value)} & {_tex_ci(binary.brier)} & "
-                    f"{_num(binary.bss.value)} & {_num(binary.reliability.value)} & "
-                    f"{_num(binary.resolution.value)} & {_num(binary.ece.value)} & "
-                    f"{_num(binary.auc.value)} & {_num(dist.crps.value, 4)} & "
-                    f"{_num(100 * dist.coverage.value, 1)} & "
-                    f"{_num(100 * dist.pit_coverage.value, 1)} " + r"\\"
+                    f"{_tex_num(binary.brier.value)} & {_tex_ci(binary.brier)} & "
+                    f"{_tex_num(binary.bss.value)} & {_tex_num(binary.reliability.value)} & "
+                    f"{_tex_num(binary.resolution.value)} & {_tex_num(binary.ece.value)} & "
+                    f"{_tex_num(binary.auc.value)} & {_tex_num(dist.crps.value, 4)} & "
+                    f"{_tex_num(100 * dist.coverage.value, 1)} & "
+                    f"{_tex_num(100 * dist.pit_coverage.value, 1)} " + r"\\"
                 )
         if rows:
             if not first_set:
@@ -1232,9 +1246,9 @@ def warning_table(run_id: str, config: ForecastStudyConfig, cells: Cells, i: int
                 rows.append(
                     f"{set_cfg.name.upper() if not rows else ''} & "
                     f"{_tex_name(config, k) if theta == config.summary.thresholds[0] else ''} & "
-                    f"{theta:g} & {cell.late} & {_num(100 * cell.warned.value, 1)} & "
-                    f"{_tex_ci(cell.warned, 1, 100)} & {_num(cell.lead.value, 1)} & "
-                    f"{cell.on_time} & {_num(100 * cell.false_alarms.value, 1)}\\,"
+                    f"{theta:g} & {cell.late} & {_tex_num(100 * cell.warned.value, 1)} & "
+                    f"{_tex_ci(cell.warned, 1, 100)} & {_tex_num(cell.lead.value, 1)} & "
+                    f"{cell.on_time} & {_tex_num(100 * cell.false_alarms.value, 1)}\\,"
                     f"{_tex_ci(cell.false_alarms, 1, 100)} " + r"\\"
                 )
         if rows:
@@ -1272,9 +1286,9 @@ def plan_stage_table(run_id: str, config: ForecastStudyConfig, cells: Cells, i: 
                 rows.append(
                     f"{set_cfg.name.upper() if not rows else ''} & "
                     f"{_tex_name(config, k) if theta == config.summary.thresholds[0] else ''} & "
-                    f"{theta:g} & {cell.late} & {_num(100 * cell.late_below.value, 1)} & "
+                    f"{theta:g} & {cell.late} & {_tex_num(100 * cell.late_below.value, 1)} & "
                     f"{_tex_ci(cell.late_below, 1, 100)} & {cell.on_time} & "
-                    f"{_num(100 * cell.on_time_below.value, 1)} & "
+                    f"{_tex_num(100 * cell.on_time_below.value, 1)} & "
                     f"{_tex_ci(cell.on_time_below, 1, 100)} " + r"\\"
                 )
         if rows:
@@ -1320,9 +1334,9 @@ def headline_table(run_id: str, config: ForecastStudyConfig, cells: Cells, i: in
                 group += [
                     f"{set_cfg.name.upper() if not rows and not group else ''} & "
                     f"{f'{share:g}' if not group else ''} & {_tex_name(config, k)} & "
-                    f"{_num(binary.brier.value)} & {_num(binary.bss.value)} & "
-                    f"{_num(binary.ece.value)} & {_num(binary.auc.value)} & "
-                    f"{_num(dist.crps.value)} & {_num(dist.pit_coverage.value)} " + r"\\",
+                    f"{_tex_num(binary.brier.value)} & {_tex_num(binary.bss.value)} & "
+                    f"{_tex_num(binary.ece.value)} & {_tex_num(binary.auc.value)} & "
+                    f"{_tex_num(dist.crps.value)} & {_tex_num(dist.pit_coverage.value)} " + r"\\",
                     f" & & & {_tex_short_ci(binary.brier)} & & & {_tex_short_ci(binary.auc)} & "
                     f"{_tex_short_ci(dist.crps)} & " + r"\\",
                 ]
