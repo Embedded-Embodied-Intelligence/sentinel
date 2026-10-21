@@ -26,6 +26,7 @@ uv sync                                               # environment from uv.lock
 uv run pre-commit install                             # git hooks (ruff, detect-secrets, hygiene)
 uv run python scripts/fetch_psplib.py --sets j30 j60  # PSPLIB into data/psplib (not committed)
 uv run pytest -q                                      # tests; data tests skip without data/
+uv run pytest -q -m "data or slow"                    # data tests and slow (> 30 s) tests
 uv run sentinel inspect j30/j301_1                    # instance summary, LB0, reference makespans
 ```
 
