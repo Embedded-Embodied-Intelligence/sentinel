@@ -288,6 +288,21 @@ class EngineState:
         self.temp_days = 0  # temporary worker-days paid so far
         self.overtime_cost = 0.0
 
+    def copy(self) -> "EngineState":
+        """An independent copy for another run from the same state: every container a run
+        changes is copied, the instance and immutable values are shared."""
+        other = object.__new__(EngineState)
+        for name in EngineState.__slots__:
+            value = getattr(self, name)
+            if name in _NESTED:
+                value = [inner.copy() for inner in value]
+            elif name == "leaving":
+                value = {day: workers.copy() for day, workers in value.items()}
+            elif isinstance(value, list | set):
+                value = value.copy()
+            setattr(other, name, value)
+        return other
+
     def add_activity(
         self,
         duration: int,
@@ -407,6 +422,9 @@ class EngineState:
             handovers=tuple(self.handovers),
             temporary=tuple(self.temporary),
         )
+
+
+_NESTED: Final = frozenset({"idle", "successors"})  # EngineState lists of lists
 
 
 def day_limit(instance: ProjectInstance, deadline: int | None) -> int:

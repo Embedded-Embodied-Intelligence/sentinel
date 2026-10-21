@@ -43,7 +43,9 @@ class RolloutStreams:
     worker resume the day after its return (spec section 2.2 D1), for a present one on day
     `day + 1`. D2 counts work days from the start of the rollout and applies to original
     activities only; D3 arrivals start on day `day + 1`. `seq` spawns one child stream per
-    process. Answers depend only on `seq`, the parameters and the query, never on query order.
+    process. Answers depend only on `seq`, the parameters and the query, never on query order;
+    the D2 queries of one activity only move forward within a rollout, so streams shared by
+    several rollouts from the same day (candidates in one sampled world) are `rewind`-ed first.
     """
 
     __slots__ = (
@@ -103,6 +105,10 @@ class RolloutStreams:
         self._new_rng = _generator(new_seq) if params.lambda_n > 0 else None
         self._new: dict[int, NewActivityDraw] = {}
         self._new_last = day  # day of the last arrival drawn so far
+
+    def rewind(self) -> None:
+        """Start the D2 queries of a new rollout from the same day; drawn values are kept."""
+        self._work_cursor = [0] * self.n_original
 
     def absence_onsets(self, day: int) -> Sequence[AbsenceDraw]:
         """Absences that start on `day`, by increasing worker id (spec section 2.2 D1)."""

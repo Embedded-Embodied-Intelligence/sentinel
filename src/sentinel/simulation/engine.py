@@ -16,6 +16,7 @@ decision with the same `Run.apply`.
 import math
 from bisect import insort
 from collections.abc import Collection, Sequence
+from itertools import compress
 from typing import assert_never
 
 from pydantic import (
@@ -265,9 +266,13 @@ class Run:
     `apply` is step 3's treatment of a decision; a rollout may also use it to apply a candidate
     action to a rebuilt state before `resume`. Applied and rejected operations are logged in
     `substitutions`, `rejected`, `reseqs`, `shifts`, `nervousness` and `infeasible_reseqs`.
+    Without `check_plans`, RESEQ and SHIFT plans are applied unchecked: for rollouts of a
+    decision already checked on the same observation (`rehearse`), as the check depends on
+    the observation only.
     """
 
     __slots__ = (
+        "check_plans",
         "debug",
         "events",
         "infeasible_reseqs",
@@ -301,9 +306,11 @@ class Run:
         record_trace: bool = False,
         observe_days: Collection[int] = (),
         debug: bool = False,
+        check_plans: bool = True,
     ) -> None:
         self.state = state
         self.streams = streams
+        self.check_plans = check_plans
         self.policy = policy
         self.review_period = review_period
         self.events: list[Event] | None = [] if record_events else None
@@ -404,7 +411,7 @@ class Run:
                     if reason is not None:
                         self.rejected.append(Rejection(day=t, operation=op, reason=reason))
                 case Reseq() | Shift():
-                    reason = _infeasible_plan(state, op)
+                    reason = _infeasible_plan(state, op) if self.check_plans else None
                     if reason is not None:
                         if self.debug:
                             raise AssertionError(f"{op.kind.upper()} on day {t}: {reason}")
@@ -552,8 +559,8 @@ def _update_crew(state: EngineState, j: int, t: int) -> None:
     present member j is paused, and it resumes when one returns. Every change of the present
     members ends the current work segment.
     """
-    present, wage = state.present, state.wage
-    workers = tuple(w for w in state.assigned[j] if present[w])
+    crew = state.assigned[j]
+    workers = tuple(compress(crew, map(state.present.__getitem__, crew)))
     if state.status[j] == RUNNING:
         if state.open_since[j] < t:  # a second change on one day (SUBST) adds no empty segment
             state.segments.append(WorkSegment(j, state.open_since[j], t, state.working[j]))
@@ -566,7 +573,7 @@ def _update_crew(state: EngineState, j: int, t: int) -> None:
     state.working[j] = workers
     state.open_since[j] = t if workers else -1
     state.rate[j] = len(workers)
-    state.work_cost[j] = sum(wage[w] for w in workers)
+    state.work_cost[j] = sum(map(state.wage.__getitem__, workers))
 
 
 def _work_increase(

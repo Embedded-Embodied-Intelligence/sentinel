@@ -7,17 +7,19 @@ that fails `validate_residual` raises, and with every realised schedule checked 
 r) is the WP2b one, derive_seed(base_seed, set, instance, str(r)), shared by all policies
 (common random numbers, spec section 2.3), so the NoReaction runs are WP2b's worlds. A run uses
 max_days of the largest deadline slack; whether each deadline is met is evaluated post hoc, as
-in WP2b.
+in WP2b. Sentinel, which uses the deadline, gets the one of `PolicyTask.agent_delta` (and its
+max_days); its on-time flags for the other slacks are post hoc.
 """
 
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from sentinel.agent.params import SentinelParams
 from sentinel.data.psplib_loader import DEFAULT_ROOT, instance_path, load_psplib
 from sentinel.model import ProjectInstance, Schedule, validate_schedule
 from sentinel.policies.base import DecisionStats
-from sentinel.policies.registry import make_policy
+from sentinel.policies.registry import SENTINELS, make_policy
 from sentinel.policies.resolve import T_CP
 from sentinel.simulation.baselines import DEFAULT_CACHE_ROOT, CpsatDet, cached_baseline
 from sentinel.simulation.engine import SimulationResult, simulate
@@ -49,6 +51,8 @@ class PolicyTask:
     baseline: CpsatDet = WP2B_BASELINE
     data_root: Path = DEFAULT_ROOT
     baseline_cache: Path = DEFAULT_CACHE_ROOT
+    agent_delta: float = 0.2  # delta_D of the deadline Sentinel works towards
+    sentinel: SentinelParams | None = None  # Sentinel's parameters (default: spec section 8)
 
 
 @dataclass(frozen=True)
@@ -77,6 +81,9 @@ class PolicyRecord:
     epochs: int
     stats: DecisionStats
     wall_time_s: float
+    shifts: int = 0
+    hired: int = 0
+    overtime_cost: float = 0.0
 
 
 def run_policies(task: PolicyTask) -> list[PolicyRecord]:
@@ -87,6 +94,7 @@ def run_policies(task: PolicyTask) -> list[PolicyRecord]:
     if violations:
         raise InvalidScheduleError(f"baseline of {instance.name}: {violations[0].detail}")
     deadlines = [derive_deadline(task.c_star, delta) for delta in task.deltas]
+    target = derive_deadline(task.c_star, task.agent_delta)
     records: list[PolicyRecord] = []
     for replication, seed in enumerate(task.seeds):
         for name in task.policies:
@@ -97,9 +105,11 @@ def run_policies(task: PolicyTask) -> list[PolicyRecord]:
                 seed,
                 pert=task.pert,
                 disruptions=task.disruptions,
-                deadline=deadlines[-1],  # max_days of the largest delta_D
+                # max_days of the largest delta_D, or Sentinel's own deadline
+                deadline=target if name in SENTINELS else deadlines[-1],
                 review_period=task.review_period,
                 deterministic_time_limit=task.deterministic_time_limit,
+                sentinel=task.sentinel,
             )
             records.append(
                 PolicyRecord(
@@ -127,6 +137,9 @@ def run_policies(task: PolicyTask) -> list[PolicyRecord]:
                     epochs=result.n_epochs,
                     stats=stats,
                     wall_time_s=wall_time_s,
+                    shifts=result.shifts,
+                    hired=result.hired,
+                    overtime_cost=result.overtime_cost,
                 )
             )
     return records
@@ -144,11 +157,17 @@ def run_checked(
     review_period: int,
     deterministic_time_limit: float,
     cp_seed: int = 0,
+    sentinel: SentinelParams | None = None,
 ) -> tuple[SimulationResult, DecisionStats, float]:
     """One run of a fresh policy in debug mode with its realised schedule checked: the result,
-    the policy's decision statistics (empty for NoReaction) and the wall time of `simulate`."""
+    the policy's decision statistics (empty for NoReaction) and the wall time of `simulate`.
+    Sentinel gets the run's seed and `sentinel` parameters (`make_policy`)."""
     policy = make_policy(
-        policy_name, deterministic_time_limit=deterministic_time_limit, seed=cp_seed
+        policy_name,
+        deterministic_time_limit=deterministic_time_limit,
+        seed=cp_seed,
+        run_seed=seed,
+        sentinel=sentinel,
     )
     began = time.perf_counter()
     result = simulate(
