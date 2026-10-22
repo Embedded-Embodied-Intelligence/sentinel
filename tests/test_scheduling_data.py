@@ -56,6 +56,7 @@ def _solve_j6013_1(root: Path) -> tuple[str, tuple[int, ...] | None]:
     return result.status, None if result.schedule is None else result.schedule.starts
 
 
+@pytest.mark.slow  # about 5 s
 def test_deterministic_limit_does_not_depend_on_machine_load(psplib_root: Path) -> None:
     # j6013_1 is not solved to optimality within the limit, so the limit stops the search.
     if not (psplib_root / "j60").is_dir():

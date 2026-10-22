@@ -29,7 +29,13 @@ def _sets(psplib_root: Path) -> list[str]:
 
 # A short limit keeps the test fast and leaves non-optimal (FEASIBLE) CP-SAT plans among them.
 @pytest.mark.parametrize(
-    "method", [CpsatDet(deterministic_time_limit=0.5, random_seed=2026), SgsLft()]
+    "method",
+    [
+        pytest.param(  # about 4 s
+            CpsatDet(deterministic_time_limit=0.5, random_seed=2026), marks=pytest.mark.slow
+        ),
+        SgsLft(),
+    ],
 )
 def test_exact_durations_reproduce_the_baseline_makespan(
     psplib_root: Path, tmp_path: Path, method: CpsatDet | SgsLft

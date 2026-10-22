@@ -71,6 +71,7 @@ def test_reactive_policies_keep_every_realised_schedule_feasible(psplib_root: Pa
             assert sum(record.reseqs for record in mine) > 0, name
 
 
+@pytest.mark.slow  # about 9 s
 def test_residual_plans_are_feasible_on_j30_planning_views(psplib_root: Path) -> None:
     """At least 50 planning views of NoReaction J30 runs: the residual SGS and both CP-SAT
     objectives at the policies' limit T_cp give feasible plans and CP-SAT is never longer than

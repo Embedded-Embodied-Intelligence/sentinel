@@ -24,6 +24,7 @@ PRIMARY = DisruptionParams(lambda_a=0.01, mean_absence=3, lambda_s=0.01, lambda_
 RUNS = 2000
 
 
+@pytest.mark.slow  # about 9 s
 def test_day_zero_forecast_agrees_with_the_world(psplib_root: Path) -> None:
     """2000 rollouts from day 0 before any event against 2000 world runs: the rollout layout
     has the distributions of spec section 2.2 (only the events of day 0 itself differ)."""
