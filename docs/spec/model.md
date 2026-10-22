@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.7)
+# Sentinel — formal model (v1.8)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -24,7 +24,12 @@ deterministic forecaster (§5.1, §5.2), CP-SAT hint, FullResolve(subst) epochs 
 set (§7, §7.1), `T_cp = 0.1` (§8); v1.7 (WP5a) Sentinel core: SHIFT and OVERTIME with temporary
 workers (§4, §4.1), Δ over the deviation set and the needs gate (§5), candidates, racing
 evaluation and deliberation epochs (§6), parameters (§8); the readings of the WP4b questions
-(realised deviation over `J⁺`, return days without a crew) are accepted.
+(realised deviation over `J⁺`, return days without a crew) are accepted; v1.8 (WP5b) the
+material decision rule with expected tardiness (§5, §6), the permission gate with deferral,
+escalation and approval epochs (§3.1 g, §4, §6), DESCOPE and optional activities (§4, §6,
+§7.1), `B`, `c_k` and `c_OT_k` in the observation (§3, §5), parameters (§8); answers to the
+WP5a questions: SHIFT keeps the order strictly, overtime pay and cap (§4), needs-gate
+sequencing (§5), racing of the scalarised ablation (§6).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -180,12 +185,15 @@ its crew work in expectation when the member's expected remaining absence exceed
 not add cost.
 
 **State** `s_t`: day `t`; per activity status (done / running with `e_j` / paused with `e_j` /
-unstarted); crews (assigned workers); worker availability with announced `L_low`; plan `π_t`;
-cost so far; priors. **Hidden:** true `P_j`, true `L`, future events. Hidden quantities are
-sampled from conditional distributions, e.g. `P_j | P_j > e_j` (§5.1).
+unstarted / removed by DESCOPE, §4); crews (assigned workers); worker availability with
+announced `L_low`; plan `π_t`; cost so far; priors. The observation also carries the budget `B`
+(§1.2), the daily costs `c_k` and `c_OT_k` (§4) and the optional activities `O` (§4).
+**Hidden:** true `P_j`, true `L`, future events. Hidden quantities are sampled from conditional
+distributions, e.g. `P_j | P_j > e_j` (§5.1).
 
-**Decision epochs:** after every D1–D3 event (absence onsets and returns included) and every
-`T_r` days (periodic review); the exact days are given in §3.1 (g).
+**Decision epochs:** after every D1–D3 event (absence onsets and returns included), every `T_r`
+days (periodic review) and on the approval day of an escalated action (§4); the exact days are
+given in §3.1 (g).
 
 ### §3.1 Execution details
 
@@ -212,8 +220,10 @@ sampled from conditional distributions, e.g. `P_j | P_j > e_j` (§5.1).
 - (f) The simulation ends when the sink completes, or at `max_days = ceil(5 · D)` (or
   `5 · Σ p_j` if `D` is undefined), with a `truncated` flag.
 - (g) Decision epochs: any day with a D1 event (an absence onset or a return) or a D3 event, the
-  day after a D2 event (D2 is drawn in step 5, after the decision of its day), and every day `t`
-  with `t % T_r == 0`. A return day is an epoch whether or not the worker returns to a crew.
+  day after a D2 event (D2 is drawn in step 5, after the decision of its day), every day `t`
+  with `t % T_r == 0`, and the day `t + δ_h` on which the simulated human approves an action
+  escalated on day `t` (§4 permission gate). A return day is an epoch whether or not the worker
+  returns to a crew.
 
 ---
 
@@ -247,7 +257,9 @@ residual problem (§4.1). Dispatch semantics (§3 step 4) are unchanged.
 
 SHIFT(π') is the order-preserving repair: the residual SGS (§4.1) with the current plan's planned
 starts as priority list (ties by id). It may start activities earlier than the current plan
-(left-justification under the railway rule) and never changes the order of planned starts.
+(left-justification under the railway rule) and never changes the order of planned starts:
+every activity with `p_j > 0` starts no earlier than the one with `p_j > 0` before it in the
+list, so a level-0 action never re-sequences.
 
 OVERTIME(k, u, H) hires `u ≤ floor(γ R_k)` *temporary workers* of role `k` (overtime or agency
 capacity), present every day of the window `[t, t + H)`, never absent, idle until assigned.
@@ -255,19 +267,36 @@ During the window they can be dispatched or used in SUBST like any idle worker (
 applies; starting a new activity has no onboarding). A temporary worker assigned to a crew stays
 until that activity completes; after the window it takes no new assignment and leaves when idle.
 Cost `c_OT_k = 1.5 c_k` per temporary worker and day while hired (window days, plus any days
-after the window while still in a crew). Temporary workers have ids after the original workers;
-they have no absence stream, so the common random numbers of the original workers are unchanged
-(§2.3).
+after the window while still in a crew); its crew work costs nothing on top, and window days
+after the project ends are not paid. At most `floor(γ R_k)` temporary workers of a role are
+hired at a time, those past their window but still in a crew included. Temporary workers have
+ids after the original workers; they have no absence stream, so the common random numbers of
+the original workers are unchanged (§2.3).
+
+DESCOPE(j) removes an unstarted optional activity `j ∈ O` whose only successor is still `n+1`:
+its precedence edges vanish, and a predecessor left without successors precedes `n+1` instead,
+so the network stays valid (§1). A removed activity is never executed and costs nothing.
+**Optional activities** `O` are drawn per instance with a fixed seed
+(`derive_seed(base, "optional", instance)`): a share `φ` of the real activities whose only
+successor is the sink, each with value `v_j = p_j · Σ_k c_k r_jk`. The *scope loss* of a run is
+`Σ_removed v_j / Σ_{j∈O} v_j` (§7.1).
 
 Operations are applied in step 3 in the order given, each validated against the state left by
 the previous one; an invalid operation is rejected (logged, counted), the others still apply.
 
 Levels: 0 automatic, 1 automatic with report, 2 human approval. `*` DESCOPE always needs
-approval. Autonomy level `Λ ∈ {0,1,2,3}`: an action runs without approval iff `ℓ(a) < Λ` and
-it contains no DESCOPE. A simulated human approves escalated actions after `δ_h` days.
-Optional activities `O`: a random share `φ` of activities whose only successor is `n+1`, each
-with value `v_j`. No classical crashing: adding people to a late software task is modelled by
-the handover cost (Brooks's law).
+approval. No classical crashing: adding people to a late software task is modelled by the
+handover cost (Brooks's law).
+
+**Permission gate.** With autonomy level `Λ ∈ {0,1,2,3}`, an action other than NOOP runs
+automatically iff `ℓ(a) < Λ` and it has no DESCOPE. Otherwise, if the urgency `τ_t > τ_def`
+(§5), Sentinel *defers*: NOOP now, and it deliberates again at its next deliberation epoch (§6).
+Else it *escalates*: the simulated human approves after `δ_h` days, and day `t + δ_h` becomes a
+decision epoch (§3.1 g), where the action is re-validated against the current state (RESEQ and
+SHIFT plans against the current planning view, §4.1) and applied if valid, i.e. if none of its
+operations would be rejected, otherwise discarded with a fresh deliberation. Meanwhile Sentinel
+takes no other action. Deferrals, escalations, approvals applied and approvals discarded are
+recorded.
 
 ### §4.1 Planning view
 
@@ -286,7 +315,8 @@ What a planner assumes at day `t`: the same assumptions as the deterministic for
   window's end and its activity's `F̂_j`, during which its crew reserves it as above.
 
 The **residual problem** schedules all unstarted activities on days `≥ t` under this capacity
-profile and precedence (finished predecessors: realised finish; started ones: `F̂_j`).
+profile and precedence (finished predecessors: realised finish; started ones: `F̂_j`); removed
+activities (§4 DESCOPE) and their edges are no longer part of the project.
 
 ---
 
@@ -296,23 +326,27 @@ For candidate `a`, run `N` rollouts with common seeds `ξ_1..ξ_N`, giving makes
 and costs `Z_a^(i)`:
 
 - `p̂_a = (1/N) Σ_i 1[C_a^(i) ≤ D]`
+- `T̂_a = (1/N) Σ_i max(0, C_a^(i) − D)`, the expected tardiness in days (a rollout cut at
+  max_days counts `C = max_days`)
 - `ẑ_a = (1/N) Σ_i Z_a^(i)`, the mean total project cost including the cost so far,
-  `o_a = max(0, ẑ_a − B) / B`
+  `o_a = max(0, ẑ_a − B) / B` with the budget `B` of the observation
 - `Δ_a = (1/|U'_t|) Σ_{j∈U'_t} |S_j^a − S_j^t| + κ_h · n_a^subst`: the candidate's plan `S^a`
   against the current plan `S^t` over the deviation set `U'_t` of §7.1, plus `κ_h` per member
   the candidate replaces (`n_a^subst`, §7.1 substitutions)
 
-Goal hierarchy: G1 feasibility (hard), G2 deadline `p̂ ≥ θ_D`, G3 budget `o = 0`,
-G4 stability (small `Δ`).
+Goal hierarchy: G1 feasibility (hard), G2 deadline `p̂ ≥ θ_D`, and small expected tardiness
+`T̂` where `θ_D` is out of reach, G3 budget `o = 0`, G4 stability (small `Δ`).
 
 **Needs** are evaluated for NOOP: `n_D = max(0, θ_D − p̂_NOOP)`, `n_B = o_NOOP`. **Needs
-gate:** NOOP is evaluated first (`N₁` rollouts, then up to `N`); if `n_D ≤ ε_D` and
-`n_B ≤ ε_B`, the agent returns NOOP without generating candidates.
+gate:** NOOP is evaluated first on `N₁` rollouts; the gate stops there only if they show a need
+beyond 2 standard errors (`θ_D − p̂ − ε_D` above 2 standard errors of `p̂`, or the overrun of the
+mean cost lowered by 2 standard errors above `ε_B`), otherwise NOOP is extended to `N` rollouts;
+if `n_D ≤ ε_D` and `n_B ≤ ε_B` on those, the agent returns NOOP without generating candidates.
 
 **Urgency** `τ_t = min_j τ_j` with `τ_j = LS_j − t` for unstarted and paused activities and
 `τ_j = LF_j − t − E[remaining_j]` for running activities regardless of absences, the
 expectation under the belief of §5.1 (`LS_j`, `LF_j` latest start and finish w.r.t. `D`). If
-the best action needs approval and `τ_t > τ_def`, the decision is deferred.
+the chosen action needs approval and `τ_t > τ_def`, it is deferred (§4 permission gate).
 
 ### §5.1 Beliefs
 
@@ -424,10 +458,23 @@ Forecasts of the makespan `C` of a NoReaction run are scored against its realise
 Sentinel is a one-step rollout policy (Bertsekas et al. 1997) on base policy `NoReaction`.
 Rollouts continue without further interventions after the candidate action.
 
-`a* = lexmax_{a ∈ C(s_t)} ( min(p̂_a, θ_D), −o_a, −Δ_a, −ℓ(a) )`
+`a* = lexmax_{a ∈ C(s_t)} ( min(p̂_a, θ_D), −T̂_a, −o_a, −Δ_a, −ℓ(a) )`
 
-Differences in the first component smaller than two standard errors of the paired (CRN)
-differences are ties. Scalarised ablation: `U_a = p̂_a − λ_B · o_a − λ_Δ · Δ_a`.
+with the expected tardiness `T̂_a` of §5. Every component decides only on differences that are
+statistically and practically material. Two candidates **tie** in a stochastic component
+(`min(p̂, θ_D)`, `T̂`, `o`) when their paired (CRN) difference is within 2 paired standard errors
+**or** below its materiality threshold: `ε_D` for `min(p̂, θ_D)`, `ε_T` for `T̂`, `ε_B` for `o`.
+They tie in `Δ` when the difference is below `ε_Δ`, and in `ℓ` only when equal. The paired
+standard error is that of the mean of the per-rollout differences over the `N` common rollouts:
+of the on-time indicators for `min(p̂, θ_D)`, of the tardiness `max(0, C − D)` for `T̂`, and of
+the total cost divided by `B` for `o`. The best set is filtered component by component: keep
+every candidate tied with the best of the current set (among equal values the first in candidate
+order), then move to the next component; the remaining ties go to the candidate order below.
+With DESCOPE candidates, the scope loss of a candidate (`v_j / Σ_{i∈O} v_i` of the activity it
+removes, 0 for every other candidate) is an extra component right after `T̂` (smaller first,
+exact), so a DESCOPE wins only when it is materially better in `min(p̂, θ_D)` or `T̂`.
+Scalarised ablation: `U_a = p̂_a − λ_B · o_a − λ_Δ · Δ_a`, maximised over the candidates that
+racing keeps (racing as below).
 
 **Candidates** `C(s_t)`, at most these, each filtered for validity:
 - `NOOP`;
@@ -440,23 +487,35 @@ differences are ties. Scalarised ablation: `U_a = p̂_a − λ_B · o_a − λ_�
 - `SUBST-ALL + RESEQ-M`;
 - `OT(k*) + RESEQ-M`, with `k*` the most backlogged role, `u = floor(γ R_k*)`, `H = 2 T_r`; the
   backlog of role `k` is `Σ r_jk · p_j / R_k` over the unstarted and paused activities with
-  `LS_j ≤ t + 2 T_r` (nominal durations).
+  `LS_j ≤ t + 2 T_r` (nominal durations);
+- `DESCOPE(j)`, only where DESCOPE is enabled, for up to 2 unstarted optional activities
+  `j ∈ O` whose only successor is `n+1`, those with the largest `p_j` (ties: smaller `v_j`,
+  then id), generated only if no other candidate reaches `θ_D` (`p̂_a ≥ θ_D` after racing), and
+  then raced with the others on the same worlds. DESCOPE is off in the main RQ4 comparison,
+  since the baselines cannot descope.
 
 RESEQ plans with added capacity use the planning view extended by the temporary workers (§4.1).
-DESCOPE (only if no other candidate reaches `θ_D`) and LLM proposals in the same JSON action
-grammar, filtered for feasibility, extend this list later (WP5b, WP6).
+LLM proposals in the same JSON action grammar, filtered for feasibility, extend this list later
+(WP6).
 
 **Evaluation.** Each candidate is applied at step 3 of day `t` in every rollout; the rollout then
-continues under NoReaction (§5.1; rollout `i` uses seed `ξ_i`, shared by all candidates).
-**Racing:** stage 1 evaluates every candidate on `N₁` rollouts; candidates whose capped on-time
-estimate `min(p̂_a, θ_D)` is below the best by more than 2 paired standard errors are dropped;
-stage 2 extends the survivors to `N` rollouts. Ties and the lexicographic order are as above
-(`min(p̂, θ_D)`, then `−o`, then `−Δ`, then `−ℓ`); `ẑ` and `Δ` are those of §5.
+continues under NoReaction (§5.1; rollout `i` uses seed `ξ_i`, shared by all candidates). A
+candidate that would need approval (§4 permission gate) is instead applied at step 3 of day
+`t + δ_h` if it is valid in that rollout (re-validated as in the world), so the agent imagines
+the approval delay; otherwise the rollout continues without it.
+**Racing:** stage 1 evaluates every candidate on `N₁` rollouts; a candidate is dropped only if
+it is significantly and materially worse than the stage's best in `min(p̂, θ_D)` **and** in
+`T̂`, i.e. not tied with it in either component (ties as above, on the `N₁` rollouts); the
+stage's best is the candidate with the largest `min(p̂, θ_D)`, then the smallest `T̂`, then the
+first in candidate order. Stage 2 extends the survivors to `N` rollouts, on which the rule
+decides; `ẑ` and `Δ` are those of §5.
 
 **Deliberation epochs.** Sentinel deliberates at decision epochs that have an event touching a
 crew (absence onset or return of a crew member, D2, D3) and at periodic epochs; at epochs whose
-only events concern idle workers it returns NOOP. This is the agent's own choice of when to
-think, not a change of the decision epochs of §3.1 (g).
+only events concern idle workers it returns NOOP. While an escalated action awaits approval it
+returns NOOP without deliberating; on the approval day it applies the action if valid, else
+deliberates afresh (§4 permission gate). This is the agent's own choice of when to think; the
+approval days are the only decision epochs it adds (§3.1 g).
 
 ---
 
@@ -490,7 +549,10 @@ think, not a change of the decision epochs of §3.1 (g).
 - *nervousness* = total number of pairs (epoch `t`, activity `j ∈ U'_t`) whose planned start the
   decision of epoch `t` changed (`U'_t` the deviation set of §7);
 - number of substitutions (replaced members), onboarding days `Σ m_j o_j` (crew-member days) and
-  handover days `Σ h_j` (full-crew days); number of RESEQs and CP-SAT fallbacks.
+  handover days `Σ h_j` (full-crew days); number of RESEQs and CP-SAT fallbacks;
+- overtime cost and its share of the total cost, temporary workers hired (§4 OVERTIME); scope
+  loss `Σ_removed v_j / Σ_{j∈O} v_j` (§4 DESCOPE); deferrals, escalations, approvals applied and
+  approvals discarded (§4 permission gate).
 
 ---
 
@@ -509,16 +571,19 @@ think, not a change of the decision epochs of §3.1 (g).
 | `γ` | overtime cap vs `R_k` | 0.2 |
 | `φ` | share of optional activities | 0.1 |
 | `θ_D` | deadline probability target | 0.8 |
-| `ε_D, ε_B` | need activation thresholds | 0.02, 0.01 |
+| `ε_D, ε_B` | need activation thresholds (§5) and materiality of `min(p̂, θ_D)` and `o` (§6) | 0.02, 0.01 |
+| `ε_T` | materiality of the expected tardiness `T̂` (§6) | 0.5 days |
+| `ε_Δ` | materiality of the instability `Δ` (§6) | 0.5 days |
 | `κ_h` | handover weight in instability | 2 |
 | `τ_def` | deferral urgency threshold (days) | 3 |
 | `T_r` | periodic review (days) | 5 |
 | `T_cp` | CP-SAT deterministic time limit per stage in policies (§7) | 0.1 deterministic seconds |
-| `N` | rollouts per candidate | 200 |
-| `N₁` | rollouts per candidate in stage 1 of racing (§6) | 50 |
+| `N` | rollouts per candidate | 200 (rollout-budget study of WP5b pending) |
+| `N₁` | rollouts per candidate in stage 1 of racing (§6) | 50 (rollout-budget study of WP5b pending) |
 | `c_OT_k` | daily cost of a temporary worker of role `k` (§4) | `1.5 c_k` |
 | `H` | OVERTIME window of the rule candidate (§6) | `2 T_r` |
 | — | single-activity SUBST candidates (§6) | at most 3 |
+| — | DESCOPE candidates (§6) | at most 2 |
 | `Λ` | autonomy level | {0,1,2,3}, default 2 |
 | `δ_h` | human approval delay (days) | 1 |
 | `c_k` | daily cost per worker | 1.0 |
