@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.8)
+# Sentinel — formal model (v1.8.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -30,7 +30,11 @@ escalation and approval epochs (§3.1 g, §4, §6), DESCOPE and optional activit
 §7.1), `B`, `c_k` and `c_OT_k` in the observation (§3, §5), parameters (§8); answers to the
 WP5a questions: SHIFT keeps the order strictly, overtime pay and cap (§4), needs-gate
 sequencing (§5), racing of the scalarised ablation (§6); the rollout budget `(N₁, N) = (25, 100)`
-of the WP5b study (§8).
+of the WP5b study (§8); v1.8.1 (WP5b.1) answers to the WP5b questions: approved actions are
+re-planned on their approval day, in the world and in rollouts (§4, §6), `O` is every real
+activity whose only successor is the sink and `φ` is gone (§4, §8), deferred actions are not
+remembered (§4), the paired standard error of `o` (§6), removed activities are not in `J⁺`
+(§7.1); the racing leader (§6) and all-or-nothing approval (§4) as written in v1.8.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -277,10 +281,9 @@ the original workers are unchanged (§2.3).
 DESCOPE(j) removes an unstarted optional activity `j ∈ O` whose only successor is still `n+1`:
 its precedence edges vanish, and a predecessor left without successors precedes `n+1` instead,
 so the network stays valid (§1). A removed activity is never executed and costs nothing.
-**Optional activities** `O` are drawn per instance with a fixed seed
-(`derive_seed(base, "optional", instance)`): a share `φ` of the real activities whose only
-successor is the sink, each with value `v_j = p_j · Σ_k c_k r_jk`. The *scope loss* of a run is
-`Σ_removed v_j / Σ_{j∈O} v_j` (§7.1).
+**Optional activities** `O` are all real activities whose only successor is the sink `n+1` in
+the instance (three in every J30 and J60 instance), each with value `v_j = p_j · Σ_k c_k r_jk`.
+The *scope loss* of a run is `Σ_removed v_j / Σ_{j∈O} v_j` (§7.1).
 
 Operations are applied in step 3 in the order given, each validated against the state left by
 the previous one; an invalid operation is rejected (logged, counted), the others still apply.
@@ -292,12 +295,20 @@ handover cost (Brooks's law).
 **Permission gate.** With autonomy level `Λ ∈ {0,1,2,3}`, an action other than NOOP runs
 automatically iff `ℓ(a) < Λ` and it has no DESCOPE. Otherwise, if the urgency `τ_t > τ_def`
 (§5), Sentinel *defers*: NOOP now, and it deliberates again at its next deliberation epoch (§6).
+A deferred action is not remembered: every deliberation starts afresh, so the same action may
+be chosen and deferred again until the urgency drops to `τ_def` and it is escalated.
 Else it *escalates*: the simulated human approves after `δ_h` days, and day `t + δ_h` becomes a
-decision epoch (§3.1 g), where the action is re-validated against the current state (RESEQ and
-SHIFT plans against the current planning view, §4.1) and applied if valid, i.e. if none of its
-operations would be rejected, otherwise discarded with a fresh deliberation. Meanwhile Sentinel
-takes no other action. Deferrals, escalations, approvals applied and approvals discarded are
-recorded.
+decision epoch (§3.1 g). The human approves the *intent* of the action, not a schedule that may
+be stale by then. On the approval day its SUBST, OVERTIME and DESCOPE operations are
+re-validated, unchanged, against the current state, and its plan part is re-planned on the
+current planning view (§4.1) left by them, with the objective of its candidate (§6): SHIFT is
+recomputed, RESEQ-M minimises the residual makespan, RESEQ-S the deviation subject to the
+residual makespan of the current SHIFT; the RESEQ-M of OT + RESEQ-M thus includes the temporary
+workers. The action applies all or nothing: it is discarded, with a fresh deliberation, only if
+a SUBST, OVERTIME or DESCOPE operation would be rejected or the re-plan fails, i.e. the engine
+would reject the new plan (a CP-SAT stage without a solution falls back as in candidate
+generation, which is no failure). Meanwhile Sentinel takes no other action. Deferrals,
+escalations, approvals applied and approvals discarded are recorded.
 
 ### §4.1 Planning view
 
@@ -468,7 +479,8 @@ statistically and practically material. Two candidates **tie** in a stochastic c
 They tie in `Δ` when the difference is below `ε_Δ`, and in `ℓ` only when equal. The paired
 standard error is that of the mean of the per-rollout differences over the `N` common rollouts:
 of the on-time indicators for `min(p̂, θ_D)`, of the tardiness `max(0, C − D)` for `T̂`, and of
-the total cost divided by `B` for `o`. The best set is filtered component by component: keep
+the total cost divided by `B` for `o` (exact where both candidates are over budget, conservative
+where `o` is clipped at 0). The best set is filtered component by component: keep
 every candidate tied with the best of the current set (among equal values the first in candidate
 order), then move to the next component; the remaining ties go to the candidate order below.
 With DESCOPE candidates, the scope loss of a candidate (`v_j / Σ_{i∈O} v_i` of the activity it
@@ -501,9 +513,11 @@ LLM proposals in the same JSON action grammar, filtered for feasibility, extend 
 
 **Evaluation.** Each candidate is applied at step 3 of day `t` in every rollout; the rollout then
 continues under NoReaction (§5.1; rollout `i` uses seed `ξ_i`, shared by all candidates). A
-candidate that would need approval (§4 permission gate) is instead applied at step 3 of day
-`t + δ_h` if it is valid in that rollout (re-validated as in the world), so the agent imagines
-the approval delay; otherwise the rollout continues without it.
+candidate that would need approval (§4 permission gate) is instead approved at step 3 of day
+`t + δ_h` exactly as in the world: its plan part is re-planned on that rollout's planning view of
+the day and its other operations are re-validated, all or nothing, so the agent imagines the
+approval delay and the re-plan; a discarded candidate leaves the rollout to continue without
+it.
 **Racing:** stage 1 evaluates every candidate on `N₁` rollouts; a candidate is dropped only if
 it is significantly and materially worse than the stage's best in `min(p̂, θ_D)` **and** in
 `T̂`, i.e. not tied with it in either component (ties as above, on the `N₁` rollouts); the
@@ -514,9 +528,9 @@ decides; `ẑ` and `Δ` are those of §5.
 **Deliberation epochs.** Sentinel deliberates at decision epochs that have an event touching a
 crew (absence onset or return of a crew member, D2, D3) and at periodic epochs; at epochs whose
 only events concern idle workers it returns NOOP. While an escalated action awaits approval it
-returns NOOP without deliberating; on the approval day it applies the action if valid, else
-deliberates afresh (§4 permission gate). This is the agent's own choice of when to think; the
-approval days are the only decision epochs it adds (§3.1 g).
+returns NOOP without deliberating; on the approval day it applies the re-planned action, or
+deliberates afresh if the action is discarded (§4 permission gate). This is the agent's own
+choice of when to think; the approval days are the only decision epochs it adds (§3.1 g).
 
 ---
 
@@ -546,7 +560,8 @@ approval days are the only decision epochs it adds (§3.1 g).
 - on-time for each `δ_D`, makespan / `C*`, cost / `B`;
 - *realised deviation* `(1/|J⁺|) Σ_{j ∈ J⁺} |S_j^real − S_j^0|` against the baseline plan, over
   `J⁺`, the original activities with `p_j > 0` (milestones and the dummies are excluded as in
-  the deviation set of §7; D3 activities have no baseline start);
+  the deviation set of §7; D3 activities have no baseline start; activities removed by DESCOPE
+  never start and are left out);
 - *nervousness* = total number of pairs (epoch `t`, activity `j ∈ U'_t`) whose planned start the
   decision of epoch `t` changed (`U'_t` the deviation set of §7);
 - number of substitutions (replaced members), onboarding days `Σ m_j o_j` (crew-member days) and
@@ -570,7 +585,6 @@ approval days are the only decision epochs it adds (§3.1 g).
 | `λ_N` | daily new-activity probability | 0.02 |
 | `α` | handover factor | 0.3 |
 | `γ` | overtime cap vs `R_k` | 0.2 |
-| `φ` | share of optional activities | 0.1 |
 | `θ_D` | deadline probability target | 0.8 |
 | `ε_D, ε_B` | need activation thresholds (§5) and materiality of `min(p̂, θ_D)` and `o` (§6) | 0.02, 0.01 |
 | `ε_T` | materiality of the expected tardiness `T̂` (§6) | 0.5 days |
