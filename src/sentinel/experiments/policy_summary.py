@@ -97,6 +97,7 @@ ACTION_GROUPS = {
 _SLOT = {name: i for i, name in enumerate((*COMPARED, "stable_resolve"))}
 _COLORS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948")
 _MARKERS = ("o", "s", "^", "D", "v", "P", "X", "*")
+_VARIANT_MARKERS = ("o", "H", "p")  # Sentinel variants of a trade-off panel, beside the slots
 _INK, _INK_2, _MUTED, _GRID, _AXIS = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
 
 CellKey = tuple[str, str | None, str]  # set, scenario (None: pooled over the run's), policy
@@ -997,10 +998,11 @@ def tradeoff_figure(path_stem: Path, analysis: Analysis) -> list[str]:
 def sentinel_tradeoff_figure(path_stem: Path, analysis: Analysis) -> list[str]:
     """On time for the first delta_D against realised deviation (top row) and against
     nervousness (bottom row), pooled over the run's scenarios: the Sentinel variants in the
-    first categorical slots, direct-labelled, and the baselines as context in grey with one
-    marker shape each (emphasis form). A scatter tells at most three hues apart, so the
-    variants come in groups of at most three, a column of panels per set and group, each group
-    with its own legend."""
+    first categorical slots with their own marker shapes, and the baselines as context in grey
+    with one marker shape each (emphasis form). A variant point is direct-labelled where no
+    other variant point is close; the legend carries the rest. A scatter tells at most three
+    hues apart, so the variants come in groups of at most three, a column of panels per set and
+    group, each group with its own legend."""
     variants = analysis.variants
     groups = [variants[i : i + 3] for i in range(0, len(variants), 3)] or [[]]
     baselines = [p for p in analysis.policies if p not in variants]
@@ -1031,31 +1033,41 @@ def sentinel_tradeoff_figure(path_stem: Path, analysis: Analysis) -> list[str]:
                     zorder=2,
                     label=POLICY_LABELS.get(policy, policy),
                 )
+            points: list[tuple[str, float, float]] = []
             for k, policy in enumerate(group):
                 cell = analysis.cell(set_name, None, policy)
                 if cell is None:
                     continue
                 x, y = getattr(cell, metric), 100 * cell.share(0)
+                points.append((POLICY_LABELS.get(policy, policy), x, y))
                 ax.plot(
                     x,
                     y,
                     linestyle="none",
-                    marker="o",
+                    marker=_VARIANT_MARKERS[k],
                     markersize=6,
                     markeredgecolor="white",
                     markeredgewidth=1.0,
                     color=_COLORS[k],
                     zorder=3,
-                    label=POLICY_LABELS.get(policy, policy),
+                    label=points[-1][0],
                 )
-                ax.annotate(
-                    POLICY_LABELS.get(policy, policy),
-                    (x, y),
-                    xytext=(4, 3 - 7 * k),
-                    textcoords="offset points",
-                    fontsize=6,
-                    color=_INK_2,
+            (left, right), (low, high) = ax.get_xlim(), ax.get_ylim()
+            for name, x, y in points:
+                apart = all(
+                    abs(x - u) > 0.15 * (right - left) or abs(y - v) > 0.08 * (high - low)
+                    for other, u, v in points
+                    if other != name
                 )
+                if apart:
+                    ax.annotate(
+                        name,
+                        (x, y),
+                        xytext=(5, 3),
+                        textcoords="offset points",
+                        fontsize=6,
+                        color=_INK_2,
+                    )
             ax.set_xlabel(label, fontsize=7, color=_INK)
             if col == 0:
                 ax.set_ylabel(rf"On time [%], $\delta_D = {delta:g}$", fontsize=7, color=_INK)
