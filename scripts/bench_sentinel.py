@@ -1,9 +1,13 @@
-"""Time Sentinel and take a first look at it against the WP4b policies (WP5a measurements).
+"""Time Sentinel and take a first look at it against the WP4b policies (WP5a, WP5b measurements).
 
 Usage:
-    uv run python scripts/bench_sentinel.py [--runs j30:20:3 --runs j60:20:3]
-        [--policies no_reaction full_resolve sentinel_full sentinel_no_overtime]
+    uv run python scripts/bench_sentinel.py [--runs j30:20:2 --runs j60:10:2]
+        [--policies no_reaction full_resolve sentinel_full sentinel_gate]
         [--lambdas j30:5 --lambdas j60:5] [--profile j30:j3013_1] [--workers 4]
+
+Sentinel variants: `sentinel_full` (Lambda = 3, every choice applies at once),
+`sentinel_gate` (Lambda = 2, the permission gate of spec section 4) and `sentinel_no_ot` (no
+OVERTIME, Lambda = 3), with the rollout budget and the other parameters of spec section 8.
 
 1. Runs (`--runs set:instances:seeds`): the policies at lambda_A = 0.01 on the same worlds
    (WP2b seeds of replications 0 .. seeds - 1, every (480 / instances)-th instance), every run
@@ -12,8 +16,8 @@ Usage:
    Prints the timing table of the Sentinel variants (deliberation times, deliberations,
    needs-gate exits, candidates and rollouts per deliberation, time per run), the first-look
    table of every policy (spec section 7.1 metrics, cost / B with B of spec section 1.2 for
-   beta = 0.1, overtime share of the cost), how often each candidate type was chosen and which
-   component of the decision rule decided.
+   beta = 0.1, overtime share of the cost), how often each candidate type was chosen, which
+   component of the decision rule decided, and what the permission gate did.
 2. lambda_A sample (`--lambdas set:instances`, replication 0): the Sentinel variants at every
    lambda_A of the plan's primary grid, and the duration estimate of the RQ4 study on its
    subset (120 instances per set, 4 lambda_A, R = 4) on `--workers` workers.
@@ -40,24 +44,44 @@ from pathlib import Path
 from bench_policies import REFERENCE, p95, parse_sizes, spread, wp2b_check
 
 from sentinel.agent.candidates import KINDS
+from sentinel.agent.params import SentinelParams
 from sentinel.data.psplib_loader import DEFAULT_ROOT, instance_path, load_psplib
 from sentinel.data.reference import load_reference
 from sentinel.experiments.policy_runs import (
     WP2B_BASELINE,
     PolicyRecord,
     PolicyTask,
+    SentinelVariant,
     run_checked,
     run_policies,
 )
 from sentinel.experiments.runs import derive_seed
-from sentinel.policies.registry import SENTINELS
 from sentinel.policies.sentinel import SentinelStats
 from sentinel.simulation.baselines import DEFAULT_CACHE_ROOT, cached_baseline
 from sentinel.simulation.events import DisruptionParams
 from sentinel.simulation.uncertainty import PertParams, derive_budget, derive_deadline
 
 LAMBDAS = (0.0, 0.005, 0.01, 0.02)  # primary grid of docs/experiments/plan.md
-POLICIES = ("no_reaction", "full_resolve", "sentinel_full", "sentinel_no_overtime")
+VARIANTS = {
+    "sentinel_full": SentinelVariant(params=SentinelParams(autonomy=3)),
+    "sentinel_gate": SentinelVariant(params=SentinelParams(autonomy=2)),
+    "sentinel_no_ot": SentinelVariant(params=SentinelParams(variant="no_overtime", autonomy=3)),
+}
+SENTINELS = tuple(VARIANTS)
+POLICIES = ("no_reaction", "full_resolve", "sentinel_full", "sentinel_gate")
+REASONS = (
+    "needs_met",
+    "only_candidate",
+    "racing",
+    "on_time",
+    "tardiness",
+    "scope",
+    "budget",
+    "stability",
+    "level",
+    "order",
+    "utility",
+)
 STUDY_INSTANCES = 120  # per set: every 4th instance (docs/experiments/plan.md)
 STUDY_REPLICATIONS = 4
 
@@ -79,6 +103,7 @@ def tasks(
             seeds=tuple(derive_seed(2026, set_name, stem, str(r)) for r in range(seeds)),
             disruptions=scenario(lambda_a),
             data_root=root,
+            variants=VARIANTS,
         )
         for stem in spread(set_name, count, root)
     ]
@@ -193,19 +218,40 @@ def chosen_table(records: Sequence[PolicyRecord]) -> None:
 
 
 def reasons_table(records: Sequence[PolicyRecord]) -> None:
-    """Share of the deliberations of each Sentinel variant by the reason of the decision."""
-    names = ("needs_met", "only_candidate", "on_time", "budget", "stability", "level", "order")
-    names += ("utility",)
-    print("| Set | Variant | Deliberations | " + " | ".join(names) + " |")
-    print("| --- | --- |" + " ---: |" * (1 + len(names)))
+    """Share of the deliberations of each Sentinel variant by the reason of the decision: the
+    needs gate, a single candidate, racing, or the rule component that removed the runner-up
+    (spec section 6)."""
+    print("| Set | Variant | Deliberations | " + " | ".join(REASONS) + " |")
+    print("| --- | --- |" + " ---: |" * (1 + len(REASONS)))
     for (set_name, policy), group in grouped(records, SENTINELS).items():
         stats = [sentinel_stats(r) for r in group]
         total = sum(s.deliberations for s in stats)
         reasons: Counter[str] = Counter()
         for s in stats:
             reasons.update(s.reasons)
-        cells = " | ".join(f"{100 * reasons[name] / total:.1f}" for name in names)
+        cells = " | ".join(f"{100 * reasons[name] / total:.1f}" for name in REASONS)
         print(f"| {set_name.upper()} | {policy} | {total} | {cells} |")
+
+
+def gate_table(records: Sequence[PolicyRecord]) -> None:
+    """Per run: deliberations whose choice was an action, and what the permission gate did
+    with them (spec section 4)."""
+    print(
+        "| Set | Variant | Runs | Actions chosen / run | Deferrals / run | Escalations / run "
+        "| Approvals applied / run | Approvals discarded / run |"
+    )
+    print("| --- | --- |" + " ---: |" * 6)
+    for (set_name, policy), group in grouped(records, SENTINELS).items():
+        stats = [sentinel_stats(r) for r in group]
+        n = len(group)
+        actions = sum(sum(s.chosen.values()) - s.chosen.get("noop", 0) for s in stats)
+        print(
+            f"| {set_name.upper()} | {policy} | {n} | {actions / n:.2f} | "
+            f"{sum(s.deferrals for s in stats) / n:.2f} | "
+            f"{sum(s.escalations for s in stats) / n:.2f} | "
+            f"{sum(s.approvals_applied for s in stats) / n:.2f} | "
+            f"{sum(s.approvals_discarded for s in stats) / n:.2f} |"
+        )
 
 
 def estimate(by_lambda: dict[float, list[PolicyRecord]], workers: int) -> None:
@@ -256,6 +302,7 @@ def profile(set_name: str, stem: str, root: Path) -> None:
         deadline=deadline,
         review_period=5,
         deterministic_time_limit=0.1,
+        sentinel=VARIANTS["sentinel_full"],
     )
     profiler.disable()
     assert isinstance(stats, SentinelStats)
@@ -298,6 +345,8 @@ def main() -> None:
         chosen_table(records)
         print()
         reasons_table(records)
+        print()
+        gate_table(records)
         print(
             f"\n- {len(records)} runs in {wall:.1f} s wall with {args.workers} workers "
             f"({sum(r.wall_time_s for r in records):.1f} s of run time); "
@@ -311,7 +360,7 @@ def main() -> None:
             work = [
                 task
                 for set_name, count, _ in parse_sizes(args.lambdas)
-                for task in tasks(set_name, count, 1, lam, SENTINELS[:2], args.root)
+                for task in tasks(set_name, count, 1, lam, SENTINELS, args.root)
             ]
             by_lambda[lam], wall = execute(work, args.workers)
             print(f"- λ_A = {lam:g}: {len(by_lambda[lam])} runs in {wall:.1f} s wall")

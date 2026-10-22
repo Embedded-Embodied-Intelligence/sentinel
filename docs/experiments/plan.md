@@ -67,3 +67,30 @@ WP7 runs Sentinel on the same instances, scenarios and seeds, so its runs pair w
 Summaries: per set × λ_A × policy the on-time shares for both δ_D (95 % Wilson intervals), C / C*,
 realised deviation and nervousness (§7.1), substitutions and cost / B; paired differences against
 NoReaction (on time, C / C*, deviation) with 95 % cluster bootstrap intervals over instances.
+
+## RQ4 Sentinel study (WP5b, run in WP7)
+
+Sentinel variants on worlds of the WP4b baseline study, so every Sentinel run pairs with the
+five baselines' runs of the same world (set, instance, scenario, replication; common random
+numbers). The baselines are read from the WP4b results instead of being rerun; NoReaction is
+rerun as the check (its seeds and makespans must equal those of WP2b and WP4b, 0 mismatches).
+
+| Item | Value |
+| --- | --- |
+| Instances | J30 every 4th (120, the WP4b instances); J60 **every 8th** (60, `j601_1`, `j601_9`, `j602_7`, …, a subset of the WP4b instances) |
+| Grid | λ_A ∈ {0, 0.005, 0.01, 0.02}, E[L] = 3, λ_S = 0.01, λ_N = 0.02, R = 4 with the WP2b seeds of replications 0–3 |
+| Deadline | Sentinel works towards δ_D = 0.2 (primary; ADR-0013: a deadline-aware policy needs one run per δ_D), on time for δ_D = 0.3 post hoc; max_days 5 D(δ_D) of its own deadline |
+| Sentinel | spec v1.8 parameters (§8): N₁ = 25, N = 100 (WP5b rollout-budget study), θ_D = 0.8, ε_D = 0.02, ε_B = 0.01, ε_T = ε_Δ = 0.5 d, T_cp = 0.1, B with β = 0.1 in the observation |
+| Main variants | `sentinel_full` (Λ = 3), `sentinel_no_ot` (no OVERTIME, Λ = 3: the fair comparison with the baselines, which cannot hire), `sentinel_gate` (full, Λ = 2: the permission gate) |
+| Ablation | J30 subset, λ_A ∈ {0.01, 0.02}: `sentinel_scalarised` (Λ = 3), `sentinel_lambda0` and `sentinel_lambda1` (full, Λ = 0 and 1), `sentinel_descope` (full, Λ = 2, DESCOPE on, φ = 0.1; a demonstration, since the baselines cannot descope), `sentinel_delta03` (full, Λ = 3, δ_D = 0.3) |
+| Size | main 3 × (1,920 J30 + 960 J60) = 8,640 Sentinel runs; ablation 5 × 960 = 4,800 Sentinel runs; plus the NoReaction checks |
+| Configs | `configs/wp5_rq4_main.toml`, `configs/wp5_rq4_ablation.toml` (`policy_study` runner, outputs in `results/wp5/<run_id>/`) |
+| Metrics | spec §7.1 per run, plus overtime cost and share, temporary workers hired, deferrals, escalations, approvals applied and discarded, scope loss, deliberations, needs-gate exits, rollouts and the chosen candidates and deciding components |
+
+Summaries: the WP4b ones (on time with Wilson intervals, C / C*, realised deviation,
+nervousness, cost / B) for the Sentinel variants and the five baselines, and paired differences
+**against NoReaction and against FullResolve** on the same worlds with 95 % cluster bootstrap
+intervals over instances; Sentinel's per-run counts, chosen actions and deciding components per
+λ_A. Figures: `fig_wp5_tradeoff` (on time against realised deviation and against nervousness,
+the Sentinel variants and the five baselines, a column of panels per set) and
+`fig_wp5_actions` (the share of deliberations choosing each kind of action, per λ_A).

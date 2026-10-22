@@ -21,9 +21,10 @@ SCENARIO = DisruptionParams(lambda_a=0.01, mean_absence=3, lambda_s=0.01, lambda
 
 def test_sentinel_runs_on_j30_are_feasible(psplib_root: Path) -> None:
     """Five spread J30 instances x two WP2b seeds with Sentinel `full` (spec section 8
-    parameters) and NoReaction on the same worlds: every run passes the feasibility checks in
-    debug mode (`run_checked`), the engine rejects none of Sentinel's actions, and every
-    epoch is either a deliberation or skipped."""
+    parameters, so the permission gate with Lambda = 2) and NoReaction on the same worlds:
+    every run passes the feasibility checks in debug mode (`run_checked`), the engine rejects
+    none of Sentinel's actions, and every epoch is a deliberation, skipped, or an approval day
+    (or one awaiting approval)."""
     references = load_reference("j30", "opt", psplib_root)
     stems = list_instances("j30", psplib_root)[::96][:5]
     tasks = [
@@ -47,7 +48,9 @@ def test_sentinel_runs_on_j30_are_feasible(psplib_root: Path) -> None:
         stats = record.stats
         assert isinstance(stats, SentinelStats)
         assert record.rejected == 0 and stats.fallbacks == 0
-        assert stats.deliberations + stats.skipped == stats.decisions == record.epochs
+        approvals = sum(stats.reasons.get(r, 0) for r in ("approved", "awaiting_approval"))
+        assert stats.deliberations + stats.skipped + approvals == stats.decisions == record.epochs
+        assert stats.escalations >= stats.approvals_applied + stats.approvals_discarded
         assert stats.deliberations > 0 and len(stats.deliberation_s) == stats.deliberations
         assert sum(stats.chosen.values()) == stats.deliberations - stats.gate_exits
     times = [t for r in sentinel for t in r.stats.deliberation_s]  # type: ignore[attr-defined]

@@ -41,8 +41,8 @@ class SentinelParams(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     variant: Variant = "full"
-    n_rollouts: PositiveInt = 200  # N
-    n_stage1: PositiveInt = 50  # N_1
+    n_rollouts: PositiveInt = 100  # N
+    n_stage1: PositiveInt = 25  # N_1
     se_factor: float = Field(default=2.0, ge=0)
     theta_d: float = Field(default=0.8, ge=0, le=1)  # theta_D
     eps_d: float = Field(default=0.02, ge=0)  # epsilon_D

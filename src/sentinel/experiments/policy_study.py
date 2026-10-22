@@ -1,4 +1,5 @@
-"""Policy study: the compared policies of spec section 7 on baseline plans (WP4b, RQ4).
+"""Policy study: the compared policies of spec section 7 and Sentinel variants on baseline plans
+(WP4b, WP5b; RQ4).
 
     uv run python -m sentinel.experiments.policy_study --config configs/wp4_baselines.toml \
         --out results/wp4 [--limit N] [--replications R]
@@ -11,9 +12,13 @@ WP2b one, shared by all policies and scenarios (common random numbers, spec sect
 NoReaction runs are WP2b's worlds, and the summaries check their seeds and makespans against the
 WP2b results. A run uses max_days of the largest delta_D. No compared policy uses the deadline
 (the urgency order of AlwaysSubstitute does not depend on it), so whether each deadline is met
-is evaluated post hoc. results.csv.gz has one row per (set, instance, scenario, replication,
-policy) with the metrics of spec section 7.1; the summaries come from `policy_summary` and can
-be regenerated with `sentinel summarise-policies <run_dir>`.
+is evaluated post hoc. A Sentinel variant works towards the deadline of its own delta_D (its
+max_days too; ADR-0013) and, with DESCOPE, gets the instance's optional activities; on time for
+the other slacks is post hoc. Every run's observations report the study's budget B.
+results.csv.gz has one row per (set, instance, scenario, replication, policy) with the metrics
+of spec section 7.1 and Sentinel's counts (zero for the other policies); the summaries come
+from `policy_summary`, join the baselines of an earlier study where configured, and can be
+regenerated with `sentinel summarise-policies <run_dir>`.
 """
 
 import argparse
@@ -32,13 +37,21 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
+from sentinel.agent.candidates import KINDS
+from sentinel.agent.decide import Reason
 from sentinel.data.psplib_loader import instance_path, list_instances, load_psplib, natural_key
 from sentinel.data.reference import load_reference
 from sentinel.experiments import runs
 from sentinel.experiments.policy_config import PolicyStudyConfig
-from sentinel.experiments.policy_runs import InvalidScheduleError, realised_deviation, run_checked
+from sentinel.experiments.policy_runs import (
+    InvalidScheduleError,
+    optional_set,
+    realised_deviation,
+    run_checked,
+    scope_loss,
+)
 from sentinel.experiments.policy_summary import RESULTS_FILE, write_summaries
 from sentinel.experiments.rcpsp_benchmark import format_duration
 from sentinel.experiments.simulation_config import Scenario, met_column
@@ -50,6 +63,7 @@ from sentinel.experiments.simulation_study import (
 )
 from sentinel.model import ProjectInstance, Schedule, validate_schedule
 from sentinel.policies.base import DecisionStats
+from sentinel.policies.sentinel import SentinelStats
 from sentinel.scheduling.priority_rules import lft_priorities
 from sentinel.scheduling.sgs import serial_sgs
 from sentinel.simulation.baselines import InvalidPlanError, cached_baseline, read_cached
@@ -62,8 +76,36 @@ SEED_RULE = (
     "seed of (instance, replication r) = runs.derive_seed(base_seed, set, instance, str(r)), "
     "shared by all policies and scenarios, as in WP2b (common random numbers, spec section 2.3)"
 )
+OPTIONAL_RULE = (
+    "optional activities of a DESCOPE variant: uncertainty.optional_activities(instance, phi, "
+    "runs.derive_seed(base_seed, 'optional', set/instance)) (spec section 4)"
+)
 
 Row = dict[str, Any]
+REASONS: tuple[str, ...] = get_args(Reason)
+# Sentinel's per-run counts (spec sections 4-7.1); zero or empty for the other policies.
+SENTINEL_COLUMNS = (
+    "agent_delta",
+    "shifts",
+    "hired",
+    "temporary_days",
+    "overtime_cost",
+    "overtime_share",
+    "descoped",
+    "scope_loss",
+    "deliberations",
+    "gate_exits",
+    "skipped",
+    "candidates",
+    "rollouts",
+    "deferrals",
+    "escalations",
+    "approvals_applied",
+    "approvals_discarded",
+    "deliberation_s",
+    *(f"chosen_{kind}" for kind in KINDS),
+    *(f"reason_{reason}" for reason in REASONS),
+)
 
 
 @dataclass(frozen=True)
@@ -120,6 +162,7 @@ def columns(deltas: Sequence[float]) -> tuple[str, ...]:
         "cpsat_deterministic_s",
         "truncated",
         "runtime_s",
+        *SENTINEL_COLUMNS,
     )
 
 
@@ -133,10 +176,12 @@ def result_row(
     run: tuple[SimulationResult, DecisionStats, float],
     deadlines: Sequence[int],
     budget: float,
+    optional: Sequence[int] = (),
 ) -> Row:
     """One results row (spec section 7.1); the deadline of delta_D is met iff the run is not
     truncated and C <= D. `substitutions` counts replaced crew members, `onboarding_days` their
-    m_j o_j crew-member days and `handover_days` the h_j in full-crew days."""
+    m_j o_j crew-member days and `handover_days` the h_j in full-crew days; the Sentinel
+    columns are those of `sentinel_columns`."""
     result, stats, runtime_s = run
     counts: Counter[str] = Counter(event.kind for event in result.events)
     scenario = task.scenario
@@ -176,18 +221,72 @@ def result_row(
         "cpsat_deterministic_s": round(stats.deterministic_time, 6),
         "truncated": result.truncated,
         "runtime_s": round(runtime_s, 6),
+        **sentinel_columns(task, policy, result, stats, instance, optional),
+    }
+
+
+def sentinel_columns(
+    task: Task,
+    policy: str,
+    result: SimulationResult,
+    stats: DecisionStats,
+    instance: ProjectInstance,
+    optional: Sequence[int],
+) -> Row:
+    """Overtime, DESCOPE and the decision counts of a run: the deadline slack the policy works
+    towards (empty for policies that do not use the deadline), SHIFTs, temporary workers hired,
+    their paid days and cost and its share of the total cost, the activities removed and the
+    scope loss (spec section 4), and Sentinel's deliberations, needs-gate exits, epochs without
+    deliberation, candidates, rollouts, the gate's deferrals, escalations and approvals, the
+    deliberation time, the chosen candidates by kind and the decisions by reason."""
+    variant = task.config.sentinel_variants.get(policy)
+    sentinel = stats if isinstance(stats, SentinelStats) else SentinelStats()
+    return {
+        "agent_delta": "" if variant is None else variant.delta_d,
+        "shifts": result.shifts,
+        "hired": result.hired,
+        "temporary_days": result.temporary_days,
+        "overtime_cost": round(result.overtime_cost, 6),
+        "overtime_share": round(result.overtime_cost / result.total_cost, 6)
+        if result.total_cost > 0
+        else 0.0,
+        "descoped": len(result.descoped),
+        "scope_loss": round(scope_loss(result, instance, optional), 6),
+        "deliberations": sentinel.deliberations,
+        "gate_exits": sentinel.gate_exits,
+        "skipped": sentinel.skipped,
+        "candidates": sentinel.candidates,
+        "rollouts": sentinel.rollouts,
+        "deferrals": sentinel.deferrals,
+        "escalations": sentinel.escalations,
+        "approvals_applied": sentinel.approvals_applied,
+        "approvals_discarded": sentinel.approvals_discarded,
+        "deliberation_s": round(sum(sentinel.deliberation_s), 6),
+        **{f"chosen_{kind}": sentinel.chosen.get(kind, 0) for kind in KINDS},
+        **{f"reason_{reason}": sentinel.reasons.get(reason, 0) for reason in REASONS},
     }
 
 
 def task_runs(
     task: Task, instance: ProjectInstance, plan: Schedule, seeds: Sequence[int]
-) -> list[tuple[int, str, tuple[SimulationResult, DecisionStats, float]]]:
-    """Every (replication, policy) of `task` on `plan` for the given seeds, checked."""
+) -> list[tuple[int, str, tuple[SimulationResult, DecisionStats, float], tuple[int, ...]]]:
+    """Every (replication, policy) of `task` on `plan` for the given seeds, checked, with the
+    optional activities of the run. Baselines run with the deadline (and max_days) of the
+    largest delta_D, a Sentinel variant with that of its own delta_D; the observations report
+    the study's budget B (spec section 1.2)."""
     config = task.config
-    deadline = derive_deadline(task.c_star, config.deltas[-1])  # max_days of the largest delta_D
+    variants = config.sentinel_variants
+    budget = derive_budget(instance, config.beta, params=config.pert)
     done = []
     for replication, seed in enumerate(seeds):
         for policy in config.policies:
+            variant = variants.get(policy)
+            delta = config.deltas[-1] if variant is None else variant.delta_d
+            optional = (
+                ()
+                if variant is None
+                else optional_set(instance, variant.optional_share, config.base_seed)
+            )
             run = run_checked(
                 instance,
                 plan,
@@ -195,12 +294,15 @@ def task_runs(
                 seed,
                 pert=config.pert,
                 disruptions=task.scenario.disruptions,
-                deadline=deadline,
+                deadline=derive_deadline(task.c_star, delta),
                 review_period=config.review_period,
                 deterministic_time_limit=config.deterministic_time_limit,
                 cp_seed=config.cp_seed,
+                sentinel=variant,
+                budget=budget,
+                optional=optional,
             )
-            done.append((replication, policy, run))
+            done.append((replication, policy, run, optional))
     return done
 
 
@@ -217,9 +319,10 @@ def run_task(task: Task) -> Outcome:
         )
     deadlines = [derive_deadline(task.c_star, delta) for delta in config.deltas]
     budget = derive_budget(instance, config.beta, params=config.pert)
+    schedule, makespan = plan.schedule, plan.makespan
     rows = [
-        result_row(task, instance, plan.schedule, plan.makespan, r, policy, run, deadlines, budget)
-        for r, policy, run in task_runs(task, instance, plan.schedule, task.seeds)
+        result_row(task, instance, schedule, makespan, r, policy, run, deadlines, budget, optional)
+        for r, policy, run, optional in task_runs(task, instance, schedule, task.seeds)
     ]
     baseline = Baseline(instance.name, plan.makespan, plan.status, cached, plan.schedule.starts)
     return Outcome(rows, baseline)
@@ -391,7 +494,7 @@ def run_study(
         f"T_cp = {config.deterministic_time_limit:g}, {config.max_workers} workers",
         flush=True,
     )
-    estimate = estimate_duration_s(config, tasks)
+    estimate = estimate_duration_s(config, tasks) if config.start_estimate else None
     run_dir = runs.create_run_dir(out, run_id, smoke=smoke)
     manifest: dict[str, Any] = {
         "run_id": run_id,
@@ -418,17 +521,29 @@ def run_study(
             "num_workers": 1,
         },
         "handover_factor": HANDOVER_FACTOR,
+        "sentinel_variants": {
+            name: variant.model_dump(mode="json")
+            for name, variant in config.sentinel_variants.items()
+        },
         "scenarios": [{"name": s.name, **s.disruptions.model_dump(mode="json")} for s in scenarios],
-        "seeds": {"base_seed": config.base_seed, "rule": SEED_RULE, "per_instance": seeds},
+        "seeds": {
+            "base_seed": config.base_seed,
+            "rule": SEED_RULE,
+            "optional_rule": OPTIONAL_RULE,
+            "per_instance": seeds,
+        },
         "data": data_provenance(config),
-        "estimated_duration_s": round(estimate, 1),
+        "estimated_duration_s": None if estimate is None else round(estimate, 1),
     }
-    print(
-        f"run {run_id} -> {run_dir}\nestimated duration: ~{format_duration(estimate)} (rough: one "
-        "replication of every policy in the busiest scenario, timed on up to 3 instances spread "
-        "over each set)",
-        flush=True,
-    )
+    if estimate is None:
+        print(f"run {run_id} -> {run_dir}\nno start estimate (start_estimate = false)", flush=True)
+    else:
+        print(
+            f"run {run_id} -> {run_dir}\nestimated duration: ~{format_duration(estimate)} (rough: "
+            "one replication of every policy in the busiest scenario, timed on up to 3 instances "
+            "spread over each set)",
+            flush=True,
+        )
     if missing:
         print(
             f"note: {len(missing)} baseline plans ({config.baseline}) are not cached and will be "
@@ -481,6 +596,7 @@ def run_study(
             "plans_sha256": plans_digest(baselines),
         },
         wp2b_check=summaries.seed_check.as_dict(),
+        wp4b_check=None if summaries.join_check is None else summaries.join_check.as_dict(),
         checks={
             "rejected_operations": sum(r["rejected"] for r in rows),
             "cpsat_fallbacks": sum(r["fallbacks"] for r in rows),
@@ -492,6 +608,8 @@ def run_study(
         outputs=[results_file, *summaries.files],
     )
     print(summaries.seed_check.line().removeprefix("- "), flush=True)
+    if summaries.join_check is not None:
+        print(summaries.join_check.line().removeprefix("- "), flush=True)
     return run_dir
 
 

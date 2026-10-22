@@ -1,6 +1,7 @@
 """Policy study runner, its configs and its summaries (WP4b, spec sections 7 and 7.1)."""
 
 import csv
+import dataclasses
 import gzip
 import io
 import json
@@ -316,3 +317,153 @@ def write_and_return(tmp_path: Path) -> Path:
     run_dir.mkdir()
     write_synthetic(run_dir, synthetic_rows())
     return run_dir / "results.csv.gz"
+
+
+@pytest.mark.parametrize("name", ["wp5_rq4_main", "wp5_rq4_ablation"])
+def test_the_wp5_configs_follow_the_study_plan(name: str) -> None:
+    """The RQ4 Sentinel subset of docs/experiments/plan.md: J30 every 4th, J60 every 8th, WP2b
+    seeds, delta_D = 0.2 unless a variant says otherwise, the WP4b baselines joined, paired
+    differences against NoReaction and FullResolve."""
+    raw = tomllib.loads((REPO_ROOT / "configs" / f"{name}.toml").read_text(encoding="utf-8"))
+    config = PolicyStudyConfig.model_validate(raw)
+    assert (config.base_seed, config.replications, config.deltas) == (2026, 4, (0.2, 0.3))
+    assert config.policies[0] == "no_reaction" and set(config.joined) == set(COMPARED[1:])
+    assert config.wp4b_results is not None and config.wp4b_results.name == "results.csv.gz"
+    assert config.summary.reference_policies == ("no_reaction", "full_resolve")
+    assert config.scenarios.mean_absence == (3,) and not config.start_estimate
+    variants = config.sentinel_variants
+    shape = {
+        name: (v.params.variant, v.params.autonomy, v.delta_d, v.params.descope, v.optional_share)
+        for name, v in variants.items()
+    }
+    assert {(v.params.n_stage1, v.params.n_rollouts) for v in variants.values()} == {(25, 100)}
+    if name == "wp5_rq4_main":
+        assert [(s.name, s.stride) for s in config.sets] == [("j30", 4), ("j60", 8)]
+        assert config.scenarios.lambda_a == (0.0, 0.005, 0.01, 0.02)
+        assert shape == {
+            "sentinel_full": ("full", 3, 0.2, False, 0.0),
+            "sentinel_no_ot": ("no_overtime", 3, 0.2, False, 0.0),
+            "sentinel_gate": ("full", 2, 0.2, False, 0.0),
+        }
+    else:
+        assert [(s.name, s.stride) for s in config.sets] == [("j30", 4)]
+        assert config.scenarios.lambda_a == (0.01, 0.02)
+        assert shape == {
+            "sentinel_scalarised": ("scalarised", 3, 0.2, False, 0.0),
+            "sentinel_lambda0": ("full", 0, 0.2, False, 0.0),
+            "sentinel_lambda1": ("full", 1, 0.2, False, 0.0),
+            "sentinel_descope": ("full", 2, 0.2, True, 0.1),
+            "sentinel_delta03": ("full", 3, 0.3, False, 0.0),
+        }
+
+
+def test_runner_with_a_sentinel_variant_joins_the_baselines_of_an_earlier_run(
+    fake_study: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A baseline run (NoReaction, FullResolve) on the tiny worlds, then a Sentinel run that
+    reads FullResolve from it: the join finds every world with 0 mismatches, the Sentinel rows
+    carry their counts, and the summaries compare against both references. The tasks run in
+    this process (the pool is tested above)."""
+    monkeypatch.setattr(
+        study, "execute", lambda tasks, workers, n_runs: [study.run_task(t) for t in tasks]
+    )
+    base = write_config(fake_study, ("no_reaction", "full_resolve"))
+    text = base.read_text(encoding="utf-8").replace("replications = 2", "replications = 1")
+    earlier = tmp_path / "first"
+    earlier.mkdir()
+    baseline_config = PolicyStudyConfig.model_validate(tomllib.loads(text))
+    tasks, _ = study.build_tasks(baseline_config, None)
+    found = [row for task in tasks for row in study.run_task(task).rows]
+    study.write_results(earlier, found, study.columns(baseline_config.deltas))
+    raw = tomllib.loads(text)
+    raw |= {
+        "name": "fake_wp5",
+        "policies": ["no_reaction", "sentinel_gate"],
+        "wp4b_results": str(earlier / "results.csv.gz"),
+        "joined": ["full_resolve"],
+        "start_estimate": False,
+        "sentinel": {"n_rollouts": 8, "n_stage1": 4},
+        "variants": {"sentinel_gate": {"autonomy": 2, "delta_d": 0.2}},
+        "summary": {
+            "bootstrap_resamples": 100,
+            "references": ["full_resolve"],
+            "table": "table_y",
+            "figure_prefix": "fig_y",
+        },
+    }
+    config_path = tmp_path / "fake_wp5.toml"
+    config_path.write_text(_toml(raw), encoding="utf-8")
+    out = tmp_path / "second"
+    assert study.main(["--config", str(config_path), "--out", str(out)]) == 0
+    (run_dir,) = out.iterdir()
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["wp4b_check"] == {
+        "path": (earlier / "results.csv.gz").as_posix(),
+        "policies": ["full_resolve"],
+        "worlds": 4,
+        "rows": 4,
+        "seed_mismatches": 0,
+        "makespan_mismatches": 0,
+        "missing": 0,
+    }
+    assert manifest["sentinel_variants"]["sentinel_gate"]["params"]["autonomy"] == 2
+    rows = read_rows(run_dir / "results.csv.gz")
+    sentinel = [r for r in rows if r["policy"] == "sentinel_gate"]
+    assert len(sentinel) == 4 and all(int(r["deliberations"]) > 0 for r in sentinel)
+    assert all(r["agent_delta"] == "0.2" for r in sentinel)
+    assert {r["agent_delta"] for r in rows if r["policy"] == "no_reaction"} == {""}
+    assert {
+        "table_y.tex",
+        "table_y_vs_full_resolve.tex",
+        "fig_y_tradeoff.png",
+        "fig_y_actions.png",
+    } <= set(manifest["outputs"])
+    text = (run_dir / "summary.md").read_text(encoding="utf-8")
+    assert "Paired differences against NoReaction:" in text
+    assert "Paired differences against FullResolve:" in text
+    assert "**0 NoReaction makespan mismatches**" in text and "Sentinel Λ=2" in text
+    config = PolicyStudyConfig.model_validate(raw)
+    own = summary.read_results(run_dir / "results.csv.gz", config.deltas)
+    changed = [
+        r if r.policy != "no_reaction" or k else dataclasses.replace(r, makespan=r.makespan + 1)
+        for k, r in enumerate(own)
+    ]
+    joined, check = summary.join_baselines(changed, config)
+    assert len(joined) == 4 and check is not None and check.makespan_mismatches == 1
+
+
+def _toml(data: dict[str, Any]) -> str:
+    """A minimal TOML writer for the nested config dictionaries of these tests."""
+    lines: list[str] = []
+    tables: list[tuple[str, dict[str, Any]]] = []
+    arrays: list[tuple[str, list[dict[str, Any]]]] = []
+
+    def value(v: Any) -> str:
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        if isinstance(v, str):
+            return json.dumps(v)
+        if isinstance(v, list):
+            return "[" + ", ".join(value(x) for x in v) + "]"
+        return repr(v)
+
+    def emit(prefix: str, table: dict[str, Any]) -> None:
+        for key, v in table.items():
+            name = f"{prefix}.{key}" if prefix else key
+            if isinstance(v, dict):
+                tables.append((name, v))
+            elif isinstance(v, list) and v and isinstance(v[0], dict):
+                arrays.append((name, v))
+            else:
+                lines.append(f"{key} = {value(v)}")
+
+    emit("", data)
+    while tables:
+        name, table = tables.pop(0)
+        lines.append(f"\n[{name}]")
+        emit(name, table)
+    for name, items in arrays:
+        for item in items:
+            lines.append(f"\n[[{name}]]")
+            emit(name, item)
+    return "\n".join(lines) + "\n"

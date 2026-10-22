@@ -12,7 +12,7 @@ from sentinel.agent.evaluate import Evaluator, race
 from sentinel.agent.params import SentinelParams
 from sentinel.experiments.policy_runs import scope_loss
 from sentinel.model import ProjectInstance, Schedule, validate_schedule
-from sentinel.policies.base import Decision, Descope, Reseq, Subst
+from sentinel.policies.base import Decision, Descope, Reseq, Shift, Subst
 from sentinel.policies.no_reaction import NoReaction
 from sentinel.policies.sentinel import Pending, Sentinel
 from sentinel.scheduling.priority_rules import lft_priorities
@@ -347,3 +347,17 @@ def test_optional_activities_are_drawn_among_the_sink_predecessors(build: Builde
     assert optional_activities(inst, 0.2, seed=7) == drawn
     assert optional_activities(inst, 0.0, seed=7) == ()
     assert len(optional_activities(inst, 1.0, seed=7)) == 4
+
+
+def test_the_gate_exempts_noop_and_always_stops_descope() -> None:
+    """An action runs at once iff l(a) < Lambda and it has no DESCOPE; NOOP never waits."""
+    shift = Decision(operations=(Shift(starts={}),))  # level 0
+    reseq = Decision(operations=(Reseq(starts={}),))  # level 1
+    subst = Decision(operations=(Subst(activity=1, workers=(2,)),))  # level 2
+    descope = Decision(operations=(Descope(activity=1),))
+    for autonomy in range(4):
+        params = SentinelParams(autonomy=autonomy, approval_delay=2)
+        assert not params.needs_approval(Decision()) and params.delay(Decision()) == 0
+        assert params.needs_approval(descope) and params.delay(descope) == 2
+        gated = [params.needs_approval(d) for d in (shift, reseq, subst)]
+        assert gated == [autonomy <= 0, autonomy <= 1, autonomy <= 2]

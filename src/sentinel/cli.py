@@ -194,6 +194,8 @@ def _summarise_policies(args: argparse.Namespace) -> int:
     for name in outputs.files:
         print(run_dir / name)
     print(outputs.seed_check.line().removeprefix("- "))
+    if outputs.join_check is not None:
+        print(outputs.join_check.line().removeprefix("- "))
     return 0
 
 
