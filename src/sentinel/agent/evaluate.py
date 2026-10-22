@@ -305,6 +305,8 @@ def instability(observation: Observation, candidate: Candidate, kappa_h: float) 
     """Delta_a of spec section 5: the mean |S_j^a - S_j^t| over the deviation set U'_t (the
     unstarted activities with p_j > 0 not inserted today; 0 if empty) plus kappa_h per
     replaced crew member."""
+    # SPEC-Q: for a candidate that needs approval, Delta uses its plan of day t, not the plans
+    # its rollouts re-plan on the approval day (spec v1.8.1 sections 4-6).
     t = observation.day
     fresh = {act.id for act in observation.inserted if act.day == t}
     current, plan = observation.plan, candidate.plan

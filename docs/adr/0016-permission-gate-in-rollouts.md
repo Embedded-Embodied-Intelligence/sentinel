@@ -1,6 +1,6 @@
 # ADR-0016: The permission gate in the world and in rollouts
 
-- Status: accepted
+- Status: accepted; the re-validation of approved plans is superseded by ADR-0017 (spec v1.8.1)
 - Date: 2026-10-22
 - WP: WP5b
 
