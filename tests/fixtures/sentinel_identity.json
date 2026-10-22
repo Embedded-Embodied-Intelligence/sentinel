@@ -1,0 +1,63 @@
+{
+ "written_with": "commit fee0ce1 (spec v1.8, before WP5b.1)",
+ "cases": {
+  "synthetic": [
+   {
+    "seed": 11,
+    "result": "c7d49f93eb765c28c9885afeb42b09322c6846b733af745e8df99a9e5c905836",
+    "records": "3599b674994965fa032137bacbdd2c915947d0bd73ae0b2c1dd868ab5a82f60d",
+    "stats": "a481dc8005da4d859e5fbde1e78cad78513b4bc3b69bb3925d04a6cda593383a",
+    "makespan": 27,
+    "deliberations": 11,
+    "rollouts": 1880
+   },
+   {
+    "seed": 12,
+    "result": "1f323ec6b10989448c5667c891f7dfb8313e4d9b363b8d0c1332f2463082c1cd",
+    "records": "466dcd11968851f78e11dfeccb0a6fff847a48b3b03b98f71901c42793ad2b6f",
+    "stats": "48ca17610c7ca881fab70fc5c7c0c372710b3e67c730b990e9263c4bca931b29",
+    "makespan": 30,
+    "deliberations": 17,
+    "rollouts": 2340
+   },
+   {
+    "seed": 13,
+    "result": "df5ca9c487d3904722ac7e60ce3b1d1979d95f8bc94c92abfd225a58eef0f7ab",
+    "records": "e351f4b026cb7a736baf0667fca483797e27d70483174677bef69ad04bf3c81e",
+    "stats": "627a8012ec80d6cc537e990041719de3c9a3b5310e0ce8abdff258fa848fa9c6",
+    "makespan": 25,
+    "deliberations": 10,
+    "rollouts": 1010
+   }
+  ],
+  "j301_1": [
+   {
+    "seed": 97953054,
+    "result": "5280436bd476f0d20764d0836ac79cac30d8094580f3bdb18ef9e8d7033c7f8b",
+    "records": "18d584f43c5bdb1cc1bee0b892b50e40de5b2a2959189f21468c26cb326d0b65",
+    "stats": "417720456da7288dc0cb7882ea4a3d904a31bd0e7ad1ba5d11af3fdd113e9ec3",
+    "makespan": 73,
+    "deliberations": 35,
+    "rollouts": 16700
+   },
+   {
+    "seed": 1530946907,
+    "result": "4bbd152ed738c1ce2877f21a708d251e29c9f9982be5b53c30960a9c72c3a712",
+    "records": "df540a87ee0e5f2c2aa20deea371ba21e6aa099aeaaefea24cdd1f7caf95f8e5",
+    "stats": "aecfcd307f2e2aea9d22b53b578101d32ad4ad64647b6a0d77128ac0f977a152",
+    "makespan": 56,
+    "deliberations": 33,
+    "rollouts": 17175
+   },
+   {
+    "seed": 1626339605,
+    "result": "983d94eb833781ec5cc920fc8b9722e8a62cb30deb81a5c6793077cd1da6ee82",
+    "records": "20fbcdefd31320c06345dbecce7e1007ba1325e0522851232ee1efa7f6cbe575",
+    "stats": "d34184893616f4775b5beab5cd60bce6042a9cb826b8e3cf5e3a4835e738929f",
+    "makespan": 53,
+    "deliberations": 26,
+    "rollouts": 10550
+   }
+  ]
+ }
+}

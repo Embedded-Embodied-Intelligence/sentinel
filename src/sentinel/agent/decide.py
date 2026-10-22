@@ -220,8 +220,9 @@ class DecisionRecord(BaseModel):
     candidate with its statistics (in candidate order), the `chosen` label, the `runner_up`, the
     `reason` (the deciding component), the candidates `tied` in the final best set, what the
     permission `gate` did with the choice and, for an escalation, its `approval_day`; `decision`
-    is what was applied (NOOP when deferred or escalated). `discarded` names an approved action
-    that was no longer valid on its approval day and gave way to this deliberation. Also the
+    is what was applied (NOOP when deferred or escalated; on an approval day the action as
+    planned again there). `discarded` names an approved action that was no longer valid on its
+    approval day and gave way to this deliberation. Also the
     rule, the rollouts and CP-SAT searches run, and the wall time of generating, evaluating and
     deciding."""
 

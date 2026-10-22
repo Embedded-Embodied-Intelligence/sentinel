@@ -43,7 +43,12 @@ from sentinel.policies.base import (
     Subst,
 )
 from sentinel.policies.no_reaction import NoReaction
-from sentinel.scheduling.residual import planning_view, validate_residual, validate_shift
+from sentinel.scheduling.residual import (
+    ResidualProblem,
+    planning_view,
+    validate_residual,
+    validate_shift,
+)
 from sentinel.simulation.events import (
     Absence,
     AbsenceDraw,
@@ -302,8 +307,8 @@ class Run:
     Without `check_plans`, RESEQ and SHIFT plans are applied unchecked: for rollouts of a
     decision already checked on the same observation (`rehearse`), as the check depends on
     the observation only. A rollout that imagines an approval delay (spec section 6) stops at
-    step 3 of the approval day (`resume_to`), applies the decision there only if it is valid in
-    that state (`apply_valid`) and goes on (`carry_on`). Days a policy requests in its
+    step 3 of the approval day (`resume_to`), applies there the action approved on that day's
+    observation, if any, and goes on (`carry_on`). Days a policy requests in its
     `requested_epoch` (the approval days of spec section 4) are decision epochs.
     """
 
@@ -407,17 +412,6 @@ class Run:
         t = self.state.day
         if not self.close_day(t, True):
             self.days(t + 1)
-
-    def apply_valid(self, decision: Decision) -> bool:
-        """Apply `decision` at step 3 of the state's day only if the engine would reject none of
-        its operations there, every plan checked (spec section 4 permission gate: all or
-        nothing); returns whether it was applied. The operations are tried on a copy first."""
-        trial = Run(self.state.copy(), _Quiet(), NoReaction(), record_events=False)
-        trial.apply(decision)
-        if trial.rejected:
-            return False
-        self.apply(decision)
-        return True
 
     def _plan_shocks(self) -> None:
         """Look up the next D2 shock of every started activity of a state rebuilt from an
@@ -874,10 +868,15 @@ def _replanned(state: EngineState, before: Sequence[int]) -> int:
 
 
 def _infeasible_plan(state: EngineState, op: Reseq | Shift) -> str | None:
-    """Why the plan of a RESEQ is not a feasible solution of the residual problem of the
-    current state (spec section 4.1), or that of a SHIFT also changes the order of the planned
-    starts (spec section 4); None if the plan is valid."""
-    problem = planning_view(state.observe())
+    """`plan_rejection` on the planning view of the current state (spec section 4.1)."""
+    return plan_rejection(planning_view(state.observe()), op)
+
+
+def plan_rejection(problem: ResidualProblem, op: Reseq | Shift) -> str | None:
+    """Why the plan of a RESEQ is not a feasible solution of the residual problem `problem`
+    (spec section 4.1), or that of a SHIFT also changes the order of the planned starts (spec
+    section 4); None if the plan is valid. The engine checks every plan on the planning view of
+    the state it applies to; a planner can check its own plan on the view it planned on."""
     if isinstance(op, Shift):
         violations = validate_shift(problem, op.starts)
     else:

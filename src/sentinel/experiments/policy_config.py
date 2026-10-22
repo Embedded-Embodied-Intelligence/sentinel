@@ -23,7 +23,7 @@ from sentinel.policies.resolve import T_CP
 
 Name = Annotated[str, Field(pattern=r"^[A-Za-z0-9_.-]+$")]
 # Keys of a variant table that are not Sentinel parameters.
-VARIANT_KEYS = ("delta_d", "optional_share")
+VARIANT_KEYS = ("delta_d",)
 
 
 class PolicySummarySettings(BaseModel):
@@ -56,8 +56,8 @@ class PolicyStudyConfig(StudyConfig):
     summaries can plot against lambda_A. `policies` are registry names (`make_policy`) or names
     of `variants`, run with the CP-SAT limit `deterministic_time_limit` (T_cp, spec section 8)
     per stage and `cp_seed`. A variant is Sentinel with the parameters of the `sentinel` table
-    updated by its own, the deadline slack `delta_d` it works towards (default 0.2) and the
-    share `optional_share` of optional activities for DESCOPE (default 0). `wp2b_results` is the
+    updated by its own and the deadline slack `delta_d` it works towards (default 0.2); one with
+    `descope = true` gets the optional activities of spec section 4. `wp2b_results` is the
     WP2b results file whose seeds and makespans the NoReaction runs must reproduce (None skips
     the check). `wp4b_results` is the results file of an earlier policy study: the summaries
     read its `joined` policies on the run's worlds instead of running them, after checking its

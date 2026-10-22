@@ -4,11 +4,13 @@ Rollout i of an epoch uses xi_i = derive_seed(seed, "rollout", str(i)), as the f
 its belief stream samples the hidden state once, and the world is reused by every candidate;
 its future stream drives the disruptions after the observed day (ADR-0009). A candidate is
 applied at step 3 of the observed day with the engine's `Run.apply`; one that needs approval
-(spec section 4) is applied at step 3 of day t + delta_h instead, and only if it is valid in
-that rollout (`Run.apply_valid`). The rollout continues under NoReaction (`Run.resume`), so all
-candidates see the same N worlds (common random numbers). Racing (ADR-0015): stage 1 runs N_1
-rollouts per candidate and drops those significantly and materially worse than the stage's
-leader in min(p, theta_D) and in the expected tardiness T; stage 2 extends the survivors to N.
+(spec section 4) is approved at step 3 of day t + delta_h instead, as in the world: `approve`
+re-validates its operations and plans its plan part again on that rollout's observation, and
+the action applies all or nothing (ADR-0017). The rollout continues under NoReaction
+(`Run.resume`), so all candidates see the same N worlds (common random numbers). Racing
+(ADR-0015): stage 1 runs N_1 rollouts per candidate and drops those significantly and materially
+worse than the stage's leader in min(p, theta_D) and in the expected tardiness T; stage 2
+extends the survivors to N.
 """
 
 import math
@@ -21,12 +23,13 @@ import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
 
-from sentinel.agent.candidates import Candidate, CandidateKind
+from sentinel.agent.candidates import Candidate, CandidateKind, PlanCache, approve
 from sentinel.agent.params import SentinelParams
 from sentinel.experiments.runs import derive_seed
 from sentinel.forecasting.beliefs import Belief
 from sentinel.forecasting.forecast import rollout_streams
 from sentinel.forecasting.streams import RolloutStreams
+from sentinel.policies.base import Decision
 from sentinel.policies.no_reaction import NoReaction
 from sentinel.simulation.engine import Run, rehearse
 from sentinel.simulation.state import (
@@ -148,8 +151,11 @@ class Evaluator:
     count and keeps them by label, so the needs gate's NOOP rollouts serve racing too. A
     candidate is checked once through the engine (`rehearse`); its rollouts then apply it
     without checking plans again, except a candidate that needs approval, which each rollout
-    re-validates on the approval day. The deadline D and the budget B come from the
-    observation.
+    approves on the approval day as the world does (`approve`, which checks what it applies).
+    The plan parts planned there are shared by the epoch's rollouts through `plans`, by
+    objective and planning view (ADR-0017); `replan_solves` counts their CP-SAT searches and
+    `replans_reused` the plan parts taken from it. The deadline D and the budget B come from
+    the observation.
     """
 
     def __init__(self, observation: Observation, seed: int, params: SentinelParams) -> None:
@@ -168,6 +174,9 @@ class Evaluator:
         self.streams: list[RolloutStreams] = []
         self.outcomes: dict[str, Outcomes] = {}  # by candidate label, unique in an epoch
         self.rollouts = 0
+        self.plans: PlanCache = {}
+        self.replan_solves = 0
+        self.replans_reused = 0
 
     def seeds(self, i: int) -> tuple[np.random.SeedSequence, np.random.SeedSequence]:
         """The belief and future streams of rollout i (forecaster layout, ADR-0009)."""
@@ -207,10 +216,11 @@ class Evaluator:
             self.rollouts += 1
         return outcomes
 
-    def rollout(self, candidate: Candidate, i: int) -> tuple[int, bool, float]:
-        """Rollout i of the candidate: (makespan, truncated, total cost); a truncated rollout
-        ends at max_days. A candidate that needs approval is applied on the approval day, if
-        the project is still running and the candidate is valid in that rollout."""
+    def play(self, candidate: Candidate, i: int) -> tuple[EngineState, Decision | None]:
+        """Rollout i of the candidate, run to its end: the final state and the decision it
+        applied. A candidate that needs approval is approved at step 3 of the approval day if
+        the project is still running, as in the world (`approve`); the decision is then the
+        approved action, or None if it was discarded (or the project ended before)."""
         self.world(i)
         state = self.templates[i].copy()
         streams = self.streams[i]
@@ -227,9 +237,22 @@ class Evaluator:
         if not delay:
             run.apply(candidate.decision)
             run.resume()
-        elif run.resume_to(state.day + delay):
-            run.apply_valid(candidate.decision)
+            return state, candidate.decision
+        applied: Decision | None = None
+        if run.resume_to(state.day + delay):
+            approval = approve(state.observe(), candidate, self.params, self.plans)
+            self.replan_solves += approval.solves
+            self.replans_reused += approval.reused
+            if approval.rejection is None:
+                applied = approval.decision
+                run.apply(applied)
             run.carry_on()
+        return state, applied
+
+    def rollout(self, candidate: Candidate, i: int) -> tuple[int, bool, float]:
+        """Rollout i of the candidate (`play`): (makespan, truncated, total cost); a truncated
+        rollout ends at max_days."""
+        state = self.play(candidate, i)[0]
         finish = state.start[state.sink]
         if finish is None:
             return state.max_days, True, state.cost

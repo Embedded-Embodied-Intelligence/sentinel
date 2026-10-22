@@ -3,7 +3,7 @@
 # Instances, scenarios and seeds of docs/experiments/plan.md (RQ4 Sentinel study).
 # Run: uv run python -m sentinel.experiments.policy_study --config configs/wp5_rq4_ablation.toml --out results/wp5
 name = "wp5_rq4_ablation"
-base_seed = 2026         # world seed of (instance, replication) as in WP2b; also seeds O (DESCOPE)
+base_seed = 2026         # world seed of (instance, replication) as in WP2b, shared by all policies
 max_workers = 4          # processes; one task per (instance, scenario)
 data_root = "data/psplib"
 baseline_cache = "data/derived/baselines"
@@ -68,11 +68,10 @@ autonomy = 0
 delta_d = 0.2
 autonomy = 1
 
-[variants.sentinel_descope]     # demonstration of DESCOPE behind the gate (spec section 4)
-delta_d = 0.2
+[variants.sentinel_descope]     # demonstration of DESCOPE behind the gate (spec section 4);
+delta_d = 0.2                   # O = the real activities whose only successor is the sink
 autonomy = 2
 descope = true
-optional_share = 0.1     # phi
 
 [variants.sentinel_delta03]     # full Sentinel working towards the looser deadline
 delta_d = 0.3

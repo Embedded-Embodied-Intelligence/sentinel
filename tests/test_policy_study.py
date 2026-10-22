@@ -333,7 +333,7 @@ def test_the_wp5_configs_follow_the_study_plan(name: str) -> None:
     assert config.scenarios.mean_absence == (3,) and not config.start_estimate
     variants = config.sentinel_variants
     shape = {
-        name: (v.params.variant, v.params.autonomy, v.delta_d, v.params.descope, v.optional_share)
+        name: (v.params.variant, v.params.autonomy, v.delta_d, v.params.descope)
         for name, v in variants.items()
     }
     assert {(v.params.n_stage1, v.params.n_rollouts) for v in variants.values()} == {(25, 100)}
@@ -341,19 +341,19 @@ def test_the_wp5_configs_follow_the_study_plan(name: str) -> None:
         assert [(s.name, s.stride) for s in config.sets] == [("j30", 4), ("j60", 8)]
         assert config.scenarios.lambda_a == (0.0, 0.005, 0.01, 0.02)
         assert shape == {
-            "sentinel_full": ("full", 3, 0.2, False, 0.0),
-            "sentinel_no_ot": ("no_overtime", 3, 0.2, False, 0.0),
-            "sentinel_gate": ("full", 2, 0.2, False, 0.0),
+            "sentinel_full": ("full", 3, 0.2, False),
+            "sentinel_no_ot": ("no_overtime", 3, 0.2, False),
+            "sentinel_gate": ("full", 2, 0.2, False),
         }
     else:
         assert [(s.name, s.stride) for s in config.sets] == [("j30", 4)]
         assert config.scenarios.lambda_a == (0.01, 0.02)
         assert shape == {
-            "sentinel_scalarised": ("scalarised", 3, 0.2, False, 0.0),
-            "sentinel_lambda0": ("full", 0, 0.2, False, 0.0),
-            "sentinel_lambda1": ("full", 1, 0.2, False, 0.0),
-            "sentinel_descope": ("full", 2, 0.2, True, 0.1),
-            "sentinel_delta03": ("full", 3, 0.3, False, 0.0),
+            "sentinel_scalarised": ("scalarised", 3, 0.2, False),
+            "sentinel_lambda0": ("full", 0, 0.2, False),
+            "sentinel_lambda1": ("full", 1, 0.2, False),
+            "sentinel_descope": ("full", 2, 0.2, True),
+            "sentinel_delta03": ("full", 3, 0.3, False),
         }
 
 

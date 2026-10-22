@@ -666,7 +666,6 @@ def _variant_lines(config: PolicyStudyConfig) -> list[str]:
             f"- {POLICY_LABELS.get(name, name)} (`{name}`): Sentinel with Λ = {params.autonomy}, "
             f"rule {params.rule}, N₁ = {params.n_stage1}, N = {params.n_rollouts}, working "
             f"towards δ_D = {variant.delta_d:g}"
-            + (f", φ = {variant.optional_share:g}" if variant.optional_share else "")
             + (f"; differs from spec section 8 in {own}" if own else "")
             + "."
         )

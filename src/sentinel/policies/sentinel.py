@@ -8,16 +8,18 @@ the rule candidates, races them on the same worlds (with DESCOPE candidates when
 candidate reaches theta_D) and takes the choice of its decision rule. The permission gate then
 applies the choice at once if its level is below Lambda and it has no DESCOPE; otherwise it
 defers (NOOP, deliberate again later) if the urgency exceeds tau_def, else escalates: a
-simulated human approves after delta_h days, the approval day becomes a decision epoch, and the
-action applies there if it is still valid, else a fresh deliberation follows. While an action
-awaits approval, and at epochs whose only events concern idle workers, Sentinel returns NOOP
-without deliberating.
+simulated human approves after delta_h days and the approval day becomes a decision epoch. The
+human approves the action's intent: there its SUBST, OVERTIME and DESCOPE operations are
+re-validated and its plan part is planned again on the current planning view (`approve`), and
+the action applies all or nothing; if it is discarded, a fresh deliberation follows. While an
+action awaits approval, and at epochs whose only events concern idle workers, Sentinel returns
+NOOP without deliberating.
 """
 
 import time
 from dataclasses import dataclass, field
 
-from sentinel.agent.candidates import Candidate, descopes, generate, noop
+from sentinel.agent.candidates import Candidate, approve, descopes, generate, noop
 from sentinel.agent.decide import (
     CandidateRecord,
     DecisionRecord,
@@ -31,17 +33,18 @@ from sentinel.agent.params import SentinelParams
 from sentinel.experiments.runs import derive_seed
 from sentinel.policies.base import EMPTY_DECISION, Decision, DecisionStats
 from sentinel.policies.urgency import urgencies
-from sentinel.simulation.engine import rehearse
 from sentinel.simulation.state import PAUSED, RUNNING, UNSTARTED, Observation
 
 
 @dataclass
 class SentinelStats(DecisionStats):
-    """`DecisionStats` (with `reseqs`: CP-SAT searches for RESEQ plans) and Sentinel's own
-    counts: deliberations, needs-gate exits, epochs without deliberation, candidates evaluated,
-    rollouts, the wall time of each deliberation, the chosen candidates by kind (before the
-    permission gate), the decisions by reason (`DecisionRecord.reason`), and what the gate did:
-    deferrals, escalations, approvals applied and approvals discarded (spec section 4)."""
+    """`DecisionStats` (with `reseqs`: CP-SAT searches for RESEQ plans, those of approval days
+    included) and Sentinel's own counts: deliberations, needs-gate exits, epochs without
+    deliberation, candidates evaluated, rollouts, the wall time of each deliberation, the chosen
+    candidates by kind (before the permission gate), the decisions by reason
+    (`DecisionRecord.reason`), what the gate did: deferrals, escalations, approvals applied and
+    approvals discarded (spec section 4), and the plan parts that rollouts planned again on
+    their approval days: CP-SAT searches and plan parts reused within an epoch (ADR-0017)."""
 
     deliberations: int = 0
     gate_exits: int = 0
@@ -55,14 +58,15 @@ class SentinelStats(DecisionStats):
     deliberation_s: list[float] = field(default_factory=list)
     chosen: dict[str, int] = field(default_factory=dict)
     reasons: dict[str, int] = field(default_factory=dict)
+    replan_solves: int = 0
+    replans_reused: int = 0
 
 
 @dataclass(frozen=True)
 class Pending:
-    """An escalated action awaiting approval on `day`."""
+    """An escalated candidate awaiting approval on `day`."""
 
-    label: str
-    decision: Decision
+    candidate: Candidate
     day: int
 
 
@@ -93,8 +97,9 @@ class Sentinel:
         return f"sentinel_{self.params.variant}"
 
     def decide(self, observation: Observation) -> Decision:
-        """The decision of the epoch: an approved action, NOOP while one awaits approval or at
-        an epoch with only idle workers' events, else the deliberated choice after the gate."""
+        """The decision of the epoch: an approved action, re-planned on its approval day, NOOP
+        while one awaits approval or at an epoch with only idle workers' events, else the
+        deliberated choice after the gate."""
         began = time.perf_counter()
         stats = self.stats
         t = observation.day
@@ -105,10 +110,14 @@ class Sentinel:
             record = self._quiet(t, "awaiting_approval")
         elif pending is not None:
             self.pending = None
-            alpha = self.params.handover_factor
-            if rehearse(observation, pending.decision, handover_factor=alpha)[1]:
+            approval = approve(observation, pending.candidate, self.params)
+            stats.reseqs += approval.solves
+            stats.fallbacks += approval.fallbacks
+            stats.solve_time_s += approval.solve_time_s
+            label = pending.candidate.label
+            if approval.rejection is not None:
                 stats.approvals_discarded += 1
-                record = self.deliberate(observation, discarded=pending.label)
+                record = self.deliberate(observation, discarded=label)
             else:
                 stats.approvals_applied += 1
                 record = DecisionRecord(
@@ -116,8 +125,10 @@ class Sentinel:
                     deliberated=False,
                     rule=self.params.rule,
                     reason="approved",
-                    chosen=pending.label,
-                    decision=pending.decision,
+                    chosen=label,
+                    decision=approval.decision,
+                    cp_solves=approval.solves,
+                    cp_fallbacks=approval.fallbacks,
                 )
         elif crew_event:
             record = self.deliberate(observation)
@@ -228,6 +239,8 @@ class Sentinel:
         stats.chosen[chosen.kind] = stats.chosen.get(chosen.kind, 0) + 1
         gate, decision = self.gate(observation, chosen)
         stats.rollouts += evaluator.rollouts
+        stats.replan_solves += evaluator.replan_solves
+        stats.replans_reused += evaluator.replans_reused
         done = time.perf_counter()
         stats.deliberation_s.append(done - began)
         return DecisionRecord(
@@ -263,7 +276,7 @@ class Sentinel:
             self.stats.deferrals += 1
             return "deferred", EMPTY_DECISION
         day = observation.day + params.approval_delay
-        self.pending = Pending(label=chosen.label, decision=chosen.decision, day=day)
+        self.pending = Pending(candidate=chosen, day=day)
         self.requested_epoch = day
         self.stats.escalations += 1
         return "escalated", EMPTY_DECISION

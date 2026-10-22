@@ -77,8 +77,8 @@ SEED_RULE = (
     "shared by all policies and scenarios, as in WP2b (common random numbers, spec section 2.3)"
 )
 OPTIONAL_RULE = (
-    "optional activities of a DESCOPE variant: uncertainty.optional_activities(instance, phi, "
-    "runs.derive_seed(base_seed, 'optional', set/instance)) (spec section 4)"
+    "optional activities of a DESCOPE variant: uncertainty.optional_activities(instance), every "
+    "real activity whose only successor is the sink (spec section 4); none for other policies"
 )
 
 Row = dict[str, Any]
@@ -282,11 +282,7 @@ def task_runs(
         for policy in config.policies:
             variant = variants.get(policy)
             delta = config.deltas[-1] if variant is None else variant.delta_d
-            optional = (
-                ()
-                if variant is None
-                else optional_set(instance, variant.optional_share, config.base_seed)
-            )
+            optional = optional_set(instance, variant)
             run = run_checked(
                 instance,
                 plan,
@@ -529,9 +525,9 @@ def run_study(
         "seeds": {
             "base_seed": config.base_seed,
             "rule": SEED_RULE,
-            "optional_rule": OPTIONAL_RULE,
             "per_instance": seeds,
         },
+        "optional_rule": OPTIONAL_RULE,
         "data": data_provenance(config),
         "estimated_duration_s": None if estimate is None else round(estimate, 1),
     }

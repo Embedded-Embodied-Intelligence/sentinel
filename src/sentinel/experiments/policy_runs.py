@@ -9,8 +9,8 @@ r) is the WP2b one, derive_seed(base_seed, set, instance, str(r)), shared by all
 max_days of the largest deadline slack; whether each deadline is met is evaluated post hoc, as
 in WP2b. Sentinel, which uses the deadline, gets the one of its variant's delta_D (registry
 names: `PolicyTask.agent_delta`) and its max_days; its on-time flags for the other slacks are
-post hoc. A Sentinel variant with DESCOPE gets the optional activities O of the instance, drawn
-with derive_seed(base_seed, "optional", instance) (spec section 4).
+post hoc. A Sentinel variant with DESCOPE gets the optional activities O of the instance, every
+real activity whose only successor is the sink (spec section 4).
 """
 
 import time
@@ -22,7 +22,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from sentinel.agent.params import SentinelParams
 from sentinel.data.psplib_loader import DEFAULT_ROOT, instance_path, load_psplib
-from sentinel.experiments.runs import derive_seed
 from sentinel.model import ProjectInstance, Schedule, validate_schedule
 from sentinel.policies.base import DecisionStats, Policy
 from sentinel.policies.registry import SENTINELS, make_policy
@@ -43,22 +42,20 @@ class InvalidScheduleError(RuntimeError):
 
 class SentinelVariant(BaseModel):
     """A named Sentinel policy of a study or measurement: its `params` (spec section 8
-    defaults), the deadline slack `delta_d` it works towards (its D and max_days) and the share
-    `optional_share` = phi of optional activities drawn per instance for DESCOPE (0: none)."""
+    defaults) and the deadline slack `delta_d` it works towards (its D and max_days)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     params: SentinelParams = SentinelParams()
     delta_d: float = Field(default=0.2, ge=0)
-    optional_share: float = Field(default=0.0, ge=0, le=1)
 
 
-def optional_set(instance: ProjectInstance, share: float, base_seed: int) -> tuple[int, ...]:
-    """O of the instance for phi = `share`, drawn with derive_seed(base_seed, "optional",
-    instance name) (spec section 4); empty for share 0."""
-    if share <= 0:
+def optional_set(instance: ProjectInstance, variant: SentinelVariant | None) -> tuple[int, ...]:
+    """The optional activities O that the observations of a run report (spec section 4): those
+    of the instance for a Sentinel variant with DESCOPE, none otherwise."""
+    if variant is None or not variant.params.descope:
         return ()
-    return optional_activities(instance, share, derive_seed(base_seed, "optional", instance.name))
+    return optional_activities(instance)
 
 
 @dataclass(frozen=True)
@@ -80,7 +77,6 @@ class PolicyTask:
     baseline_cache: Path = DEFAULT_CACHE_ROOT
     agent_delta: float = 0.2  # delta_D of the deadline of Sentinel's registry names
     variants: Mapping[str, SentinelVariant] = field(default_factory=dict)  # named Sentinels
-    base_seed: int = 2026  # base of the optional-activity seed (spec section 4)
 
 
 @dataclass(frozen=True)
@@ -132,11 +128,7 @@ def run_policies(task: PolicyTask) -> list[PolicyRecord]:
                 variant = SentinelVariant(delta_d=task.agent_delta)
             # max_days of the largest delta_D, or Sentinel's own deadline
             delta = task.deltas[-1] if variant is None else variant.delta_d
-            optional = (
-                ()
-                if variant is None
-                else optional_set(instance, variant.optional_share, task.base_seed)
-            )
+            optional = optional_set(instance, variant)
             result, stats, wall_time_s = run_checked(
                 instance,
                 plan.schedule,

@@ -4,16 +4,20 @@
 RESEQ-M, CP-SAT for minimum residual makespan; RESEQ-S, CP-SAT for minimum deviation within
 SHIFT's makespan; SUBST(j) for the up to three most urgent eligible activities; SUBST-ALL in
 the order of AlwaysSubstitute; SUBST-ALL + RESEQ-M; OT(k*) + RESEQ-M for the most backlogged
-role (not in the `no_overtime` variant). Every candidate is rehearsed through the engine's own
-`Run.apply` on the observed state and dropped if an operation would be rejected, or if its
-effect (operations other than RESEQ and SHIFT, and the planned starts it leaves for activities
-with p_j > 0) equals that of an earlier candidate. A RESEQ that follows SUBST or OVERTIME is
-planned on the state they leave, so a RESEQ with added capacity sees the planning view
-extended by the temporary workers. `descopes` gives the DESCOPE candidates, which the agent
-adds only if no other candidate reaches theta_D (spec section 6).
+role (not in the `no_overtime` variant). `prepare` builds each: the operations other than RESEQ
+and SHIFT are rehearsed through the engine's own `Run.apply` on the observed state, and the plan
+part of its kind (`PLAN_PARTS`) is planned on the state they leave, so a RESEQ with added
+capacity sees the planning view extended by the temporary workers, and checked there as the
+engine checks plans. A candidate is dropped if anything would be rejected, or if its effect
+(operations other than RESEQ and SHIFT, and the planned starts it leaves for activities with
+p_j > 0) equals that of an earlier candidate. `approve` builds an escalated candidate again in
+the same way on its approval day (spec section 4 permission gate), in the world and in
+rollouts. `descopes` gives the DESCOPE candidates, which the agent adds only if no other
+candidate reaches theta_D (spec section 6).
 """
 
 import time
+from dataclasses import dataclass
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
@@ -23,9 +27,9 @@ from sentinel.model.schedule import Schedule
 from sentinel.policies.always_substitute import substitutions
 from sentinel.policies.base import Decision, Descope, Operation, Overtime, Reseq, Shift, Subst
 from sentinel.policies.urgency import latest_finishes, urgencies
-from sentinel.scheduling.cpsat import ResidualSolution, solve_residual
-from sentinel.scheduling.residual import planning_view, shift_sgs
-from sentinel.simulation.engine import rehearse
+from sentinel.scheduling.cpsat import solve_residual
+from sentinel.scheduling.residual import ResidualProblem, planning_view, shift_sgs
+from sentinel.simulation.engine import plan_rejection, rehearse
 from sentinel.simulation.state import (
     PAUSED,
     RUNNING,
@@ -59,6 +63,17 @@ KINDS: tuple[CandidateKind, ...] = (
     "ot_reseq_m",
     "descope",
 )
+PlanObjective = Literal["shift", "makespan", "deviation"]
+# The plan part of each kind of candidate (spec section 6), planned on the state its other
+# operations leave, again on the approval day of an escalated action (spec section 4); the
+# other kinds have none.
+PLAN_PARTS: dict[CandidateKind, PlanObjective] = {
+    "shift": "shift",
+    "reseq_m": "makespan",
+    "reseq_s": "deviation",
+    "subst_all_reseq_m": "makespan",
+    "ot_reseq_m": "makespan",
+}
 
 
 class Candidate(BaseModel):
@@ -111,9 +126,7 @@ def generate(
     """The rule candidates of the observed epoch (spec section 6), NOOP first.
 
     `plan` is the current plan (default: the observation's), against which RESEQ-S minimises
-    the deviation over the deviation set. CP-SAT runs with T_cp per stage, one worker and
-    `cp_seed`, hinted as in spec section 7; RESEQ-S is hinted with the SHIFT plan, a feasible
-    solution of its makespan, and falls back to it.
+    the deviation over the deviation set. Every candidate is built by `prepare`.
     """
     began = time.perf_counter()
     params = SentinelParams() if params is None else params
@@ -121,25 +134,22 @@ def generate(
         observation = observation.model_copy(update={"plan": plan.starts})
     builder = _Builder(observation, params)
     builder.add(noop(observation))
-    view = planning_view(observation)
-    shift = shift_sgs(view)
-    builder.offer("SHIFT", "shift", (Shift(starts=shift),))
-    builder.offer("RESEQ-M", "reseq_m", (), reseq=True)
-    stable = builder.solve(observation, "deviation", hint=shift, bound=shift[view.sink])
-    builder.offer("RESEQ-S", "reseq_s", (Reseq(starts=stable.starts),), stable.fallbacks)
+    builder.offer("SHIFT", "shift")
+    builder.offer("RESEQ-M", "reseq_m")
+    builder.offer("RESEQ-S", "reseq_s")
     for op in single_substitutions(observation)[: params.max_single_subst]:
         builder.offer(f"SUBST({op.activity})", "subst", (op,))
     every = substitutions(observation)
     if every:
         builder.offer("SUBST-ALL", "subst_all", every)
-        builder.offer("SUBST-ALL+RESEQ-M", "subst_all_reseq_m", every, reseq=True)
+        builder.offer("SUBST-ALL+RESEQ-M", "subst_all_reseq_m", every)
     if params.variant != "no_overtime":
         role = most_backlogged_role(observation, 2 * params.review_period)
         if role is not None:
             workers = overtime_cap(observation.instance.roles[role].capacity)
             if workers > 0:
                 hire = Overtime(role=role, workers=workers, days=params.window)
-                builder.offer(f"OT({role})+RESEQ-M", "ot_reseq_m", (hire,), reseq=True)
+                builder.offer(f"OT({role})+RESEQ-M", "ot_reseq_m", (hire,))
     return Generation(
         candidates=tuple(builder.candidates),
         solves=builder.solves,
@@ -149,6 +159,129 @@ def generate(
         duplicates=builder.duplicates,
         wall_time_s=time.perf_counter() - began,
     )
+
+
+@dataclass(frozen=True)
+class PlanPart:
+    """A plan part computed on a planning view (`plan_part`): the RESEQ or SHIFT operation, why
+    the engine would reject it on that view (None: valid), the CP-SAT searches run, the stages
+    that fell back and the solver's wall time."""
+
+    operation: Reseq | Shift
+    rejection: str | None
+    solves: int
+    fallbacks: int
+    solve_time_s: float
+
+
+# Plan parts by objective and planning view: a plan part depends on nothing else, so the
+# rollouts of one epoch can share those of their approval days (spec section 6 evaluation).
+PlanCache = dict[tuple[object, ...], PlanPart]
+
+
+def plan_part(view: ResidualProblem, objective: PlanObjective, params: SentinelParams) -> PlanPart:
+    """The plan part of a candidate on the planning view `view` (spec section 6), checked on
+    it as the engine checks plans (`plan_rejection`): "shift" is SHIFT, the order-preserving
+    repair; "makespan" RESEQ-M by CP-SAT for minimum residual makespan, hinted as in spec
+    section 7; "deviation" RESEQ-S by CP-SAT for minimum deviation within SHIFT's makespan,
+    hinted with the SHIFT plan, a feasible solution of that makespan, to which it falls back.
+    CP-SAT runs with T_cp per stage, one worker and `cp_seed`, so the part is a function of
+    `view` alone."""
+    if objective == "shift":
+        operation: Reseq | Shift = Shift(starts=shift_sgs(view))
+        solves = fallbacks = 0
+        solve_time_s = 0.0
+    else:
+        if objective == "makespan":
+            hint, bound = view.planned_starts(), None
+        else:
+            hint = shift_sgs(view)
+            bound = hint[view.sink]
+        solution = solve_residual(
+            view,
+            objective,
+            deterministic_time_limit=params.deterministic_time_limit,
+            seed=params.cp_seed,
+            hint=hint,
+            bound=bound,
+        )
+        operation = Reseq(starts=solution.starts)
+        solves, fallbacks, solve_time_s = 1, solution.fallbacks, solution.wall_time_s
+    return PlanPart(operation, plan_rejection(view, operation), solves, fallbacks, solve_time_s)
+
+
+@dataclass(frozen=True)
+class Prepared:
+    """An action built on an observation (`prepare`): the `decision`, the observation it leaves
+    (`after`), why the engine would reject it (`rejection`; None: valid) and the effort of its
+    plan part: CP-SAT searches run, stages that fell back, the solver's wall time, and whether
+    the part came from a cache (`reused`, then without effort)."""
+
+    decision: Decision
+    after: Observation
+    rejection: str | None
+    solves: int = 0
+    fallbacks: int = 0
+    solve_time_s: float = 0.0
+    reused: bool = False
+
+
+def prepare(
+    observation: Observation,
+    kind: CandidateKind,
+    operations: tuple[Operation, ...] = (),
+    params: SentinelParams | None = None,
+    plans: PlanCache | None = None,
+) -> Prepared:
+    """The action of a candidate of `kind` with `operations` (no RESEQ or SHIFT) on the observed
+    state (spec sections 4 and 6). The operations are rehearsed through the engine (`rehearse`);
+    if none is rejected and the kind has a plan part (`PLAN_PARTS`), that part is planned on the
+    planning view of the state they leave and checked there (`plan_part`), and the action leaves
+    that state with the new plan. `plans`, if given, holds plan parts by objective and planning
+    view and is used and filled."""
+    params = SentinelParams() if params is None else params
+    decision = Decision(operations=operations)
+    objective = PLAN_PARTS.get(kind)
+    after = observation
+    if operations or objective is None:
+        after, rejected = rehearse(observation, decision, handover_factor=params.handover_factor)
+        if rejected:
+            return Prepared(decision, after, rejected[0].reason)
+        if objective is None:
+            return Prepared(decision, after, None)
+    view = planning_view(after)
+    key = (objective, *(getattr(view, name) for name in ResidualProblem.model_fields))
+    part = None if plans is None else plans.get(key)
+    reused = part is not None
+    if part is None:
+        part = plan_part(view, objective, params)
+        if plans is not None:
+            plans[key] = part
+    decision = Decision(operations=(*operations, part.operation))
+    if part.rejection is None:  # the engine sets the planned starts of the plan (`Run.apply`)
+        starts = part.operation.starts
+        plan = tuple(starts.get(j, day) for j, day in enumerate(after.plan))
+        after = after.model_copy(update={"plan": plan})
+    if reused:
+        return Prepared(decision, after, part.rejection, reused=True)
+    return Prepared(decision, after, part.rejection, part.solves, part.fallbacks, part.solve_time_s)
+
+
+def approve(
+    observation: Observation,
+    candidate: Candidate,
+    params: SentinelParams | None = None,
+    plans: PlanCache | None = None,
+) -> Prepared:
+    """The action of an escalated candidate on its approval day (spec section 4 permission
+    gate): its SUBST, OVERTIME and DESCOPE operations unchanged, re-validated on the observed
+    state, and its plan part planned again on the planning view they leave, with its kind's
+    objective (`prepare`). It applies all or nothing: only if `rejection` is None. Sentinel uses
+    it on the approval day, and so do the rollouts that imagine the approval (spec section 6)."""
+    operations = tuple(
+        op for op in candidate.decision.operations if not isinstance(op, Reseq | Shift)
+    )
+    return prepare(observation, candidate.kind, operations, params, plans)
 
 
 class _Builder:
@@ -168,49 +301,21 @@ class _Builder:
         self.solves = self.fallbacks = self.invalid = self.duplicates = 0
         self.solve_time_s = 0.0
 
-    def solve(
-        self,
-        observation: Observation,
-        objective: Literal["makespan", "deviation"],
-        *,
-        hint: dict[int, int] | None = None,
-        bound: int | None = None,
-    ) -> ResidualSolution:
-        view = planning_view(observation)
-        solution = solve_residual(
-            view,
-            objective,
-            deterministic_time_limit=self.params.deterministic_time_limit,
-            seed=self.params.cp_seed,
-            hint=view.planned_starts() if hint is None else hint,
-            bound=bound,
-        )
-        self.solves += 1
-        self.fallbacks += solution.fallbacks
-        self.solve_time_s += solution.wall_time_s
-        return solution
-
     def offer(
         self,
         label: str,
         kind: CandidateKind,
-        operations: tuple[Operation, ...],
-        fallbacks: int = 0,
+        operations: tuple[Operation, ...] = (),
         *,
-        reseq: bool = False,
         scope_loss: float = 0.0,
     ) -> None:
-        """Rehearse `operations`, then, with `reseq`, add a RESEQ-M planned on the state they
-        leave; keep the candidate if nothing is rejected and its effect is new."""
-        alpha = self.params.handover_factor
-        decision = Decision(operations=operations)
-        after, rejected = rehearse(self.observation, decision, handover_factor=alpha)
-        if not rejected and reseq:
-            solution = self.solve(after, "makespan")
-            fallbacks += solution.fallbacks
-            decision = Decision(operations=(*operations, Reseq(starts=solution.starts)))
-            after, rejected = rehearse(self.observation, decision, handover_factor=alpha)
-        if rejected:
+        """Build the candidate with `prepare`; keep it if nothing would be rejected and its
+        effect is new."""
+        prepared = prepare(self.observation, kind, operations, self.params)
+        self.solves += prepared.solves
+        self.fallbacks += prepared.fallbacks
+        self.solve_time_s += prepared.solve_time_s
+        if prepared.rejection is not None:
             self.invalid += 1
             return
         substituted = sum(len(op.workers) for op in operations if isinstance(op, Subst))
@@ -218,11 +323,11 @@ class _Builder:
             Candidate(
                 label=label,
                 kind=kind,
-                decision=decision,
-                plan=after.plan,
+                decision=prepared.decision,
+                plan=prepared.after.plan,
                 substituted=substituted,
                 scope_loss=scope_loss,
-                fallbacks=fallbacks,
+                fallbacks=prepared.fallbacks,
             )
         )
 
