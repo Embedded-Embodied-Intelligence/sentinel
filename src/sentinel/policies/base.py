@@ -70,11 +70,30 @@ class Overtime(BaseModel):
     days: PositiveInt
 
 
-Operation = Annotated[Noop | Shift | Reseq | Subst | Overtime, Field(discriminator="kind")]
+class Descope(BaseModel):
+    """DESCOPE(j): remove the unstarted optional `activity` j, whose only successor is the sink
+    (spec section 4, level 2; it always needs approval)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: Literal["descope"] = "descope"
+    activity: NonNegativeInt
+
+
+Operation = Annotated[
+    Noop | Shift | Reseq | Subst | Overtime | Descope, Field(discriminator="kind")
+]
 
 # Permission level of each operation (spec section 4): 0 automatic, 1 automatic with report,
-# 2 human approval.
-LEVELS: dict[str, int] = {"noop": 0, "shift": 0, "reseq": 1, "subst": 2, "overtime": 2}
+# 2 human approval; DESCOPE always needs approval, whatever the autonomy level.
+LEVELS: dict[str, int] = {
+    "noop": 0,
+    "shift": 0,
+    "reseq": 1,
+    "subst": 2,
+    "overtime": 2,
+    "descope": 2,
+}
 
 
 class Decision(BaseModel):
@@ -88,6 +107,11 @@ class Decision(BaseModel):
     def level(self) -> int:
         """l(a): the maximum permission level of the operations, 0 without any (spec 4)."""
         return max((LEVELS[op.kind] for op in self.operations), default=0)
+
+    @property
+    def descopes(self) -> bool:
+        """Whether the decision removes an activity (DESCOPE always needs approval, spec 4)."""
+        return any(op.kind == "descope" for op in self.operations)
 
 
 EMPTY_DECISION = Decision()
@@ -112,7 +136,9 @@ class Policy(Protocol):
 
     A policy class may set `passive = True` to promise that it always returns the empty
     decision; the engine then counts its decision epochs without building observations, which
-    leaves results unchanged and keeps rollouts on the base policy fast.
+    leaves results unchanged and keeps rollouts on the base policy fast. A policy may also set
+    an attribute `requested_epoch` in `decide`, a later day or None: the engine makes that day a
+    decision epoch (spec section 3.1 g, the approval day of an escalated action).
     """
 
     def decide(self, observation: Observation) -> Decision:

@@ -6,7 +6,9 @@ of the result and of every observation a recording policy saw. It was first writ
 engine of commit 68ba82a (WP2b), before WP3a split `simulate` into state initialisation and a
 run loop, and rewritten in WP4b for spec v1.6, where absence returns became decision epochs:
 only the epoch counts, the epoch flags of traced days and the observations a recording policy
-sees on return days changed. Regenerate it only for an intended change of the semantics:
+sees on return days changed. Observations gained B, c_k and c_OT_k in WP5b (spec v1.8 section
+3); the digests leave those three fields out (`V18_FIELDS`), so the fixture still checks every
+field it was written with. Regenerate it only for an intended change of the semantics:
 `uv run python tests/test_engine_regression.py`.
 """
 
@@ -27,6 +29,7 @@ from sentinel.simulation.state import Observation
 from sentinel.simulation.uncertainty import PertParams
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "engine_regression.json"
+V18_FIELDS = {"budget", "costs", "overtime_costs"}  # observation fields added after the fixture
 
 PARAMS = {
     "none": DisruptionParams.none(),
@@ -128,7 +131,10 @@ def _run(instance: ProjectInstance, plan: Schedule, case: dict[str, Any]) -> dic
         costs=[1.0 + 0.5 * k for k in range(len(instance.roles))] if case["costs"] else None,
         record_trace=case["trace"],
     )
-    seen = [] if recorder is None else [obs.model_dump(mode="json") for obs in recorder.seen]
+    seen = [
+        obs.model_dump(mode="json", exclude=V18_FIELDS)
+        for obs in ([] if recorder is None else recorder.seen)
+    ]
     return {
         "result": _digest(result.model_dump(mode="json")),
         "observations": _digest(seen),

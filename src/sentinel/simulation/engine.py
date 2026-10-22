@@ -33,6 +33,7 @@ from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
 from sentinel.policies.base import (
     Decision,
+    Descope,
     Noop,
     Operation,
     Overtime,
@@ -59,6 +60,7 @@ from sentinel.simulation.state import (
     DONE,
     HANDOVER_FACTOR,
     PAUSED,
+    REMOVED,
     RUNNING,
     UNSTARTED,
     EngineState,
@@ -72,7 +74,12 @@ from sentinel.simulation.state import (
     overtime_cap,
     state_from_observation,
 )
-from sentinel.simulation.uncertainty import PertParams, realised_duration, role_costs
+from sentinel.simulation.uncertainty import (
+    PertParams,
+    derive_budget,
+    realised_duration,
+    role_costs,
+)
 
 
 class DayRecord(BaseModel):
@@ -109,6 +116,17 @@ class Substitution(BaseModel):
     handover: PositiveFloat
 
 
+class Descoped(BaseModel):
+    """An applied DESCOPE (spec section 4): on `day` the optional `activity` was removed; its
+    value is v_j = p_j sum_k c_k r_jk."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    day: NonNegativeInt
+    activity: NonNegativeInt
+    value: NonNegativeFloat
+
+
 class Rejection(BaseModel):
     """An operation rejected on `day` because it was invalid in the state it met (spec 4)."""
 
@@ -134,8 +152,9 @@ class SimulationResult(BaseModel):
     changed and `infeasible_reseqs` the RESEQ and SHIFT plans that failed their check (also in
     `rejected`; spec section 7.1). `temporary` lists the workers hired by OVERTIME (ids after
     the instance's workers, in `crews` too), `temporary_days` the worker-days paid for them and
-    `overtime_cost` that part of `total_cost` (spec section 4). These fields are serialised only
-    when set. `observations` holds the agent's view of each requested day the run reached
+    `overtime_cost` that part of `total_cost` (spec section 4). `descoped` lists the activities
+    DESCOPE removed; they never start (spec section 4). These fields are serialised only when
+    set. `observations` holds the agent's view of each requested day the run reached
     (`simulate`'s `observe_days`); it is a by-product, left out of `model_dump` and
     serialisation.
     """
@@ -168,6 +187,7 @@ class SimulationResult(BaseModel):
     temporary: tuple[TemporaryWorker, ...] = Field(default=(), exclude_if=_unset)
     temporary_days: NonNegativeInt = Field(default=0, exclude_if=_unset)
     overtime_cost: NonNegativeFloat = Field(default=0.0, exclude_if=_unset)
+    descoped: tuple[Descoped, ...] = Field(default=(), exclude_if=_unset)
 
     @property
     def hired(self) -> int:
@@ -205,6 +225,8 @@ def simulate(
     observe_days: Collection[int] = (),
     handover_factor: float = HANDOVER_FACTOR,
     debug: bool = False,
+    budget: float | None = None,
+    optional: Collection[int] = (),
 ) -> SimulationResult:
     """Execute `plan` under `policy` for one replication seed (spec sections 2-3).
 
@@ -217,7 +239,10 @@ def simulate(
     with `debug`, a RESEQ plan that fails `validate_residual` raises instead of being rejected
     and counted (`Run.apply`). For every day in `observe_days` that the run reaches, the
     observation of step 3 (after any decision) is kept in `result.observations` (checkpoints of
-    spec section 5.2); recording changes nothing else.
+    spec section 5.2); recording changes nothing else. Observations report the `budget` B
+    (default: the instance's, else that of spec section 1.2 with beta = 0.1 and the run's c_k)
+    and the `optional` activities O that DESCOPE may remove (spec section 4); neither changes a
+    run without interventions.
     """
     if len(plan.starts) != instance.n_activities:
         raise ValueError(
@@ -230,7 +255,13 @@ def simulate(
         raise ValueError(f"deadline must be non-negative, got {deadline}")
     if review_period < 1:
         raise ValueError(f"review_period must be at least 1, got {review_period}")
+    if any(not 0 < j < instance.sink_id for j in optional):
+        raise ValueError(f"optional activities must be real activities, got {sorted(optional)}")
     streams = ScenarioStreams(seed, instance, disruptions, pert)
+    if budget is None:
+        budget = instance.budget
+        if budget is None:
+            budget = derive_budget(instance, costs=costs, params=pert)
     state = EngineState(
         instance,
         plan,
@@ -241,6 +272,8 @@ def simulate(
         deadline=deadline,
         max_days=day_limit(instance, deadline),
         handover_factor=handover_factor,
+        budget=budget,
+        optional=optional,
     )
     run = Run(
         state,
@@ -268,7 +301,10 @@ class Run:
     `substitutions`, `rejected`, `reseqs`, `shifts`, `nervousness` and `infeasible_reseqs`.
     Without `check_plans`, RESEQ and SHIFT plans are applied unchecked: for rollouts of a
     decision already checked on the same observation (`rehearse`), as the check depends on
-    the observation only.
+    the observation only. A rollout that imagines an approval delay (spec section 6) stops at
+    step 3 of the approval day (`resume_to`), applies the decision there only if it is valid in
+    that state (`apply_valid`) and goes on (`carry_on`). Days a policy requests in its
+    `requested_epoch` (the approval days of spec section 4) are decision epochs.
     """
 
     __slots__ = (
@@ -293,6 +329,7 @@ class Run:
         "streams",
         "substitutions",
         "trace",
+        "wakes",
     )
 
     def __init__(
@@ -332,6 +369,7 @@ class Run:
         self.shifts = 0
         self.nervousness = 0
         self.infeasible_reseqs = 0
+        self.wakes: set[int] = set()  # later days the policy asked to decide on
 
     def days(self, first: int) -> None:
         """Run days `first`, `first + 1`, ... until the sink completes or day max_days is over."""
@@ -342,14 +380,53 @@ class Run:
     def resume(self) -> None:
         """Continue a state observed at step 3 of its day t: look up the next D2 shock of every
         started activity, close day t (steps 4-6), then run days t + 1, t + 2, ..."""
+        self._plan_shocks()
+        self.carry_on()
+
+    def resume_to(self, day: int) -> bool:
+        """Continue a state observed at step 3 of its day t as `resume` does, but stop at step 3
+        of the later `day`, after its steps 1-3; False if the project completed, or day max_days
+        ended, before."""
         state = self.state
         t = state.day
+        if day <= t:
+            raise ValueError(f"day {day} is not after the state's day {t}")
+        self._plan_shocks()
+        if self.close_day(t, True):
+            return False
+        for d in range(t + 1, min(day, state.max_days + 1)):
+            if self.close_day(d, self.open_day(d)):
+                return False
+        if day > state.max_days:
+            return False
+        self.open_day(day)
+        return True
+
+    def carry_on(self) -> None:
+        """Close the state's day (steps 4-6), then run the following days to the end."""
+        t = self.state.day
+        if not self.close_day(t, True):
+            self.days(t + 1)
+
+    def apply_valid(self, decision: Decision) -> bool:
+        """Apply `decision` at step 3 of the state's day only if the engine would reject none of
+        its operations there, every plan checked (spec section 4 permission gate: all or
+        nothing); returns whether it was applied. The operations are tried on a copy first."""
+        trial = Run(self.state.copy(), _Quiet(), NoReaction(), record_events=False)
+        trial.apply(decision)
+        if trial.rejected:
+            return False
+        self.apply(decision)
+        return True
+
+    def _plan_shocks(self) -> None:
+        """Look up the next D2 shock of every started activity of a state rebuilt from an
+        observation, which has none planned yet."""
+        state = self.state
         if self.shocks:
             for j, status in enumerate(state.status):
                 if status in (RUNNING, PAUSED):
-                    _plan_next_shock(state, self.streams, j, t)
-        if not self.close_day(t, True):
-            self.days(t + 1)
+                    _plan_next_shock(state, self.streams, j, state.day)
 
     def open_day(self, t: int) -> bool:
         """Steps 1-3 of day t; returns whether t is a decision epoch (spec section 3.1 g)."""
@@ -368,10 +445,17 @@ class Run:
         # D2 is drawn in step 5, after the decision of its day, so a shock on day t - 1 makes
         # day t a decision epoch (spec section 3.1 g).
         epoch = absence or inserted or self.shocked or t % self.review_period == 0
+        if self.wakes and t in self.wakes:  # an approval day the policy asked for (3.1 g)
+            self.wakes.discard(t)
+            epoch = True
         if epoch:
             self.n_epochs += 1
             if not self.passive:
-                self.apply(self.policy.decide(state.observe()))
+                policy = self.policy
+                self.apply(policy.decide(state.observe()))
+                wake = getattr(policy, "requested_epoch", None)
+                if wake is not None and wake > t:
+                    self.wakes.add(wake)
         if t in self.observe_days:
             self.observations.append(state.observe())
         return epoch
@@ -384,7 +468,8 @@ class Run:
         apply. SUBST takes, per replaced absent member, an idle present worker of the same role,
         adds the handover h_j to the remaining work and recomputes rho_j at once, so the new
         crew works on the same day. OVERTIME hires its temporary workers, idle and present from
-        today (`_hire`). RESEQ and SHIFT set the planned starts of all unstarted activities;
+        today (`_hire`). DESCOPE removes an unstarted optional activity (`_descope`). RESEQ and
+        SHIFT set the planned starts of all unstarted activities;
         the plan must pass `validate_residual` (SHIFT: `validate_shift`) on the planning view of
         the current state, and one that does not is rejected and counted in
         `infeasible_reseqs`, or raises AssertionError in `debug` mode. The decision's changes of
@@ -408,6 +493,10 @@ class Run:
                         _plan_next_shock(state, self.streams, op.activity, t)
                 case Overtime():
                     reason = _hire(state, op, t)
+                    if reason is not None:
+                        self.rejected.append(Rejection(day=t, operation=op, reason=reason))
+                case Descope():
+                    reason = _descope(state, op)
                     if reason is not None:
                         self.rejected.append(Rejection(day=t, operation=op, reason=reason))
                 case Reseq() | Shift():
@@ -511,6 +600,10 @@ class Run:
             temporary=tuple(state.temporary),
             temporary_days=state.temp_days,
             overtime_cost=state.overtime_cost,
+            descoped=tuple(
+                Descoped(day=day, activity=j, value=state.duration[j] * state.daily_cost[j])
+                for day, j in state.descoped
+            ),
         )
 
 
@@ -635,8 +728,13 @@ def _new_activity(
     successor = unstarted[_index(draw.successor, len(unstarted))] if unstarted else sink
     below = _descendants(state.successors, successor)
     # The source and finished activities are valid predecessors (spec section 2.2 D3), so the
-    # skip below only happens for instances without real activities.
-    allowed = [i for i in range(len(status)) if i != successor and i != sink and i not in below]
+    # skip below only happens for instances without real activities. Activities removed by
+    # DESCOPE are no longer part of the project (spec section 4).
+    allowed = [
+        i
+        for i in range(len(status))
+        if i != successor and i != sink and i not in below and status[i] != REMOVED
+    ]
     if not allowed:
         if events is not None:
             reason = f"no valid predecessor of {successor}"
@@ -805,6 +903,23 @@ def _hire(state: EngineState, op: Overtime, t: int) -> str | None:
         )
     for _ in range(op.workers):
         state.hire(op.role, t + op.days)
+    return None
+
+
+def _descope(state: EngineState, op: Descope) -> str | None:
+    """DESCOPE(j) (spec section 4): j must be an unstarted optional activity whose only
+    successor is still the sink; None after removing it (`EngineState.remove`), or why the
+    operation is invalid."""
+    j = op.activity
+    if j >= len(state.status):
+        return f"activity {j} does not exist"
+    if j not in state.optional:
+        return f"activity {j} is not optional"
+    if state.status[j] != UNSTARTED:
+        return f"activity {j} is {state.status[j]}, not unstarted"
+    if state.successors[j] != [state.sink]:
+        return f"activity {j} has successors {state.successors[j]}, not only the sink"
+    state.remove(j)
     return None
 
 

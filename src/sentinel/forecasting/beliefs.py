@@ -8,6 +8,7 @@ import numpy as np
 from sentinel.forecasting.durations import IntegerPmf, duration_pmf
 from sentinel.simulation.state import (
     DONE,
+    REMOVED,
     UNSTARTED,
     Observation,
     SampledWorld,
@@ -60,7 +61,7 @@ class Belief:
         self._fixed = [0.0] * n  # remaining work of finished activities and of fallbacks
         self._durations: list[_Duration] = []
         for j, status in enumerate(observation.status):
-            if status == DONE:
+            if status in (DONE, REMOVED):
                 continue
             if j < n_original:
                 act = instance.activities[j]

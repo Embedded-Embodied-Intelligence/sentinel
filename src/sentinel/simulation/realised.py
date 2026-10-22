@@ -4,23 +4,33 @@ from itertools import pairwise
 
 from sentinel.model.instance import Activity, ProjectInstance, Role, Worker
 from sentinel.model.schedule import Schedule
-from sentinel.simulation.engine import SimulationResult
+from sentinel.simulation.engine import Descoped, SimulationResult
 from sentinel.simulation.events import Absence, NewActivity
+from sentinel.simulation.state import cut_activity
 
 
 def project_graph(
     instance: ProjectInstance, result: SimulationResult
 ) -> tuple[list[list[int]], list[tuple[int, ...]]]:
-    """Successors and demands of every activity of a run, D3 insertions included."""
+    """Successors and demands of every activity of a run: the D3 insertions and the DESCOPE
+    removals in the order they happened (an insertion of step 1 before a removal of step 3 on
+    the same day), so the graph is the engine's (spec sections 2.2 and 4)."""
     successors = [list(act.successors) for act in instance.activities]
     demands = [act.demands for act in instance.activities]
-    for event in result.events:
-        if isinstance(event, NewActivity):
-            if event.activity != len(successors):
-                raise ValueError(f"inserted ids out of order at activity {event.activity}")
-            successors[event.predecessor].append(event.activity)
-            successors.append([event.successor])
-            demands.append(event.demands)
+    changes: list[tuple[int, int, NewActivity | Descoped]] = [
+        (event.day, 0, event) for event in result.events if isinstance(event, NewActivity)
+    ]
+    changes += [(removal.day, 1, removal) for removal in result.descoped]
+    changes.sort(key=lambda change: change[:2])  # stable: insertions keep their order
+    for _, _, change in changes:
+        if isinstance(change, Descoped):
+            cut_activity(successors, change.activity, instance.sink_id)
+            continue
+        if change.activity != len(successors):
+            raise ValueError(f"inserted ids out of order at activity {change.activity}")
+        successors[change.predecessor].append(change.activity)
+        successors.append([change.successor])
+        demands.append(change.demands)
     return successors, demands
 
 
@@ -33,13 +43,16 @@ def realised_instance(
     F_j - S_j: its crew is reserved from start to finish, absent members included, so the
     capacity check counts them. The sink is renumbered last. Capacities are nominal plus every
     temporary worker the run hired (spec section 4 OVERTIME), a bound over the whole run;
-    `execution_violations` checks single workers and the capacity of each day.
+    `execution_violations` checks single workers and the capacity of each day. Activities
+    removed by DESCOPE are left out, with their edges (spec section 4).
     """
     if result.truncated:
         raise ValueError(f"the run with seed {result.seed} was truncated at {result.max_days}")
     successors, demands = project_graph(instance, result)
     sink = instance.sink_id
-    order = [0, *(j for j in range(1, len(successors)) if j != sink), sink]
+    removed = {removal.activity for removal in result.descoped}
+    kept = (j for j in range(1, len(successors)) if j != sink and j not in removed)
+    order = [0, *kept, sink]
     new_id = {j: i for i, j in enumerate(order)}
     activities: list[Activity] = []
     starts: list[int] = []

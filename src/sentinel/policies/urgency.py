@@ -3,18 +3,22 @@
 from collections.abc import Iterable
 
 from sentinel.forecasting.beliefs import Belief
-from sentinel.simulation.state import PAUSED, RUNNING, UNSTARTED, Observation, nominal_activity
+from sentinel.simulation.state import (
+    PAUSED,
+    RUNNING,
+    UNSTARTED,
+    Observation,
+    nominal_activity,
+    successor_lists,
+)
 
 
 def latest_finishes(observation: Observation, horizon: int) -> list[int]:
     """LF_j of every activity for `horizon`, by a backward pass over the current network (the
-    instance and its D3 activities) with nominal durations (spec section 1.4)."""
-    instance = observation.instance
+    instance with its D3 activities and without those DESCOPE removed) with nominal durations
+    (spec section 1.4)."""
     n = len(observation.status)
-    successors = [list(act.successors) for act in instance.activities]
-    for inserted in observation.inserted:
-        successors[inserted.predecessor].append(inserted.id)
-        successors.append([inserted.successor])
+    successors = successor_lists(observation)
     durations = [nominal_activity(observation, j)[0] for j in range(n)]
     waiting = [0] * n
     for succ in successors:

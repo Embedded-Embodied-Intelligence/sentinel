@@ -1,50 +1,79 @@
-"""Sentinel: a one-step rollout policy on the base policy NoReaction (spec sections 5 and 6;
-Bertsekas, Tsitsiklis & Wu 1997), with full autonomy (every chosen action applies).
+"""Sentinel: a one-step rollout policy on the base policy NoReaction (spec sections 4-6;
+Bertsekas, Tsitsiklis & Wu 1997), with a permission gate.
 
 At a decision epoch with an event touching a crew (an absence onset or return of a crew member,
 D2, D3) or a periodic one, Sentinel deliberates: it evaluates NOOP on the epoch's sampled
 worlds and returns it if the needs are met (needs gate, spec section 5); otherwise it generates
-the rule candidates, races them on the same worlds and applies the choice of its decision
-rule. At epochs whose only events concern idle workers it returns NOOP without deliberating.
+the rule candidates, races them on the same worlds (with DESCOPE candidates when enabled and no
+candidate reaches theta_D) and takes the choice of its decision rule. The permission gate then
+applies the choice at once if its level is below Lambda and it has no DESCOPE; otherwise it
+defers (NOOP, deliberate again later) if the urgency exceeds tau_def, else escalates: a
+simulated human approves after delta_h days, the approval day becomes a decision epoch, and the
+action applies there if it is still valid, else a fresh deliberation follows. While an action
+awaits approval, and at epochs whose only events concern idle workers, Sentinel returns NOOP
+without deliberating.
 """
 
-import math
 import time
 from dataclasses import dataclass, field
 
-from sentinel.agent.candidates import Candidate, generate, noop
-from sentinel.agent.decide import CandidateRecord, DecisionRecord, Needs, Reason, choose
+from sentinel.agent.candidates import Candidate, descopes, generate, noop
+from sentinel.agent.decide import (
+    CandidateRecord,
+    DecisionRecord,
+    Gate,
+    Reason,
+    assess_needs,
+    choose,
+)
 from sentinel.agent.evaluate import Evaluator, race
 from sentinel.agent.params import SentinelParams
 from sentinel.experiments.runs import derive_seed
 from sentinel.policies.base import EMPTY_DECISION, Decision, DecisionStats
-from sentinel.simulation.state import PAUSED, RUNNING, Observation
+from sentinel.policies.urgency import urgencies
+from sentinel.simulation.engine import rehearse
+from sentinel.simulation.state import PAUSED, RUNNING, UNSTARTED, Observation
 
 
 @dataclass
 class SentinelStats(DecisionStats):
     """`DecisionStats` (with `reseqs`: CP-SAT searches for RESEQ plans) and Sentinel's own
     counts: deliberations, needs-gate exits, epochs without deliberation, candidates evaluated,
-    rollouts, the wall time of each deliberation, the chosen candidates by kind and the
-    decisions by reason (`DecisionRecord.reason`)."""
+    rollouts, the wall time of each deliberation, the chosen candidates by kind (before the
+    permission gate), the decisions by reason (`DecisionRecord.reason`), and what the gate did:
+    deferrals, escalations, approvals applied and approvals discarded (spec section 4)."""
 
     deliberations: int = 0
     gate_exits: int = 0
     skipped: int = 0
     candidates: int = 0
     rollouts: int = 0
+    deferrals: int = 0
+    escalations: int = 0
+    approvals_applied: int = 0
+    approvals_discarded: int = 0
     deliberation_s: list[float] = field(default_factory=list)
     chosen: dict[str, int] = field(default_factory=dict)
     reasons: dict[str, int] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class Pending:
+    """An escalated action awaiting approval on `day`."""
+
+    label: str
+    decision: Decision
+    day: int
+
+
 class Sentinel:
     """The Sentinel agent (spec section 6) with `params` (variant `full`, `no_overtime` or
-    `scalarised`). It sees only observations. The rollouts of epoch t use the seed
-    derive_seed(`seed`, "sentinel", str(t)), with `seed` the run's seed, so a run is
-    deterministic and the exogenous events stay those of the world (common random numbers).
-    `records` keeps a `DecisionRecord` per epoch (without `keep_records`, none); a policy
-    object serves one run at a time and recognises a new run by its day.
+    `scalarised`, autonomy Lambda, DESCOPE). It sees only observations. The rollouts of epoch t
+    use the seed derive_seed(`seed`, "sentinel", str(t)), with `seed` the run's seed, so a run
+    is deterministic and the exogenous events stay those of the world (common random numbers).
+    `records` keeps a `DecisionRecord` per epoch (without `keep_records`, none); a policy object
+    serves one run at a time and recognises a new run by its day. After an escalation,
+    `requested_epoch` asks the engine for the approval day as a decision epoch.
     """
 
     def __init__(
@@ -55,6 +84,8 @@ class Sentinel:
         self.keep_records = keep_records
         self.stats = SentinelStats()
         self.records: list[DecisionRecord] = []
+        self.pending: Pending | None = None
+        self.requested_epoch: int | None = None
         self._seen: tuple[int, tuple[bool, ...], int, int] | None = None
 
     @property
@@ -62,23 +93,37 @@ class Sentinel:
         return f"sentinel_{self.params.variant}"
 
     def decide(self, observation: Observation) -> Decision:
-        """NOOP at an epoch with only idle workers' events, else the deliberated choice."""
+        """The decision of the epoch: an approved action, NOOP while one awaits approval or at
+        an epoch with only idle workers' events, else the deliberated choice after the gate."""
         began = time.perf_counter()
         stats = self.stats
-        if self.deliberates(observation):
+        t = observation.day
+        self.requested_epoch = None
+        crew_event = self.deliberates(observation)
+        pending = self.pending
+        if pending is not None and t < pending.day:
+            record = self._quiet(t, "awaiting_approval")
+        elif pending is not None:
+            self.pending = None
+            alpha = self.params.handover_factor
+            if rehearse(observation, pending.decision, handover_factor=alpha)[1]:
+                stats.approvals_discarded += 1
+                record = self.deliberate(observation, discarded=pending.label)
+            else:
+                stats.approvals_applied += 1
+                record = DecisionRecord(
+                    day=t,
+                    deliberated=False,
+                    rule=self.params.rule,
+                    reason="approved",
+                    chosen=pending.label,
+                    decision=pending.decision,
+                )
+        elif crew_event:
             record = self.deliberate(observation)
-            stats.deliberations += 1
-            stats.deliberation_s.append(record.wall_time_s)
         else:
             stats.skipped += 1
-            record = DecisionRecord(
-                day=observation.day,
-                deliberated=False,
-                rule=self.params.rule,
-                reason="idle_events",
-                chosen="NOOP",
-                decision=EMPTY_DECISION,
-            )
+            record = self._quiet(t, "idle_events")
         stats.decisions += 1
         stats.reasons[record.reason] = stats.reasons.get(record.reason, 0) + 1
         stats.decide_time_s += time.perf_counter() - began
@@ -86,10 +131,21 @@ class Sentinel:
             self.records.append(record)
         return record.decision
 
+    def _quiet(self, day: int, reason: Reason) -> DecisionRecord:
+        return DecisionRecord(
+            day=day,
+            deliberated=False,
+            rule=self.params.rule,
+            reason=reason,
+            chosen="NOOP",
+            decision=EMPTY_DECISION,
+        )
+
     def deliberates(self, observation: Observation) -> bool:
         """Whether the epoch is periodic or has an event touching a crew since the previous
         epoch: a D2 shock, a D3 activity, or an absence onset or return of a worker who is in
-        the crew of a started activity (spec section 6, deliberation epochs)."""
+        the crew of a started activity (spec section 6, deliberation epochs). A new run, told
+        by its day, forgets the previous run, a pending approval included."""
         n_workers = len(observation.instance.workers)
         present = observation.present[:n_workers]
         seen = (
@@ -102,6 +158,7 @@ class Sentinel:
         self._seen = seen
         if before is None or observation.day <= before[0]:  # a new run
             before = (-1, (True,) * n_workers, 0, 0)
+            self.pending = None
         if observation.day % self.params.review_period == 0 or seen[2:] != before[2:]:
             return True
         changed = [w for w in range(n_workers) if present[w] != before[1][w]]
@@ -111,17 +168,21 @@ class Sentinel:
         crews = {w for j, s in enumerate(status) if s in (RUNNING, PAUSED) for w in assigned[j]}
         return any(w in crews for w in changed)
 
-    def deliberate(self, observation: Observation) -> DecisionRecord:
-        """Needs gate, candidates, racing and the decision rule at one epoch (spec 5-6)."""
+    def deliberate(self, observation: Observation, discarded: str | None = None) -> DecisionRecord:
+        """Needs gate, candidates, racing, the decision rule and the permission gate at one
+        epoch (spec sections 4-6); `discarded` names an approved action no longer valid."""
         began = time.perf_counter()
         params, stats = self.params, self.stats
         t = observation.day
+        stats.deliberations += 1
         evaluator = Evaluator(observation, derive_seed(self.seed, "sentinel", str(t)), params)
         base = noop(observation)
-        needs = self.needs(evaluator, base)
+        needs = assess_needs(evaluator, base)
         if needs.met:
             stats.gate_exits += 1
             stats.rollouts += evaluator.rollouts
+            done = time.perf_counter()
+            stats.deliberation_s.append(done - began)
             return DecisionRecord(
                 day=t,
                 deliberated=True,
@@ -129,42 +190,57 @@ class Sentinel:
                 reason="needs_met",
                 chosen=base.label,
                 decision=base.decision,
+                discarded=discarded,
                 needs=needs,
                 rollouts=evaluator.rollouts,
-                evaluation_s=time.perf_counter() - began,
-                wall_time_s=time.perf_counter() - began,
+                evaluation_s=done - began,
+                wall_time_s=done - began,
             )
         generation = generate(observation, params=params)
         candidates: list[Candidate] = list(generation.candidates)
         stats.reseqs += generation.solves
         stats.fallbacks += generation.fallbacks
         stats.solve_time_s += generation.solve_time_s
-        stats.candidates += len(candidates)
         evaluated = time.perf_counter()
         reason: Reason = "only_candidate"
         index = 0
+        runner: int | None = None
         tied: tuple[int, ...] = (0,)
         records: list[CandidateRecord] = []
+        if params.descope and len(candidates) == 1 and needs.p_on_time < params.theta_d:
+            candidates += descopes(observation, params)
         if len(candidates) > 1:
             evaluation = race(evaluator, candidates)
-            choice = choose(evaluation.stats, params)
-            index, reason = choice.index, choice.reason
-            tied = choice.ties
+            if params.descope and not any(c.kind == "descope" for c in candidates):
+                best_p = max(s.p_on_time for s in evaluation.stats if not s.dropped)
+                extra = descopes(observation, params) if best_p < params.theta_d else []
+                if extra:
+                    candidates += extra
+                    evaluation = race(evaluator, candidates)
+            choice = choose(evaluation.stats, params, evaluation.paired)
+            index, reason, runner, tied = choice.index, choice.reason, choice.runner_up, choice.ties
             records = [
-                CandidateRecord(**s.model_dump(), decision=c.decision)
-                for s, c in zip(evaluation.stats, candidates, strict=True)
+                CandidateRecord(**s.model_dump(), decision=c.decision, eliminated=out)
+                for s, c, out in zip(evaluation.stats, candidates, choice.eliminated, strict=True)
             ]
+        stats.candidates += len(candidates)
         chosen = candidates[index]
         stats.chosen[chosen.kind] = stats.chosen.get(chosen.kind, 0) + 1
+        gate, decision = self.gate(observation, chosen)
         stats.rollouts += evaluator.rollouts
         done = time.perf_counter()
+        stats.deliberation_s.append(done - began)
         return DecisionRecord(
             day=t,
             deliberated=True,
             rule=params.rule,
             reason=reason,
             chosen=chosen.label,
-            decision=chosen.decision,
+            decision=decision,
+            runner_up=None if runner is None else candidates[runner].label,
+            gate=gate,
+            approval_day=None if self.pending is None else self.pending.day,
+            discarded=discarded,
             needs=needs,
             candidates=tuple(records),
             tied=tuple(candidates[a].label for a in tied),
@@ -176,40 +252,26 @@ class Sentinel:
             wall_time_s=done - began,
         )
 
-    def needs(self, evaluator: Evaluator, base: Candidate) -> Needs:
-        """The needs of NOOP (spec section 5) from N_1 rollouts, or from N where the N_1 ones
-        do not show a need beyond `se_factor` standard errors (deadline: theta_D - p -
-        epsilon_D; budget: the overrun of the mean cost lowered by that many errors, minus
-        epsilon_B). The gate is met only on N rollouts."""
+    def gate(self, observation: Observation, chosen: Candidate) -> tuple[Gate | None, Decision]:
+        """The permission gate (spec section 4): the chosen decision runs at once if it needs
+        no approval; otherwise NOOP now, deferred if the urgency exceeds tau_def, else escalated
+        with the approval day as the next requested epoch. None for NOOP."""
         params = self.params
-        k = params.se_factor
-        outcomes = evaluator.extend(base, params.n_stage1)
-        n = len(outcomes)
-        p, se_p = _mean_se([float(x) for x in outcomes.on_time])
-        cost, se_cost = _mean_se(outcomes.cost)
-        clear = params.theta_d - p - params.eps_d > k * se_p
-        clear = clear or evaluator.overrun(cost - k * se_cost) > params.eps_b
-        if not clear:
-            outcomes = evaluator.extend(base, params.n_rollouts)
-            n = len(outcomes)
-            p, _ = _mean_se([float(x) for x in outcomes.on_time])
-            cost, _ = _mean_se(outcomes.cost)
-        deadline = max(0.0, params.theta_d - p)
-        budget = evaluator.overrun(cost)
-        return Needs(
-            deadline=deadline,
-            budget=budget,
-            p_on_time=p,
-            rollouts=n,
-            met=deadline <= params.eps_d and budget <= params.eps_b,
-        )
+        if not params.needs_approval(chosen.decision):
+            return ("auto" if chosen.decision.operations else None), chosen.decision
+        if self.urgency(observation) > params.tau_def:
+            self.stats.deferrals += 1
+            return "deferred", EMPTY_DECISION
+        day = observation.day + params.approval_delay
+        self.pending = Pending(label=chosen.label, decision=chosen.decision, day=day)
+        self.requested_epoch = day
+        self.stats.escalations += 1
+        return "escalated", EMPTY_DECISION
 
-
-def _mean_se(values: list[float]) -> tuple[float, float]:
-    """Mean and its standard error (sample standard deviation / sqrt n; 0 for n < 2)."""
-    n = len(values)
-    mean = math.fsum(values) / n
-    if n < 2:
-        return mean, 0.0
-    variance = math.fsum((v - mean) ** 2 for v in values) / (n - 1)
-    return mean, math.sqrt(variance / n)
+    @staticmethod
+    def urgency(observation: Observation) -> float:
+        """tau_t = min_j tau_j over the unstarted, paused and running activities (spec 5)."""
+        unfinished = [
+            j for j, s in enumerate(observation.status) if s in (UNSTARTED, RUNNING, PAUSED)
+        ]
+        return min(urgencies(observation, unfinished).values(), default=float("inf"))

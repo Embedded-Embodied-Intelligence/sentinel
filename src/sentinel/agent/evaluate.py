@@ -3,18 +3,22 @@
 Rollout i of an epoch uses xi_i = derive_seed(seed, "rollout", str(i)), as the forecaster does:
 its belief stream samples the hidden state once, and the world is reused by every candidate;
 its future stream drives the disruptions after the observed day (ADR-0009). A candidate is
-applied at step 3 of the observed day with the engine's `Run.apply`, and the rollout continues
-under NoReaction (`Run.resume`), so all candidates see the same N worlds (common random
-numbers). Racing (ADR-0015): stage 1 runs N_1 rollouts per candidate and drops those whose
-capped on-time estimate min(p, theta_D) is below the best by more than `se_factor` paired
-standard errors; stage 2 extends the survivors to N.
+applied at step 3 of the observed day with the engine's `Run.apply`; one that needs approval
+(spec section 4) is applied at step 3 of day t + delta_h instead, and only if it is valid in
+that rollout (`Run.apply_valid`). The rollout continues under NoReaction (`Run.resume`), so all
+candidates see the same N worlds (common random numbers). Racing (ADR-0015): stage 1 runs N_1
+rollouts per candidate and drops those significantly and materially worse than the stage's
+leader in min(p, theta_D) and in the expected tardiness T; stage 2 extends the survivors to N.
 """
 
 import math
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Literal
 
 import numpy as np
+import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
 
 from sentinel.agent.candidates import Candidate, CandidateKind
@@ -33,18 +37,22 @@ from sentinel.simulation.state import (
     nominal_activity,
     state_from_observation,
 )
-from sentinel.simulation.uncertainty import derive_budget
 
 _BASE_POLICY = NoReaction()
+
+# The stochastic components of the rule, whose ties use paired standard errors (spec 6).
+Paired = Literal["on_time", "tardiness", "budget"]
 
 
 @dataclass
 class Outcomes:
-    """Per-rollout outcomes of one candidate, rollouts 0, 1, ... in order."""
+    """Per-rollout outcomes of one candidate, rollouts 0, 1, ... in order; the tardiness is
+    max(0, C - D) in days."""
 
     on_time: list[bool] = field(default_factory=list)
     cost: list[float] = field(default_factory=list)
     makespan: list[int] = field(default_factory=list)
+    tardiness: list[int] = field(default_factory=list)
 
     def __len__(self) -> int:
         return len(self.on_time)
@@ -52,38 +60,83 @@ class Outcomes:
 
 class CandidateStats(BaseModel):
     """What the decision rule knows of a candidate (spec sections 5 and 6): `rollouts` used,
-    p = `p_on_time`, `capped` = min(p, theta_D), `se_vs_best` the standard error of the paired
-    on-time differences against the best candidate of its stage, z = `mean_cost` (cost so far
-    included), o = `overrun`, Delta = `deviation` (substitutions included), l = `level`, and
-    whether racing `dropped` it in stage 1. `utility` is U_a of the scalarised ablation."""
+    p = `p_on_time`, `capped` = min(p, theta_D), T = `tardiness` (mean days late), z =
+    `mean_cost` (cost so far included), o = `overrun`, Delta = `deviation` (substitutions
+    included), the `scope_loss` of a DESCOPE, l = `level`, the approval `delay` its rollouts
+    imagined (0: applied at once) and whether racing `dropped` it in stage 1. `utility` is U_a
+    of the scalarised ablation."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     label: str
     kind: CandidateKind
     level: NonNegativeInt
+    delay: NonNegativeInt
     deviation: NonNegativeFloat
     substituted: NonNegativeInt
+    scope_loss: NonNegativeFloat
     rollouts: NonNegativeInt
     p_on_time: NonNegativeFloat
     capped: NonNegativeFloat
-    se_vs_best: NonNegativeFloat
+    tardiness: NonNegativeFloat
     mean_cost: float
     overrun: NonNegativeFloat
     utility: float
     dropped: bool
 
 
-class Evaluation(BaseModel):
-    """The statistics of every candidate (in candidate order), the final best by capped on-time
-    estimate, the rollouts run in this call and its wall time."""
+class PairedErrors:
+    """Standard errors of the mean paired (CRN) difference between two candidates over their
+    first `n` common rollouts (spec section 6): of the on-time indicators, of the tardiness
+    max(0, C - D) and of the total cost divided by B. Indices are candidate positions; the
+    differences are computed when first asked for, so candidates with fewer rollouts (dropped
+    by racing) may be among the outcomes as long as nobody asks for them."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    def __init__(self, outcomes: Sequence[Outcomes], n: int, budget: float) -> None:
+        self.outcomes = outcomes
+        self.n = n
+        self.budget = budget
+        self._cache: dict[tuple[Paired, int, int], float] = {}
+
+    def _values(self, component: Paired, a: int) -> npt.NDArray[np.float64]:
+        outcomes, n = self.outcomes[a], self.n
+        if len(outcomes) < n:
+            raise ValueError(f"candidate {a} has {len(outcomes)} rollouts, not {n}")
+        match component:
+            case "on_time":
+                return np.asarray(outcomes.on_time[:n], dtype=np.float64)
+            case "tardiness":
+                return np.asarray(outcomes.tardiness[:n], dtype=np.float64)
+            case "budget":
+                return np.asarray(outcomes.cost[:n], dtype=np.float64) / self.budget
+
+    def __call__(self, component: Paired, a: int, b: int) -> float:
+        """The paired standard error of `component` between candidates a and b."""
+        key = (component, min(a, b), max(a, b))
+        se = self._cache.get(key)
+        if se is None:
+            n = self.n
+            if n < 2 or a == b:
+                se = 0.0
+            else:
+                differences = self._values(component, a) - self._values(component, b)
+                se = float(np.std(differences, ddof=1)) / math.sqrt(n)
+            self._cache[key] = se
+        return se
+
+
+@dataclass(frozen=True)
+class Evaluation:
+    """The statistics of every candidate (in candidate order), the leader of the survivors
+    (largest capped on-time estimate, then smallest tardiness, then candidate order), the
+    paired standard errors on the final rollouts, the rollouts run in this call and its wall
+    time."""
 
     stats: tuple[CandidateStats, ...]
-    best: NonNegativeInt
-    rollouts: NonNegativeInt
-    wall_time_s: NonNegativeFloat
+    best: int
+    paired: PairedErrors
+    rollouts: int
+    wall_time_s: float
 
 
 class Evaluator:
@@ -94,24 +147,21 @@ class Evaluator:
     from the same streams, rewound (ADR-0015). `extend` runs a candidate's rollouts up to a
     count and keeps them by label, so the needs gate's NOOP rollouts serve racing too. A
     candidate is checked once through the engine (`rehearse`); its rollouts then apply it
-    without checking plans again. The deadline D comes from the observation; the budget B is
-    the instance's, or derived with beta = `budget_reserve` and c_k = 1 (spec section 1.2), as
-    the observation carries neither.
+    without checking plans again, except a candidate that needs approval, which each rollout
+    re-validates on the approval day. The deadline D and the budget B come from the
+    observation.
     """
 
     def __init__(self, observation: Observation, seed: int, params: SentinelParams) -> None:
         if observation.deadline is None:
             raise ValueError("Sentinel needs a deadline D (spec section 1.2)")
+        if observation.budget is None or observation.budget <= 0:
+            raise ValueError("Sentinel needs a positive budget B in the observation (spec 3)")
         self.observation = observation
         self.seed = seed
         self.params = params
         self.deadline = observation.deadline
-        instance = observation.instance
-        self.budget = (
-            instance.budget
-            if instance.budget is not None
-            else derive_budget(instance, params.budget_reserve, params=observation.pert)
-        )
+        self.budget = observation.budget
         self.belief = Belief(observation)
         self.worlds: list[SampledWorld] = []
         self.templates: list[EngineState] = []
@@ -147,17 +197,20 @@ class Evaluator:
             if rejected:
                 raise ValueError(f"candidate {candidate.label} is invalid: {rejected[0].reason}")
             outcomes = self.outcomes[candidate.label] = Outcomes()
+        deadline = self.deadline
         for i in range(len(outcomes), n):
             makespan, truncated, cost = self.rollout(candidate, i)
-            outcomes.on_time.append(not truncated and makespan <= self.deadline)
+            outcomes.on_time.append(not truncated and makespan <= deadline)
             outcomes.cost.append(cost)
             outcomes.makespan.append(makespan)
+            outcomes.tardiness.append(max(0, makespan - deadline))
             self.rollouts += 1
         return outcomes
 
     def rollout(self, candidate: Candidate, i: int) -> tuple[int, bool, float]:
         """Rollout i of the candidate: (makespan, truncated, total cost); a truncated rollout
-        ends at max_days."""
+        ends at max_days. A candidate that needs approval is applied on the approval day, if
+        the project is still running and the candidate is valid in that rollout."""
         self.world(i)
         state = self.templates[i].copy()
         streams = self.streams[i]
@@ -170,8 +223,13 @@ class Evaluator:
             record_events=False,
             check_plans=False,
         )
-        run.apply(candidate.decision)
-        run.resume()
+        delay = self.params.delay(candidate.decision)
+        if not delay:
+            run.apply(candidate.decision)
+            run.resume()
+        elif run.resume_to(state.day + delay):
+            run.apply_valid(candidate.decision)
+            run.carry_on()
         finish = state.start[state.sink]
         if finish is None:
             return state.max_days, True, state.cost
@@ -179,35 +237,29 @@ class Evaluator:
 
     def overrun(self, mean_cost: float) -> float:
         """o = max(0, z - B) / B (spec section 5)."""
-        return max(0.0, mean_cost - self.budget) / self.budget if self.budget > 0 else 0.0
+        return max(0.0, mean_cost - self.budget) / self.budget
 
     def stats(
-        self,
-        candidate: Candidate,
-        n: int,
-        best: Outcomes | None,
-        deviation: float,
-        *,
-        dropped: bool = False,
+        self, candidate: Candidate, n: int, deviation: float, *, dropped: bool = False
     ) -> CandidateStats:
-        """Statistics of the candidate's first n rollouts; `best` gives the paired SE."""
+        """Statistics of the candidate's first n rollouts."""
         outcomes = self.extend(candidate, n)
-        on_time = outcomes.on_time[:n]
-        p = sum(on_time) / n
+        p = sum(outcomes.on_time[:n]) / n
         mean_cost = math.fsum(outcomes.cost[:n]) / n
         overrun = self.overrun(mean_cost)
         params = self.params
-        se = 0.0 if best is None else paired_se(best.on_time[:n], on_time)
         return CandidateStats(
             label=candidate.label,
             kind=candidate.kind,
             level=candidate.level,
+            delay=params.delay(candidate.decision),
             deviation=deviation,
             substituted=candidate.substituted,
+            scope_loss=candidate.scope_loss,
             rollouts=n,
             p_on_time=p,
             capped=min(p, params.theta_d),
-            se_vs_best=se,
+            tardiness=sum(outcomes.tardiness[:n]) / n,
             mean_cost=mean_cost,
             overrun=overrun,
             utility=p - params.lambda_b * overrun - params.lambda_delta * deviation,
@@ -242,44 +294,72 @@ def instability(observation: Observation, candidate: Candidate, kappa_h: float) 
     return mean + kappa_h * candidate.substituted
 
 
-def race(evaluator: Evaluator, candidates: list[Candidate], *, racing: bool = True) -> Evaluation:
+def race(
+    evaluator: Evaluator,
+    candidates: Sequence[Candidate],
+    *,
+    racing: bool = True,
+    stage1: int | None = None,
+    rollouts: int | None = None,
+) -> Evaluation:
     """Evaluate the candidates by racing (spec section 6): stage 1 on N_1 rollouts each, drop
-    those whose capped on-time estimate is below the stage's best by more than `se_factor`
-    paired standard errors, stage 2 extends the survivors to N. Without `racing` every candidate
-    gets N rollouts. The best is the first candidate with the largest capped estimate; dropped
-    candidates keep their stage-1 statistics."""
+    those not tied with the stage's leader in min(p, theta_D) and not tied with it in T (ties
+    of `SentinelParams.ties`, on the stage-1 rollouts), stage 2 extends the survivors to N.
+    Without `racing` every candidate gets N rollouts. `stage1` and `rollouts` replace N_1 and N
+    of the parameters, e.g. to decide from rollouts evaluated before (outcomes are cached by
+    label). Dropped candidates keep their stage-1 statistics."""
     began = time.perf_counter()
     before = evaluator.rollouts
     params = evaluator.params
+    n1 = params.n_stage1 if stage1 is None else stage1
+    n = params.n_rollouts if rollouts is None else rollouts
     deviations = [instability(evaluator.observation, c, params.kappa_h) for c in candidates]
     keep = list(range(len(candidates)))
     first: dict[int, CandidateStats] = {}
-    if racing and params.n_stage1 < params.n_rollouts:
-        n1 = params.n_stage1
+    if racing and n1 < n and len(candidates) > 1:
         outcomes = [evaluator.extend(c, n1) for c in candidates]
-        capped = [min(sum(o.on_time[:n1]) / n1, params.theta_d) for o in outcomes]
-        top = max(range(len(candidates)), key=lambda a: (capped[a], -a))
+        stage = [evaluator.stats(c, n1, deviations[a]) for a, c in enumerate(candidates)]
+        paired = PairedErrors(outcomes, n1, evaluator.budget)
+        leader = _leader(stage, keep)
         keep = []
-        for a, candidate in enumerate(candidates):
-            se = paired_se(outcomes[top].on_time[:n1], outcomes[a].on_time[:n1])
-            if capped[top] - capped[a] > params.se_factor * se:
-                first[a] = evaluator.stats(
-                    candidate, n1, outcomes[top], deviations[a], dropped=True
-                )
+        for a in range(len(candidates)):
+            if a != leader and dominated(stage, paired, params, leader, a):
+                first[a] = stage[a].model_copy(update={"dropped": True})
             else:
                 keep.append(a)
-    n = params.n_rollouts
-    finals = [evaluator.extend(candidates[a], n) for a in keep]
-    capped = [min(sum(o.on_time[:n]) / n, params.theta_d) for o in finals]
-    top = keep[max(range(len(keep)), key=lambda b: (capped[b], -b))]
-    best = evaluator.extend(candidates[top], n)
+    for a in keep:
+        evaluator.extend(candidates[a], n)
     stats = [
-        first[a] if a in first else evaluator.stats(c, n, best, deviations[a])
+        first[a] if a in first else evaluator.stats(c, n, deviations[a])
         for a, c in enumerate(candidates)
     ]
+    all_outcomes = [evaluator.outcomes[c.label] for c in candidates]
     return Evaluation(
         stats=tuple(stats),
-        best=top,
+        best=_leader(stats, keep),
+        paired=PairedErrors(all_outcomes, n, evaluator.budget),
         rollouts=evaluator.rollouts - before,
         wall_time_s=time.perf_counter() - began,
     )
+
+
+def _leader(stats: Sequence[CandidateStats], among: Sequence[int]) -> int:
+    """The candidate with the largest capped on-time estimate, then the smallest tardiness,
+    then the first in candidate order."""
+    return min(among, key=lambda a: (-stats[a].capped, stats[a].tardiness, a))
+
+
+def dominated(
+    stats: Sequence[CandidateStats],
+    paired: PairedErrors,
+    params: SentinelParams,
+    leader: int,
+    a: int,
+) -> bool:
+    """Whether a is significantly and materially worse than the leader in min(p, theta_D) and
+    in T (racing, spec section 6)."""
+    worse_p = stats[leader].capped - stats[a].capped
+    if params.ties("on_time", worse_p, paired("on_time", leader, a)):
+        return False
+    worse_t = stats[a].tardiness - stats[leader].tardiness
+    return not params.ties("tardiness", worse_t, paired("tardiness", leader, a))

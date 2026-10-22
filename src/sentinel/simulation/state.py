@@ -3,7 +3,7 @@
 import math
 import operator
 from bisect import insort
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import Final, Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat, NonNegativeInt
@@ -13,11 +13,12 @@ from sentinel.model.schedule import Schedule
 from sentinel.simulation.events import DisruptionParams
 from sentinel.simulation.uncertainty import PertParams, role_costs
 
-ActivityStatus = Literal["unstarted", "running", "paused", "done"]
+ActivityStatus = Literal["unstarted", "running", "paused", "done", "removed"]
 UNSTARTED: Final = "unstarted"
 RUNNING: Final = "running"
 PAUSED: Final = "paused"
 DONE: Final = "done"
+REMOVED: Final = "removed"  # removed by DESCOPE, never executed (spec section 4)
 HANDOVER_FACTOR: Final = 0.3  # alpha of the handover cost h_j (spec sections 3 and 8)
 OVERTIME_CAP: Final = 0.2  # gamma: at most floor(gamma R_k) temporary workers of role k (4, 8)
 OVERTIME_RATE: Final = 1.5  # c_OT_k / c_k, the daily cost of a temporary worker (spec 4, 8)
@@ -108,7 +109,11 @@ class Observation(BaseModel):
     members included (spec section 3.1 a); a member replaced by SUBST has left it (spec section
     4). `work_increases` lists every observed D2 shock as (activity, e_j before the shock,
     factor F), and `handovers` every SUBST handover as (activity, e_j at the handover, work
-    added m_j o_j in crew-member days, i.e. h_j M_j; spec section 3).
+    added m_j o_j in crew-member days, i.e. h_j M_j; spec section 3). `budget` is B (spec
+    section 1.2), `costs` the daily costs c_k and `overtime_costs` the c_OT_k of temporary
+    workers (spec section 4); the engine always reports them. `optional` lists the optional
+    activities O that DESCOPE may remove; an activity it removed has the status "removed" (spec
+    section 4).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -132,6 +137,10 @@ class Observation(BaseModel):
     disruptions: DisruptionParams
     handovers: tuple[tuple[int, float, int], ...] = Field(default=(), exclude_if=_unset)
     temporary: tuple[TemporaryWorker, ...] = Field(default=(), exclude_if=_unset)
+    budget: float | None = None
+    costs: tuple[float, ...] = ()
+    overtime_costs: tuple[float, ...] = ()
+    optional: tuple[NonNegativeInt, ...] = Field(default=(), exclude_if=_unset)
 
 
 def worker_roles(observation: Observation) -> list[int]:
@@ -154,13 +163,15 @@ class EngineState:
     member's work costs `wage` per day, c_k of its role, but 0 for a temporary worker, which is
     paid OVERTIME_RATE c_k for every day it is hired instead (`temp_cost` per day for all of them,
     added up in `temp_days` and `overtime_cost`). `handover_factor` is alpha of the SUBST
-    handover cost.
+    handover cost and `budget` the B that observations report. `optional` holds the activities
+    O that DESCOPE may remove and `descoped` the (day, activity) of every removal (`remove`).
     """
 
     __slots__ = (
         "absent_since",
         "announced",
         "assigned",
+        "budget",
         "busy",
         "changed",
         "cost",
@@ -168,6 +179,7 @@ class EngineState:
         "day",
         "deadline",
         "demands",
+        "descoped",
         "disruptions",
         "done",
         "duration",
@@ -184,6 +196,7 @@ class EngineState:
         "max_days",
         "next_shock",
         "open_since",
+        "optional",
         "overtime_cost",
         "pending",
         "pert",
@@ -224,6 +237,8 @@ class EngineState:
         deadline: int | None,
         max_days: int,
         handover_factor: float = HANDOVER_FACTOR,
+        budget: float | None = None,
+        optional: Collection[int] = (),
     ) -> None:
         acts = instance.activities
         n = len(acts)
@@ -234,6 +249,9 @@ class EngineState:
         self.deadline = deadline
         self.max_days = max_days  # last simulated day
         self.role_costs = tuple(role_costs)
+        self.budget = budget
+        self.optional = frozenset(optional)
+        self.descoped: list[tuple[int, int]] = []
         self.sink = n - 1
         self.day = 0
         self.cost = 0.0
@@ -390,6 +408,24 @@ class EngineState:
         self.hired = len(hired)
         self.temp_cost = sum(OVERTIME_RATE * self.role_costs[k] for k in hired)
 
+    def remove(self, j: int) -> None:
+        """DESCOPE of the unstarted activity j, whose only successor is the sink (spec section
+        4): its edges vanish (`cut_activity`), predecessors left without successors precede the
+        sink, and the sink waits for those still unfinished instead of j."""
+        sink = self.sink
+        self.status[j] = REMOVED
+        self.eligible.discard(j)
+        self.pending[j] = 0
+        pending = self.pending
+        pending[sink] -= 1  # j was unstarted
+        for i in cut_activity(self.successors, j, sink):
+            if self.status[i] != DONE:
+                pending[sink] += 1
+        if pending[sink] == 0:
+            self.eligible.add(sink)
+            self.changed = True
+        self.descoped.append((self.day, j))
+
     def hidden(self) -> SampledWorld:
         """The true hidden quantities: the perfect-information test hook of the forecaster.
 
@@ -421,10 +457,49 @@ class EngineState:
             disruptions=self.disruptions,
             handovers=tuple(self.handovers),
             temporary=tuple(self.temporary),
+            budget=self.budget,
+            costs=self.role_costs,
+            overtime_costs=tuple(OVERTIME_RATE * c for c in self.role_costs),
+            optional=tuple(sorted(self.optional)),
         )
 
 
 _NESTED: Final = frozenset({"idle", "successors"})  # EngineState lists of lists
+
+
+def cut_activity(successors: list[list[int]], j: int, sink: int) -> list[int]:
+    """Remove activity j from the successor lists (spec section 4 DESCOPE): its edges vanish,
+    and every predecessor left without successors precedes the sink instead, so every activity
+    still reaches the sink (spec section 1). Returns those predecessors."""
+    orphans: list[int] = []
+    for i, succ in enumerate(successors):
+        if j in succ:
+            succ.remove(j)
+            if not succ:
+                succ.append(sink)
+                orphans.append(i)
+    successors[j] = []
+    return orphans
+
+
+def successor_lists(observation: Observation) -> list[list[int]]:
+    """The current precedence graph of an observation by activity id: the instance's, with the
+    D3 insertions (spec section 2.2) and then the DESCOPE removals (spec section 4) applied.
+
+    A removed activity never had a D3 successor (DESCOPE needs the sink as only successor), so
+    applying the insertions first gives the engine's graph, except that the engine keeps the
+    edge to the sink of a predecessor left without successors even if a later D3 activity
+    follows it; that edge is implied by the D3 activity's own path and changes no start.
+    """
+    instance = observation.instance
+    successors = [list(act.successors) for act in instance.activities]
+    for inserted in observation.inserted:
+        successors[inserted.predecessor].append(inserted.id)
+        successors.append([inserted.successor])
+    for j, status in enumerate(observation.status):
+        if status == REMOVED:
+            cut_activity(successors, j, instance.sink_id)
+    return successors
 
 
 def day_limit(instance: ProjectInstance, deadline: int | None) -> int:
@@ -445,11 +520,12 @@ def state_from_observation(
     """The engine state at step 3 of the observed day, completed by the hidden `world`.
 
     `plan` replaces the observed plan (one start per activity id, D3 activities included),
-    `costs` are the daily role costs c_k (default 1.0) and `handover_factor` the alpha of later
-    SUBST operations (default 0.3, spec section 8). The D2 work-day counters restart at 0 and
-    no D2 shock is planned yet: the run that continues the state looks them up in its own streams
-    (`Run.resume`). Work segments before the day are not reconstructed, nor are the counts of
-    temporary worker-days and overtime cost (both in the observed cost).
+    `costs` are the daily role costs c_k (default: the observation's, else 1.0) and
+    `handover_factor` the alpha of later SUBST operations (default 0.3, spec section 8). The D2
+    work-day counters restart at 0 and no D2 shock is planned yet: the run that continues the
+    state looks them up in its own streams (`Run.resume`). Work segments before the day are not
+    reconstructed, nor are the counts of temporary worker-days and overtime cost (both in the
+    observed cost). Activities removed by DESCOPE lose their edges as in `successor_lists`.
     """
     instance = observation.instance
     n_original = instance.n_activities
@@ -462,6 +538,8 @@ def state_from_observation(
         )
     if len(world.return_day) != len(observation.present):
         raise ValueError(f"need one return day per worker, got {len(world.return_day)}")
+    if costs is None and observation.costs:
+        costs = observation.costs
     state = EngineState(
         instance,
         Schedule(starts=tuple(starts[:n_original])),
@@ -472,6 +550,8 @@ def state_from_observation(
         deadline=observation.deadline,
         max_days=day_limit(instance, observation.deadline),
         handover_factor=handover_factor,
+        budget=observation.budget,
+        optional=observation.optional,
     )
     for act in observation.inserted:
         new = state.add_activity(
@@ -502,6 +582,9 @@ def state_from_observation(
     state.done = [
         crew_member_days(e, u) for e, u in zip(observation.work_done, state.unit, strict=True)
     ]
+    for j in range(n):
+        if status[j] == REMOVED:
+            cut_activity(state.successors, j, state.sink)
     pending = [0] * n
     for i in range(n):
         if status[i] != DONE:
@@ -517,7 +600,7 @@ def state_from_observation(
     role, busy = state.role, state.busy
     for j in range(n):
         crew = state.assigned[j] = observation.assigned[j]
-        if status[j] in (DONE, UNSTARTED):
+        if status[j] in (DONE, UNSTARTED, REMOVED):
             continue
         for w in crew:
             busy[w] = j
@@ -600,7 +683,7 @@ def nominal_world(observation: Observation) -> SampledWorld:
     history = work_history(observation)
     remaining = [0.0] * len(observation.status)
     for j, status in enumerate(observation.status):
-        if status == DONE:
+        if status in (DONE, REMOVED):
             continue
         nominal, demands = nominal_activity(observation, j)
         unit = max(1, sum(demands))  # M_j crew-member days per full-crew day

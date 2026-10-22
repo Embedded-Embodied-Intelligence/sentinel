@@ -9,7 +9,8 @@ role (not in the `no_overtime` variant). Every candidate is rehearsed through th
 effect (operations other than RESEQ and SHIFT, and the planned starts it leaves for activities
 with p_j > 0) equals that of an earlier candidate. A RESEQ that follows SUBST or OVERTIME is
 planned on the state they leave, so a RESEQ with added capacity sees the planning view
-extended by the temporary workers.
+extended by the temporary workers. `descopes` gives the DESCOPE candidates, which the agent
+adds only if no other candidate reaches theta_D (spec section 6).
 """
 
 import time
@@ -20,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, NonNegativeFloat, NonNegativeInt
 from sentinel.agent.params import SentinelParams
 from sentinel.model.schedule import Schedule
 from sentinel.policies.always_substitute import substitutions
-from sentinel.policies.base import Decision, Operation, Overtime, Reseq, Shift, Subst
+from sentinel.policies.base import Decision, Descope, Operation, Overtime, Reseq, Shift, Subst
 from sentinel.policies.urgency import latest_finishes, urgencies
 from sentinel.scheduling.cpsat import ResidualSolution, solve_residual
 from sentinel.scheduling.residual import planning_view, shift_sgs
@@ -32,11 +33,20 @@ from sentinel.simulation.state import (
     Observation,
     nominal_activity,
     overtime_cap,
+    successor_lists,
     worker_roles,
 )
 
 CandidateKind = Literal[
-    "noop", "shift", "reseq_m", "reseq_s", "subst", "subst_all", "subst_all_reseq_m", "ot_reseq_m"
+    "noop",
+    "shift",
+    "reseq_m",
+    "reseq_s",
+    "subst",
+    "subst_all",
+    "subst_all_reseq_m",
+    "ot_reseq_m",
+    "descope",
 ]
 KINDS: tuple[CandidateKind, ...] = (
     "noop",
@@ -47,13 +57,15 @@ KINDS: tuple[CandidateKind, ...] = (
     "subst_all",
     "subst_all_reseq_m",
     "ot_reseq_m",
+    "descope",
 )
 
 
 class Candidate(BaseModel):
     """A candidate action: its `decision`, the planned starts of all activities it leaves
-    (`plan`, for the instability Delta of spec section 5), the crew members it replaces and the
-    CP-SAT stages that fell back while planning it."""
+    (`plan`, for the instability Delta of spec section 5), the crew members it replaces, its
+    scope loss v_j / sum_O v_i (DESCOPE, spec section 6) and the CP-SAT stages that fell back
+    while planning it."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -62,6 +74,7 @@ class Candidate(BaseModel):
     decision: Decision
     plan: tuple[int, ...]
     substituted: NonNegativeInt
+    scope_loss: NonNegativeFloat = 0.0
     fallbacks: NonNegativeInt = 0
 
     @property
@@ -185,6 +198,7 @@ class _Builder:
         fallbacks: int = 0,
         *,
         reseq: bool = False,
+        scope_loss: float = 0.0,
     ) -> None:
         """Rehearse `operations`, then, with `reseq`, add a RESEQ-M planned on the state they
         leave; keep the candidate if nothing is rejected and its effect is new."""
@@ -207,6 +221,7 @@ class _Builder:
                 decision=decision,
                 plan=after.plan,
                 substituted=substituted,
+                scope_loss=scope_loss,
                 fallbacks=fallbacks,
             )
         )
@@ -224,6 +239,35 @@ class _Builder:
             return
         self.effects.add(effect)
         self.candidates.append(candidate)
+
+
+def optional_values(observation: Observation) -> dict[int, float]:
+    """v_j = p_j sum_k c_k r_jk of every optional activity j in O (spec section 4), with the
+    observation's daily costs c_k (1.0 if it has none)."""
+    costs = observation.costs or (1.0,) * len(observation.instance.roles)
+    values: dict[int, float] = {}
+    for j in observation.optional:
+        duration, demands = nominal_activity(observation, j)
+        values[j] = duration * sum(c * r for c, r in zip(costs, demands, strict=True))
+    return values
+
+
+def descopes(observation: Observation, params: SentinelParams | None = None) -> list[Candidate]:
+    """DESCOPE(j) for up to `max_descope` unstarted optional activities whose only successor is
+    the sink, those with the largest p_j (ties: smaller v_j, then id; spec section 6), each
+    rehearsed through the engine and with its scope loss v_j / sum_O v_i."""
+    params = SentinelParams() if params is None else params
+    values = optional_values(observation)
+    total = sum(values.values())
+    sink = observation.instance.sink_id
+    successors = successor_lists(observation)
+    eligible = [j for j in values if observation.status[j] == UNSTARTED and successors[j] == [sink]]
+    eligible.sort(key=lambda j: (-nominal_activity(observation, j)[0], values[j], j))
+    builder = _Builder(observation, params)
+    for j in eligible[: params.max_descope]:
+        loss = values[j] / total if total > 0 else 0.0
+        builder.offer(f"DESCOPE({j})", "descope", (Descope(activity=j),), scope_loss=loss)
+    return builder.candidates
 
 
 def single_substitutions(observation: Observation) -> list[Subst]:

@@ -21,10 +21,12 @@ from pydantic import BaseModel, ConfigDict, NonNegativeInt, model_validator
 from sentinel.model.schedule import Violation
 from sentinel.simulation.state import (
     DONE,
+    REMOVED,
     UNSTARTED,
     Observation,
     nominal_activity,
     nominal_world,
+    successor_lists,
     worker_roles,
 )
 
@@ -125,16 +127,13 @@ def planning_view(observation: Observation) -> ResidualProblem:
     s + max(L_low, t - s + 1). A hired temporary worker adds a unit of its role until the end of
     its window if it is idle, and until the later of that and F-hat_j if it is in a crew, which
     reserves it as any member. Unstarted activities, D3 ones included, take their nominal
-    durations and demands.
+    durations and demands; activities removed by DESCOPE have left the network.
     """
     t = observation.day
     instance = observation.instance
     status = observation.status
     n = len(status)
-    successors = [list(act.successors) for act in instance.activities]
-    for inserted in observation.inserted:
-        successors[inserted.predecessor].append(inserted.id)
-        successors.append([inserted.successor])
+    successors = successor_lists(observation)
     world = nominal_world(observation)
     present, return_day = observation.present, world.return_day
     roles = worker_roles(observation)
@@ -149,7 +148,7 @@ def planning_view(observation: Observation) -> ResidualProblem:
             if done is None:
                 raise ValueError(f"finished activity {j} has no finish")
             finish[j] = done
-        elif state != UNSTARTED:
+        elif state != UNSTARTED and state != REMOVED:
             crew = observation.assigned[j]
             end = _estimated_finish(t, world.remaining[j], crew, present, return_day)
             finish[j] = end

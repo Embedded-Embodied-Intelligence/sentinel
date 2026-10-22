@@ -14,8 +14,8 @@ from sentinel.agent.candidates import (
     noop,
     single_substitutions,
 )
-from sentinel.agent.decide import choose
-from sentinel.agent.evaluate import CandidateStats, Evaluator, race
+from sentinel.agent.decide import PairedSE, choose
+from sentinel.agent.evaluate import CandidateStats, Evaluator, dominated, race
 from sentinel.agent.params import SentinelParams
 from sentinel.forecasting.forecast import forecast
 from sentinel.model import ProjectInstance, Schedule, validate_schedule
@@ -36,14 +36,16 @@ from sentinel.simulation.state import (
     day_limit,
     worker_roles,
 )
-from sentinel.simulation.uncertainty import PertParams, role_costs
+from sentinel.simulation.uncertainty import PertParams, derive_budget, role_costs
 
 Builder = Callable[..., ProjectInstance]
 
 EXACT = PertParams(a=1.0, m=1.0, b=1.0)  # X = 1, so P_j = p_j
 NONE = DisruptionParams.none()
 LIVELY = DisruptionParams(lambda_a=0.05, mean_absence=3, lambda_s=0.02, lambda_n=0.05)
-SMALL = SentinelParams(n_rollouts=16, n_stage1=8)  # few rollouts: tests stay fast
+# Few rollouts keep the tests fast; full autonomy (Lambda = 3) applies every choice at once, so
+# these tests see the mechanics of WP5a without the permission gate (tests/test_gate_descope.py).
+SMALL = SentinelParams(n_rollouts=16, n_stage1=8, autonomy=3)
 
 
 def random_instance(build: Builder, seed: int, n: int = 12) -> ProjectInstance:
@@ -226,7 +228,7 @@ def test_racing_keeps_the_best_candidate_by_n(
         candidate(observation, "late", "reseq_m", late),
         candidate(observation, "SUBST(1)", "subst", substitute),
     ]
-    params = SentinelParams(n_rollouts=40, n_stage1=10)
+    params = SentinelParams(n_rollouts=40, n_stage1=10, autonomy=3)
     full = race(Evaluator(observation, 3, params), candidates, racing=False)
     assert [s.p_on_time for s in full.stats][1:] == [0.0, 1.0]
     assert 0 < full.stats[0].p_on_time < 1
@@ -235,31 +237,35 @@ def test_racing_keeps_the_best_candidate_by_n(
     assert raced.stats[2] == full.stats[2] and not raced.stats[2].dropped
     assert raced.stats[1].dropped and raced.stats[1].rollouts == 10
     assert raced.rollouts < full.rollouts
-    assert choose(raced.stats, params).index == 2
+    choice = choose(raced.stats, params, raced.paired)
+    assert (choice.index, choice.reason, choice.runner_up) == (2, "on_time", 0)
 
 
 def stats(
     label: str,
     p: float,
     *,
-    se: float = 0.0,
+    tardiness: float = 0.0,
     overrun: float = 0.0,
     deviation: float = 0.0,
     level: int = 0,
+    scope: float = 0.0,
     dropped: bool = False,
     theta: float = 0.8,
 ) -> CandidateStats:
-    """Hand-made statistics; `se` is the paired standard error against the best."""
+    """Hand-made statistics of a candidate."""
     return CandidateStats(
         label=label,
         kind="noop",
         level=level,
+        delay=0,
         deviation=deviation,
         substituted=0,
+        scope_loss=scope,
         rollouts=200,
         p_on_time=p,
         capped=min(p, theta),
-        se_vs_best=se,
+        tardiness=tardiness,
         mean_cost=100 * (1 + overrun),
         overrun=overrun,
         utility=p - overrun - 0.01 * deviation,
@@ -267,35 +273,102 @@ def stats(
     )
 
 
-def test_the_decision_rule_caps_ties_and_ranks_budget_stability_and_level() -> None:
-    params = SentinelParams()
-    # Above theta_D = 0.8 the deadline component is capped: the cheaper candidate wins.
-    choice = choose([stats("a", 0.95, overrun=0.02), stats("b", 0.85, overrun=0.01)], params)
-    assert (choice.index, choice.reason, choice.ties) == (1, "budget", (0, 1))
-    # Within two paired standard errors of the best: a tie, decided by stability.
-    tied = [stats("a", 0.50, deviation=3.0), stats("b", 0.45, se=0.03, deviation=1.0)]
-    assert (choose(tied, params).index, choose(tied, params).reason) == (1, "stability")
-    # Beyond two standard errors the better on-time estimate wins.
-    apart = [stats("a", 0.50, deviation=3.0), stats("b", 0.40, se=0.03, deviation=1.0)]
-    assert (choose(apart, params).index, choose(apart, params).reason) == (0, "on_time")
-    # Budget before stability before level; then the candidate order.
-    ranked = [
-        stats("a", 0.6, overrun=0.02),
-        stats("b", 0.6, overrun=0.01, deviation=5.0, level=2),
-        stats("c", 0.6, overrun=0.01, deviation=4.0, level=2),
-        stats("d", 0.6, overrun=0.01, deviation=4.0, level=1),
+def paired(table: dict[tuple[str, int, int], float] | None = None) -> PairedSE:
+    """Hand-made paired standard errors by (component, a, b) with a < b; 0 elsewhere."""
+    errors = table or {}
+    return lambda component, a, b: errors.get((component, min(a, b), max(a, b)), 0.0)
+
+
+def pick(
+    candidates: list[CandidateStats],
+    se: dict[tuple[str, int, int], float] | None = None,
+    params: SentinelParams | None = None,
+) -> tuple[int, str, int | None]:
+    choice = choose(candidates, params or SentinelParams(), paired(se))
+    return choice.index, choice.reason, choice.runner_up
+
+
+def test_the_rule_ties_on_the_deadline_component_unless_significant_and_material() -> None:
+    """min(p, theta_D) with eps_D = 0.02 and 2 paired SE; tardiness decides the ties."""
+    two = [stats("a", 0.50, tardiness=2.0), stats("b", 0.49, tardiness=1.0)]
+    # Significant (0.01 > 2 x 0.001) but immaterial (< eps_D): a tie.
+    assert pick(two, {("on_time", 0, 1): 0.001}) == (1, "tardiness", 0)
+    apart = [stats("a", 0.50, tardiness=2.0), stats("b", 0.40, tardiness=1.0)]
+    # Material (0.10 >= eps_D) but within 2 SE (<= 2 x 0.06): a tie.
+    assert pick(apart, {("on_time", 0, 1): 0.06}) == (1, "tardiness", 0)
+    # Significant and material: the better estimate wins, b leaves at the first component.
+    choice = choose(apart, SentinelParams(), paired({("on_time", 0, 1): 0.03}))
+    assert (choice.index, choice.reason, choice.runner_up) == (0, "on_time", 1)
+    assert choice.eliminated == (None, "on_time") and choice.ties == (0,)
+    # Above theta_D = 0.8 the component is capped, so the budget decides.
+    assert pick([stats("a", 0.95, overrun=0.03), stats("b", 0.85)]) == (1, "budget", 0)
+
+
+def test_the_rule_ties_tardiness_budget_and_stability_by_their_thresholds() -> None:
+    # A hopeless epoch (all p = 0): T decides once its difference is significant and material.
+    late = [stats("a", 0.0, tardiness=3.0, deviation=2.0), stats("b", 0.0, tardiness=4.0)]
+    assert pick(late, {("tardiness", 0, 1): 0.2}) == (0, "tardiness", 1)
+    assert pick(late, {("tardiness", 0, 1): 0.6}) == (1, "stability", 0)  # 1.0 <= 2 x 0.6
+    near = [stats("a", 0.0, tardiness=3.0, deviation=2.0), stats("b", 0.0, tardiness=3.3)]
+    assert pick(near, {("tardiness", 0, 1): 0.05}) == (1, "stability", 0)  # 0.3 < eps_T
+    # Budget: eps_B = 0.01 against the paired SE of cost / B.
+    cheap = [stats("a", 0.3, overrun=0.02, deviation=3.0), stats("b", 0.3, overrun=0.05)]
+    assert pick(cheap, {("budget", 0, 1): 0.005}) == (0, "budget", 1)
+    assert pick(cheap, {("budget", 0, 1): 0.02}) == (1, "stability", 0)  # 0.03 <= 2 x 0.02
+    close = [stats("a", 0.3, overrun=0.020, deviation=3.0), stats("b", 0.3, overrun=0.025)]
+    assert pick(close, {("budget", 0, 1): 0.0001}) == (1, "stability", 0)  # 0.005 < eps_B
+    # Delta ties below eps_Delta = 0.5 day, the level only when equal, then the order.
+    assert pick([stats("a", 0.3, deviation=1.4, level=1), stats("b", 0.3, deviation=1.0)]) == (
+        1,
+        "level",
+        0,
+    )
+    assert pick([stats("a", 0.3, deviation=1.5), stats("b", 0.3, deviation=1.0, level=1)]) == (
+        1,
+        "stability",
+        0,
+    )
+    assert pick([stats("a", 0.3), stats("b", 0.3)]) == (0, "order", 1)
+
+
+def test_the_rule_filters_against_the_best_of_the_current_set() -> None:
+    """Ties are not transitive: c ties with b but not with the best a, so it leaves at the
+    first component even though its tardiness is the lowest; then T decides between a and b."""
+    three = [
+        stats("a", 0.500, tardiness=2.0),
+        stats("b", 0.485, tardiness=1.0),
+        stats("c", 0.470, tardiness=0.0),
     ]
-    assert (choose(ranked, params).index, choose(ranked, params).reason) == (3, "level")
-    assert choose(ranked[:3], params).reason == "stability"
-    assert choose(ranked[:2], params).reason == "budget"
-    same = [stats("a", 0.6), stats("b", 0.6)]
-    assert (choose(same, params).index, choose(same, params).reason) == (0, "order")
-    # Dropped candidates do not compete; the scalarised ablation maximises U.
-    assert choose([stats("a", 0.9, dropped=True), stats("b", 0.1)], params).index == 1
-    scalar = params.model_copy(update={"variant": "scalarised"})
+    choice = choose(three, SentinelParams(), paired({("tardiness", 0, 1): 0.1}))
+    assert choice.eliminated == ("tardiness", None, "on_time")
+    assert (choice.index, choice.reason, choice.runner_up) == (1, "tardiness", 0)
+    # A DESCOPE ties with NOOP on p and T (0.2 < eps_T), so the scope loss removes it; one
+    # materially and significantly earlier wins on T.
+    descope = [stats("NOOP", 0.0, tardiness=5.0), stats("DESCOPE", 0.0, tardiness=4.8, scope=0.3)]
+    assert pick(descope) == (0, "scope", 1)
+    earlier = [stats("NOOP", 0.0, tardiness=5.0), stats("DESCOPE", 0.0, tardiness=3.0, scope=0.3)]
+    assert pick(earlier, {("tardiness", 0, 1): 0.1}) == (1, "tardiness", 0)
+    # Dropped candidates do not compete: racing decided, the best dropped one is the runner-up.
+    assert pick([stats("a", 0.9, dropped=True), stats("b", 0.1)]) == (1, "racing", 0)
+    # The scalarised ablation maximises U.
+    scalar = SentinelParams(variant="scalarised")
     utility = [stats("a", 0.70, overrun=0.10), stats("b", 0.65, deviation=2.0)]
-    assert (choose(utility, scalar).index, choose(utility, scalar).reason) == (1, "utility")
-    assert (choose(utility, params).index, choose(utility, params).reason) == (0, "on_time")
+    assert pick(utility, params=scalar) == (1, "utility", 0)
+    assert pick(utility, {("on_time", 0, 1): 0.01}) == (0, "on_time", 1)
+
+
+def test_racing_drops_only_candidates_worse_in_both_deadline_components() -> None:
+    params = SentinelParams()
+    worse = [stats("lead", 0.5, tardiness=1.0), stats("other", 0.3, tardiness=3.0)]
+    tight = paired({("on_time", 0, 1): 0.01, ("tardiness", 0, 1): 0.1})
+    assert dominated(worse, tight, params, 0, 1)
+    # Material in p but within 2 SE: kept, as is one worse in p but tied in T.
+    assert not dominated(worse, paired({("on_time", 0, 1): 0.15}), params, 0, 1)
+    tied_t = [stats("lead", 0.5, tardiness=1.0), stats("other", 0.3, tardiness=1.4)]
+    assert not dominated(tied_t, tight, params, 0, 1)
+    # Hopeless: equal p, so nobody is dropped however late.
+    hopeless = [stats("lead", 0.0, tardiness=1.0), stats("other", 0.0, tardiness=9.0)]
+    assert not dominated(hopeless, tight, params, 0, 1)
 
 
 def run_sentinel(
@@ -365,6 +438,7 @@ def test_sentinel_deliberates_only_at_crew_events_and_periodic_epochs(build: Bui
         disruptions=NONE,
         deadline=6,
         max_days=day_limit(inst, 6),
+        budget=derive_budget(inst, params=EXACT),
     )
     run = Run(state, streams, policy, review_period=10, debug=True)
     run.days(0)
@@ -420,6 +494,7 @@ def test_perfect_information_rollout_after_overtime_subst_and_reseq(build: Build
         disruptions=LIVELY,
         deadline=27,
         max_days=day_limit(instance, 27),
+        budget=derive_budget(instance),
     )
     run = Run(state, streams, Sentinel(SMALL, seed=0), debug=True)
     day = max(first.values()) + 1

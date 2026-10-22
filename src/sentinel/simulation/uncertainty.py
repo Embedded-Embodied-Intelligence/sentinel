@@ -118,3 +118,27 @@ def derive_budget(
         for act, p_bar in zip(instance.activities, expected, strict=True)
     )
     return (1 + beta) * work_cost
+
+
+def optional_activities(instance: ProjectInstance, share: float, seed: int) -> tuple[int, ...]:
+    """The optional activities O of spec section 4, drawn with `seed` (derive_seed(base,
+    "optional", instance) in the studies): `share` = phi of the real activities, taken
+    uniformly among the real activities whose only successor is the sink (at most all of them).
+    """
+    # SPEC-Q: "a share phi of the real activities whose only successor is the sink" read as
+    # round(phi n_real) of them; every J30/J60 instance has exactly 3 such activities, so the
+    # share of those 3 would give round(0.1 * 3) = 0 optional activities.
+    if not 0 <= share <= 1:
+        raise ValueError(f"share phi must lie in [0, 1], got {share}")
+    sink = instance.sink_id
+    eligible = [
+        act.id
+        for act in instance.activities
+        if act.id not in (0, sink) and tuple(act.successors) == (sink,)
+    ]
+    count = min(len(eligible), round(share * instance.n_real))
+    if count == 0:
+        return ()
+    rng = np.random.default_rng(seed)
+    chosen = rng.choice(len(eligible), size=count, replace=False).tolist()
+    return tuple(sorted(eligible[i] for i in chosen))
