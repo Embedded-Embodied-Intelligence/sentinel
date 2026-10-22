@@ -1,7 +1,8 @@
-# WP5b (RQ4): Sentinel variants against the WP4b baselines on the same worlds, primary grid.
-# Instances, scenarios and seeds of docs/experiments/plan.md (RQ4 Sentinel study). The four
-# re-solving baselines are read from the WP4b run on the same worlds, not rerun; NoReaction is
-# rerun (5 ms per run) to check the worlds against WP2b and WP4b.
+# WP5b (RQ4): Sentinel at full autonomy against the WP4b baselines on the same worlds, primary
+# grid. Instances, scenarios and seeds of docs/experiments/plan.md (RQ4 Sentinel study; sizes of
+# WP5b.1: the permission-gate variants are in the ablation). The four re-solving baselines are
+# read from the WP4b run on the same worlds, not rerun; NoReaction is rerun (5 ms per run) to
+# check the worlds against WP2b and WP4b.
 # Run: uv run python -m sentinel.experiments.policy_study --config configs/wp5_rq4_main.toml --out results/wp5
 name = "wp5_rq4_main"
 base_seed = 2026         # world seed of (instance, replication) as in WP2b, shared by all policies
@@ -12,7 +13,7 @@ replications = 4         # replications 0-3 of WP2b (same world seeds)
 deltas = [0.2, 0.3]      # on time evaluated for both; Sentinel works towards its variant's delta_D
 beta = 0.10              # budget reserve of B (spec section 1.2), reported to Sentinel
 review_period = 5        # T_r (spec section 8)
-policies = ["no_reaction", "sentinel_full", "sentinel_no_ot", "sentinel_gate"]
+policies = ["no_reaction", "sentinel_full", "sentinel_no_ot"]
 deterministic_time_limit = 0.1  # T_cp per CP-SAT stage in deterministic seconds (spec section 8)
 cp_seed = 0              # CP-SAT random seed; one CP-SAT worker
 wp2b_results = "results/wp2/20261020-181559-6534a712/results.csv.gz"  # NoReaction makespans must match
@@ -62,10 +63,6 @@ autonomy = 3
 delta_d = 0.2
 variant = "no_overtime"
 autonomy = 3
-
-[variants.sentinel_gate]     # full Sentinel behind the permission gate (spec section 4)
-delta_d = 0.2
-autonomy = 2
 
 [summary]
 bootstrap_resamples = 1000  # cluster bootstrap over instances (spec section 5.2 style)

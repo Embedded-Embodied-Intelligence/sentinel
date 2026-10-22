@@ -77,13 +77,14 @@ rerun as the check (its seeds and makespans must equal those of WP2b and WP4b, 0
 
 | Item | Value |
 | --- | --- |
-| Instances | J30 every 4th (120, the WP4b instances); J60 **every 8th** (60, `j601_1`, `j601_9`, `j602_7`, …, a subset of the WP4b instances) |
-| Grid | λ_A ∈ {0, 0.005, 0.01, 0.02}, E[L] = 3, λ_S = 0.01, λ_N = 0.02, R = 4 with the WP2b seeds of replications 0–3 |
+| Instances | main: J30 every 4th (120, the WP4b instances); J60 **every 8th** (60, `j601_1`, `j601_9`, `j602_7`, …, a subset of the WP4b instances); ablation: J30 **every 8th** (60, `j301_1`, `j301_9`, `j302_7`, …, a subset of the main J30 instances) |
+| Grid | main: λ_A ∈ {0, 0.005, 0.01, 0.02}; ablation: λ_A ∈ {0.01, 0.02}; both E[L] = 3, λ_S = 0.01, λ_N = 0.02, R = 4 with the WP2b seeds of replications 0–3 |
 | Deadline | Sentinel works towards δ_D = 0.2 (primary; ADR-0013: a deadline-aware policy needs one run per δ_D), on time for δ_D = 0.3 post hoc; max_days 5 D(δ_D) of its own deadline |
-| Sentinel | spec v1.8 parameters (§8): N₁ = 25, N = 100 (WP5b rollout-budget study), θ_D = 0.8, ε_D = 0.02, ε_B = 0.01, ε_T = ε_Δ = 0.5 d, T_cp = 0.1, B with β = 0.1 in the observation |
-| Main variants | `sentinel_full` (Λ = 3), `sentinel_no_ot` (no OVERTIME, Λ = 3: the fair comparison with the baselines, which cannot hire), `sentinel_gate` (full, Λ = 2: the permission gate) |
-| Ablation | J30 subset, λ_A ∈ {0.01, 0.02}: `sentinel_scalarised` (Λ = 3), `sentinel_lambda0` and `sentinel_lambda1` (full, Λ = 0 and 1), `sentinel_descope` (full, Λ = 2, DESCOPE on, φ = 0.1; a demonstration, since the baselines cannot descope), `sentinel_delta03` (full, Λ = 3, δ_D = 0.3) |
-| Size | main 3 × (1,920 J30 + 960 J60) = 8,640 Sentinel runs; ablation 5 × 960 = 4,800 Sentinel runs; plus the NoReaction checks |
+| Sentinel | spec v1.8.1 parameters (§8): N₁ = 25, N = 100 (WP5b rollout-budget study), θ_D = 0.8, ε_D = 0.02, ε_B = 0.01, ε_T = ε_Δ = 0.5 d, T_cp = 0.1, B with β = 0.1 in the observation; behind the gate (Λ < 3), an approved action is planned again on its approval day, in the world and in rollouts (§4, §6) |
+| Main variants | `sentinel_full` (Λ = 3), `sentinel_no_ot` (no OVERTIME, Λ = 3: the fair comparison with the baselines, which cannot hire) |
+| Ablation | `sentinel_scalarised` (Λ = 3), `sentinel_lambda0`, `sentinel_lambda1` and `sentinel_gate` (full, Λ = 0, 1 and 2: the permission gate), `sentinel_descope` (full, Λ = 2, DESCOPE on, `O` = the three real activities whose only successor is the sink; a demonstration, since the baselines cannot descope), `sentinel_delta03` (full, Λ = 3, δ_D = 0.3) |
+| Size | main 2 × (1,920 J30 + 960 J60) = 5,760 Sentinel runs; ablation 6 × 480 = 2,880 Sentinel runs; plus the NoReaction checks |
+| Sizes (WP5b.1) | Set by the architect after WP5b for two reasons. Budget: as first planned (three main variants; five ablation variants on J30 every 4th) the studies needed about 14.4 h and 9.0 h on 4 workers (WP5b measurements), over the 12 h and 6 h budgets. Scope: the permission-gate variants belong to the ablation; the main study compares Sentinel with the baselines, which have no gate, while the autonomy level Λ is a deployment setting compared within Sentinel, on the ablation subset. Measured duration estimates: `docs/reports/WP5b.1.md` |
 | Configs | `configs/wp5_rq4_main.toml`, `configs/wp5_rq4_ablation.toml` (`policy_study` runner, outputs in `results/wp5/<run_id>/`) |
 | Metrics | spec §7.1 per run, plus overtime cost and share, temporary workers hired, deferrals, escalations, approvals applied and discarded, scope loss, deliberations, needs-gate exits, rollouts and the chosen candidates and deciding components |
 

@@ -321,9 +321,10 @@ def write_and_return(tmp_path: Path) -> Path:
 
 @pytest.mark.parametrize("name", ["wp5_rq4_main", "wp5_rq4_ablation"])
 def test_the_wp5_configs_follow_the_study_plan(name: str) -> None:
-    """The RQ4 Sentinel subset of docs/experiments/plan.md: J30 every 4th, J60 every 8th, WP2b
-    seeds, delta_D = 0.2 unless a variant says otherwise, the WP4b baselines joined, paired
-    differences against NoReaction and FullResolve."""
+    """The RQ4 Sentinel study of docs/experiments/plan.md (sizes of WP5b.1): main on J30 every
+    4th and J60 every 8th with the two variants at full autonomy, the ablation on J30 every 8th
+    with the autonomy levels 0-2; WP2b seeds, delta_D = 0.2 unless a variant says otherwise, the
+    WP4b baselines joined, paired differences against NoReaction and FullResolve."""
     raw = tomllib.loads((REPO_ROOT / "configs" / f"{name}.toml").read_text(encoding="utf-8"))
     config = PolicyStudyConfig.model_validate(raw)
     assert (config.base_seed, config.replications, config.deltas) == (2026, 4, (0.2, 0.3))
@@ -343,15 +344,15 @@ def test_the_wp5_configs_follow_the_study_plan(name: str) -> None:
         assert shape == {
             "sentinel_full": ("full", 3, 0.2, False),
             "sentinel_no_ot": ("no_overtime", 3, 0.2, False),
-            "sentinel_gate": ("full", 2, 0.2, False),
         }
     else:
-        assert [(s.name, s.stride) for s in config.sets] == [("j30", 4)]
+        assert [(s.name, s.stride) for s in config.sets] == [("j30", 8)]
         assert config.scenarios.lambda_a == (0.01, 0.02)
         assert shape == {
             "sentinel_scalarised": ("scalarised", 3, 0.2, False),
             "sentinel_lambda0": ("full", 0, 0.2, False),
             "sentinel_lambda1": ("full", 1, 0.2, False),
+            "sentinel_gate": ("full", 2, 0.2, False),
             "sentinel_descope": ("full", 2, 0.2, True),
             "sentinel_delta03": ("full", 3, 0.3, False),
         }
