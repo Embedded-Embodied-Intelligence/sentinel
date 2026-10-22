@@ -29,7 +29,8 @@ material decision rule with expected tardiness (§5, §6), the permission gate w
 escalation and approval epochs (§3.1 g, §4, §6), DESCOPE and optional activities (§4, §6,
 §7.1), `B`, `c_k` and `c_OT_k` in the observation (§3, §5), parameters (§8); answers to the
 WP5a questions: SHIFT keeps the order strictly, overtime pay and cap (§4), needs-gate
-sequencing (§5), racing of the scalarised ablation (§6).
+sequencing (§5), racing of the scalarised ablation (§6); the rollout budget `(N₁, N) = (25, 100)`
+of the WP5b study (§8).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -578,8 +579,8 @@ approval days are the only decision epochs it adds (§3.1 g).
 | `τ_def` | deferral urgency threshold (days) | 3 |
 | `T_r` | periodic review (days) | 5 |
 | `T_cp` | CP-SAT deterministic time limit per stage in policies (§7) | 0.1 deterministic seconds |
-| `N` | rollouts per candidate | 200 (rollout-budget study of WP5b pending) |
-| `N₁` | rollouts per candidate in stage 1 of racing (§6) | 50 (rollout-budget study of WP5b pending) |
+| `N` | rollouts per candidate | 100 |
+| `N₁` | rollouts per candidate in stage 1 of racing (§6) | 25 |
 | `c_OT_k` | daily cost of a temporary worker of role `k` (§4) | `1.5 c_k` |
 | `H` | OVERTIME window of the rule candidate (§6) | `2 T_r` |
 | — | single-activity SUBST candidates (§6) | at most 3 |
@@ -591,6 +592,13 @@ approval days are the only decision epochs it adds (§3.1 g).
 `λ_A` is per worker and day. A worker alternates between present spells of mean `1/λ_A` days
 and absences of mean `E[L]`, so with `E[L] = 3`, `λ_A = 0.01` means about 3 % of worker-days
 absent (`E[L] / (1/λ_A + E[L])`).
+
+The rollout budget `(N₁, N) = (25, 100)` comes from the WP5b study
+(`scripts/bench_rollout_budget.py`): on 722 deliberations of 10 J30 and 5 J60 Sentinel runs at
+`λ_A = 0.01`, its choice agreed with the choice on all candidates over `N = 800` common worlds
+in 90.3 % of the deliberations and lost on average 0.0014 in `p̂` and 0.023 days in `T̂` of the
+reference statistics (adoption limits 0.01 and 0.25 days); `(50, 200)` agreed in 92.2 %
+(0.0008, 0.018 days) with twice the rollouts (909 against 462 per deliberation).
 
 ---
 
