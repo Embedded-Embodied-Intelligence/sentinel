@@ -1,7 +1,7 @@
 # WP5b (RQ4 ablations): variants of Sentinel on every 8th J30 instance at the higher absence
 # rates, against the WP4b baselines on the same worlds (read, not rerun; NoReaction rerun as the
 # check). Instances, scenarios and seeds of docs/experiments/plan.md (RQ4 Sentinel study; sizes
-# of WP5b.1: the autonomy levels 0-2 of the permission gate are studied here).
+# of WP5b.1; autonomy levels 0 and 1 moved to configs/wp5_rq4_autonomy.toml for the time budget).
 # Run: uv run python -m sentinel.experiments.policy_study --config configs/wp5_rq4_ablation.toml --out results/wp5
 name = "wp5_rq4_ablation"
 base_seed = 2026         # world seed of (instance, replication) as in WP2b, shared by all policies
@@ -15,8 +15,6 @@ review_period = 5        # T_r (spec section 8)
 policies = [
     "no_reaction",
     "sentinel_scalarised",
-    "sentinel_lambda0",
-    "sentinel_lambda1",
     "sentinel_gate",
     "sentinel_descope",
     "sentinel_delta03",
@@ -61,14 +59,6 @@ n_rollouts = 100
 delta_d = 0.2
 variant = "scalarised"
 autonomy = 3
-
-[variants.sentinel_lambda0]     # full Sentinel, every action needs approval
-delta_d = 0.2
-autonomy = 0
-
-[variants.sentinel_lambda1]     # full Sentinel, only level-0 actions (SHIFT) run at once
-delta_d = 0.2
-autonomy = 1
 
 [variants.sentinel_gate]        # full Sentinel, level-2 actions (SUBST, OVERTIME) need approval
 delta_d = 0.2
