@@ -1,0 +1,739 @@
+{
+  "run_id": "20261022-193948-592f7183",
+  "status": "completed",
+  "smoke": false,
+  "command": "python -m sentinel.experiments.policy_study --config configs/wp5_rq4_ablation.toml --out results/wp5",
+  "config_path": "configs/wp5_rq4_ablation.toml",
+  "config": {
+    "name": "wp5_rq4_ablation",
+    "base_seed": 2026,
+    "max_workers": 4,
+    "data_root": "data/psplib",
+    "baseline_cache": "data/derived/baselines",
+    "replications": 4,
+    "deltas": [
+      0.2,
+      0.3
+    ],
+    "beta": 0.1,
+    "review_period": 5,
+    "policies": [
+      "no_reaction",
+      "sentinel_scalarised",
+      "sentinel_gate",
+      "sentinel_descope",
+      "sentinel_delta03"
+    ],
+    "deterministic_time_limit": 0.1,
+    "cp_seed": 0,
+    "wp2b_results": "results/wp2/20261020-181559-6534a712/results.csv.gz",
+    "wp4b_results": "results/wp4/20261021-152439-8892ea21/results.csv.gz",
+    "joined": [
+      "always_substitute",
+      "full_resolve",
+      "full_resolve_subst",
+      "stable_resolve_subst"
+    ],
+    "start_estimate": false,
+    "baseline": "cpsat_det",
+    "baselines": {
+      "cpsat_det": {
+        "deterministic_time_limit": 5.0,
+        "random_seed": 2026,
+        "num_workers": 1
+      }
+    },
+    "pert": {
+      "a": 0.8,
+      "m": 1.0,
+      "b": 1.6,
+      "lam": 4.0
+    },
+    "scenarios": {
+      "lambda_a": [
+        0.01,
+        0.02
+      ],
+      "mean_absence": [
+        3
+      ],
+      "lambda_s": 0.01,
+      "lambda_n": 0.02,
+      "durations_only": false
+    },
+    "sets": [
+      {
+        "name": "j30",
+        "reference": "opt",
+        "stride": 8
+      }
+    ],
+    "sentinel": {
+      "n_stage1": 25,
+      "n_rollouts": 100
+    },
+    "variants": {
+      "sentinel_scalarised": {
+        "delta_d": 0.2,
+        "variant": "scalarised",
+        "autonomy": 3
+      },
+      "sentinel_gate": {
+        "delta_d": 0.2,
+        "autonomy": 2
+      },
+      "sentinel_descope": {
+        "delta_d": 0.2,
+        "autonomy": 2,
+        "descope": true
+      },
+      "sentinel_delta03": {
+        "delta_d": 0.3,
+        "autonomy": 3
+      }
+    },
+    "summary": {
+      "bootstrap_resamples": 1000,
+      "bootstrap_seed": 2026,
+      "reference_policy": "no_reaction",
+      "references": [
+        "full_resolve"
+      ],
+      "table": "table_wp5_ablation",
+      "figure_prefix": "fig_wp5_ablation"
+    }
+  },
+  "config_hash": "592f7183319e79352b7e2dae70b200b68b3e980e315a1585a34f3a99b6a1588e",
+  "limit": null,
+  "overrides": {},
+  "git_commit": "583fd4f11af4e69908c14315965d2c11c6d37ccf",
+  "git_dirty": false,
+  "start_utc": "2026-10-22T19:39:48+00:00",
+  "python": "3.12.15",
+  "packages": {
+    "numpy": "2.5.4",
+    "ortools": "9.15.6755",
+    "pydantic": "2.14.1",
+    "psplib": "0.4.0",
+    "matplotlib": "3.11.2"
+  },
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "Intel(R) Core(TM) i5-6600K CPU @ 3.50GHz",
+  "cpu_count": 4,
+  "hostname": "DESKTOP-JHBU14Q",
+  "max_workers": 4,
+  "n_instances": 60,
+  "n_tasks": 120,
+  "n_runs": 2400,
+  "policies": [
+    "no_reaction",
+    "sentinel_scalarised",
+    "sentinel_gate",
+    "sentinel_descope",
+    "sentinel_delta03"
+  ],
+  "cpsat": {
+    "deterministic_time_limit": 0.1,
+    "random_seed": 0,
+    "num_workers": 1
+  },
+  "handover_factor": 0.3,
+  "sentinel_variants": {
+    "sentinel_scalarised": {
+      "params": {
+        "variant": "scalarised",
+        "n_rollouts": 100,
+        "n_stage1": 25,
+        "se_factor": 2.0,
+        "theta_d": 0.8,
+        "eps_d": 0.02,
+        "eps_b": 0.01,
+        "eps_t": 0.5,
+        "eps_delta": 0.5,
+        "kappa_h": 2.0,
+        "review_period": 5,
+        "max_single_subst": 3,
+        "overtime_window": null,
+        "deterministic_time_limit": 0.1,
+        "cp_seed": 0,
+        "lambda_b": 1.0,
+        "lambda_delta": 0.01,
+        "handover_factor": 0.3,
+        "autonomy": 3,
+        "tau_def": 3.0,
+        "approval_delay": 1,
+        "descope": false,
+        "max_descope": 2
+      },
+      "delta_d": 0.2
+    },
+    "sentinel_gate": {
+      "params": {
+        "variant": "full",
+        "n_rollouts": 100,
+        "n_stage1": 25,
+        "se_factor": 2.0,
+        "theta_d": 0.8,
+        "eps_d": 0.02,
+        "eps_b": 0.01,
+        "eps_t": 0.5,
+        "eps_delta": 0.5,
+        "kappa_h": 2.0,
+        "review_period": 5,
+        "max_single_subst": 3,
+        "overtime_window": null,
+        "deterministic_time_limit": 0.1,
+        "cp_seed": 0,
+        "lambda_b": 1.0,
+        "lambda_delta": 0.01,
+        "handover_factor": 0.3,
+        "autonomy": 2,
+        "tau_def": 3.0,
+        "approval_delay": 1,
+        "descope": false,
+        "max_descope": 2
+      },
+      "delta_d": 0.2
+    },
+    "sentinel_descope": {
+      "params": {
+        "variant": "full",
+        "n_rollouts": 100,
+        "n_stage1": 25,
+        "se_factor": 2.0,
+        "theta_d": 0.8,
+        "eps_d": 0.02,
+        "eps_b": 0.01,
+        "eps_t": 0.5,
+        "eps_delta": 0.5,
+        "kappa_h": 2.0,
+        "review_period": 5,
+        "max_single_subst": 3,
+        "overtime_window": null,
+        "deterministic_time_limit": 0.1,
+        "cp_seed": 0,
+        "lambda_b": 1.0,
+        "lambda_delta": 0.01,
+        "handover_factor": 0.3,
+        "autonomy": 2,
+        "tau_def": 3.0,
+        "approval_delay": 1,
+        "descope": true,
+        "max_descope": 2
+      },
+      "delta_d": 0.2
+    },
+    "sentinel_delta03": {
+      "params": {
+        "variant": "full",
+        "n_rollouts": 100,
+        "n_stage1": 25,
+        "se_factor": 2.0,
+        "theta_d": 0.8,
+        "eps_d": 0.02,
+        "eps_b": 0.01,
+        "eps_t": 0.5,
+        "eps_delta": 0.5,
+        "kappa_h": 2.0,
+        "review_period": 5,
+        "max_single_subst": 3,
+        "overtime_window": null,
+        "deterministic_time_limit": 0.1,
+        "cp_seed": 0,
+        "lambda_b": 1.0,
+        "lambda_delta": 0.01,
+        "handover_factor": 0.3,
+        "autonomy": 3,
+        "tau_def": 3.0,
+        "approval_delay": 1,
+        "descope": false,
+        "max_descope": 2
+      },
+      "delta_d": 0.3
+    }
+  },
+  "scenarios": [
+    {
+      "name": "la0.01_L3",
+      "lambda_a": 0.01,
+      "mean_absence": 3.0,
+      "lambda_s": 0.01,
+      "f_low": 1.2,
+      "f_high": 2.0,
+      "lambda_n": 0.02
+    },
+    {
+      "name": "la0.02_L3",
+      "lambda_a": 0.02,
+      "mean_absence": 3.0,
+      "lambda_s": 0.01,
+      "f_low": 1.2,
+      "f_high": 2.0,
+      "lambda_n": 0.02
+    }
+  ],
+  "seeds": {
+    "base_seed": 2026,
+    "rule": "seed of (instance, replication r) = runs.derive_seed(base_seed, set, instance, str(r)), shared by all policies and scenarios, as in WP2b (common random numbers, spec section 2.3)",
+    "per_instance": {
+      "j30/j301_1": [
+        97953054,
+        1530946907,
+        1626339605,
+        1347916289
+      ],
+      "j30/j301_9": [
+        1921771846,
+        997912761,
+        1402466810,
+        396079269
+      ],
+      "j30/j302_7": [
+        1779638734,
+        1249525877,
+        629355041,
+        652930527
+      ],
+      "j30/j303_5": [
+        303029414,
+        1509798842,
+        718112221,
+        1477541100
+      ],
+      "j30/j304_3": [
+        1263937303,
+        1326830471,
+        1240011893,
+        1581452379
+      ],
+      "j30/j305_1": [
+        853075065,
+        268219678,
+        1138655824,
+        1564432337
+      ],
+      "j30/j305_9": [
+        1068890513,
+        2081636949,
+        150543357,
+        1532307927
+      ],
+      "j30/j306_7": [
+        1592922115,
+        1803336371,
+        932255906,
+        1888577835
+      ],
+      "j30/j307_5": [
+        1067235462,
+        1041873809,
+        91871406,
+        1108017644
+      ],
+      "j30/j308_3": [
+        1379194225,
+        1575025114,
+        1417435106,
+        196721282
+      ],
+      "j30/j309_1": [
+        318829936,
+        813154707,
+        698087069,
+        1087923855
+      ],
+      "j30/j309_9": [
+        877379793,
+        594372688,
+        1429965188,
+        1105327117
+      ],
+      "j30/j3010_7": [
+        1641809300,
+        1154493286,
+        697764499,
+        1568503537
+      ],
+      "j30/j3011_5": [
+        1168669493,
+        761593414,
+        611563391,
+        737163770
+      ],
+      "j30/j3012_3": [
+        170417821,
+        1148270886,
+        1161923364,
+        1836241513
+      ],
+      "j30/j3013_1": [
+        761126025,
+        1101421020,
+        269003475,
+        6941390
+      ],
+      "j30/j3013_9": [
+        1440627088,
+        563070950,
+        1604189312,
+        1009131306
+      ],
+      "j30/j3014_7": [
+        561455550,
+        1029526730,
+        351456685,
+        1103509939
+      ],
+      "j30/j3015_5": [
+        619147680,
+        1765327574,
+        545034968,
+        1526984278
+      ],
+      "j30/j3016_3": [
+        277527482,
+        1556425278,
+        1525142477,
+        1492285657
+      ],
+      "j30/j3017_1": [
+        1765587584,
+        744649190,
+        1970405815,
+        1565191545
+      ],
+      "j30/j3017_9": [
+        1785379561,
+        210681051,
+        1920342701,
+        528035872
+      ],
+      "j30/j3018_7": [
+        1085331102,
+        79040943,
+        1793966949,
+        1055614048
+      ],
+      "j30/j3019_5": [
+        461574285,
+        1678722010,
+        207792554,
+        714115834
+      ],
+      "j30/j3020_3": [
+        319033051,
+        1216179902,
+        134287487,
+        1917770638
+      ],
+      "j30/j3021_1": [
+        1465966957,
+        1673455988,
+        1049323429,
+        733517454
+      ],
+      "j30/j3021_9": [
+        575456324,
+        87423640,
+        1592831071,
+        1009900336
+      ],
+      "j30/j3022_7": [
+        1381507793,
+        53703349,
+        923887187,
+        1297499424
+      ],
+      "j30/j3023_5": [
+        1904235972,
+        455780476,
+        615614543,
+        1270073342
+      ],
+      "j30/j3024_3": [
+        1348084249,
+        1863894090,
+        1268582809,
+        223738081
+      ],
+      "j30/j3025_1": [
+        1079783178,
+        1161117570,
+        884526111,
+        249145541
+      ],
+      "j30/j3025_9": [
+        808617869,
+        1252071798,
+        79308883,
+        795409227
+      ],
+      "j30/j3026_7": [
+        211200673,
+        1092064188,
+        2111022979,
+        1455984566
+      ],
+      "j30/j3027_5": [
+        1503058583,
+        685698803,
+        204976947,
+        1613902370
+      ],
+      "j30/j3028_3": [
+        1069027485,
+        378578005,
+        2065805193,
+        1021598724
+      ],
+      "j30/j3029_1": [
+        924254208,
+        1386300298,
+        2000241284,
+        2057235991
+      ],
+      "j30/j3029_9": [
+        661713225,
+        1857198316,
+        242127608,
+        1355416298
+      ],
+      "j30/j3030_7": [
+        341780652,
+        278327893,
+        1451739602,
+        79417766
+      ],
+      "j30/j3031_5": [
+        1713696932,
+        1802005776,
+        2120800371,
+        1086658857
+      ],
+      "j30/j3032_3": [
+        380535124,
+        322033553,
+        1805143759,
+        1698832980
+      ],
+      "j30/j3033_1": [
+        878684641,
+        1803636921,
+        1190590673,
+        278997755
+      ],
+      "j30/j3033_9": [
+        614578569,
+        573077133,
+        1115246799,
+        278160078
+      ],
+      "j30/j3034_7": [
+        2089966125,
+        2022935241,
+        216482942,
+        665674960
+      ],
+      "j30/j3035_5": [
+        1437889306,
+        341846405,
+        977320439,
+        861866040
+      ],
+      "j30/j3036_3": [
+        619473757,
+        271726546,
+        1651044070,
+        1824756640
+      ],
+      "j30/j3037_1": [
+        1638839673,
+        1125675850,
+        419304,
+        1896489815
+      ],
+      "j30/j3037_9": [
+        770260049,
+        1761052334,
+        959999218,
+        1171830830
+      ],
+      "j30/j3038_7": [
+        2054805168,
+        523974137,
+        663781544,
+        414294699
+      ],
+      "j30/j3039_5": [
+        1574667909,
+        466708034,
+        1918365743,
+        304488442
+      ],
+      "j30/j3040_3": [
+        1865233567,
+        526857070,
+        660394976,
+        1743195211
+      ],
+      "j30/j3041_1": [
+        2138497034,
+        1266049566,
+        339983226,
+        483042242
+      ],
+      "j30/j3041_9": [
+        1128881789,
+        2054083268,
+        1188836622,
+        2108770433
+      ],
+      "j30/j3042_7": [
+        2095830078,
+        1042176336,
+        1662189476,
+        417174781
+      ],
+      "j30/j3043_5": [
+        450235147,
+        1768222020,
+        1685107724,
+        1070852054
+      ],
+      "j30/j3044_3": [
+        56066604,
+        77480374,
+        589972537,
+        2061668058
+      ],
+      "j30/j3045_1": [
+        1893013410,
+        1038777724,
+        1028389619,
+        390464567
+      ],
+      "j30/j3045_9": [
+        113344974,
+        831818285,
+        521413781,
+        112875572
+      ],
+      "j30/j3046_7": [
+        169573089,
+        1438365907,
+        1162129197,
+        1560408196
+      ],
+      "j30/j3047_5": [
+        738179390,
+        158980700,
+        141370958,
+        2039082177
+      ],
+      "j30/j3048_3": [
+        1779636484,
+        953162506,
+        1744004118,
+        1134731515
+      ]
+    }
+  },
+  "optional_rule": "optional activities of a DESCOPE variant: uncertainty.optional_activities(instance), every real activity whose only successor is the sink (spec section 4); none for other policies",
+  "data": {
+    "root": "data/psplib",
+    "instances_content_sha256": {
+      "j30": "b77624e10a877bcded77a9ff8fe142c633996d7956040342991e3b54e58c6241"
+    },
+    "references_sha256": {
+      "j30_opt": "9036456d909d5d2102975c13dd6fe36fe503b3ed1df5b91fa652aa7dc9648ee3"
+    }
+  },
+  "estimated_duration_s": null,
+  "end_utc": "2026-10-22T23:44:35+00:00",
+  "duration_s": 14686.9,
+  "n_rows": 2400,
+  "results_file": "results.csv.gz",
+  "baselines": {
+    "method": {
+      "kind": "cpsat_det",
+      "deterministic_time_limit": 5.0,
+      "random_seed": 2026,
+      "num_workers": 1
+    },
+    "cache_root": "data/derived/baselines",
+    "from_cache": 60,
+    "computed_in_run": 0,
+    "statuses": {
+      "FEASIBLE": 1,
+      "OPTIMAL": 59
+    },
+    "plans_sha256": "5832357b9f8941891a96c59e38e5eef5e20cdc342759cb3c665296f279bc9c90"
+  },
+  "wp2b_check": {
+    "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",
+    "available": true,
+    "worlds_checked": 480,
+    "makespan_mismatches": 0,
+    "seed_mismatches": 0,
+    "missing": 0
+  },
+  "wp4b_check": {
+    "path": "results/wp4/20261021-152439-8892ea21/results.csv.gz",
+    "policies": [
+      "always_substitute",
+      "full_resolve",
+      "full_resolve_subst",
+      "stable_resolve_subst"
+    ],
+    "worlds": 480,
+    "rows": 1920,
+    "seed_mismatches": 0,
+    "makespan_mismatches": 0,
+    "missing": 0
+  },
+  "checks": {
+    "rejected_operations": 0,
+    "cpsat_fallbacks": 0,
+    "truncated_runs": 0
+  },
+  "run_wall_s": 14683.8,
+  "runs_per_s": 0.163,
+  "policy_timing": {
+    "j30/no_reaction": {
+      "runs": 480,
+      "mean_runtime_s": 0.0058,
+      "max_runtime_s": 0.044
+    },
+    "j30/sentinel_scalarised": {
+      "runs": 480,
+      "mean_runtime_s": 21.1212,
+      "max_runtime_s": 117.988
+    },
+    "j30/sentinel_gate": {
+      "runs": 480,
+      "mean_runtime_s": 38.5409,
+      "max_runtime_s": 326.279
+    },
+    "j30/sentinel_descope": {
+      "runs": 480,
+      "mean_runtime_s": 41.9132,
+      "max_runtime_s": 334.312
+    },
+    "j30/sentinel_delta03": {
+      "runs": 480,
+      "mean_runtime_s": 18.6817,
+      "max_runtime_s": 104.347
+    }
+  },
+  "outputs": [
+    "results.csv.gz",
+    "summary.md",
+    "table_wp5_ablation.tex",
+    "table_wp5_ablation_vs_full_resolve.tex",
+    "fig_wp5_ablation_tradeoff.pdf",
+    "fig_wp5_ablation_tradeoff.png",
+    "fig_wp5_ablation_actions.pdf",
+    "fig_wp5_ablation_actions.png",
+    "summary_manifest.json"
+  ]
+}
