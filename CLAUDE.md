@@ -58,7 +58,9 @@ Deadline: 2026-12-02.
 6. **Feasibility is checked, not assumed.** Every schedule produced anywhere passes
    `validate_schedule` in tests and in experiment runners.
 7. **Privacy by design.** The model stores worker *availability* only, never reasons for
-   absence (GDPR Art. 9).
+   absence (GDPR Art. 9). LLM caches and replay bundles of real (non-synthetic) messages use
+   `store_prompts = false`: request key, model metadata and response, never the messages
+   (spec §10).
 
 ## Quality gate (all must pass before every commit)
 

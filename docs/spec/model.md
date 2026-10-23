@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.9)
+# Sentinel — formal model (v1.9.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -37,7 +37,10 @@ remembered (§4), the paired standard error of `o` (§6), removed activities are
 (§7.1); the racing leader (§6) and all-or-nothing approval (§4) as written in v1.8. v1.9
 (WP6b) answers to the WP6a questions: extracted real activities have `p_j ≥ 1` (§1), the IT
 role names (§1.1); the interpretation layer: team calendar, events from team messages, the
-action grammar and its compilation, explanations (§10).
+action grammar and its compilation, explanations (§10); v1.9.1 (WP6c) answers to the WP6b
+questions: LLM calls never in the engine or a rollout, only by the agent at a deliberation of a
+simulated world (§10), cache records without messages (`store_prompts = false`), mandatory for
+real data (§10), "about N days" as an announced lower bound of N days (§10.2).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -649,9 +652,20 @@ The LLM has three roles: it turns team messages into events (§10.2), proposes c
 in a fixed grammar (§10.3) and explains decisions (§10.4). **LLM output enters the decision
 layer only as validated, compiled objects:** events after validation, applied to the
 observation by code; proposals compiled into candidates, which the rollouts evaluate and the
-rule of §6 chooses among; explanations never enter it. No LLM call is made in a rollout or in
-the simulator; every call goes through the record/replay cache with a JSON-schema-validated
-answer. Prompts and texts are in English.
+rule of §6 chooses among; explanations never enter it. **No LLM call is made inside the engine
+(the simulator of §2–§3) or inside a rollout.** In a simulated world only the agent may call the
+LLM, at a deliberation (the online check of RQ5: proposals at the deliberations that passed the
+needs gate); the rollouts that evaluate its proposals make no call. Every call goes through the
+record/replay cache with a JSON-schema-validated answer. Prompts and texts are in English.
+
+**Cache records and privacy.** A cache record holds the request key (the SHA-256 of the full
+request: backend, model, weights digest, messages, schema and decoding parameters), the model
+metadata (backend, model, digest, schema name and hash, decoding parameters, the serving
+provider) and the response. With `store_prompts = true` it also holds the messages; with
+`store_prompts = false` it holds no message text, and record and replay work by the key alone.
+`store_prompts = false` is mandatory for real (non-synthetic) data, in the working cache and in
+every replay bundle (invariant 7, GDPR Art. 9); research runs on synthetic messages and
+fictional rosters keep the full records.
 
 ### §10.1 Team calendar
 
@@ -668,8 +682,8 @@ a message without an event (meeting moves, praise, questions); a message may rep
 
 - `{"type": "absence", "worker": w, "return_day": r}`: worker `w` is absent from day `t` on
   (a D1 onset); `r` is the announced earliest return day, so `L_low = r − t`, or `null` if the
-  message gives none (`L_low = 1`). A weekday gives `r` by §10.1, "about N days" `r = t + N`,
-  "next week" the Monday of the next week.
+  message gives none (`L_low = 1`). A weekday gives `r` by §10.1, "about N days" an announced
+  lower bound of N days, `r = t + N`, "next week" the Monday of the next week.
 - `{"type": "work_increase", "activity": j, "factor": F}`: the remaining work of the running
   activity `j` is multiplied by `F ≥ 1` (D2, observed with the current `e_j`). "About x % more"
   gives `F = 1 + x/100`, "twice as long" `F = 2`, "another d days" `F = (r_j + d) / r_j` with
