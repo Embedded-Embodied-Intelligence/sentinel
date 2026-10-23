@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.8.1)
+# Sentinel — formal model (v1.9)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -34,7 +34,10 @@ of the WP5b study (§8); v1.8.1 (WP5b.1) answers to the WP5b questions: approved
 re-planned on their approval day, in the world and in rollouts (§4, §6), `O` is every real
 activity whose only successor is the sink and `φ` is gone (§4, §8), deferred actions are not
 remembered (§4), the paired standard error of `o` (§6), removed activities are not in `J⁺`
-(§7.1); the racing leader (§6) and all-or-nothing approval (§4) as written in v1.8.
+(§7.1); the racing leader (§6) and all-or-nothing approval (§4) as written in v1.8. v1.9
+(WP6b) answers to the WP6a questions: extracted real activities have `p_j ≥ 1` (§1), the IT
+role names (§1.1); the interpretation layer: team calendar, events from team messages, the
+action grammar and its compilation, explanations (§10).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -64,13 +67,17 @@ Validity conditions (enforced at construction):
 - `0 ≤ r_jk ≤ R_k` for all `j, k` (otherwise the instance is infeasible);
 - dummies have `p = 0` and `r = 0`.
 
+A project model extracted from a text description (RQ1, WP6a) gives every real activity a
+duration `p_j ≥ 1`, as PSPLIB real activities have; zero-duration milestones are not extracted.
+
 ### §1.1 Mapping from PSPLIB
 
 PSPLIB single-mode instances (`.sm`, parsed with `psplib.parse(path, instance_format="psplib")`)
 provide `J, E, p, r, R_k`. Only single-mode instances with renewable resources are supported;
 anything else is rejected with a clear error. Each capacity unit of role `k` is interpreted as
 one worker `w = (k, i)`, `i = 0..R_k-1`, so that the absence of a specific person can be modelled.
-Role names default to `R1..R|K|`; an optional display mapping to IT roles may be added later.
+Role names default to `R1..R|K|`. Texts for and from the LLM (RQ1, §10) display `R1–R4` as the
+IT roles backend developer, frontend developer, tester and DevOps engineer.
 Instance names follow the file stem with the set prefix, e.g. `j30/j301_1`.
 
 ### §1.2 Derived deadline and budget
@@ -508,8 +515,8 @@ racing keeps (racing as below).
   since the baselines cannot descope.
 
 RESEQ plans with added capacity use the planning view extended by the temporary workers (§4.1).
-LLM proposals in the same JSON action grammar, filtered for feasibility, extend this list later
-(WP6).
+LLM proposals in the action grammar of §10.3, compiled and filtered for validity, extend this
+list (WP6).
 
 **Evaluation.** Each candidate is applied at step 3 of day `t` in every rollout; the rollout then
 continues under NoReaction (§5.1; rollout `i` uses seed `ξ_i`, shared by all candidates). A
@@ -633,3 +640,95 @@ reference statistics (adoption limits 0.01 and 0.25 days); `(50, 200)` agreed in
 - Czado, Gneiting & Held 2009 — predictive model assessment for count data, Biometrics 65(4). doi:10.1111/j.1541-0420.2009.01191.x
 - Murphy 1988 — skill scores based on the mean square error, Mon. Weather Rev. 116(12). doi:10.1175/1520-0493(1988)116<2417:SSBOTM>2.0.CO;2
 - Hanley & McNeil 1982 — area under the ROC curve, Radiology 143(1). doi:10.1148/radiology.143.1.7063747
+
+---
+
+## §10 Interpretation layer (WP6)
+
+The LLM has three roles: it turns team messages into events (§10.2), proposes candidate actions
+in a fixed grammar (§10.3) and explains decisions (§10.4). **LLM output enters the decision
+layer only as validated, compiled objects:** events after validation, applied to the
+observation by code; proposals compiled into candidates, which the rollouts evaluate and the
+rule of §6 chooses among; explanations never enter it. No LLM call is made in a rollout or in
+the simulator; every call goes through the record/replay cache with a JSON-schema-validated
+answer. Prompts and texts are in English.
+
+### §10.1 Team calendar
+
+Day 0 is a Monday. The working days are Monday to Friday, without holidays; one simulation day
+is one working day, so day `t` is weekday `t mod 5` (0 Monday, …, 4 Friday) of week `⌊t/5⌋`. A
+message is dated by its day and weekday. In a message of day `t`, "on <weekday>" names the first
+day after `t` with that weekday (1–5 days later) and "next week" names the Monday `5(⌊t/5⌋ + 1)`.
+
+### §10.2 Events from team messages (role 1)
+
+A message of day `t` comes from a member of the team roster, which gives every original worker
+a unique first name next to its role. The parser answers `{"events": [...]}`, an empty list for
+a message without an event (meeting moves, praise, questions); a message may report several:
+
+- `{"type": "absence", "worker": w, "return_day": r}`: worker `w` is absent from day `t` on
+  (a D1 onset); `r` is the announced earliest return day, so `L_low = r − t`, or `null` if the
+  message gives none (`L_low = 1`). A weekday gives `r` by §10.1, "about N days" `r = t + N`,
+  "next week" the Monday of the next week.
+- `{"type": "work_increase", "activity": j, "factor": F}`: the remaining work of the running
+  activity `j` is multiplied by `F ≥ 1` (D2, observed with the current `e_j`). "About x % more"
+  gives `F = 1 + x/100`, "twice as long" `F = 2`, "another d days" `F = (r_j + d) / r_j` with
+  `r_j` the remaining work shown to the parser (the deterministic estimate of §5.2 in full-crew
+  days, one decimal); `F` has two decimals.
+- `{"type": "new_activity", "name": ..., "duration": p, "crew": {role: n}, "after": i,
+  "before": s}`: a D3 activity with nominal duration `p ≥ 1` and `n` workers per role, inserted
+  as `i → new → s`; `i = null` is the source ("can start right away") and `s = null` the sink
+  ("before the release"). As in §2.2, `s` is an unstarted real activity or the sink and `i` is
+  neither `s`, the sink, a descendant of `s` nor removed; `n ≤ R_k`.
+
+No field can hold the reason for an absence (invariant 7, GDPR Art. 9): a reason in a message
+is dropped. **Validation** lists the issues of an answer: unknown or already absent workers,
+return days `≤ t` or `> t + 365`, unknown activities, work increases of activities that are not
+running, `F < 1`, new activities with `p < 1`, unknown roles, crews above `R_k`, a name in use or
+an invalid placement, and a worker or activity named twice. As in RQ1, up to three repair rounds
+send the previous answer and its issues back; events with issues after the last round are
+dropped. **Application:** the accepted events change the observation of day `t` as the engine
+would: an absent worker gets `present = false`, `absent_since = t` and `announced = L_low`, and
+a running activity left without a present crew member is paused; a work increase appends
+`(j, e_j, F)` to the observed shocks; a new activity gets the next id, status unstarted and the
+planned start of §3.1 (e).
+
+### §10.3 Action grammar (role 2)
+
+An answer holds at most three proposals, a proposal at most three operations:
+
+- `{"op": "SHIFT"}` and `{"op": "RESEQ", "objective": "makespan" | "stable"}`: SHIFT of §4 and
+  RESEQ-M or RESEQ-S of §6 (`stable`: minimum deviation within the makespan of SHIFT);
+- `{"op": "SUBST", "activity": j}`: SUBST of the paused or running `j` for every absent member
+  for which an idle present worker of its role is left, in the order of AlwaysSubstitute (§7):
+  absent members in increasing id order, the lowest-id idle workers first;
+- `{"op": "OVERTIME", "role": k, "workers": u, "days": H}`: OVERTIME(k, u, H) of §4 with
+  `1 ≤ u ≤ ⌊γ R_k⌋` and `1 ≤ H ≤ 20`.
+
+DESCOPE is not part of the grammar. **Compilation** (code): a proposal has at most one plan
+operation (SHIFT or RESEQ). Its other operations apply in the order given, each validated on the
+state the previous ones leave; a SUBST chooses its substitutes there, so the temporary workers of
+an earlier OVERTIME may substitute. The plan operation is then planned on the state they leave,
+whatever its place in the list, exactly as for the rule candidates (CP-SAT plans for RESEQ on the
+planning view with the temporary workers, §4.1, §6). A proposal with an operation the engine
+would reject, two plan operations, an ineligible SUBST, an unknown role or activity or a
+parameter out of range compiles to an issue instead of a candidate. Its level is `ℓ(a)` of §4.
+A compiled proposal with the effect of a rule candidate or of an earlier proposal (equal
+operations other than SHIFT and RESEQ and equal planned starts of the activities with
+`p_j > 0`) is a duplicate and is not evaluated. The others join `C(s_t)` after the rule
+candidates, in answer order, are raced and chosen by §6 like them, and behind the permission gate
+are approved and re-planned (§4) with the objective of their plan operation.
+
+### §10.4 Explanations (role 3)
+
+From the `DecisionRecord` of a deliberation that passed the needs gate, the LLM writes
+`{"summary": text, "cited_facts": [{"kind": k, "value": v}]}`: a summary of at most 80 words for
+a project manager and the facts it uses, `k ∈ {chosen_action, p_on_time, tardiness_days,
+budget_overrun, alternative, alternative_p_on_time, deciding_component}` (the chosen candidate's
+label, `p̂`, `T̂` and `o`; the runner-up's label and `p̂`; the rule component that decided, the
+record's reason). **Faithfulness:** every cited fact equals the record's value (numbers within
+the rounding of the value written; probabilities and the overrun as fractions or percentages);
+the chosen action is cited; the deciding component is cited and right; every number written in
+digits in the summary matches a value of the record shown to the LLM within its rounding, else
+it counts as a hallucinated number. An explanation that passes all four checks is fully
+faithful.
