@@ -1,0 +1,195 @@
+# WP6b (RQ5): decision states, the deliberations of Sentinel full (Lambda = 3) that passed the
+# needs gate, recorded from reruns of WP5 main-study worlds (the J30 ablation subset), and the
+# stratified sample used by configs/wp6_rq5_proposals.toml and configs/wp6_rq5_explanations.toml.
+# Run: uv run python scripts/record_decision_states.py --config configs/wp6_rq5_states.toml --write-sample
+name = "wp6_rq5_states"
+base_seed = 2026          # world seed of (instance, replication) as in WP2b and WP5
+data_root = "data/psplib"
+baseline_cache = "data/derived/baselines"
+states_dir = "data/derived/decision_states"  # gitignored; reproducible from the seeds
+max_workers = 2           # the RQ1 Ollama study may share the CPU
+set_name = "j30"
+reference = "opt"         # C* = proven optimum
+stride = 8                # every 8th instance: the 60 of the WP5 ablation subset
+lambda_a = [0.01, 0.02]
+mean_absence = 3
+lambda_s = 0.01
+lambda_n = 0.02
+replication = 0
+delta_d = 0.2             # Sentinel works towards D = ceil(1.2 C*)
+beta = 0.10               # budget reserve of B (spec section 1.2)
+review_period = 5         # T_r
+baseline_time_limit = 5.0 # cpsat_det baseline plans of WP2b
+baseline_seed = 2026
+wp5_results = "results/wp5/20261022-102609-e9d131b3/results.csv.gz"  # main study: same worlds
+wp5_policy = "sentinel_full"
+
+[pert]
+a = 0.8
+m = 1.0
+b = 1.6
+lam = 4.0
+
+[sentinel]                # sentinel_full of configs/wp5_rq4_main.toml; spec section 8 otherwise
+autonomy = 3
+n_stage1 = 25
+n_rollouts = 100
+deterministic_time_limit = 0.1
+cp_seed = 0
+
+[sample]                  # strata: lambda_A x progress tercile x rule chose NOOP (12 strata)
+size = 150
+seed = 2026
+# --- sample ids: written by scripts/record_decision_states.py --write-sample ---
+ids = [
+  "j30/j301_1/la0.01/r0/d62",
+  "j30/j301_9/la0.01/r0/d35",
+  "j30/j301_9/la0.02/r0/d50",
+  "j30/j302_7/la0.01/r0/d13",
+  "j30/j303_5/la0.01/r0/d20",
+  "j30/j303_5/la0.02/r0/d67",
+  "j30/j304_3/la0.02/r0/d15",
+  "j30/j304_3/la0.02/r0/d29",
+  "j30/j305_1/la0.01/r0/d10",
+  "j30/j305_9/la0.02/r0/d48",
+  "j30/j306_7/la0.01/r0/d19",
+  "j30/j306_7/la0.02/r0/d29",
+  "j30/j307_5/la0.01/r0/d49",
+  "j30/j307_5/la0.02/r0/d23",
+  "j30/j309_1/la0.01/r0/d58",
+  "j30/j309_9/la0.01/r0/d21",
+  "j30/j309_9/la0.02/r0/d1",
+  "j30/j3010_7/la0.01/r0/d20",
+  "j30/j3010_7/la0.01/r0/d33",
+  "j30/j3010_7/la0.02/r0/d12",
+  "j30/j3010_7/la0.02/r0/d40",
+  "j30/j3010_7/la0.02/r0/d55",
+  "j30/j3011_5/la0.01/r0/d25",
+  "j30/j3011_5/la0.01/r0/d40",
+  "j30/j3011_5/la0.01/r0/d41",
+  "j30/j3011_5/la0.02/r0/d20",
+  "j30/j3011_5/la0.02/r0/d40",
+  "j30/j3011_5/la0.02/r0/d46",
+  "j30/j3012_3/la0.01/r0/d6",
+  "j30/j3012_3/la0.01/r0/d15",
+  "j30/j3012_3/la0.02/r0/d23",
+  "j30/j3013_1/la0.01/r0/d33",
+  "j30/j3013_1/la0.01/r0/d37",
+  "j30/j3013_1/la0.02/r0/d17",
+  "j30/j3013_9/la0.01/r0/d22",
+  "j30/j3013_9/la0.01/r0/d87",
+  "j30/j3013_9/la0.02/r0/d2",
+  "j30/j3013_9/la0.02/r0/d17",
+  "j30/j3013_9/la0.02/r0/d18",
+  "j30/j3014_7/la0.02/r0/d10",
+  "j30/j3015_5/la0.01/r0/d16",
+  "j30/j3015_5/la0.01/r0/d21",
+  "j30/j3015_5/la0.01/r0/d28",
+  "j30/j3015_5/la0.01/r0/d53",
+  "j30/j3015_5/la0.01/r0/d60",
+  "j30/j3015_5/la0.02/r0/d18",
+  "j30/j3015_5/la0.02/r0/d24",
+  "j30/j3017_1/la0.01/r0/d12",
+  "j30/j3017_1/la0.01/r0/d28",
+  "j30/j3017_1/la0.01/r0/d39",
+  "j30/j3017_9/la0.01/r0/d9",
+  "j30/j3017_9/la0.01/r0/d32",
+  "j30/j3017_9/la0.01/r0/d54",
+  "j30/j3017_9/la0.02/r0/d18",
+  "j30/j3018_7/la0.01/r0/d6",
+  "j30/j3018_7/la0.01/r0/d60",
+  "j30/j3018_7/la0.02/r0/d20",
+  "j30/j3019_5/la0.02/r0/d15",
+  "j30/j3019_5/la0.02/r0/d17",
+  "j30/j3019_5/la0.02/r0/d36",
+  "j30/j3020_3/la0.01/r0/d14",
+  "j30/j3022_7/la0.02/r0/d17",
+  "j30/j3023_5/la0.01/r0/d14",
+  "j30/j3023_5/la0.01/r0/d18",
+  "j30/j3023_5/la0.02/r0/d10",
+  "j30/j3024_3/la0.01/r0/d10",
+  "j30/j3024_3/la0.02/r0/d49",
+  "j30/j3025_1/la0.01/r0/d55",
+  "j30/j3025_1/la0.01/r0/d95",
+  "j30/j3025_1/la0.02/r0/d5",
+  "j30/j3025_1/la0.02/r0/d64",
+  "j30/j3025_9/la0.01/r0/d65",
+  "j30/j3026_7/la0.01/r0/d3",
+  "j30/j3026_7/la0.02/r0/d20",
+  "j30/j3027_5/la0.01/r0/d37",
+  "j30/j3027_5/la0.02/r0/d24",
+  "j30/j3028_3/la0.01/r0/d32",
+  "j30/j3028_3/la0.02/r0/d25",
+  "j30/j3029_1/la0.01/r0/d37",
+  "j30/j3029_1/la0.02/r0/d10",
+  "j30/j3029_1/la0.02/r0/d39",
+  "j30/j3029_1/la0.02/r0/d80",
+  "j30/j3029_1/la0.02/r0/d112",
+  "j30/j3029_9/la0.01/r0/d36",
+  "j30/j3029_9/la0.02/r0/d54",
+  "j30/j3029_9/la0.02/r0/d62",
+  "j30/j3029_9/la0.02/r0/d70",
+  "j30/j3029_9/la0.02/r0/d79",
+  "j30/j3030_7/la0.01/r0/d38",
+  "j30/j3031_5/la0.01/r0/d45",
+  "j30/j3031_5/la0.02/r0/d28",
+  "j30/j3031_5/la0.02/r0/d53",
+  "j30/j3031_5/la0.02/r0/d61",
+  "j30/j3032_3/la0.01/r0/d7",
+  "j30/j3032_3/la0.01/r0/d10",
+  "j30/j3032_3/la0.01/r0/d14",
+  "j30/j3032_3/la0.02/r0/d1",
+  "j30/j3032_3/la0.02/r0/d24",
+  "j30/j3032_3/la0.02/r0/d44",
+  "j30/j3033_1/la0.01/r0/d63",
+  "j30/j3033_1/la0.02/r0/d87",
+  "j30/j3033_9/la0.01/r0/d11",
+  "j30/j3033_9/la0.01/r0/d42",
+  "j30/j3033_9/la0.01/r0/d65",
+  "j30/j3035_5/la0.01/r0/d25",
+  "j30/j3035_5/la0.02/r0/d25",
+  "j30/j3036_3/la0.01/r0/d24",
+  "j30/j3037_1/la0.01/r0/d35",
+  "j30/j3037_1/la0.02/r0/d76",
+  "j30/j3037_9/la0.01/r0/d42",
+  "j30/j3037_9/la0.02/r0/d68",
+  "j30/j3038_7/la0.01/r0/d25",
+  "j30/j3038_7/la0.02/r0/d16",
+  "j30/j3038_7/la0.02/r0/d19",
+  "j30/j3038_7/la0.02/r0/d43",
+  "j30/j3039_5/la0.02/r0/d23",
+  "j30/j3039_5/la0.02/r0/d46",
+  "j30/j3040_3/la0.01/r0/d44",
+  "j30/j3040_3/la0.01/r0/d52",
+  "j30/j3041_1/la0.01/r0/d13",
+  "j30/j3041_1/la0.01/r0/d44",
+  "j30/j3041_1/la0.01/r0/d50",
+  "j30/j3041_1/la0.02/r0/d89",
+  "j30/j3041_1/la0.02/r0/d102",
+  "j30/j3041_1/la0.02/r0/d112",
+  "j30/j3041_9/la0.01/r0/d12",
+  "j30/j3041_9/la0.02/r0/d59",
+  "j30/j3042_7/la0.01/r0/d30",
+  "j30/j3042_7/la0.01/r0/d59",
+  "j30/j3042_7/la0.02/r0/d60",
+  "j30/j3043_5/la0.01/r0/d62",
+  "j30/j3043_5/la0.02/r0/d57",
+  "j30/j3043_5/la0.02/r0/d62",
+  "j30/j3043_5/la0.02/r0/d65",
+  "j30/j3044_3/la0.01/r0/d4",
+  "j30/j3044_3/la0.01/r0/d45",
+  "j30/j3044_3/la0.02/r0/d50",
+  "j30/j3045_1/la0.01/r0/d64",
+  "j30/j3045_1/la0.01/r0/d83",
+  "j30/j3045_1/la0.01/r0/d115",
+  "j30/j3045_1/la0.02/r0/d82",
+  "j30/j3045_9/la0.01/r0/d51",
+  "j30/j3045_9/la0.01/r0/d90",
+  "j30/j3046_7/la0.01/r0/d60",
+  "j30/j3046_7/la0.02/r0/d44",
+  "j30/j3046_7/la0.02/r0/d66",
+  "j30/j3047_5/la0.01/r0/d40",
+  "j30/j3047_5/la0.01/r0/d44",
+  "j30/j3047_5/la0.02/r0/d25",
+  "j30/j3048_3/la0.02/r0/d9",
+]
