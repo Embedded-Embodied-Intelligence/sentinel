@@ -57,6 +57,33 @@ class GroqBackend(_Frozen):
     timeout_s: PositiveFloat = 300.0
 
 
+class ProviderRouting(_Frozen):
+    """OpenRouter provider routing: the providers to use, in order (slugs such as `groq`),
+    whether another provider may serve when they fail, and whether the provider must support
+    every request field (so that none is silently dropped)."""
+
+    order: tuple[str, ...] = Field(min_length=1)
+    allow_fallbacks: bool = False
+    require_parameters: bool = True
+
+
+class OpenRouterBackend(_Frozen):
+    """A model on OpenRouter with pinned provider routing; `options` are further request fields
+    (e.g. `reasoning`), part of the cache key like the routing. OpenRouter sets no platform
+    limit for paid models and sends no rate-limit headers with an answer, so
+    `tokens_per_minute` (None: no client-side limit) is the limiter's fallback."""
+
+    kind: Literal["openrouter"]
+    model: str = Field(min_length=1)
+    provider: ProviderRouting
+    tokens_per_minute: PositiveInt | None = None
+    response_format: Literal["json_schema", "json_object"] = "json_schema"
+    options: dict[str, JsonValue] = Field(default_factory=dict)
+    max_wait_s: PositiveFloat = 900.0
+    max_retries: NonNegativeInt = 6
+    timeout_s: PositiveFloat = 300.0
+
+
 class FakeBackend(_Frozen):
     """The scripted oracle of smoke runs: the template parser's reading of the description with
     seeded mistakes in the first 0..`max_faulty_rounds` answers of a session."""
@@ -66,7 +93,9 @@ class FakeBackend(_Frozen):
     max_faulty_rounds: NonNegativeInt = 2
 
 
-Backend = Annotated[OllamaBackend | GroqBackend | FakeBackend, Field(discriminator="kind")]
+Backend = Annotated[
+    OllamaBackend | GroqBackend | OpenRouterBackend | FakeBackend, Field(discriminator="kind")
+]
 
 
 class SummarySettings(_Frozen):
@@ -81,13 +110,15 @@ class SummarySettings(_Frozen):
 class WbsStudyConfig(_Frozen):
     """Seeds, instances, styles, backends, extraction and CP-SAT settings of the RQ1 study.
     `backends` is the study's backends in table order; `backend` holds the settings of every
-    backend a run may select, the fake one of the smoke runs included."""
+    backend a run may select, the fake one of the smoke runs included. `store_prompts = false`
+    keeps the messages out of the caches and bundles (mandatory for real data, spec §10)."""
 
     name: str = Field(min_length=1)
     base_seed: NonNegativeInt
     narrator_seed: NonNegativeInt
     data_root: Path
     cache_dir: Path = DEFAULT_CACHE_DIR
+    store_prompts: bool = True
     sets: tuple[SetConfig, ...] = Field(min_length=1)
     styles: tuple[Style, ...] = Field(min_length=1)
     backends: tuple[str, ...] = Field(min_length=1)

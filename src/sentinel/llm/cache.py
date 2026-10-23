@@ -5,6 +5,11 @@ backend and stores the reply even when the key is cached, `replay` answers from 
 (a miss raises `CacheMiss`), `auto` calls the backend on a miss and stores the reply. The
 working cache lives under `data/llm_cache/` (gitignored); a run's replay bundle is a gzip file
 of exactly the entries it used, from which the run can be repeated without any backend.
+
+A cache with `store_prompts=False` stores no message text: an entry keeps the key, the model
+metadata, the decoding parameters and the reply, and lookups work by key as before. It is
+mandatory for real (non-synthetic) data (spec §10, invariant 7); such a cache refuses to open a
+file that holds messages, so its bundles hold none either.
 """
 
 import fcntl
@@ -26,7 +31,8 @@ DEFAULT_CACHE_DIR = Path("data/llm_cache")
 
 
 class CacheEntry(BaseModel):
-    """A stored reply with its request: messages, schema name and digest, parameters."""
+    """A stored reply with its request: messages (unless not stored), schema name and digest,
+    parameters."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -39,23 +45,33 @@ class CacheEntry(BaseModel):
     recorded_utc: str
 
 
-def make_entry(request: Request, reply: Reply, now: datetime | None = None) -> CacheEntry:
-    """The cache entry of a request and its reply; the schema is kept as its SHA-256."""
+def make_entry(
+    request: Request, reply: Reply, now: datetime | None = None, *, store_prompts: bool = True
+) -> CacheEntry:
+    """The cache entry of a request and its reply; the schema is kept as its SHA-256, and the
+    messages only with `store_prompts` (else the entry says `store_prompts: false`)."""
     moment = (now or datetime.now(UTC)).astimezone(UTC)
+    details: dict[str, JsonValue] = {
+        "schema_name": request.schema_name,
+        "schema_sha256": sha256_json(request.json_schema),
+        "temperature": request.temperature,
+        "seed": request.seed,
+        "max_tokens": request.max_tokens,
+        "options": request.options,
+    }
+    if store_prompts:
+        messages: list[JsonValue] = [
+            message.model_dump(mode="json") for message in request.messages
+        ]
+        details = {"messages": messages, **details}
+    else:
+        details = {"store_prompts": False, **details}
     return CacheEntry(
         key=request.key,
         backend=request.backend,
         model=request.model,
         digest=request.digest,
-        request={
-            "messages": [message.model_dump(mode="json") for message in request.messages],
-            "schema_name": request.schema_name,
-            "schema_sha256": sha256_json(request.json_schema),
-            "temperature": request.temperature,
-            "seed": request.seed,
-            "max_tokens": request.max_tokens,
-            "options": request.options,
-        },
+        request=details,
         reply=reply,
         recorded_utc=moment.isoformat(timespec="seconds"),
     )
@@ -67,11 +83,13 @@ class LlmCache:
     The last line of a key wins. A cut-off last line (a crash while writing) is skipped; any
     other bad line is an error. Appends hold an exclusive `flock`, so processes can share a
     file. `used` collects the entries looked up or stored, in first-use order, for a bundle.
+    With `store_prompts=False` no message text is written, and a file with messages is an error.
     """
 
-    def __init__(self, path: Path, *, readonly: bool = False) -> None:
+    def __init__(self, path: Path, *, readonly: bool = False, store_prompts: bool = True) -> None:
         self.path = path
         self.readonly = readonly or path.suffix == ".gz"
+        self.store_prompts = store_prompts
         self.skipped_lines = 0
         self.used: dict[str, CacheEntry] = {}
         self._entries: dict[str, CacheEntry] = {}
@@ -106,7 +124,7 @@ class LlmCache:
         """Append the reply of `request` and return its entry."""
         if self.readonly:
             raise PermissionError(f"cache file {self.path} is read-only")
-        entry = make_entry(request, reply)
+        entry = make_entry(request, reply, store_prompts=self.store_prompts)
         line = entry.model_dump_json() + "\n"
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as handle:
@@ -136,6 +154,11 @@ class LlmCache:
                     self.skipped_lines += 1
                     continue
                 raise ValueError(f"{self.path}:{number}: corrupt cache entry ({exc})") from None
+            if not self.store_prompts and "messages" in entry.request:
+                raise ValueError(
+                    f"{self.path}:{number}: the entry holds message text, which a cache without "
+                    "prompts (store_prompts = false) must not contain"
+                )
             self._entries[entry.key] = entry
 
 

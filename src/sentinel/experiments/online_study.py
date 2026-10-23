@@ -2,7 +2,7 @@
 needs gate, against Sentinel `full` on the same worlds (WP6b; spec section 10.3).
 
     uv run python -m sentinel.experiments.online_study --config configs/wp6_rq5_online.toml \
-        --out results/wp6 [--backend groq] [--limit N] [--cache-file <bundle>]
+        --out results/wp6 [--backend openrouter] [--limit N] [--cache-file <bundle>]
 
 The worlds are those of the WP5 main study (`configs/wp6_rq5_states.toml` gives the data,
 scenario, baseline plans, D, B and the Sentinel settings; this config the instance stride,
@@ -337,7 +337,7 @@ def run(args: Any, command: str) -> Path:
     git = runs.git_state()  # taken before any output of the run exists
     digest = runs.config_hash(raw, args.limit, {"backends": selected, "states": states_raw})
     run_id = runs.make_run_id(started, digest)
-    clients = open_clients(config, selected, args.cache_mode, args.cache_file)
+    clients = open_clients(config, selected, args.cache_mode, args.cache_file, args.replay)
     print(f"run {run_id}: backends {', '.join(selected)}, cache mode {clients.mode}", flush=True)
     rows = execute(config, states, clients, args.limit)
     run_dir = runs.create_run_dir(args.out, run_id, smoke=args.limit is not None)

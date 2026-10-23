@@ -51,6 +51,23 @@ class QuotaExhausted(LlmError):
         super().__init__(message)
         self.retry_after_s = retry_after_s
 
+    @property
+    def resume_hint(self) -> str:
+        """What to do before the same command resumes the run."""
+        return f"run the same command again in about {self.retry_after_s / 3600:.1f} h"
+
+
+class CreditsExhausted(QuotaExhausted):
+    """The account cannot pay for the request (no credits left, or a key or budget limit);
+    finished calls are cached, so the same run resumes once credits are added."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, 0.0)
+
+    @property
+    def resume_hint(self) -> str:
+        return "add credits (or raise the key's limit), then run the same command again"
+
 
 class Message(BaseModel):
     """One chat message."""

@@ -1,5 +1,6 @@
-"""LLM layer (WP6): one client protocol over Ollama, Groq and a scripted fake, a record/replay
-cache, JSON-schema-validated answers and versioned prompts (CLAUDE.md invariant 3; ADR-0018).
+"""LLM layer (WP6): one client protocol over Ollama, the OpenAI-compatible cloud backends Groq
+and OpenRouter and a scripted fake, a record/replay cache, JSON-schema-validated answers and
+versioned prompts (CLAUDE.md invariant 3; ADR-0018).
 
 Only `sentinel.wbs`, `sentinel.experiments` and the interpretation layer import this package;
 no simulation or rollout path calls an LLM.
@@ -9,6 +10,7 @@ from sentinel.llm.cache import CACHE_MODES, DEFAULT_CACHE_DIR, CacheEntry, Cache
 from sentinel.llm.client import BaseClient, ClientStats
 from sentinel.llm.core import (
     CacheMiss,
+    CreditsExhausted,
     ErrorDetail,
     LlmClient,
     LlmError,
@@ -22,8 +24,10 @@ from sentinel.llm.core import (
     backend_schema,
 )
 from sentinel.llm.fake import FakeLlmClient, FakeReply
-from sentinel.llm.groq import GroqClient, TokenRateLimiter
+from sentinel.llm.groq import GroqClient
 from sentinel.llm.ollama import OllamaClient
+from sentinel.llm.openai_compat import OpenAICompatibleClient, TokenRateLimiter
+from sentinel.llm.openrouter import OpenRouterClient
 from sentinel.llm.prompts import Prompt, load_prompt
 from sentinel.llm.secrets import Secret, load_secret, load_setting
 
@@ -35,6 +39,7 @@ __all__ = [
     "CacheMiss",
     "CacheMode",
     "ClientStats",
+    "CreditsExhausted",
     "ErrorDetail",
     "FakeLlmClient",
     "FakeReply",
@@ -45,6 +50,8 @@ __all__ = [
     "LlmResponse",
     "Message",
     "OllamaClient",
+    "OpenAICompatibleClient",
+    "OpenRouterClient",
     "OutputError",
     "Prompt",
     "QuotaExhausted",

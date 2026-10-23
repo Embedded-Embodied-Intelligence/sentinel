@@ -1,6 +1,7 @@
-"""RQ1 study runner (WP6a): the config follows the study plan; a run on the scripted oracle
-writes every output, its replay bundle reproduces it without a backend, a rate-limit stop
-writes nothing and resumes from the cache, and the summaries regenerate identically."""
+"""RQ1 study runner (WP6a, WP6c): the config follows the study plan; a run on the scripted
+oracle writes every output, its replay bundle reproduces it without a backend (also as the
+replay of one backend), a rate-limit or credits stop writes nothing and resumes from the cache,
+the summaries regenerate identically, and the manifest names OpenRouter's serving providers."""
 
 import csv
 import json
@@ -9,14 +10,37 @@ import tomllib
 from pathlib import Path
 
 import pytest
+from pydantic import BaseModel
 
 from sentinel import cli
 from sentinel.experiments import wbs_study
-from sentinel.experiments.wbs_config import GroqBackend, OllamaBackend, WbsStudyConfig
-from sentinel.llm import FakeLlmClient, QuotaExhausted, Reply, Request
+from sentinel.experiments.wbs_config import (
+    GroqBackend,
+    OllamaBackend,
+    OpenRouterBackend,
+    WbsStudyConfig,
+)
+from sentinel.llm import (
+    CreditsExhausted,
+    FakeLlmClient,
+    LlmCache,
+    Message,
+    OpenRouterClient,
+    QuotaExhausted,
+    Reply,
+    Request,
+    Secret,
+)
+from sentinel.llm.http import HttpReply
 from sentinel.wbs.narrate import parse_narration
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+class Empty(BaseModel):
+    """An answer without fields."""
+
+
 CONFIG = """
 name = "fake_wp6"
 base_seed = 7
@@ -89,12 +113,15 @@ def rows(path: Path) -> list[dict[str, str]]:
 
 def test_the_rq1_config_follows_the_study_plan() -> None:
     """docs/experiments/plan.md (RQ1): J30 every 12th, both styles, Ollama qwen2.5:7b with its
-    weights pinned and Groq gpt-oss-120b on the free plan, up to 3 repair rounds."""
+    weights pinned and gpt-oss-120b served by Groq through OpenRouter (WP6c; Groq's free plan
+    stays an option), up to 3 repair rounds, full cache records of the synthetic texts."""
     raw = tomllib.loads((REPO_ROOT / "configs" / "wp6_rq1.toml").read_text(encoding="utf-8"))
     config = WbsStudyConfig.model_validate(raw)
     assert [(s.name, s.stride) for s in config.sets] == [("j30", 12)]
-    assert config.styles == ("structured", "narrative") and config.backends == ("ollama", "groq")
+    assert config.styles == ("structured", "narrative")
+    assert config.backends == ("ollama", "openrouter") and config.store_prompts
     ollama, groq = config.backend["ollama"], config.backend["groq"]
+    cloud = config.backend["openrouter"]
     assert isinstance(ollama, OllamaBackend) and isinstance(groq, GroqBackend)
     assert ollama.model == "qwen2.5:7b" and ollama.digest is not None
     assert (groq.model, groq.tokens_per_minute, groq.tokens_per_day) == (
@@ -102,6 +129,10 @@ def test_the_rq1_config_follows_the_study_plan() -> None:
         8000,
         200000,
     )
+    assert isinstance(cloud, OpenRouterBackend) and cloud.model == groq.model
+    assert (cloud.provider.order, cloud.provider.allow_fallbacks) == (("groq",), False)
+    assert cloud.provider.require_parameters and cloud.response_format == "json_schema"
+    assert cloud.options == {"reasoning": {"effort": "low", "exclude": True}}
     extraction = config.extraction
     assert (extraction.prompt_version, extraction.temperature) == ("v1", 0.0)
     assert extraction.max_repair_rounds == 3
@@ -159,6 +190,75 @@ def test_a_rate_limit_stop_writes_nothing_and_the_rerun_resumes_from_the_cache(
     (run_dir,) = out.iterdir()
     manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["llm"]["fake"]["stats"]["cache_hits"] == 3
+
+
+def test_a_credits_stop_exits_with_status_3_and_says_to_add_credits(
+    study: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def broke(self: FakeLlmClient, request: Request) -> Reply:
+        raise CreditsExhausted("OpenRouter request failed: HTTP 402: Insufficient credits")
+
+    monkeypatch.setattr(FakeLlmClient, "_send", broke)
+    out = tmp_path / "results"
+    argv = ["--config", str(study), "--out", str(out), "--backend", "fake"]
+    assert wbs_study.main(argv) == wbs_study.EXIT_QUOTA
+    message = capsys.readouterr().err
+    assert "HTTP 402" in message and "add credits" in message and "run the same command" in message
+    assert not out.exists() or not any(out.iterdir())
+
+
+def test_one_backend_replays_from_a_bundle_while_the_others_use_their_cache(
+    fake_run: tuple[Path, Path], tmp_path: Path, tiny_path: Path
+) -> None:
+    """--replay fake=<bundle>: the bundle answers (replay mode, nothing recorded), so the run
+    reproduces the recorded one; a backend outside the run or a malformed value is an error."""
+    run_dir = fake_run[0]
+    config = write_study(tmp_path, tiny_path)
+    bundle = run_dir / "llm_cache.jsonl.gz"
+    argv = ["--config", str(config), "--out", str(tmp_path / "out"), "--replay", f"fake={bundle}"]
+    assert wbs_study.main(argv) == 0
+    (replayed,) = (tmp_path / "out").iterdir()
+    for name in ("results.csv", "rounds.csv", "llm_cache.jsonl.gz"):
+        assert (replayed / name).read_bytes() == (run_dir / name).read_bytes(), name
+    manifest = json.loads((replayed / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["replay"] == {"fake": str(bundle)} and manifest["cache_mode"] == "auto"
+    assert manifest["llm"]["fake"]["cache_mode"] == "replay"
+    assert manifest["llm"]["fake"]["cache_file"] == str(bundle)
+    assert not (tmp_path / "cache").exists()  # the working cache was not touched
+    with pytest.raises(ValueError, match="does not select"):
+        wbs_study.open_caches(
+            ["fake"], tmp_path, "auto", None, {"groq": bundle}, store_prompts=True
+        )
+    with pytest.raises(ValueError, match="BACKEND=FILE"):
+        wbs_study.parse_replay(["fake"])
+    with pytest.raises(SystemExit):
+        wbs_study.main([*argv[:4], "--replay", f"fake={bundle}", "--cache-file", str(bundle)])
+
+
+def test_the_manifest_names_the_routing_and_the_providers_that_served(tmp_path: Path) -> None:
+    body = {
+        "provider": "Groq",
+        "model": "openai/gpt-oss-120b",
+        "choices": [{"message": {"content": "{}"}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 5, "cost": 0.0002},
+    }
+    replies = [HttpReply(200, json.dumps(body).encode(), {})]
+    routing = {"order": ["groq"], "allow_fallbacks": False, "require_parameters": True}
+    cache = LlmCache(tmp_path / "openrouter.jsonl")
+    client = OpenRouterClient(
+        "openai/gpt-oss-120b",
+        tokens_per_minute=None,
+        extra={"provider": routing},
+        api_key=Secret("sk-or-v1-test0123456789abcdef"),  # pragma: allowlist secret
+        env_file=None,
+        cache=cache,
+        transport=lambda *args, **kwargs: replies.pop(0),
+    )
+    client.complete([Message(role="user", content="hi")], schema=Empty, seed=1, max_tokens=50)
+    record = wbs_study.llm_provenance({"openrouter": client}, {"openrouter": cache})["openrouter"]
+    assert record["provider_routing"] == routing and record["providers"] == {"Groq": 1}
+    assert record["recorded_cost"] == 0.0002 and record["store_prompts"] is True
+    assert record["retries"] == 0 and record["reported_limit_tokens"] == []
 
 
 def test_the_summaries_regenerate_identically(fake_run: tuple[Path, Path]) -> None:

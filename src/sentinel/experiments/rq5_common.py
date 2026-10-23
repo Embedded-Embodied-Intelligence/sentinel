@@ -1,11 +1,13 @@
 """What the RQ5 studies of WP6b share: backend settings, clients over the record/replay cache,
 the scripted oracle of the smoke runs, the replay bundle, the manifest and the exit status of a
-run stopped by a rate limit (as in WP6a; ADR-0018).
+run stopped by a rate limit or by missing credits (as in WP6a; ADR-0018).
 
 Each study (events, proposals, explanations, the online check) runs its LLM calls one after the
 other through `<cache_dir>/<backend>.jsonl` (mode `auto` by default), or answers from a run's
-replay bundle only (`--cache-file`, replay mode, no backend). A run stopped by `QuotaExhausted`
-writes no run directory and exits with status 3; the same command resumes from the cache.
+replay bundle only (`--cache-file`, replay mode, no backend); `--replay <backend>=<file>`
+answers one backend from a file only. A run stopped by `QuotaExhausted` (a rate limit, or
+`CreditsExhausted`) writes no run directory and exits with status 3; the same command resumes
+from the cache.
 """
 
 import argparse
@@ -23,8 +25,14 @@ from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveInt
 
 from sentinel.experiments import runs
 from sentinel.experiments.forecast_summary import Estimate
-from sentinel.experiments.wbs_config import GroqBackend, OllamaBackend
-from sentinel.experiments.wbs_study import llm_provenance
+from sentinel.experiments.wbs_config import GroqBackend, OllamaBackend, OpenRouterBackend
+from sentinel.experiments.wbs_study import (
+    add_replay_argument,
+    llm_provenance,
+    open_caches,
+    parse_replay,
+    stop_message,
+)
 from sentinel.experiments.wbs_study import make_client as make_real_client
 from sentinel.forecasting.metrics import (
     FloatArray,
@@ -64,7 +72,9 @@ class FakeBackend(_Frozen):
     error_rate: float = Field(default=0.3, ge=0, le=1)
 
 
-Backend = Annotated[OllamaBackend | GroqBackend | FakeBackend, Field(discriminator="kind")]
+Backend = Annotated[
+    OllamaBackend | GroqBackend | OpenRouterBackend | FakeBackend, Field(discriminator="kind")
+]
 
 
 class BootstrapSettings(_Frozen):
@@ -77,11 +87,14 @@ class BootstrapSettings(_Frozen):
 
 class LlmStudyConfig(_Frozen):
     """Settings every RQ5 LLM study has: name, seed, cache directory, the study's backends in
-    table order and the settings of every backend a run may select, the fake one included."""
+    table order and the settings of every backend a run may select, the fake one included.
+    `store_prompts = false` keeps the messages out of the caches and bundles (mandatory for
+    real data, spec §10; the RQ5 messages are synthetic)."""
 
     name: str = Field(min_length=1)
     base_seed: NonNegativeInt
     cache_dir: Path = DEFAULT_RQ5_CACHE
+    store_prompts: bool = True
     backends: tuple[str, ...] = Field(min_length=1)
     backend: dict[str, Backend]
     summary: BootstrapSettings
@@ -117,12 +130,14 @@ class Oracle:
 
 @dataclass
 class Clients:
-    """The clients, caches and oracles of a run's selected backends."""
+    """The clients, caches and oracles of a run's selected backends; `mode` is the run's
+    cache mode and `replay` the backends answered from a file only."""
 
     clients: dict[str, BaseClient]
     caches: dict[str, LlmCache | None]
     oracles: dict[str, Oracle]
     mode: CacheMode
+    replay: dict[str, Path] = field(default_factory=dict)
 
 
 def open_clients(
@@ -130,15 +145,21 @@ def open_clients(
     selected: Sequence[str],
     cache_mode: CacheMode,
     cache_file: Path | None,
+    replay: Mapping[str, Path] | None = None,
 ) -> Clients:
     """A client per selected backend over `<cache_dir>/<backend>.jsonl`, or over the replay
-    bundle `cache_file` (replay mode)."""
-    shared = None if cache_file is None else LlmCache(cache_file, readonly=True)
+    bundle `cache_file` (replay mode), or for a backend of `replay` over that file only
+    (replay mode)."""
+    replay = dict(replay or {})
+    caches, modes = open_caches(
+        selected,
+        config.cache_dir,
+        cache_mode,
+        cache_file,
+        replay,
+        store_prompts=config.store_prompts,
+    )
     mode: CacheMode = "replay" if cache_file is not None else cache_mode
-    caches: dict[str, LlmCache | None] = {
-        name: shared if shared is not None else LlmCache(config.cache_dir / f"{name}.jsonl")
-        for name in selected
-    }
     clients: dict[str, BaseClient] = {}
     oracles: dict[str, Oracle] = {}
     for name in selected:
@@ -146,11 +167,11 @@ def open_clients(
         if isinstance(backend, FakeBackend):
             oracles[name] = Oracle()
             clients[name] = FakeLlmClient(
-                oracles[name], model=backend.model, cache=caches[name], mode=mode
+                oracles[name], model=backend.model, cache=caches[name], mode=modes[name]
             )
         else:
-            clients[name] = make_real_client(name, backend, caches[name], mode)
-    return Clients(clients, caches, oracles, mode)
+            clients[name] = make_real_client(name, backend, caches[name], modes[name])
+    return Clients(clients, caches, oracles, mode, dict(replay))
 
 
 def item_seed(base_seed: int, *keys: str) -> int:
@@ -210,6 +231,7 @@ def manifest(
         "backends": list(selected),
         "cache_mode": clients.mode,
         "cache_file": None if cache_file is None else str(cache_file),
+        "replay": {name: str(path) for name, path in clients.replay.items()},
         "git_commit": git["commit"],
         "git_dirty": git["dirty"],
         "start_utc": runs.utc_iso(started),
@@ -225,7 +247,7 @@ def manifest(
 
 
 def add_common_arguments(parser: argparse.ArgumentParser) -> None:
-    """--config, --out, --limit, --backend, --cache-mode and --cache-file."""
+    """--config, --out, --limit, --backend, --cache-mode, --cache-file and --replay."""
     parser.add_argument("--config", type=Path, required=True, help="study config (TOML)")
     parser.add_argument(
         "--out", type=Path, required=True, help="results directory, e.g. results/wp6"
@@ -241,6 +263,7 @@ def add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--cache-file", type=Path, help="answer from this replay bundle only (replay mode)"
     )
+    add_replay_argument(parser)
 
 
 def run_main(
@@ -249,7 +272,8 @@ def run_main(
     argv: Sequence[str] | None,
     run: Callable[[argparse.Namespace, str], Path],
 ) -> int:
-    """Parse the common arguments, run, and map a rate-limit stop to exit status 3."""
+    """Parse the common arguments (`args.replay` becomes {backend: file}), run, and map a stop
+    by a rate limit or by missing credits to exit status 3."""
     args_list = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(prog=f"python -m {prog}", description=description)
     add_common_arguments(parser)
@@ -258,16 +282,17 @@ def run_main(
         parser.error("--limit must be at least 1")
     if args.cache_file is not None and args.cache_mode != "auto":
         parser.error("--cache-file replays a bundle; it takes no --cache-mode")
+    if args.cache_file is not None and args.replay:
+        parser.error("--cache-file replays every backend; it takes no --replay")
+    try:
+        args.replay = parse_replay(args.replay)
+    except ValueError as exc:
+        parser.error(str(exc))
     command = shlex.join(["python", "-m", prog, *args_list])
     try:
         run_dir = run(args, command)
     except QuotaExhausted as exc:
-        hours = exc.retry_after_s / 3600
-        print(
-            f"stopped: {exc}\nEvery finished call is in the cache; run the same command again in "
-            f"about {hours:.1f} h to resume (no run directory was written).",
-            file=sys.stderr,
-        )
+        print(stop_message(exc), file=sys.stderr)
         return EXIT_QUOTA
     print(f"done: {run_dir}", flush=True)
     return 0

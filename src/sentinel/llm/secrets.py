@@ -1,7 +1,7 @@
 """API keys and settings from the environment or `.env` (CLAUDE.md invariant 4).
 
 A key is held as a `Secret`, whose repr, str and format never show the value; `redact`
-removes it (and anything shaped like a Groq key) from text before it reaches a log, a
+removes it (and anything shaped like a Groq or OpenRouter key) from text before it reaches a log, a
 manifest, a cache file or an exception. `.env` is parsed here at run time, so nothing else
 reads it; the environment takes precedence.
 """
@@ -14,7 +14,7 @@ from typing import NoReturn
 
 DEFAULT_ENV_FILE = Path(".env")
 REDACTED = "[REDACTED]"
-_KEY_SHAPE = re.compile(r"gsk_[A-Za-z0-9]{8,}")
+_KEY_SHAPE = re.compile(r"gsk_[A-Za-z0-9]{8,}|sk-or-[A-Za-z0-9_-]{8,}")
 _ASSIGNMENT = re.compile(r"\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*")
 
 
@@ -32,7 +32,7 @@ class Secret:
         return self._value
 
     def redact(self, text: str) -> str:
-        """`text` without the value and without anything shaped like a Groq API key."""
+        """`text` without the value and without anything shaped like a Groq or OpenRouter key."""
         return _KEY_SHAPE.sub(REDACTED, text.replace(self._value, REDACTED))
 
     def __repr__(self) -> str:
@@ -49,7 +49,8 @@ class Secret:
 
 
 def redact(text: str, secret: Secret | None = None) -> str:
-    """`text` without `secret` (if given) and without anything shaped like a Groq API key."""
+    """`text` without `secret` (if given) and without anything shaped like a Groq or OpenRouter
+    key."""
     if secret is not None:
         return secret.redact(text)
     return _KEY_SHAPE.sub(REDACTED, text)

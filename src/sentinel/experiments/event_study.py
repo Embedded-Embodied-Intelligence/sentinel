@@ -534,7 +534,7 @@ def run(args: Any, command: str) -> Path:
     git = runs.git_state()  # taken before any output of the run exists
     digest = runs.config_hash(raw, args.limit, {"backends": selected})
     run_id = runs.make_run_id(started, digest)
-    clients = open_clients(config, selected, args.cache_mode, args.cache_file)
+    clients = open_clients(config, selected, args.cache_mode, args.cache_file, args.replay)
     items = build_items(config, args.limit)
     print(
         f"run {run_id}: {len(items)} messages x {len(selected)} backends, cache mode "

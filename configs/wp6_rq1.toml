@@ -2,16 +2,17 @@
 # project model compared with single-shot extraction? Descriptions are generated from PSPLIB
 # instances by templates (sentinel.wbs.narrate); docs/experiments/plan.md (RQ1 study).
 # Ollama run: uv run python -m sentinel.experiments.wbs_study --config configs/wp6_rq1.toml --out results/wp6 --backend ollama
-# Both backends (Ollama replayed from the cache, Groq live and resumable):
-#             uv run python -m sentinel.experiments.wbs_study --config configs/wp6_rq1.toml --out results/wp6
+# Both backends (Ollama replayed from the Ollama run, OpenRouter live and resumable; Groq: --backend groq):
+#             uv run python -m sentinel.experiments.wbs_study --config configs/wp6_rq1.toml --out results/wp6 --replay ollama=results/wp6/20261023-084159-73dcf94e/llm_cache.jsonl.gz
 # Smoke on the scripted oracle: add --backend fake --limit 2
 name = "wp6_rq1"
 base_seed = 2026          # LLM seed of a session (instance, style), shared by the backends
 narrator_seed = 2026      # narrator seed of an instance, shared by both styles
 data_root = "data/psplib"
 cache_dir = "data/llm_cache"  # record/replay cache, one JSON-lines file per backend (gitignored)
+store_prompts = true       # synthetic messages: full cache records; false is mandatory for real data (spec section 10)
 styles = ["structured", "narrative"]
-backends = ["ollama", "groq"]  # the study's backends in table order; --backend selects
+backends = ["ollama", "openrouter"]  # the study's backends in table order; --backend selects
 
 [[sets]]
 name = "j30"
@@ -45,6 +46,21 @@ max_wait_s = 900          # a longer rate-limit wait stops the run (resume from 
 [backend.groq.options]    # extra request fields, part of the cache key
 reasoning_effort = "low"
 include_reasoning = false
+
+[backend.openrouter]      # cloud (WP6c): gpt-oss-120b of the Groq smokes, served by Groq via OpenRouter (ADR-0018)
+kind = "openrouter"
+model = "openai/gpt-oss-120b"
+response_format = "json_schema"  # best effort, as on Groq
+max_wait_s = 900          # a longer rate-limit wait stops the run (resume from the cache)
+# no tokens_per_minute: OpenRouter sets no limit for paid models; a 429 waits for Retry-After
+
+[backend.openrouter.provider]  # pinned to Groq; if Groq is unavailable, order = ["cerebras"]
+order = ["groq"]
+allow_fallbacks = false
+require_parameters = true  # the provider must take every field (seed, schema, reasoning)
+
+[backend.openrouter.options]  # extra request fields, part of the cache key
+reasoning = { effort = "low", exclude = true }  # reasoning_effort low, no reasoning text
 
 [backend.fake]            # scripted oracle for smoke runs (template parser with seeded mistakes)
 kind = "fake"

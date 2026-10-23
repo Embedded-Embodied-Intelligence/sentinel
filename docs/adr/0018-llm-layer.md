@@ -54,3 +54,46 @@ open model (best-effort `json_schema`, `reasoning_effort` low, retries with back
   on `QuotaExhausted` and resumes from the cache.
 - Groq's schema check is best effort: an answer that fails it (HTTP 400 `json_validate_failed`)
   comes back as an answer with `failed_generation`, so the validator and the repair loop see it.
+
+## Amendment (WP6c, 2026-10-23): OpenRouter backend, cache records without prompts
+
+**Context.** Groq's paid Developer plan is temporarily unavailable, and the free plan (8K
+tokens/min, 200K/day) would hold the WP6 cloud runs for about two weeks. OpenRouter (pay as you
+go, OpenAI-compatible) serves `openai/gpt-oss-120b` through Groq among about 24 providers.
+OpenRouter's documentation and endpoint list, read **2026-10-23**: routing by
+`provider: {order, allow_fallbacks, require_parameters}` with provider slugs (`groq`: $0.15 /
+$0.60 per million prompt / completion tokens, 131K context, `seed`, `response_format`,
+`structured_outputs` and `reasoning` supported; `cerebras/fp16`: $0.35 / $0.75); no platform
+rate limit for paid models and no rate-limit headers on answers; 429 with `Retry-After` when the
+providers give one, `X-RateLimit-*` on platform limits; 402 for credits, with
+`error.metadata.limit_source` (the in-flight budget is transient and sends `Retry-After`);
+errors may come inside an HTTP 200 body; router metadata (`X-OpenRouter-Metadata: enabled`)
+names the endpoint that served.
+
+**Decision.** `OpenAICompatibleClient` holds the shared call path (payload, retries, limiter,
+key); `GroqClient` (requests and cache keys unchanged, `max_completion_tokens`, failed
+generations) and `OpenRouterClient` (`max_tokens`, routing as a request field, router metadata)
+are thin subclasses. Backend `openrouter`: the same model, temperature 0, item seeds,
+best-effort `json_schema`, `reasoning: {effort: low, exclude: true}` (as `reasoning_effort` low
+without reasoning text on Groq), routing pinned to Groq without fallbacks and with
+`require_parameters: true`, part of the cache key. The serving provider (`provider`, else the
+router metadata) is recorded in every reply and counted in the manifest with the recorded cost;
+under `allow_fallbacks: false` an answer of another provider is an error and is not cached.
+Fallback if Groq is unavailable: `order = ["cerebras"]` (new cache keys). The limiter follows
+`x-ratelimit-limit-tokens` when a reply reports it (Groq), else the configured limit (none for
+OpenRouter). A 402 other than the in-flight budget, or a budget 403, raises `CreditsExhausted`
+(a `QuotaExhausted`: exit status 3; add credits and rerun). `store_prompts = false` writes cache
+records without messages (spec §10, v1.9.1). `--replay BACKEND=FILE` answers one backend from a
+file in replay mode while the others record, so the cloud runs replay the committed Ollama runs.
+
+| Option | Why not |
+| --- | --- |
+| Groq free plan | About two weeks of daily quota for the WP6 cloud runs |
+| OpenRouter's default routing | Cheaper fp4/int4 endpoints would change the serving hardware between calls |
+| Cerebras directly | Another key and client, and not the provider of the WP6a/WP6b smokes |
+| `openai` SDK | A new runtime dependency |
+
+**Consequences.** The cloud runs cost about one US dollar and take hours (WP6c report); model
+and serving provider stay those of the Groq smokes, but answers are not bit-identical to them
+(hosted model, another account); `groq` keeps working and its recorded caches still answer (a
+test pins a pre-WP6c request key).

@@ -2,19 +2,22 @@
 instances, single-shot against validation with repair (WP6a; docs/experiments/plan.md).
 
     uv run python -m sentinel.experiments.wbs_study --config configs/wp6_rq1.toml \
-        --out results/wp6 --backend ollama [--backend groq] [--limit N] \
-        [--cache-mode auto|record|replay] [--cache-file <run_dir>/llm_cache.jsonl.gz]
+        --out results/wp6 --backend ollama [--backend openrouter] [--limit N] \
+        [--cache-mode auto|record|replay] [--cache-file <run_dir>/llm_cache.jsonl.gz] \
+        [--replay ollama=<run_dir>/llm_cache.jsonl.gz]
 
 For every instance (every `stride`-th of a set), style and selected backend one repair
 session runs (`sentinel.wbs.extract.repair`); its first round is the single-shot condition and
 its last round the repair condition, so both come from one session. Every LLM call goes
 through the record/replay cache `<cache_dir>/<backend>.jsonl` (mode `auto` by default); with
-`--cache-file` a run's replay bundle answers instead, without any backend. Sessions run one
+`--cache-file` a run's replay bundle answers instead, without any backend, and with `--replay
+<backend>=<file>` that file answers for that backend only (replay mode). Sessions run one
 after the other (one GPU, one rate limit). The run directory is written once every session is
-done: a run stopped by a rate limit (`QuotaExhausted`, exit status 3) keeps its finished calls
-in the cache and the same command resumes it. Every CP-SAT schedule is checked with
-`validate_schedule`. Outputs: `results.csv`, `rounds.csv`, `manifest.json` (with the cache hit
-rates), the replay bundle `llm_cache.jsonl.gz` and the summaries of `wbs_summary`.
+done: a run stopped by a rate limit or by missing credits (`QuotaExhausted`, exit status 3)
+keeps its finished calls in the cache and the same command resumes it. Every CP-SAT schedule
+is checked with `validate_schedule`. Outputs: `results.csv`, `rounds.csv`, `manifest.json`
+(with the cache hit rates), the replay bundle `llm_cache.jsonl.gz` and the summaries of
+`wbs_summary`.
 """
 
 import argparse
@@ -41,6 +44,7 @@ from sentinel.experiments.wbs_config import (
     FakeBackend,
     GroqBackend,
     OllamaBackend,
+    OpenRouterBackend,
     WbsStudyConfig,
 )
 from sentinel.experiments.wbs_summary import write_summaries
@@ -55,6 +59,8 @@ from sentinel.llm import (
     LlmError,
     Message,
     OllamaClient,
+    OpenAICompatibleClient,
+    OpenRouterClient,
     QuotaExhausted,
     load_prompt,
 )
@@ -278,6 +284,18 @@ def make_client(name: str, backend: Backend, cache: LlmCache | None, mode: Cache
                 tokens_per_minute=backend.tokens_per_minute,
                 response_format=backend.response_format,
                 extra=backend.options,
+                max_wait_s=backend.max_wait_s,
+                max_retries=backend.max_retries,
+                timeout_s=backend.timeout_s,
+                cache=cache,
+                mode=mode,
+            )
+        case OpenRouterBackend():
+            return OpenRouterClient(
+                backend.model,
+                tokens_per_minute=backend.tokens_per_minute,
+                response_format=backend.response_format,
+                extra={"provider": backend.provider.model_dump(mode="json"), **backend.options},
                 max_wait_s=backend.max_wait_s,
                 max_retries=backend.max_retries,
                 timeout_s=backend.timeout_s,
@@ -588,7 +606,8 @@ def data_provenance(config: WbsStudyConfig) -> dict[str, Any]:
 def llm_provenance(
     clients: Mapping[str, BaseClient], caches: Mapping[str, LlmCache | None]
 ) -> dict[str, Any]:
-    """Per backend: model, digest, cache file and stats, and what its replies report."""
+    """Per backend: model, digest, cache file and stats, and what its replies report (for
+    OpenRouter the routing, the providers that served the answers and their recorded cost)."""
     result: dict[str, Any] = {}
     for name, client in clients.items():
         cache = caches[name]
@@ -605,6 +624,7 @@ def llm_provenance(
             "digest": client.digest if isinstance(client, OllamaClient) else None,
             "cache_file": None if cache is None else str(cache.path),
             "cache_mode": client.mode,
+            "store_prompts": None if cache is None else cache.store_prompts,
             "stats": client.stats.as_dict(),
             "recorded_utc": [
                 min((e.recorded_utc for e in used), default=None),
@@ -616,7 +636,7 @@ def llm_provenance(
                 record["server_version"] = client.server_version()
             except LlmError:
                 record["server_version"] = None
-        if isinstance(client, GroqClient):
+        if isinstance(client, OpenAICompatibleClient):
             record["retries"] = client.retries
             record["rate_limit_wait_s"] = (
                 None if client.limiter is None else round(client.limiter.waited_s, 1)
@@ -626,8 +646,86 @@ def llm_provenance(
             )
             for header in ("limit_tokens", "limit_requests"):
                 record[f"reported_{header}"] = sorted({str(m[header]) for m in meta if header in m})
+        if isinstance(client, OpenRouterClient):
+            record["provider_routing"] = dict(client.routing)
+            record["providers"] = dict(
+                sorted(Counter(str(m.get("provider", "unreported")) for m in meta).items())
+            )
+            costs = [cost for m in meta if isinstance(cost := m.get("cost"), int | float)]
+            record["recorded_cost"] = round(sum(costs), 6)  # OpenRouter credits (USD)
         result[name] = record
     return result
+
+
+def add_replay_argument(parser: argparse.ArgumentParser) -> None:
+    """--replay BACKEND=FILE (repeatable)."""
+    parser.add_argument(
+        "--replay",
+        action="append",
+        default=[],
+        metavar="BACKEND=FILE",
+        help="answer this backend from FILE only, a replay bundle or cache file (replay mode: a "
+        "miss is an error); the other backends use --cache-mode (repeatable)",
+    )
+
+
+def stop_message(exc: QuotaExhausted) -> str:
+    """What a run stopped by a rate limit or by missing credits prints (exit status 3)."""
+    return (
+        f"stopped: {exc}\nEvery finished call is in the cache; {exc.resume_hint} to resume (no "
+        "run directory was written)."
+    )
+
+
+def parse_replay(values: Sequence[str]) -> dict[str, Path]:
+    """The `--replay BACKEND=FILE` values as {backend: file}; a malformed value or a backend
+    named twice is a ValueError."""
+    replay: dict[str, Path] = {}
+    for value in values:
+        name, sep, file = value.partition("=")
+        if not sep or not name or not file:
+            raise ValueError(f"--replay takes BACKEND=FILE, got {value!r}")
+        if name in replay:
+            raise ValueError(f"--replay names the backend {name!r} twice")
+        replay[name] = Path(file)
+    return replay
+
+
+def open_caches(
+    selected: Sequence[str],
+    cache_dir: Path,
+    cache_mode: CacheMode,
+    cache_file: Path | None,
+    replay: Mapping[str, Path],
+    *,
+    store_prompts: bool,
+) -> tuple[dict[str, LlmCache | None], dict[str, CacheMode]]:
+    """The cache and mode of every selected backend: its working cache
+    `<cache_dir>/<backend>.jsonl` in `cache_mode`; with `cache_file` that bundle for every
+    backend (replay mode); with `replay` the given file for that backend only (read-only,
+    replay mode, so a miss is an error)."""
+    unknown = sorted(set(replay) - set(selected))
+    if unknown:
+        raise ValueError(f"--replay names backends the run does not select: {unknown}")
+    if cache_file is not None and replay:
+        raise ValueError("--cache-file replays every backend; it takes no --replay")
+    shared = (
+        None
+        if cache_file is None
+        else LlmCache(cache_file, readonly=True, store_prompts=store_prompts)
+    )
+    caches: dict[str, LlmCache | None] = {}
+    modes: dict[str, CacheMode] = {}
+    for name in selected:
+        if shared is not None:
+            caches[name], modes[name] = shared, "replay"
+        elif name in replay:
+            caches[name] = LlmCache(replay[name], readonly=True, store_prompts=store_prompts)
+            modes[name] = "replay"
+        else:
+            caches[name] = LlmCache(cache_dir / f"{name}.jsonl", store_prompts=store_prompts)
+            modes[name] = cache_mode
+    return caches, modes
 
 
 def run_study(
@@ -638,6 +736,7 @@ def run_study(
     cache_mode: CacheMode,
     cache_file: Path | None,
     command: str,
+    replay: Mapping[str, Path] | None = None,
 ) -> Path:
     """Run the selected backends' sessions and write the run directory; returns its path."""
     raw_config = runs.load_toml(config_path)
@@ -651,14 +750,19 @@ def run_study(
     run_id = runs.make_run_id(started, digest)
     git = runs.git_state()
     subjects = build_subjects(config, limit)
-    shared = None if cache_file is None else LlmCache(cache_file, readonly=True)
+    replay = dict(replay or {})
+    caches, modes = open_caches(
+        selected,
+        config.cache_dir,
+        cache_mode,
+        cache_file,
+        replay,
+        store_prompts=config.store_prompts,
+    )
     mode: CacheMode = "replay" if cache_file is not None else cache_mode
-    caches: dict[str, LlmCache | None] = {
-        name: shared if shared is not None else LlmCache(config.cache_dir / f"{name}.jsonl")
-        for name in selected
-    }
     clients = {
-        name: make_client(name, config.backend[name], caches[name], mode) for name in selected
+        name: make_client(name, config.backend[name], caches[name], modes[name])
+        for name in selected
     }
     planned = plan_sessions(config, subjects, selected)
     print(
@@ -697,6 +801,7 @@ def run_study(
         "backends": selected,
         "cache_mode": mode,
         "cache_file": None if cache_file is None else str(cache_file),
+        "replay": {name: str(path) for name, path in replay.items()},
         "git_commit": git["commit"],
         "git_dirty": git["dirty"],
         "start_utc": runs.utc_iso(started),
@@ -752,11 +857,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--cache-file", type=Path, help="answer from this replay bundle only (replay mode)"
     )
+    add_replay_argument(parser)
     args = parser.parse_args(args_list)
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be at least 1")
     if args.cache_file is not None and args.cache_mode != "auto":
         parser.error("--cache-file replays a bundle; it takes no --cache-mode")
+    if args.cache_file is not None and args.replay:
+        parser.error("--cache-file replays every backend; it takes no --replay")
+    try:
+        replay = parse_replay(args.replay)
+    except ValueError as exc:
+        parser.error(str(exc))
     command = shlex.join(["python", "-m", "sentinel.experiments.wbs_study", *args_list])
     try:
         run_dir = run_study(
@@ -767,14 +879,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.cache_mode,
             args.cache_file,
             command,
+            replay,
         )
     except QuotaExhausted as exc:
-        hours = exc.retry_after_s / 3600
-        print(
-            f"stopped: {exc}\nEvery finished call is in the cache; run the same command again in "
-            f"about {hours:.1f} h to resume (no run directory was written).",
-            file=sys.stderr,
-        )
+        print(stop_message(exc), file=sys.stderr)
         return EXIT_QUOTA
     except InvalidScheduleError as exc:
         print(f"error: invalid schedule, run aborted: {exc}", file=sys.stderr)

@@ -322,7 +322,7 @@ def run(args: Any, command: str) -> Path:
     git = runs.git_state()  # taken before any output of the run exists
     digest = runs.config_hash(raw, args.limit, {"backends": selected, "states": states_raw})
     run_id = runs.make_run_id(started, digest)
-    clients = open_clients(config, selected, args.cache_mode, args.cache_file)
+    clients = open_clients(config, selected, args.cache_mode, args.cache_file, args.replay)
     print(f"run {run_id}: {len(states)} states x {len(selected)} backends", flush=True)
     rows = execute(config, states, states_config.sentinel, clients)
     run_dir = runs.create_run_dir(args.out, run_id, smoke=args.limit is not None)

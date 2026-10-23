@@ -2,8 +2,8 @@
 # generated from templates in the states of NoReaction worlds (sentinel.interpret.messages), so
 # their events are the exact ground truth; each message is parsed in a WP6a repair session.
 # Ollama run:  uv run python -m sentinel.experiments.event_study --config configs/wp6_rq5_events.toml --out results/wp6 --backend ollama
-# Both backends (Ollama from the cache, Groq live and resumable):
-#              uv run python -m sentinel.experiments.event_study --config configs/wp6_rq5_events.toml --out results/wp6
+# Both backends (Ollama replayed from its cache, OpenRouter live and resumable; Groq: --backend groq):
+#              uv run python -m sentinel.experiments.event_study --config configs/wp6_rq5_events.toml --out results/wp6 --replay ollama=data/llm_cache/rq5/ollama.jsonl
 # Smoke on the scripted oracle: --backend fake --limit 4 (20 messages)
 name = "wp6_rq5_events"
 base_seed = 2026          # LLM seed of a message, shared by the backends and the rounds
@@ -11,7 +11,8 @@ message_seed = 2026       # message days, roster, activity names and message tex
 data_root = "data/psplib"
 baseline_cache = "data/derived/baselines"
 cache_dir = "data/llm_cache/rq5"  # record/replay caches of RQ5, one JSON-lines file per backend
-backends = ["ollama", "groq"]
+store_prompts = true       # synthetic messages: full cache records; false is mandatory for real data (spec section 10)
+backends = ["ollama", "openrouter"]
 set_name = "j30"
 reference = "opt"
 stride = 12               # every 12th instance: the 40 of RQ1
@@ -55,6 +56,21 @@ max_wait_s = 900
 [backend.groq.options]
 reasoning_effort = "low"
 include_reasoning = false
+
+[backend.openrouter]      # cloud (WP6c): gpt-oss-120b of the Groq smokes, served by Groq via OpenRouter (ADR-0018)
+kind = "openrouter"
+model = "openai/gpt-oss-120b"
+response_format = "json_schema"  # best effort, as on Groq
+max_wait_s = 900          # a longer rate-limit wait stops the run (resume from the cache)
+# no tokens_per_minute: OpenRouter sets no limit for paid models; a 429 waits for Retry-After
+
+[backend.openrouter.provider]  # pinned to Groq; if Groq is unavailable, order = ["cerebras"]
+order = ["groq"]
+allow_fallbacks = false
+require_parameters = true  # the provider must take every field (seed, schema, reasoning)
+
+[backend.openrouter.options]  # extra request fields, part of the cache key
+reasoning = { effort = "low", exclude = true }  # reasoning_effort low, no reasoning text
 
 [backend.fake]            # scripted oracle: the true events with seeded mistakes
 kind = "fake"

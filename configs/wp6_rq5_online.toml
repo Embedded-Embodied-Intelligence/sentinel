@@ -1,6 +1,6 @@
 # WP6b (RQ5, optional online check): Sentinel full with LLM proposals at every deliberation that
 # passed the needs gate, against Sentinel full on the same worlds (read from the WP5 main study).
-# Groq only; the LLM is never called inside a rollout (spec section 10).
+# OpenRouter (Groq) only; the LLM is never called inside a rollout (spec section 10).
 # Run:   uv run python -m sentinel.experiments.online_study --config configs/wp6_rq5_online.toml --out results/wp6
 # Smoke: --backend fake --limit 1
 name = "wp6_rq5_online"
@@ -8,7 +8,8 @@ base_seed = 2026          # LLM seed of a deliberation
 names_seed = 2026         # activity names of the state summaries
 states = "configs/wp6_rq5_states.toml"  # data, scenario, baseline plans, D, B, Sentinel full
 cache_dir = "data/llm_cache/rq5"
-backends = ["groq"]
+store_prompts = true       # synthetic messages: full cache records; false is mandatory for real data (spec section 10)
+backends = ["openrouter"]
 stride = 24               # every 24th J30 instance: 20 (j301_1, j303_5, ...)
 lambda_a = 0.01
 replications = 1          # replication 0, the WP2b and WP5 seed
@@ -29,6 +30,21 @@ max_wait_s = 900
 [backend.groq.options]
 reasoning_effort = "low"
 include_reasoning = false
+
+[backend.openrouter]      # cloud (WP6c): gpt-oss-120b of the Groq smokes, served by Groq via OpenRouter (ADR-0018)
+kind = "openrouter"
+model = "openai/gpt-oss-120b"
+response_format = "json_schema"  # best effort, as on Groq
+max_wait_s = 900          # a longer rate-limit wait stops the run (resume from the cache)
+# no tokens_per_minute: OpenRouter sets no limit for paid models; a 429 waits for Retry-After
+
+[backend.openrouter.provider]  # pinned to Groq; if Groq is unavailable, order = ["cerebras"]
+order = ["groq"]
+allow_fallbacks = false
+require_parameters = true  # the provider must take every field (seed, schema, reasoning)
+
+[backend.openrouter.options]  # extra request fields, part of the cache key
+reasoning = { effort = "low", exclude = true }  # reasoning_effort low, no reasoning text
 
 [backend.fake]
 kind = "fake"

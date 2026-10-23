@@ -1,10 +1,14 @@
-"""LLM layer (WP6a): record/replay cache, schema violations, Ollama and Groq requests, Groq
-retries and the tokens-per-minute limit, secrets and the import boundary. No network: every
-backend call goes to a scripted transport or the fake client."""
+"""LLM layer (WP6a, WP6c): record/replay cache (also without prompts), schema violations,
+Ollama, Groq and OpenRouter requests, retries, credits and the tokens-per-minute limit, secrets
+and the import boundary. No network: every backend call goes to a scripted transport or the
+fake client."""
 
+import gzip
+import hashlib
 import json
 import pickle
 import re
+import time
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -13,6 +17,7 @@ from pydantic import BaseModel
 
 from sentinel.llm import (
     CacheMiss,
+    CreditsExhausted,
     FakeLlmClient,
     FakeReply,
     GroqClient,
@@ -20,6 +25,7 @@ from sentinel.llm import (
     LlmError,
     Message,
     OllamaClient,
+    OpenRouterClient,
     QuotaExhausted,
     RequestTooLarge,
     Secret,
@@ -29,8 +35,10 @@ from sentinel.llm import (
     load_secret,
 )
 from sentinel.llm.cache import write_bundle
-from sentinel.llm.groq import parse_wait
 from sentinel.llm.http import HttpReply, TransportError
+from sentinel.llm.openai_compat import parse_wait
+from sentinel.llm.openrouter import reset_wait
+from sentinel.llm.secrets import redact
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MESSAGES = [
@@ -38,6 +46,9 @@ MESSAGES = [
     Message(role="user", content="a is 1 and b is x"),
 ]
 KEY = Secret("gsk_test0123456789abcdefTESTKEY")
+OPENROUTER_KEY = Secret("sk-or-v1-0123456789abcdef0123456789abcdefTEST")  # pragma: allowlist secret
+ROUTING = {"order": ["groq"], "allow_fallbacks": False, "require_parameters": True}
+REASONING = {"effort": "low", "exclude": True}
 DIGEST = "sha256:" + "ab" * 32
 
 
@@ -99,13 +110,13 @@ class ScriptedTransport:
         return reply
 
 
-def chat_ok(text: str, prompt: int = 10, completion: int = 5) -> HttpReply:
+def chat_ok(text: str, prompt: int = 10, completion: int = 5, limit: str = "8000") -> HttpReply:
     body = {
         "model": "openai/gpt-oss-120b",
         "choices": [{"message": {"content": text}, "finish_reason": "stop"}],
         "usage": {"prompt_tokens": prompt, "completion_tokens": completion},
     }
-    return HttpReply(200, json.dumps(body).encode(), {"x-ratelimit-limit-tokens": "8000"})
+    return HttpReply(200, json.dumps(body).encode(), {"x-ratelimit-limit-tokens": limit})
 
 
 def groq(transport: ScriptedTransport, **settings: object) -> tuple[GroqClient, FakeClock]:
@@ -118,6 +129,48 @@ def groq(transport: ScriptedTransport, **settings: object) -> tuple[GroqClient, 
         clock=clock.now,
         sleep=clock.sleep,
         **settings,  # type: ignore[arg-type]
+    )
+    return client, clock
+
+
+def routed_ok(text: str, provider: str | None = "Groq", **extra: object) -> HttpReply:
+    """An OpenRouter answer (no rate-limit headers), naming its provider if given."""
+    body: dict[str, object] = {
+        "id": "gen-1",
+        "model": "openai/gpt-oss-120b",
+        "choices": [
+            {"message": {"content": text}, "finish_reason": "stop", "native_finish_reason": "stop"}
+        ],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 5, "cost": 0.00012},
+        **extra,
+    }
+    if provider is not None:
+        body["provider"] = provider
+    return HttpReply(200, json.dumps(body).encode(), {})
+
+
+def routed_error(status: int, error: Mapping[str, object], **headers: str) -> HttpReply:
+    body = json.dumps({"error": dict(error)}).encode()
+    return HttpReply(status, body, {name.replace("_", "-"): v for name, v in headers.items()})
+
+
+def openrouter(
+    transport: ScriptedTransport, **settings: object
+) -> tuple[OpenRouterClient, FakeClock]:
+    clock = FakeClock()
+    options: dict[str, object] = {
+        "tokens_per_minute": None,
+        "extra": {"provider": ROUTING, "reasoning": REASONING},
+        **settings,
+    }
+    client = OpenRouterClient(
+        "openai/gpt-oss-120b",
+        api_key=OPENROUTER_KEY,
+        env_file=None,
+        transport=transport,
+        clock=clock.now,
+        sleep=clock.sleep,
+        **options,  # type: ignore[arg-type]
     )
     return client, clock
 
@@ -375,12 +428,213 @@ def test_the_token_limiter_spaces_requests_within_a_minute() -> None:
     assert first[1] == 60.0
 
     transport = ScriptedTransport(
-        [chat_ok('{"a": 1, "b": "x"}', 700, 300), chat_ok('{"a": 1, "b": "y"}', 700, 300)]
+        [
+            chat_ok('{"a": 1, "b": "x"}', 700, 300, limit="1000"),
+            chat_ok('{"a": 1, "b": "y"}', 700, 300, limit="1000"),
+        ]
     )
     client, clock = groq(transport, tokens_per_minute=1000)
     client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=2000)
     client.complete(MESSAGES, schema=Pair, seed=2, max_tokens=2000)
     assert clock.sleeps == [60.0]  # the first used 1000 tokens, so the second waits a minute
+
+
+def test_the_limiter_follows_the_reported_limit_and_falls_back_to_the_config() -> None:
+    def two_calls(client: GroqClient | OpenRouterClient) -> None:
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=2000)
+        client.complete(MESSAGES, schema=Pair, seed=2, max_tokens=2000)
+
+    answers = [chat_ok('{"a": 1, "b": "x"}', 700, 300), chat_ok('{"a": 1, "b": "y"}', 700, 300)]
+    raised, clock = groq(ScriptedTransport(answers), tokens_per_minute=1000)
+    two_calls(raised)  # Groq reports 8,000 tokens per minute: the second call fits
+    assert clock.sleeps == [] and raised.limiter is not None and raised.limiter.limit == 8000
+    reported = [chat_ok('{"a": 1, "b": "x"}', 700, 300, limit="1000")] * 2
+    learned, clock = groq(ScriptedTransport(reported), tokens_per_minute=None)
+    two_calls(learned)  # no configured limit: the reported one applies from the first answer
+    assert clock.sleeps == [60.0]
+    silent = [routed_ok('{"a": 1, "b": "x"}'), routed_ok('{"a": 1, "b": "y"}')]
+    configured, clock = openrouter(ScriptedTransport(silent), tokens_per_minute=1000)
+    two_calls(configured)  # OpenRouter reports no limit: the configured one applies
+    assert configured.limiter is not None and configured.limiter.limit == 1000
+    assert clock.sleeps == [60.0]
+
+
+def test_the_groq_request_and_its_cache_key_are_unchanged_by_the_shared_client() -> None:
+    """The key and body of a fixed request as computed before WP6c, so that the recorded Groq
+    caches still answer."""
+    transport = ScriptedTransport([chat_ok('{"a": 1, "b": "x"}')])
+    client, _ = groq(
+        transport,
+        tokens_per_minute=None,
+        extra={"reasoning_effort": "low", "include_reasoning": False},
+    )
+    request = client.request(MESSAGES, schema=Pair, temperature=0.0, seed=3, max_tokens=50)
+    assert request.key == (
+        "87c7c13ca608fdde880615027dbb920d"  # pragma: allowlist secret
+        "fd01900b409d174185419d7a92c47c5d"  # pragma: allowlist secret
+    )
+    client.complete(MESSAGES, schema=Pair, seed=3, max_tokens=50)
+    body = json.dumps(transport.calls[0][2]).encode("utf-8")
+    assert hashlib.sha256(body).hexdigest() == (
+        "2e648c0095547bb1a0efbe251faf27c9"  # pragma: allowlist secret
+        "48978e128e6ebe46a66ee24746a0fe45"  # pragma: allowlist secret
+    )
+
+
+def test_openrouter_sends_the_pinned_routing_and_records_the_provider(tmp_path: Path) -> None:
+    cache = LlmCache(tmp_path / "openrouter.jsonl")
+    metadata = {"endpoints": {"available": [{"provider": "Groq", "selected": True}]}}
+    transport = ScriptedTransport(
+        [
+            routed_ok('{"a": 1, "b": "x"}'),
+            routed_ok('{"a": 2, "b": "y"}', provider=None, openrouter_metadata=metadata),
+        ]
+    )
+    client, _ = openrouter(transport, cache=cache)
+    response = client.complete(MESSAGES, schema=Pair, seed=3, max_tokens=50)
+    assert response.value == Pair(a=1, b="x")
+    _, url, body, headers = transport.calls[0]
+    assert url == "https://openrouter.ai/api/v1/chat/completions" and isinstance(body, dict)
+    assert body["provider"] == ROUTING and body["reasoning"] == REASONING
+    assert (body["seed"], body["max_tokens"], body["temperature"]) == (3, 50, 0.0)
+    assert "max_completion_tokens" not in body
+    assert body["response_format"]["json_schema"]["schema"] == backend_schema(Pair)
+    assert headers["Authorization"] == f"Bearer {OPENROUTER_KEY.reveal()}"
+    assert headers["X-OpenRouter-Metadata"] == "enabled"
+    client.complete(MESSAGES, schema=Pair, seed=4, max_tokens=50)
+    first, second = cache.entries()
+    assert first.backend == "openrouter" and first.request["options"] == {
+        "response_format": "json_schema",
+        "provider": ROUTING,
+        "reasoning": REASONING,
+    }
+    assert first.reply.meta["provider"] == "Groq" and first.reply.meta["cost"] == 0.00012
+    assert first.reply.meta["generation_id"] == "gen-1"
+    assert second.reply.meta["provider"] == "Groq"  # from the router metadata
+    cerebras, _ = openrouter(
+        ScriptedTransport([]),
+        extra={"provider": {**ROUTING, "order": ["cerebras"]}, "reasoning": REASONING},
+    )
+    settings: dict[str, object] = {"schema": Pair, "temperature": 0.0, "seed": 3, "max_tokens": 50}
+    assert cerebras.request(MESSAGES, **settings).key != client.request(MESSAGES, **settings).key  # type: ignore[arg-type]
+
+
+def test_openrouter_rejects_an_answer_of_a_provider_outside_the_pin(tmp_path: Path) -> None:
+    cache = LlmCache(tmp_path / "openrouter.jsonl")
+    client, _ = openrouter(
+        ScriptedTransport([routed_ok('{"a": 1, "b": "x"}', provider="Cerebras")]), cache=cache
+    )
+    with pytest.raises(LlmError, match="not by the pinned"):
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert len(cache) == 0 and not (tmp_path / "openrouter.jsonl").exists()
+
+
+def test_openrouter_stops_for_credits_and_waits_for_the_in_flight_budget() -> None:
+    no_credits = routed_error(
+        402,
+        {"code": 402, "message": "Insufficient credits", "metadata": {"limit_source": "x"}},
+    )
+    client, clock = openrouter(ScriptedTransport([no_credits]))
+    with pytest.raises(CreditsExhausted) as info:
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert isinstance(info.value, QuotaExhausted) and clock.sleeps == []
+    assert "add credits at https://openrouter.ai/settings/credits" in str(info.value)
+    assert info.value.resume_hint.startswith("add credits")
+    in_flight = routed_error(
+        402,
+        {"code": 402, "metadata": {"limit_source": "openrouter_in_flight_budget"}},
+        retry_after="3",
+    )
+    client, clock = openrouter(ScriptedTransport([in_flight, routed_ok('{"a": 1, "b": "x"}')]))
+    assert client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50).value == Pair(a=1, b="x")
+    assert clock.sleeps == [3.0] and client.retries == 1
+
+
+def test_openrouter_backs_off_on_429_and_on_an_error_inside_a_200() -> None:
+    reset = str(int((time.time() + 20) * 1000))  # epoch milliseconds
+    transport = ScriptedTransport(
+        [
+            routed_error(429, {"code": 429, "message": "Rate limit exceeded"}, retry_after="7"),
+            routed_error(200, {"code": 502, "message": "upstream error"}),
+            routed_error(429, {"code": 429}, x_ratelimit_reset=reset),
+            routed_ok('{"a": 1, "b": "x"}'),
+        ]
+    )
+    client, clock = openrouter(transport, backoff_s=2.0)
+    assert client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50).value == Pair(a=1, b="x")
+    assert clock.sleeps[:2] == [7.0, 4.0] and clock.sleeps[2] == pytest.approx(20, abs=2)
+    assert reset_wait("1800000000000", now=1_799_999_990.0) == pytest.approx(10.0)
+    assert reset_wait("12") == 12.0 and reset_wait(None) is None
+    client, clock = openrouter(
+        ScriptedTransport([routed_error(429, {"code": 429}, retry_after="3600")])
+    )
+    with pytest.raises(QuotaExhausted) as info:
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert info.value.retry_after_s == 3600 and clock.sleeps == []
+    client, _ = openrouter(ScriptedTransport([routed_error(401, {"code": 401})]))
+    with pytest.raises(LlmError, match="HTTP 401"):
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+
+
+def test_openrouter_returns_a_failed_generation_of_the_provider_as_an_answer(
+    tmp_path: Path,
+) -> None:
+    raw = {"error": {"code": "json_validate_failed", "failed_generation": '{"a": "x"}'}}
+    metadata = {"provider_name": "Groq", "raw": json.dumps(raw)}
+    failed = routed_error(
+        400, {"code": 400, "message": "Provider returned error", "metadata": metadata}
+    )
+    cache = LlmCache(tmp_path / "openrouter.jsonl")
+    client, _ = openrouter(ScriptedTransport([failed]), cache=cache)
+    response = client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert response.finish_reason == "json_validate_failed" and response.parsed == {"a": "x"}
+    assert response.error is not None and response.error.kind == "schema"
+    assert cache.entries()[0].reply.meta["provider"] == "Groq"
+    client, _ = openrouter(ScriptedTransport([routed_error(400, {"code": 400})]))
+    with pytest.raises(LlmError):
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+
+
+def test_a_cache_without_prompts_replays_by_key_and_holds_no_message_text(
+    tmp_path: Path,
+) -> None:
+    private = [
+        Message(role="system", content="Report the absences as JSON."),
+        Message(role="user", content="Zofia Wrona is in hospital with pneumonia until Friday."),
+    ]
+    path = tmp_path / "private.jsonl"
+    recorder = FakeLlmClient(
+        ['{"a": 1, "b": "x"}'], cache=LlmCache(path, store_prompts=False), mode="record"
+    )
+    first = recorder.complete(private, schema=Pair, seed=7, max_tokens=64)
+    stored = path.read_text(encoding="utf-8")
+    for text in [m.content for m in private] + ["Zofia", "hospital", "pneumonia"]:
+        assert text not in stored
+    (entry,) = LlmCache(path, store_prompts=False).entries()
+    assert entry.key == first.key and "messages" not in entry.request
+    assert entry.request["store_prompts"] is False and entry.request["schema_name"] == "Pair"
+
+    replayer = FakeLlmClient([], cache=LlmCache(path, store_prompts=False), mode="replay")
+    again = replayer.complete(private, schema=Pair, seed=7, max_tokens=64)
+    assert again.cache_hit and again.value == Pair(a=1, b="x") and again.key == first.key
+    with pytest.raises(CacheMiss):
+        replayer.complete(
+            [private[0], Message(role="user", content="other")], schema=Pair, seed=7, max_tokens=64
+        )
+    assert replayer.cache is not None
+    bundle = tmp_path / "llm_cache.jsonl.gz"
+    write_bundle(bundle, replayer.cache.used.values())
+    assert "Zofia" not in gzip.decompress(bundle.read_bytes()).decode("utf-8")
+    from_bundle = FakeLlmClient([], cache=LlmCache(bundle, store_prompts=False), mode="replay")
+    assert from_bundle.complete(private, schema=Pair, seed=7, max_tokens=64).text == first.text
+
+    full = tmp_path / "full.jsonl"
+    FakeLlmClient(['{"a": 1, "b": "x"}'], cache=LlmCache(full)).complete(
+        private, schema=Pair, seed=7, max_tokens=64
+    )
+    assert "Zofia" in full.read_text(encoding="utf-8")  # research runs keep the full record
+    with pytest.raises(ValueError, match="holds message text"):
+        LlmCache(full, store_prompts=False)
 
 
 def test_the_key_never_shows_in_reprs_errors_or_cache_files(tmp_path: Path) -> None:
@@ -409,6 +663,35 @@ def test_the_key_never_shows_in_reprs_errors_or_cache_files(tmp_path: Path) -> N
     assert "[REDACTED]" in str(info.value)
     client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
     assert value not in (tmp_path / "groq.jsonl").read_text(encoding="utf-8")
+
+
+def test_the_openrouter_key_never_shows_in_reprs_errors_or_cache_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    value = OPENROUTER_KEY.reveal()
+    other = "sk-or-v1-ffffffffffffffffffffffffffffffff"  # pragma: allowlist secret
+    echo = {"code": 401, "message": f"No auth credentials found for {value} or {other}"}
+    cache = LlmCache(tmp_path / "openrouter.jsonl")
+    client, _ = openrouter(
+        ScriptedTransport([routed_error(401, echo), routed_ok('{"a": 1, "b": "x"}')]),
+        cache=cache,
+    )
+    assert value not in repr(client) and "redacted" in repr(client)
+    with pytest.raises(LlmError) as info:
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert value not in str(info.value) and other not in str(info.value)
+    assert str(info.value).count("[REDACTED]") == 2 and redact(other) == "[REDACTED]"
+    client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert value not in (tmp_path / "openrouter.jsonl").read_text(encoding="utf-8")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    keyless = OpenRouterClient(
+        "m",
+        tokens_per_minute=None,
+        env_file=tmp_path / "absent.env",
+        transport=ScriptedTransport([]),
+    )
+    with pytest.raises(LlmError, match="OPENROUTER_API_KEY is not set"):
+        keyless.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
 
 
 def test_the_key_comes_from_the_environment_or_the_env_file(
