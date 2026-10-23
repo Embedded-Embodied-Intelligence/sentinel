@@ -1,0 +1,4 @@
+Your JSON answer has these problems:
+$issues
+
+Correct them using the project description. Answer with the corrected JSON object for the whole project, every activity included, in the same format and nothing else.
