@@ -81,6 +81,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     raw = runs.load_toml(args.config)
     config = StatesConfig.model_validate(raw)
     started = datetime.now(UTC)
+    git = runs.git_state()  # taken before any output of the run exists
     out = config.states_dir if args.limit is None else Path(f"{config.states_dir}-smoke")
     out.mkdir(parents=True, exist_ok=True)
     todo = worlds(config, args.limit)
@@ -131,7 +132,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "config": raw,
         "config_hash": runs.config_hash(raw, args.limit),
         "limit": args.limit,
-        **runs.git_state(),
+        **git,
         "start_utc": runs.utc_iso(started),
         "end_utc": runs.utc_iso(finished_at),
         "duration_s": round((finished_at - started).total_seconds(), 1),

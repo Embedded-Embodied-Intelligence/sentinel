@@ -531,6 +531,7 @@ def run(args: Any, command: str) -> Path:
     config = EventStudyConfig.model_validate(raw)
     selected = config.selected(args.backend)
     started = datetime.now(UTC)
+    git = runs.git_state()  # taken before any output of the run exists
     digest = runs.config_hash(raw, args.limit, {"backends": selected})
     run_id = runs.make_run_id(started, digest)
     clients = open_clients(config, selected, args.cache_mode, args.cache_file)
@@ -561,6 +562,7 @@ def run(args: Any, command: str) -> Path:
     data = manifest(
         run_id=run_id,
         started=started,
+        git=git,
         command=command,
         config_path=args.config,
         raw_config=raw,

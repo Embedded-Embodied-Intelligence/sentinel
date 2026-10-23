@@ -180,6 +180,7 @@ def manifest(
     *,
     run_id: str,
     started: datetime,
+    git: Mapping[str, Any],
     command: str,
     config_path: Path,
     raw_config: Mapping[str, Any],
@@ -192,8 +193,8 @@ def manifest(
     outputs: Sequence[str],
     extra: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """The manifest fields every RQ5 LLM study writes, then the study's own `extra`."""
-    git = runs.git_state()
+    """The manifest fields every RQ5 LLM study writes, then the study's own `extra`; `git` is
+    `runs.git_state()` taken when the run started, before any of its outputs existed."""
     finished = datetime.now(UTC)
     stats = [client.stats for client in clients.clients.values()]
     calls = sum(s.calls for s in stats)

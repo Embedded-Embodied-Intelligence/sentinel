@@ -608,6 +608,7 @@ def run(args: Any, command: str) -> Path:
     states_config, states, states_raw = load_sample(config.states, args.limit)
     params = states_config.sentinel
     started = datetime.now(UTC)
+    git = runs.git_state()  # taken before any output of the run exists
     digest = runs.config_hash(raw, args.limit, {"backends": selected, "states": states_raw})
     run_id = runs.make_run_id(started, digest)
     clients = open_clients(config, selected, args.cache_mode, args.cache_file)
@@ -630,6 +631,7 @@ def run(args: Any, command: str) -> Path:
     data = manifest(
         run_id=run_id,
         started=started,
+        git=git,
         command=command,
         config_path=args.config,
         raw_config=raw,
