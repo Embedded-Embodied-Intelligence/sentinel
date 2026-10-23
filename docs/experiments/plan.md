@@ -78,14 +78,16 @@ rerun as the check (its seeds and makespans must equal those of WP2b and WP4b, 0
 | Item | Value |
 | --- | --- |
 | Instances | main: J30 every 4th (120, the WP4b instances); J60 **every 8th** (60, `j601_1`, `j601_9`, `j602_7`, …, a subset of the WP4b instances); ablation: J30 **every 8th** (60, `j301_1`, `j301_9`, `j302_7`, …, a subset of the main J30 instances) |
-| Grid | main: λ_A ∈ {0, 0.005, 0.01, 0.02}; ablation: λ_A ∈ {0.01, 0.02}; both E[L] = 3, λ_S = 0.01, λ_N = 0.02, R = 4 with the WP2b seeds of replications 0–3 |
+| Grid | main: λ_A ∈ {0, 0.005, 0.01, 0.02}; ablation: λ_A ∈ {0.01, 0.02}; autonomy levels: λ_A = 0.01; all E[L] = 3, λ_S = 0.01, λ_N = 0.02, R = 4 with the WP2b seeds of replications 0–3 |
 | Deadline | Sentinel works towards δ_D = 0.2 (primary; ADR-0013: a deadline-aware policy needs one run per δ_D), on time for δ_D = 0.3 post hoc; max_days 5 D(δ_D) of its own deadline |
 | Sentinel | spec v1.8.1 parameters (§8): N₁ = 25, N = 100 (WP5b rollout-budget study), θ_D = 0.8, ε_D = 0.02, ε_B = 0.01, ε_T = ε_Δ = 0.5 d, T_cp = 0.1, B with β = 0.1 in the observation; behind the gate (Λ < 3), an approved action is planned again on its approval day, in the world and in rollouts (§4, §6) |
 | Main variants | `sentinel_full` (Λ = 3), `sentinel_no_ot` (no OVERTIME, Λ = 3: the fair comparison with the baselines, which cannot hire) |
 | Ablation | `sentinel_scalarised` (Λ = 3), `sentinel_lambda0`, `sentinel_lambda1` and `sentinel_gate` (full, Λ = 0, 1 and 2: the permission gate), `sentinel_descope` (full, Λ = 2, DESCOPE on, `O` = the three real activities whose only successor is the sink; a demonstration, since the baselines cannot descope), `sentinel_delta03` (full, Λ = 3, δ_D = 0.3) |
-| Size | main 2 × (1,920 J30 + 960 J60) = 5,760 Sentinel runs; ablation 6 × 480 = 2,880 Sentinel runs; plus the NoReaction checks |
+| Size | main 2 × (1,920 J30 + 960 J60) = 5,760 Sentinel runs; ablation 4 × 480 = 1,920 and autonomy levels 2 × 240 = 480 Sentinel runs; plus the NoReaction checks |
+| Split (WP5b.1) | The autonomy levels Λ = 0 and 1 (`sentinel_lambda0`, `sentinel_lambda1`) run at λ_A = 0.01 only, in their own config `configs/wp5_rq4_autonomy.toml`, for the time budget: an approved action is planned again on its approval day, so gated rollouts run CP-SAT and a run at Λ ≤ 1 costs 2–12 times one at Λ = 3 (`docs/reports/WP5b.1.md`). `configs/wp5_rq4_ablation.toml` keeps `sentinel_scalarised`, `sentinel_gate`, `sentinel_descope` and `sentinel_delta03` at λ_A ∈ {0.01, 0.02} |
 | Sizes (WP5b.1) | Set by the architect after WP5b for two reasons. Budget: as first planned (three main variants; five ablation variants on J30 every 4th) the studies needed about 14.4 h and 9.0 h on 4 workers (WP5b measurements), over the 12 h and 6 h budgets. Scope: the permission-gate variants belong to the ablation; the main study compares Sentinel with the baselines, which have no gate, while the autonomy level Λ is a deployment setting compared within Sentinel, on the ablation subset. Measured duration estimates: `docs/reports/WP5b.1.md` |
-| Configs | `configs/wp5_rq4_main.toml`, `configs/wp5_rq4_ablation.toml` (`policy_study` runner, outputs in `results/wp5/<run_id>/`) |
+| Configs | `configs/wp5_rq4_main.toml`, `configs/wp5_rq4_ablation.toml`, `configs/wp5_rq4_autonomy.toml` (`policy_study` runner, outputs in `results/wp5/<run_id>/`) |
+| Runs | main `results/wp5/20261022-102609-e9d131b3` (8,640 rows with the NoReaction check, 9.2 h); ablation `20261022-193948-592f7183` (2,400 rows, 4.1 h); autonomy levels `20261022-234437-49965457` (720 rows, 2.8 h); all on 4 workers |
 | Metrics | spec §7.1 per run, plus overtime cost and share, temporary workers hired, deferrals, escalations, approvals applied and discarded, scope loss, deliberations, needs-gate exits, rollouts and the chosen candidates and deciding components |
 
 Summaries: the WP4b ones (on time with Wilson intervals, C / C*, realised deviation,
@@ -95,3 +97,28 @@ intervals over instances; Sentinel's per-run counts, chosen actions and deciding
 λ_A. Figures: `fig_wp5_tradeoff` (on time against realised deviation and against nervousness,
 the Sentinel variants and the five baselines, a column of panels per set) and
 `fig_wp5_actions` (the share of deliberations choosing each kind of action, per λ_A).
+
+## RQ1 WBS extraction study (WP6a)
+
+RQ1: does validation with a repair loop improve the correctness of an LLM-extracted project
+model (WBS with durations, crews and dependencies) compared with single-shot extraction? To
+have exact ground truth without circularity, the project descriptions are generated
+deterministically from PSPLIB instances by templates (no LLM writes the inputs); the LLM must
+recover the instance from the text.
+
+| Item | Value |
+| --- | --- |
+| Instances | J30 **every 12th** in natural order (`stride = 12`): 40, `j301_1`, `j302_3`, `j303_5`, …, `j3047_9` (includes the CP-SAT-hard `j3029_9`) |
+| Narrator | `sentinel.wbs.narrate`, fully deterministic: roles R1–R4 are the backend developer, frontend developer, tester and DevOps engineer; activities get unique names from a seeded vocabulary of their dominant role; the text states the team (capacity per role) and for every real activity its name, duration in working days, crew per role and immediate predecessors by name; source and sink are implicit |
+| Styles | `structured` (one block per activity in topological order, fixed phrasing) and `narrative` (prose paragraphs in a shuffled order, varied phrasings, each dependency stated once on the successor or on the predecessor, numbers sometimes in words) |
+| Narrator seed | fixed base seed; one seed per instance, shared by both styles, so both styles name the activities identically |
+| Backends | local Ollama `qwen2.5:7b` (Ollama 0.40.6, weights digest pinned in the config; project data stay on premises) and Groq (cloud, the strongest generally available open model; choice and date in the LLM-layer ADR) |
+| Conditions | `single_shot` (one call) and `repair` (after a call with issues, the issue list and the previous JSON are sent back with a request for a corrected full JSON; at most 3 repair rounds). The single-shot answer is the first call of the repair session, so both conditions come from one session per (instance, style, backend) |
+| Decoding | temperature 0, one seed per session shared by the backends, the output JSON schema given to the backend; versioned English prompts in `src/sentinel/llm/prompts/` |
+| Validation | missing fields, unknown roles, duplicate or unknown activity names, cycles (listed), non-positive durations, crews above team capacity; a valid answer becomes a `ProjectInstance` with source and sink added |
+| Metrics | valid-instance rate; activity recall and precision (match by normalised name, unmatched reported); precedence-edge precision, recall and F1 on matched activities; duration and crew accuracy (exact) on matched activities; team accuracy; exact-instance rate (isomorphic to the truth); downstream CP-SAT makespan of a valid extracted instance against the true one (relative error); tokens and latency per session |
+| Statistics | rates with 95 % Wilson intervals; paired differences repair − single-shot over the same sessions with 95 % percentile intervals of a bootstrap over instances |
+| Outputs | `results.csv` (one row per instance, style, backend and condition, with rounds used and final issues), `summary.md`, `table_wp6_rq1.tex`, `fig_wp6_rq1.pdf/.png` (validity and edge F1 by round 0–3 per backend and style), `manifest.json` with the cache hit rate, and the replay bundle `llm_cache.jsonl.gz` (< 10 MB) that regenerates the run without an API key |
+| Size | 40 instances × 2 styles × 2 backends = 160 sessions of 1–4 calls; 320 result rows |
+| Runs | Ollama and Groq as separate commands, each committing its run; the Groq run respects the free-tier limits, possibly over more than one day, and resumes from the record/replay cache |
+| Config | `configs/wp6_rq1.toml` (runner `sentinel.experiments.wbs_study`, outputs in `results/wp6/<run_id>/`) |
