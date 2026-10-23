@@ -1,0 +1,35 @@
+{
+  "run_id": "20261023-084159-73dcf94e",
+  "generator": "sentinel.experiments.wbs_summary",
+  "generated_utc": "2026-10-23T14:26:28+00:00",
+  "git_commit": "a0932ab68575e766b3abda04aa21f2f4eaf3b0df",
+  "git_dirty": false,
+  "git_dirty_ignores": [
+    "results"
+  ],
+  "summary_settings_source": "run config",
+  "summary_settings": {
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 2026,
+    "table": "table_wp6_rq1",
+    "figure": "fig_wp6_rq1"
+  },
+  "inputs": [
+    {
+      "path": "results.csv",
+      "bytes": 45751,
+      "sha256": "892122bbdc4ae2285358070dd1954d9f70c06dee52f9818092a5240e4e771257"
+    },
+    {
+      "path": "rounds.csv",
+      "bytes": 40744,
+      "sha256": "b00fcb34102a68da6f403cdbd60c2f3681aae4fe581ceff16989bad897bf5d3e"
+    }
+  ],
+  "outputs": [
+    "summary.md",
+    "table_wp6_rq1.tex",
+    "fig_wp6_rq1.pdf",
+    "fig_wp6_rq1.png"
+  ]
+}
