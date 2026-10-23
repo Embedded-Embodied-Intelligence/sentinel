@@ -1,0 +1,399 @@
+{
+  "run_id": "20261023-221218-1dc12a5f",
+  "status": "completed",
+  "smoke": false,
+  "command": "python -m sentinel.experiments.explanation_study --config configs/wp6_rq5_explanations.toml --out results/wp6 --replay ollama=data/llm_cache/rq5/ollama.jsonl",
+  "config_path": "configs/wp6_rq5_explanations.toml",
+  "config": {
+    "name": "wp6_rq5_explanations",
+    "base_seed": 2026,
+    "states": "configs/wp6_rq5_states.toml",
+    "cache_dir": "data/llm_cache/rq5",
+    "store_prompts": true,
+    "backends": [
+      "ollama",
+      "openrouter"
+    ],
+    "explanation": {
+      "prompt_version": "v1",
+      "max_tokens": 2048,
+      "temperature": 0.0
+    },
+    "backend": {
+      "ollama": {
+        "kind": "ollama",
+        "model": "qwen2.5:7b",
+        "digest": "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730",
+        "num_ctx": 8192
+      },
+      "groq": {
+        "kind": "groq",
+        "model": "openai/gpt-oss-120b",
+        "tokens_per_minute": 8000,
+        "tokens_per_day": 200000,
+        "response_format": "json_schema",
+        "max_wait_s": 900,
+        "options": {
+          "reasoning_effort": "low",
+          "include_reasoning": false
+        }
+      },
+      "openrouter": {
+        "kind": "openrouter",
+        "model": "openai/gpt-oss-120b",
+        "response_format": "json_schema",
+        "max_wait_s": 900,
+        "provider": {
+          "order": [
+            "groq"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true
+        },
+        "options": {
+          "reasoning_effort": "low",
+          "include_reasoning": false
+        }
+      },
+      "fake": {
+        "kind": "fake",
+        "model": "oracle-explanations-v1",
+        "error_rate": 0.3
+      }
+    },
+    "summary": {
+      "bootstrap_resamples": 2000,
+      "bootstrap_seed": 2026,
+      "table": "table_wp6_rq5_explanations"
+    }
+  },
+  "config_hash": "1dc12a5fdfed60b9e72c299b4feaf91d97df44f1e68f5c3c411fed3071414800",
+  "limit": null,
+  "backends": [
+    "ollama",
+    "openrouter"
+  ],
+  "cache_mode": "auto",
+  "cache_file": null,
+  "replay": {
+    "ollama": "data/llm_cache/rq5/ollama.jsonl"
+  },
+  "git_commit": "690ba99d122c875a8abda03d666b01286c05964e",
+  "git_dirty": false,
+  "start_utc": "2026-10-23T22:12:18+00:00",
+  "end_utc": "2026-10-23T22:14:26+00:00",
+  "duration_s": 127.9,
+  "python": "3.12.15",
+  "packages": {
+    "numpy": "2.5.4",
+    "ortools": "9.15.6755",
+    "pydantic": "2.14.1",
+    "psplib": "0.4.0",
+    "matplotlib": "3.11.2"
+  },
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "Intel(R) Core(TM) i5-6600K CPU @ 3.50GHz",
+  "cpu_count": 4,
+  "hostname": "DESKTOP-JHBU14Q",
+  "llm": {
+    "ollama": {
+      "kind": "ollama",
+      "model": "qwen2.5:7b",
+      "reported_models": [
+        "qwen2.5:7b"
+      ],
+      "digest": "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730",
+      "cache_file": "data/llm_cache/rq5/ollama.jsonl",
+      "cache_mode": "replay",
+      "store_prompts": true,
+      "stats": {
+        "calls": 150,
+        "cache_hits": 150,
+        "backend_calls": 0,
+        "hit_rate": 1.0,
+        "prompt_tokens": 111816,
+        "completion_tokens": 11839,
+        "latency_s": 997.823
+      },
+      "recorded_utc": [
+        "2026-10-23T15:17:46+00:00",
+        "2026-10-23T15:34:17+00:00"
+      ]
+    },
+    "openrouter": {
+      "kind": "openrouter",
+      "model": "openai/gpt-oss-120b",
+      "reported_models": [
+        "openai/gpt-oss-120b"
+      ],
+      "digest": null,
+      "cache_file": "data/llm_cache/rq5/openrouter.jsonl",
+      "cache_mode": "auto",
+      "store_prompts": true,
+      "stats": {
+        "calls": 150,
+        "cache_hits": 0,
+        "backend_calls": 150,
+        "hit_rate": 0.0,
+        "prompt_tokens": 134011,
+        "completion_tokens": 32638,
+        "latency_s": 123.622
+      },
+      "recorded_utc": [
+        "2026-10-23T22:12:19+00:00",
+        "2026-10-23T22:14:26+00:00"
+      ],
+      "retries": 1,
+      "rate_limit_wait_s": null,
+      "system_fingerprints": [
+        "fp_02b0d31eca",
+        "fp_49bfac06f1",
+        "fp_64b2f1c926",
+        "fp_854fa9be4c",
+        "fp_8ea50c0161",
+        "fp_9241e9962b",
+        "fp_96d96a151c",
+        "fp_c3da0d4bb9",
+        "fp_c800245357",
+        "fp_dee443f41b",
+        "fp_f640395b96",
+        "fp_fe269835c7"
+      ],
+      "reported_limit_tokens": [],
+      "reported_limit_requests": [],
+      "provider_routing": {
+        "order": [
+          "groq"
+        ],
+        "allow_fallbacks": false,
+        "require_parameters": true
+      },
+      "providers": {
+        "Groq": 150
+      },
+      "recorded_cost": 0.034385
+    }
+  },
+  "cache_hit_rate": 0.5,
+  "bundle": {
+    "file": "llm_cache.jsonl.gz",
+    "entries": 300,
+    "bytes": 76317
+  },
+  "states_config": {
+    "path": "configs/wp6_rq5_states.toml",
+    "config": {
+      "name": "wp6_rq5_states",
+      "base_seed": 2026,
+      "data_root": "data/psplib",
+      "baseline_cache": "data/derived/baselines",
+      "states_dir": "data/derived/decision_states",
+      "max_workers": 2,
+      "set_name": "j30",
+      "reference": "opt",
+      "stride": 8,
+      "lambda_a": [
+        0.01,
+        0.02
+      ],
+      "mean_absence": 3,
+      "lambda_s": 0.01,
+      "lambda_n": 0.02,
+      "replication": 0,
+      "delta_d": 0.2,
+      "beta": 0.1,
+      "review_period": 5,
+      "baseline_time_limit": 5.0,
+      "baseline_seed": 2026,
+      "wp5_results": "results/wp5/20261022-102609-e9d131b3/results.csv.gz",
+      "wp5_policy": "sentinel_full",
+      "pert": {
+        "a": 0.8,
+        "m": 1.0,
+        "b": 1.6,
+        "lam": 4.0
+      },
+      "sentinel": {
+        "autonomy": 3,
+        "n_stage1": 25,
+        "n_rollouts": 100,
+        "deterministic_time_limit": 0.1,
+        "cp_seed": 0
+      },
+      "sample": {
+        "size": 150,
+        "seed": 2026,
+        "ids": [
+          "j30/j301_1/la0.01/r0/d62",
+          "j30/j301_9/la0.01/r0/d35",
+          "j30/j301_9/la0.02/r0/d50",
+          "j30/j302_7/la0.01/r0/d13",
+          "j30/j303_5/la0.01/r0/d20",
+          "j30/j303_5/la0.02/r0/d67",
+          "j30/j304_3/la0.02/r0/d15",
+          "j30/j304_3/la0.02/r0/d29",
+          "j30/j305_1/la0.01/r0/d10",
+          "j30/j305_9/la0.02/r0/d48",
+          "j30/j306_7/la0.01/r0/d19",
+          "j30/j306_7/la0.02/r0/d29",
+          "j30/j307_5/la0.01/r0/d49",
+          "j30/j307_5/la0.02/r0/d23",
+          "j30/j309_1/la0.01/r0/d58",
+          "j30/j309_9/la0.01/r0/d21",
+          "j30/j309_9/la0.02/r0/d1",
+          "j30/j3010_7/la0.01/r0/d20",
+          "j30/j3010_7/la0.01/r0/d33",
+          "j30/j3010_7/la0.02/r0/d12",
+          "j30/j3010_7/la0.02/r0/d40",
+          "j30/j3010_7/la0.02/r0/d55",
+          "j30/j3011_5/la0.01/r0/d25",
+          "j30/j3011_5/la0.01/r0/d40",
+          "j30/j3011_5/la0.01/r0/d41",
+          "j30/j3011_5/la0.02/r0/d20",
+          "j30/j3011_5/la0.02/r0/d40",
+          "j30/j3011_5/la0.02/r0/d46",
+          "j30/j3012_3/la0.01/r0/d6",
+          "j30/j3012_3/la0.01/r0/d15",
+          "j30/j3012_3/la0.02/r0/d23",
+          "j30/j3013_1/la0.01/r0/d33",
+          "j30/j3013_1/la0.01/r0/d37",
+          "j30/j3013_1/la0.02/r0/d17",
+          "j30/j3013_9/la0.01/r0/d22",
+          "j30/j3013_9/la0.01/r0/d87",
+          "j30/j3013_9/la0.02/r0/d2",
+          "j30/j3013_9/la0.02/r0/d17",
+          "j30/j3013_9/la0.02/r0/d18",
+          "j30/j3014_7/la0.02/r0/d10",
+          "j30/j3015_5/la0.01/r0/d16",
+          "j30/j3015_5/la0.01/r0/d21",
+          "j30/j3015_5/la0.01/r0/d28",
+          "j30/j3015_5/la0.01/r0/d53",
+          "j30/j3015_5/la0.01/r0/d60",
+          "j30/j3015_5/la0.02/r0/d18",
+          "j30/j3015_5/la0.02/r0/d24",
+          "j30/j3017_1/la0.01/r0/d12",
+          "j30/j3017_1/la0.01/r0/d28",
+          "j30/j3017_1/la0.01/r0/d39",
+          "j30/j3017_9/la0.01/r0/d9",
+          "j30/j3017_9/la0.01/r0/d32",
+          "j30/j3017_9/la0.01/r0/d54",
+          "j30/j3017_9/la0.02/r0/d18",
+          "j30/j3018_7/la0.01/r0/d6",
+          "j30/j3018_7/la0.01/r0/d60",
+          "j30/j3018_7/la0.02/r0/d20",
+          "j30/j3019_5/la0.02/r0/d15",
+          "j30/j3019_5/la0.02/r0/d17",
+          "j30/j3019_5/la0.02/r0/d36",
+          "j30/j3020_3/la0.01/r0/d14",
+          "j30/j3022_7/la0.02/r0/d17",
+          "j30/j3023_5/la0.01/r0/d14",
+          "j30/j3023_5/la0.01/r0/d18",
+          "j30/j3023_5/la0.02/r0/d10",
+          "j30/j3024_3/la0.01/r0/d10",
+          "j30/j3024_3/la0.02/r0/d49",
+          "j30/j3025_1/la0.01/r0/d55",
+          "j30/j3025_1/la0.01/r0/d95",
+          "j30/j3025_1/la0.02/r0/d5",
+          "j30/j3025_1/la0.02/r0/d64",
+          "j30/j3025_9/la0.01/r0/d65",
+          "j30/j3026_7/la0.01/r0/d3",
+          "j30/j3026_7/la0.02/r0/d20",
+          "j30/j3027_5/la0.01/r0/d37",
+          "j30/j3027_5/la0.02/r0/d24",
+          "j30/j3028_3/la0.01/r0/d32",
+          "j30/j3028_3/la0.02/r0/d25",
+          "j30/j3029_1/la0.01/r0/d37",
+          "j30/j3029_1/la0.02/r0/d10",
+          "j30/j3029_1/la0.02/r0/d39",
+          "j30/j3029_1/la0.02/r0/d80",
+          "j30/j3029_1/la0.02/r0/d112",
+          "j30/j3029_9/la0.01/r0/d36",
+          "j30/j3029_9/la0.02/r0/d54",
+          "j30/j3029_9/la0.02/r0/d62",
+          "j30/j3029_9/la0.02/r0/d70",
+          "j30/j3029_9/la0.02/r0/d79",
+          "j30/j3030_7/la0.01/r0/d38",
+          "j30/j3031_5/la0.01/r0/d45",
+          "j30/j3031_5/la0.02/r0/d28",
+          "j30/j3031_5/la0.02/r0/d53",
+          "j30/j3031_5/la0.02/r0/d61",
+          "j30/j3032_3/la0.01/r0/d7",
+          "j30/j3032_3/la0.01/r0/d10",
+          "j30/j3032_3/la0.01/r0/d14",
+          "j30/j3032_3/la0.02/r0/d1",
+          "j30/j3032_3/la0.02/r0/d24",
+          "j30/j3032_3/la0.02/r0/d44",
+          "j30/j3033_1/la0.01/r0/d63",
+          "j30/j3033_1/la0.02/r0/d87",
+          "j30/j3033_9/la0.01/r0/d11",
+          "j30/j3033_9/la0.01/r0/d42",
+          "j30/j3033_9/la0.01/r0/d65",
+          "j30/j3035_5/la0.01/r0/d25",
+          "j30/j3035_5/la0.02/r0/d25",
+          "j30/j3036_3/la0.01/r0/d24",
+          "j30/j3037_1/la0.01/r0/d35",
+          "j30/j3037_1/la0.02/r0/d76",
+          "j30/j3037_9/la0.01/r0/d42",
+          "j30/j3037_9/la0.02/r0/d68",
+          "j30/j3038_7/la0.01/r0/d25",
+          "j30/j3038_7/la0.02/r0/d16",
+          "j30/j3038_7/la0.02/r0/d19",
+          "j30/j3038_7/la0.02/r0/d43",
+          "j30/j3039_5/la0.02/r0/d23",
+          "j30/j3039_5/la0.02/r0/d46",
+          "j30/j3040_3/la0.01/r0/d44",
+          "j30/j3040_3/la0.01/r0/d52",
+          "j30/j3041_1/la0.01/r0/d13",
+          "j30/j3041_1/la0.01/r0/d44",
+          "j30/j3041_1/la0.01/r0/d50",
+          "j30/j3041_1/la0.02/r0/d89",
+          "j30/j3041_1/la0.02/r0/d102",
+          "j30/j3041_1/la0.02/r0/d112",
+          "j30/j3041_9/la0.01/r0/d12",
+          "j30/j3041_9/la0.02/r0/d59",
+          "j30/j3042_7/la0.01/r0/d30",
+          "j30/j3042_7/la0.01/r0/d59",
+          "j30/j3042_7/la0.02/r0/d60",
+          "j30/j3043_5/la0.01/r0/d62",
+          "j30/j3043_5/la0.02/r0/d57",
+          "j30/j3043_5/la0.02/r0/d62",
+          "j30/j3043_5/la0.02/r0/d65",
+          "j30/j3044_3/la0.01/r0/d4",
+          "j30/j3044_3/la0.01/r0/d45",
+          "j30/j3044_3/la0.02/r0/d50",
+          "j30/j3045_1/la0.01/r0/d64",
+          "j30/j3045_1/la0.01/r0/d83",
+          "j30/j3045_1/la0.01/r0/d115",
+          "j30/j3045_1/la0.02/r0/d82",
+          "j30/j3045_9/la0.01/r0/d51",
+          "j30/j3045_9/la0.01/r0/d90",
+          "j30/j3046_7/la0.01/r0/d60",
+          "j30/j3046_7/la0.02/r0/d44",
+          "j30/j3046_7/la0.02/r0/d66",
+          "j30/j3047_5/la0.01/r0/d40",
+          "j30/j3047_5/la0.01/r0/d44",
+          "j30/j3047_5/la0.02/r0/d25",
+          "j30/j3048_3/la0.02/r0/d9"
+        ]
+      }
+    }
+  },
+  "prompts": {
+    "explain": {
+      "version": "v1",
+      "sha256": "e6c9c4169b8b78821bbed070403894c5eaf13caacbf50595dd47d52556fdd012"
+    }
+  },
+  "seeds": {
+    "base_seed": 2026
+  },
+  "seed_rule": "LLM seed of a state: runs.derive_seed(base_seed, 'llm', 'explanations', state id), shared by the backends",
+  "n_states": 150,
+  "n_rows": 300,
+  "outputs": [
+    "results.csv",
+    "summary.md",
+    "table_wp6_rq5_explanations.tex",
+    "llm_cache.jsonl.gz"
+  ]
+}
