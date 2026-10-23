@@ -59,8 +59,9 @@ order = ["groq"]
 allow_fallbacks = false
 require_parameters = true  # the provider must take every field (seed, schema, reasoning)
 
-[backend.openrouter.options]  # extra request fields, part of the cache key
-reasoning = { effort = "low", exclude = true }  # reasoning_effort low, no reasoning text
+[backend.openrouter.options]  # extra request fields, part of the cache key: Groq's own, as above
+reasoning_effort = "low"
+include_reasoning = false
 
 [backend.fake]            # scripted oracle for smoke runs (template parser with seeded mistakes)
 kind = "fake"

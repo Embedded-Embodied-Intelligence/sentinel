@@ -132,7 +132,7 @@ def test_the_rq1_config_follows_the_study_plan() -> None:
     assert isinstance(cloud, OpenRouterBackend) and cloud.model == groq.model
     assert (cloud.provider.order, cloud.provider.allow_fallbacks) == (("groq",), False)
     assert cloud.provider.require_parameters and cloud.response_format == "json_schema"
-    assert cloud.options == {"reasoning": {"effort": "low", "exclude": True}}
+    assert cloud.options == groq.options  # Groq's own fields: reasoning_effort low
     extraction = config.extraction
     assert (extraction.prompt_version, extraction.temperature) == ("v1", 0.0)
     assert extraction.max_repair_rounds == 3
