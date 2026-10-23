@@ -1,6 +1,6 @@
-# WP6c — Clean manifests for the RQ5 runners, privacy-safe cache, overnight run chain
+# WP6c — Clean RQ5 manifests, privacy-safe cache, OpenRouter backend, overnight run chain
 
-Fresh session (`/clear`). Small WP (target ≤ 1 h): a bug fix, a privacy option, spec answers,
+Fresh session (`/clear`). Small WP (target ≤ 1.5 h): a bug fix, a privacy option, a cloud backend, spec answers,
 and the exact command chain for the owner's overnight runs.
 
 <context>
@@ -16,8 +16,14 @@ when the manifest is written, i.e. after the run's own outputs exist in the tree
 runner takes it before the run directory exists. The LLM answers are in `data/llm_cache/`, so
 the runs can be repeated in replay mode at the cost of their rollouts only.
 
-The owner is moving the Groq key to the paid Developer plan, so the free-plan limits
-(8K tokens/min, 200K/day) no longer bind.
+Groq's paid Developer plan is temporarily unavailable, and the free plan (8K tokens/min,
+200K/day) would block the repository for about two weeks. **Decision:** the cloud runs use the
+same model, `openai/gpt-oss-120b`, through **OpenRouter** (pay as you go, OpenAI-compatible),
+with provider routing pinned to Groq (`provider: {order: ["Groq"], allow_fallbacks: false}`), so
+model and serving hardware stay those of the WP6a/WP6b Groq smokes. The owner puts
+`OPENROUTER_API_KEY` into `.env` (never read or print it). If Groq is unavailable on OpenRouter,
+the fallback is Cerebras as the pinned provider; record which provider served each call (from
+the response) in the cache and the manifest.
 
 Answers to the WP6b spec questions (binding):
 1. LLM calls are forbidden inside the engine and inside rollouts; the agent may call the LLM at
@@ -40,18 +46,25 @@ Answers to the WP6b spec questions (binding):
 2. **Privacy-safe cache**: implement `store_prompts = false` (record and replay work by key;
    no message text in the file); tests: a record/replay round trip works and the file contains no
    message text.
-3. **Groq limits**: the client's rate limiter takes its limits from the response headers
-   (`x-ratelimit-*`) when present, config values only as a fallback; check the current
-   Developer-plan limits for `openai/gpt-oss-120b` in Groq's documentation and record them in
-   ADR-0018 (amendment). Keep the exit-status-3 resume behaviour.
+3. **OpenRouter backend** (ADR-0018 amendment): generalise the Groq client into an
+   OpenAI-compatible client (base URL, key variable, extra request fields) and add backend
+   `openrouter` with the provider pinning above, `temperature 0`, fixed seed, JSON mode as the
+   provider supports; keep `groq` working. Check OpenRouter's documentation for provider routing,
+   error codes and limits; the rate limiter uses response headers when present, config values as
+   fallback; keep the exit-status-3 resume behaviour (also for 402 "insufficient credits", with a
+   clear message). The study configs get backend `openrouter` as the cloud backend (Groq stays
+   available as an option). Tests with scripted HTTP responses (routing fields sent, provider
+   recorded, 402 and 429 paths, key redacted). One live smoke call if the key is present.
 4. **Overnight chain**: give the owner **one tmux command line**, to be started on a clean
    tree, that runs in order and commits each run directory right after it finishes (pathspec
    commits, `-- results/wp6`), then pushes at the end:
    1. the three RQ5 Ollama runs again in replay mode (no Ollama calls; a cache miss is an error);
-   2. the RQ1 run with both backends (Ollama replays from the committed RQ1 run's cache);
+   2. the RQ1 run with both backends (Ollama replays from the committed RQ1 run's cache;
+      cloud = OpenRouter);
    3. the three RQ5 runs with both backends;
-   4. the online check (Groq).
-   Estimate each step's duration and Groq tokens from the WP6a/WP6b measurements. The chain stops
+   4. the online check (OpenRouter).
+   Estimate each step's duration, tokens and cost (OpenRouter price of the pinned provider)
+   from the WP6a/WP6b measurements. The chain stops
    on the first non-zero exit; say how to resume from the step that failed.
 5. `wp-report` (`docs/reports/WP6c.md`); roadmap `WP6: in progress: WP6c done, runs pending`.
 </task>
