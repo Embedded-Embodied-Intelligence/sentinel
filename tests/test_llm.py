@@ -346,6 +346,19 @@ def test_groq_returns_a_failed_generation_as_an_answer() -> None:
     response = client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
     assert response.finish_reason == "json_validate_failed" and response.parsed == {"a": "x"}
     assert response.error is not None and response.error.kind == "schema"
+    unparsed = {"error": {"code": "output_parse_failed", "failed_generation": "No events."}}
+    client, _ = groq(
+        ScriptedTransport([HttpReply(400, json.dumps(unparsed).encode())]), tokens_per_minute=None
+    )
+    response = client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert response.finish_reason == "output_parse_failed" and response.text == "No events."
+    assert response.error is not None and response.error.kind == "json"
+    other = {"error": {"code": "invalid_api_key"}}
+    client, _ = groq(
+        ScriptedTransport([HttpReply(400, json.dumps(other).encode())]), tokens_per_minute=None
+    )
+    with pytest.raises(LlmError):
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
 
 
 def test_the_token_limiter_spaces_requests_within_a_minute() -> None:

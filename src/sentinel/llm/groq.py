@@ -38,6 +38,9 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 API_KEY_VARIABLE = "GROQ_API_KEY"  # the variable's name  # pragma: allowlist secret
 ResponseFormat = Literal["json_schema", "json_object"]
 RETRYABLE = frozenset({429, 498, 500, 502, 503, 504})
+# HTTP 400 codes of an answer that failed Groq's own JSON check (schema or parsing); its text
+# comes back as an answer for the validator, with the code as its finish reason.
+FAILED_GENERATION_CODES = frozenset({"json_validate_failed", "output_parse_failed"})
 MAX_BACKOFF_S = 60.0
 _DURATION = re.compile(r"(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m(?!s))?(?:(\d+(?:\.\d+)?)s)?")
 
@@ -195,13 +198,14 @@ class GroqClient(BaseClient):
             if reply is not None and reply.status == 400:
                 failed = self._failed_generation(reply)
                 if failed is not None:
+                    code, text = failed
                     return Reply(
-                        text=failed,
+                        text=text,
                         model=request.model,
                         prompt_tokens=estimate - request.max_tokens,
-                        completion_tokens=estimate_tokens(failed),
+                        completion_tokens=estimate_tokens(text),
                         latency_s=round(latency, 3),
-                        finish_reason="json_validate_failed",
+                        finish_reason=code,
                         meta={"tokens_estimated": True, "retries": attempt},
                     )
             message = key.redact(f"Groq request failed: {failure}")
@@ -283,16 +287,18 @@ class GroqClient(BaseClient):
         )
 
     @staticmethod
-    def _failed_generation(reply: HttpReply) -> str | None:
-        """The text of an answer that failed Groq's own schema check, if this is that error."""
+    def _failed_generation(reply: HttpReply) -> tuple[str, str] | None:
+        """The error code and text of an answer that failed Groq's own JSON check (schema or
+        parsing, `FAILED_GENERATION_CODES`), if this is that error."""
         try:
             error = reply.json().get("error") or {}
         except (LlmError, AttributeError):
             return None
-        if not isinstance(error, dict) or error.get("code") != "json_validate_failed":
+        code = error.get("code") if isinstance(error, dict) else None
+        if code not in FAILED_GENERATION_CODES:
             return None
         failed = error.get("failed_generation")
-        return failed if isinstance(failed, str) else ""
+        return str(code), failed if isinstance(failed, str) else ""
 
     def _wait(self, reply: HttpReply | None, attempt: int) -> float:
         backoff = min(MAX_BACKOFF_S, self.backoff_s * 2.0**attempt)
