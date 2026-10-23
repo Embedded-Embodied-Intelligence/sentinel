@@ -1,0 +1,58 @@
+# WP6a (RQ1): does validation with a repair loop improve the correctness of an LLM-extracted
+# project model compared with single-shot extraction? Descriptions are generated from PSPLIB
+# instances by templates (sentinel.wbs.narrate); docs/experiments/plan.md (RQ1 study).
+# Ollama run: uv run python -m sentinel.experiments.wbs_study --config configs/wp6_rq1.toml --out results/wp6 --backend ollama
+# Both backends (Ollama replayed from the cache, Groq live and resumable):
+#             uv run python -m sentinel.experiments.wbs_study --config configs/wp6_rq1.toml --out results/wp6
+# Smoke on the scripted oracle: add --backend fake --limit 2
+name = "wp6_rq1"
+base_seed = 2026          # LLM seed of a session (instance, style), shared by the backends
+narrator_seed = 2026      # narrator seed of an instance, shared by both styles
+data_root = "data/psplib"
+cache_dir = "data/llm_cache"  # record/replay cache, one JSON-lines file per backend (gitignored)
+styles = ["structured", "narrative"]
+backends = ["ollama", "groq"]  # the study's backends in table order; --backend selects
+
+[[sets]]
+name = "j30"
+stride = 12               # every 12th instance in natural order: 40 (j301_1, j302_3, ...)
+
+[extraction]
+prompt_version = "v1"     # src/sentinel/llm/prompts/wbs_extract.v1.txt, wbs_repair.v1.txt
+max_tokens = 4096         # completion limit; a J30 answer has about 1.2-1.3K tokens (Ollama)
+temperature = 0.0
+max_repair_rounds = 3
+
+[cpsat]                   # downstream makespans, as cpsat_det of WP2b
+deterministic_time_limit = 5.0
+random_seed = 2026
+num_workers = 1
+
+[backend.ollama]          # local, project data stay on premises (Ollama 0.40.6, GTX 1060)
+kind = "ollama"
+model = "qwen2.5:7b"
+digest = "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730"  # weights, /api/show
+num_ctx = 12288           # longest repair prompt (about 5K tokens) plus max_tokens, with room
+
+[backend.groq]            # cloud; strongest generally available open model on 2026-10-23 (ADR-0018)
+kind = "groq"
+model = "openai/gpt-oss-120b"
+tokens_per_minute = 8000  # free plan; the client spaces requests to stay below it
+tokens_per_day = 200000   # free plan; only for the duration estimate (the server enforces it)
+response_format = "json_schema"  # best effort: the free-form crew map rules out strict mode
+max_wait_s = 900          # a longer rate-limit wait stops the run (resume from the cache)
+
+[backend.groq.options]    # extra request fields, part of the cache key
+reasoning_effort = "low"
+include_reasoning = false
+
+[backend.fake]            # scripted oracle for smoke runs (template parser with seeded mistakes)
+kind = "fake"
+model = "oracle-v1"
+max_faulty_rounds = 2
+
+[summary]
+bootstrap_resamples = 2000  # cluster bootstrap over instances
+bootstrap_seed = 2026
+table = "table_wp6_rq1"
+figure = "fig_wp6_rq1"

@@ -30,11 +30,16 @@ def load_toml(path: Path) -> dict[str, Any]:
         return tomllib.load(handle)
 
 
-def config_hash(config: Mapping[str, Any], limit: int | None) -> str:
-    """SHA-256 of the canonical JSON (sorted keys) of the config together with `--limit`."""
-    canonical = json.dumps(
-        {"config": config, "limit": limit}, sort_keys=True, separators=(",", ":")
-    )
+def config_hash(
+    config: Mapping[str, Any], limit: int | None, selection: Mapping[str, Any] | None = None
+) -> str:
+    """SHA-256 of the canonical JSON (sorted keys) of the config together with `--limit` and,
+    if given, further run options that select part of the config (e.g. `--backend`); without
+    them the hash is the same as before such options existed."""
+    content: dict[str, Any] = {"config": config, "limit": limit}
+    if selection:
+        content["selection"] = selection
+    canonical = json.dumps(content, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

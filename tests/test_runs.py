@@ -16,6 +16,15 @@ def test_config_hash_ignores_key_order_but_not_limit() -> None:
     assert len(runs.config_hash(a, None)) == 64
 
 
+def test_a_selection_of_the_config_changes_the_hash_and_none_keeps_it() -> None:
+    a = {"name": "x", "backends": ["ollama", "groq"]}
+    assert runs.config_hash(a, 1, None) == runs.config_hash(a, 1) == runs.config_hash(a, 1, {})
+    ollama = runs.config_hash(a, 1, {"backends": ["ollama"]})
+    assert ollama != runs.config_hash(a, 1) and ollama != runs.config_hash(
+        a, 1, {"backends": ["groq"]}
+    )
+
+
 def test_run_id_uses_utc_time_and_hash_prefix() -> None:
     moment = datetime(2026, 10, 20, 14, 5, 9, tzinfo=timezone(timedelta(hours=2)))
     assert runs.make_run_id(moment, "0123456789abcdef") == "20261020-120509-01234567"

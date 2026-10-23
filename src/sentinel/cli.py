@@ -3,7 +3,8 @@
 `sentinel baselines --set j30 --method cpsat_det` precomputes the cached baseline plans of a set
 with the method parameters of a study config (default `configs/wp2_noreaction.toml`).
 `sentinel summarise-forecasts results/wp3/<run_id>` regenerates the summaries of a forecast study,
-`sentinel summarise-policies results/wp4/<run_id>` those of a policy study.
+`sentinel summarise-policies results/wp4/<run_id>` those of a policy study and
+`sentinel summarise-wbs results/wp6/<run_id>` those of a WBS extraction study.
 """
 
 import argparse
@@ -53,6 +54,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _summarise_forecasts(args)
     if args.command == "summarise-policies":
         return _summarise_policies(args)
+    if args.command == "summarise-wbs":
+        return _summarise_wbs(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -88,6 +91,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "summarise-policies", help="regenerate the summaries of a policy study run"
     )
     policies.add_argument("run_dir", type=Path, help="run directory with manifest.json")
+    wbs = commands.add_parser(
+        "summarise-wbs", help="regenerate the summaries of a WBS extraction study run"
+    )
+    wbs.add_argument("run_dir", type=Path, help="run directory with manifest.json")
     return parser
 
 
@@ -196,6 +203,19 @@ def _summarise_policies(args: argparse.Namespace) -> int:
     print(outputs.seed_check.line().removeprefix("- "))
     if outputs.join_check is not None:
         print(outputs.join_check.line().removeprefix("- "))
+    return 0
+
+
+def _summarise_wbs(args: argparse.Namespace) -> int:
+    run_dir: Path = args.run_dir
+    if not (run_dir / "manifest.json").is_file():
+        print(f"error: {run_dir / 'manifest.json'} not found", file=sys.stderr)
+        return 1
+    # Imported here so that the other commands do not load matplotlib.
+    from sentinel.experiments.wbs_summary import regenerate
+
+    for name in regenerate(run_dir):
+        print(run_dir / name)
     return 0
 
 
