@@ -1,0 +1,67 @@
+# WP6b (RQ5, role 1): the LLM turns team messages into events (spec section 10.2). Messages are
+# generated from templates in the states of NoReaction worlds (sentinel.interpret.messages), so
+# their events are the exact ground truth; each message is parsed in a WP6a repair session.
+# Ollama run:  uv run python -m sentinel.experiments.event_study --config configs/wp6_rq5_events.toml --out results/wp6 --backend ollama
+# Both backends (Ollama from the cache, Groq live and resumable):
+#              uv run python -m sentinel.experiments.event_study --config configs/wp6_rq5_events.toml --out results/wp6
+# Smoke on the scripted oracle: --backend fake --limit 4 (20 messages)
+name = "wp6_rq5_events"
+base_seed = 2026          # LLM seed of a message, shared by the backends and the rounds
+message_seed = 2026       # message days, roster, activity names and message texts
+data_root = "data/psplib"
+baseline_cache = "data/derived/baselines"
+cache_dir = "data/llm_cache/rq5"  # record/replay caches of RQ5, one JSON-lines file per backend
+backends = ["ollama", "groq"]
+set_name = "j30"
+reference = "opt"
+stride = 12               # every 12th instance: the 40 of RQ1
+messages_per_instance = 5 # 200 messages
+lambda_a = 0.01           # the world of the states: primary scenario, WP2b seed of replication 0
+mean_absence = 3
+lambda_s = 0.01
+lambda_n = 0.02
+delta_d = 0.2
+beta = 0.10
+review_period = 5
+baseline_time_limit = 5.0
+baseline_seed = 2026
+
+[messages]
+multi_fact_share = 0.2    # messages with two or three facts
+reason_share = 0.5        # absences that state a personal reason (never recorded)
+greeting_share = 0.333
+words_share = 0.5         # numbers written as words
+
+[parsing]
+prompt_version = "v1"     # src/sentinel/llm/prompts/events_parse.v1.txt, events_repair.v1.txt
+max_tokens = 2048
+temperature = 0.0
+max_repair_rounds = 3
+
+[backend.ollama]          # as in configs/wp6_rq1.toml
+kind = "ollama"
+model = "qwen2.5:7b"
+digest = "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730"
+num_ctx = 8192            # the longest prompt (219 workers) has about 3K tokens
+
+[backend.groq]
+kind = "groq"
+model = "openai/gpt-oss-120b"
+tokens_per_minute = 8000
+tokens_per_day = 200000
+response_format = "json_schema"
+max_wait_s = 900
+
+[backend.groq.options]
+reasoning_effort = "low"
+include_reasoning = false
+
+[backend.fake]            # scripted oracle: the true events with seeded mistakes
+kind = "fake"
+model = "oracle-events-v1"
+error_rate = 0.3
+
+[summary]
+bootstrap_resamples = 2000
+bootstrap_seed = 2026
+table = "table_wp6_rq5_events"

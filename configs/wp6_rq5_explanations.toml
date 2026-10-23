@@ -1,0 +1,45 @@
+# WP6b (RQ5, role 3): LLM explanations of Sentinel's decisions for a project manager, checked
+# for faithfulness against the DecisionRecord (spec section 10.4). States: the sample of
+# configs/wp6_rq5_states.toml.
+# Ollama run:  uv run python -m sentinel.experiments.explanation_study --config configs/wp6_rq5_explanations.toml --out results/wp6 --backend ollama
+# Both backends (Ollama from the cache, Groq live and resumable):
+#              uv run python -m sentinel.experiments.explanation_study --config configs/wp6_rq5_explanations.toml --out results/wp6
+# Smoke on the scripted oracle: --backend fake --limit 3
+name = "wp6_rq5_explanations"
+base_seed = 2026          # LLM seed of a state, shared by the backends
+states = "configs/wp6_rq5_states.toml"
+cache_dir = "data/llm_cache/rq5"
+backends = ["ollama", "groq"]
+
+[explanation]
+prompt_version = "v1"     # src/sentinel/llm/prompts/explain.v1.txt
+max_tokens = 2048
+temperature = 0.0
+
+[backend.ollama]          # as in configs/wp6_rq1.toml
+kind = "ollama"
+model = "qwen2.5:7b"
+digest = "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730"
+num_ctx = 8192
+
+[backend.groq]
+kind = "groq"
+model = "openai/gpt-oss-120b"
+tokens_per_minute = 8000
+tokens_per_day = 200000
+response_format = "json_schema"
+max_wait_s = 900
+
+[backend.groq.options]
+reasoning_effort = "low"
+include_reasoning = false
+
+[backend.fake]            # scripted explanations: faithful, with seeded errors at times
+kind = "fake"
+model = "oracle-explanations-v1"
+error_rate = 0.3
+
+[summary]
+bootstrap_resamples = 2000
+bootstrap_seed = 2026
+table = "table_wp6_rq5_explanations"
