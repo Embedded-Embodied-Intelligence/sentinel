@@ -157,7 +157,8 @@ def model_issues(extraction: Extraction) -> list[Issue]:
             issues.append(
                 Issue(
                     "duplicate_name",
-                    f'The activity "{name}" appears {count} times; list every activity once.',
+                    f'The activity "{name}" appears {count} times in "activities"; list every '
+                    "activity once.",
                     activity=name,
                 )
             )
@@ -172,12 +173,14 @@ def _activity_issues(
 ) -> list[Issue]:
     name = activity.name
     issues: list[Issue] = []
+    # SPEC-Q: spec section 1 allows real activities with p_j = 0; WP6a rejects non-positive
+    # durations (J30 has durations 1-10, so the reading is exact for RQ1).
     if activity.duration_days <= 0:
         issues.append(
             Issue(
                 "non_positive_duration",
                 f'The activity "{name}" has duration {activity.duration_days}; a duration is a '
-                "positive whole number of working days.",
+                "positive whole number of working days, as stated in the description.",
                 activity=name,
             )
         )
@@ -206,7 +209,8 @@ def _activity_issues(
             issues.append(
                 Issue(
                     "unknown_role",
-                    f'The activity "{name}" needs the role "{role}", which is not in the team.',
+                    f'The activity "{name}" needs the role "{role}", which is not in "team"; '
+                    'use the role names of "team".',
                     activity=name,
                 )
             )
@@ -214,8 +218,8 @@ def _activity_issues(
             issues.append(
                 Issue(
                     "crew_above_capacity",
-                    f'The activity "{name}" needs {count} of the role "{role}", but the team '
-                    f"has only {capacity[key]}.",
+                    f'The activity "{name}" needs {count} of the role "{role}", but "team" '
+                    f"has only {capacity[key]}; check both numbers in the description.",
                     activity=name,
                 )
             )
@@ -224,8 +228,9 @@ def _activity_issues(
             issues.append(
                 Issue(
                     "unknown_name",
-                    f'The activity "{name}" lists the predecessor "{predecessor}", which is not '
-                    "an activity of the project.",
+                    f'The activity "{name}" lists the predecessor "{predecessor}", which is '
+                    f'missing from "activities"; add "{predecessor}" as the description states '
+                    "it, or correct the name.",
                     activity=name,
                 )
             )
@@ -254,7 +259,7 @@ def _cycle_issues(extraction: Extraction, spelled: Mapping[str, str]) -> list[Is
             Issue(
                 "cycle",
                 f"The dependencies form a cycle ({path}; A -> B means A must be finished before "
-                "B starts).",
+                "B starts); check the predecessors of these activities in the description.",
                 activity=cycle[0],
                 cycle=tuple(cycle),
             )

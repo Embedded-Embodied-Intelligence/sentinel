@@ -106,7 +106,8 @@ def test_issue_messages_name_the_activity_and_list_the_cycle() -> None:
     assert '"A" -> "B" -> "C" -> "A"' in found[0].message
     (unknown,) = validate_extraction(project(act("A", predecessors=["Z"])))
     assert unknown.message == (
-        'The activity "A" lists the predecessor "Z", which is not an activity of the project.'
+        'The activity "A" lists the predecessor "Z", which is missing from "activities"; add '
+        '"Z" as the description states it, or correct the name.'
     )
 
 

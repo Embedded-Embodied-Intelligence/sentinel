@@ -170,7 +170,8 @@ def estimate_tokens(text: str) -> int:
 
 
 def backend_schema(model: type[BaseModel]) -> dict[str, JsonValue]:
-    """The model's JSON schema for a backend: `$ref`s inlined, `$defs` and titles dropped."""
+    """The model's JSON schema for a backend: `$ref`s inlined, `$defs`, titles and descriptions
+    dropped, so that editing a docstring changes no cache key."""
     schema = model.model_json_schema()
     definitions = schema.pop("$defs", {})
     result = _inline(schema, definitions, ())
@@ -192,7 +193,7 @@ def _inline(node: JsonValue, definitions: Mapping[str, Any], seen: tuple[str, ..
         return _inline(definitions[name], definitions, (*seen, name))
     result: dict[str, JsonValue] = {}
     for key, value in node.items():
-        if key == "title":
+        if key in ("title", "description"):
             continue
         if key == "properties" and isinstance(value, dict):
             result[key] = {name: _inline(sub, definitions, seen) for name, sub in value.items()}

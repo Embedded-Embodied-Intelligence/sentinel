@@ -217,6 +217,10 @@ class GroqClient(BaseClient):
                     wait,
                 )
             if attempt >= self.max_retries:
+                if reply is not None and reply.status == 429:
+                    raise QuotaExhausted(
+                        f"{message}; still rate limited after {attempt + 1} attempts", wait
+                    )
                 raise LlmError(f"{message}; gave up after {attempt + 1} attempts")
             attempt += 1
             self.retries += 1

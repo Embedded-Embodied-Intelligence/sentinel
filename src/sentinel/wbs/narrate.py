@@ -251,15 +251,15 @@ def activity_names(instance: ProjectInstance, seed: int) -> dict[int, str]:
     verb; once a role's objects are used up, they come back with verbs not yet paired with
     them. Activities are named in id order.
     """
-    role_names(instance)
+    role_names(instance)  # at most four roles, one vocabulary each
     rng = _stream(seed, _NAMES_STREAM)
     queues = [[objects[i] for i in rng.permutation(len(objects))] for _, objects in VOCABULARY]
     used: set[str] = set()
     names: dict[int, str] = {}
     for activity in instance.activities[1:-1]:
         k = dominant_role(activity) if activity.demands else 0
-        verbs, objects = VOCABULARY[k % len(VOCABULARY)]
-        queue = queues[k % len(VOCABULARY)]
+        verbs, objects = VOCABULARY[k]
+        queue = queues[k]
         for _ in range(len(objects)):
             thing = queue.pop(0)
             queue.append(thing)

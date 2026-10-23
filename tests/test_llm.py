@@ -56,6 +56,8 @@ class Item(BaseModel):
 
 
 class Basket(BaseModel):
+    """A docstring that does not reach the backend."""
+
     items: tuple[Item, ...]
 
 
@@ -225,6 +227,7 @@ def test_backend_schema_inlines_references_and_drops_titles() -> None:
     schema = backend_schema(Basket)
     text = json.dumps(schema)
     assert "$ref" not in text and "$defs" not in text and '"title"' not in text
+    assert '"description"' not in text
     item = schema["properties"]["items"]["items"]  # type: ignore[index, call-overload]
     assert item["properties"]["crew"]["additionalProperties"] == {"type": "integer"}  # type: ignore[index, call-overload]
     assert item["required"] == ["name", "crew"]  # type: ignore[index, call-overload]
@@ -328,6 +331,11 @@ def test_groq_stops_on_a_long_rate_limit_wait_and_on_a_too_large_request() -> No
     )
     with pytest.raises(LlmError, match="gave up after 3 attempts"):
         client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    limited = [HttpReply(429, b"{}", {"retry-after": "30"})] * 3
+    client, clock = groq(ScriptedTransport(limited), tokens_per_minute=None, max_retries=2)
+    with pytest.raises(QuotaExhausted, match="still rate limited after 3 attempts"):
+        client.complete(MESSAGES, schema=Pair, seed=1, max_tokens=50)
+    assert clock.sleeps == [30.0, 30.0]
 
 
 def test_groq_returns_a_failed_generation_as_an_answer() -> None:
