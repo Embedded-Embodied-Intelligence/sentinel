@@ -17,18 +17,21 @@ NOOP without deliberating.
 """
 
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Protocol
 
 from sentinel.agent.candidates import Candidate, approve, descopes, generate, noop
 from sentinel.agent.decide import (
     CandidateRecord,
+    Choice,
     DecisionRecord,
     Gate,
     Reason,
     assess_needs,
     choose,
 )
-from sentinel.agent.evaluate import Evaluator, race
+from sentinel.agent.evaluate import Evaluation, Evaluator, race
 from sentinel.agent.params import SentinelParams
 from sentinel.experiments.runs import derive_seed
 from sentinel.policies.base import EMPTY_DECISION, Decision, DecisionStats
@@ -44,7 +47,8 @@ class SentinelStats(DecisionStats):
     candidates by kind (before the permission gate), the decisions by reason
     (`DecisionRecord.reason`), what the gate did: deferrals, escalations, approvals applied and
     approvals discarded (spec section 4), and the plan parts that rollouts planned again on
-    their approval days: CP-SAT searches and plan parts reused within an epoch (ADR-0017)."""
+    their approval days: CP-SAT searches and plan parts reused within an epoch (ADR-0017), and
+    the candidates a proposer added (`proposed`, WP6b)."""
 
     deliberations: int = 0
     gate_exits: int = 0
@@ -60,6 +64,20 @@ class SentinelStats(DecisionStats):
     reasons: dict[str, int] = field(default_factory=dict)
     replan_solves: int = 0
     replans_reused: int = 0
+    proposed: int = 0
+
+
+class Proposer(Protocol):
+    """Candidates proposed at a deliberation that passed the needs gate (spec section 10.3):
+    from the observation, the record of the rule candidates and the rule candidates themselves,
+    compiled candidates that are valid, no duplicates and labelled uniquely within the epoch
+    (WP6b online check)."""
+
+    def __call__(
+        self, observation: Observation, record: DecisionRecord, rule: Sequence[Candidate]
+    ) -> Sequence[Candidate]:
+        """The extra candidates of the deliberation."""
+        ...
 
 
 @dataclass(frozen=True)
@@ -78,12 +96,20 @@ class Sentinel:
     `records` keeps a `DecisionRecord` per epoch (without `keep_records`, none); a policy object
     serves one run at a time and recognises a new run by its day. After an escalation,
     `requested_epoch` asks the engine for the approval day as a decision epoch.
+    A `proposer` (WP6b, spec section 10.3) adds compiled candidates after the rule candidates are
+    raced; all are then raced again on the same worlds and the rule chooses among them.
     """
 
     def __init__(
-        self, params: SentinelParams | None = None, *, seed: int = 0, keep_records: bool = True
+        self,
+        params: SentinelParams | None = None,
+        *,
+        seed: int = 0,
+        keep_records: bool = True,
+        proposer: Proposer | None = None,
     ) -> None:
         self.params = SentinelParams() if params is None else params
+        self.proposer = proposer
         self.seed = seed
         self.keep_records = keep_records
         self.stats = SentinelStats()
@@ -230,10 +256,30 @@ class Sentinel:
                     evaluation = race(evaluator, candidates)
             choice = choose(evaluation.stats, params, evaluation.paired)
             index, reason, runner, tied = choice.index, choice.reason, choice.runner_up, choice.ties
-            records = [
-                CandidateRecord(**s.model_dump(), decision=c.decision, eliminated=out)
-                for s, c, out in zip(evaluation.stats, candidates, choice.eliminated, strict=True)
-            ]
+            records = _records(evaluation, candidates, choice)
+        if self.proposer is not None:
+            rule = DecisionRecord(
+                day=t,
+                deliberated=True,
+                rule=params.rule,
+                reason=reason,
+                chosen=candidates[index].label,
+                decision=candidates[index].decision,
+                runner_up=None if runner is None else candidates[runner].label,
+                needs=needs,
+                candidates=tuple(records),
+                tied=tuple(candidates[a].label for a in tied),
+                rollouts=evaluator.rollouts,
+            )
+            extra = list(self.proposer(observation, rule, tuple(candidates)))
+            stats.proposed += len(extra)
+            if extra:
+                candidates += extra
+                evaluation = race(evaluator, candidates)
+                choice = choose(evaluation.stats, params, evaluation.paired)
+                index, reason = choice.index, choice.reason
+                runner, tied = choice.runner_up, choice.ties
+                records = _records(evaluation, candidates, choice)
         stats.candidates += len(candidates)
         chosen = candidates[index]
         stats.chosen[chosen.kind] = stats.chosen.get(chosen.kind, 0) + 1
@@ -288,3 +334,13 @@ class Sentinel:
             j for j, s in enumerate(observation.status) if s in (UNSTARTED, RUNNING, PAUSED)
         ]
         return min(urgencies(observation, unfinished).values(), default=float("inf"))
+
+
+def _records(
+    evaluation: Evaluation, candidates: Sequence[Candidate], choice: Choice
+) -> list[CandidateRecord]:
+    """Every candidate's statistics with its operations and where it left the best set."""
+    return [
+        CandidateRecord(**s.model_dump(), decision=c.decision, eliminated=out)
+        for s, c, out in zip(evaluation.stats, candidates, choice.eliminated, strict=True)
+    ]

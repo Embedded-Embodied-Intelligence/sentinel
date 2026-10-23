@@ -17,6 +17,7 @@ candidate reaches theta_D (spec section 6).
 """
 
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
 
@@ -51,7 +52,14 @@ CandidateKind = Literal[
     "subst_all_reseq_m",
     "ot_reseq_m",
     "descope",
+    "proposal",
+    "proposal_shift",
+    "proposal_reseq_m",
+    "proposal_reseq_s",
 ]
+# The kinds of the rule candidates (spec section 6), the columns of the policy studies; the
+# "proposal" kinds are compiled proposals of the action grammar (spec section 10.3), by their
+# plan operation.
 KINDS: tuple[CandidateKind, ...] = (
     "noop",
     "shift",
@@ -73,6 +81,9 @@ PLAN_PARTS: dict[CandidateKind, PlanObjective] = {
     "reseq_s": "deviation",
     "subst_all_reseq_m": "makespan",
     "ot_reseq_m": "makespan",
+    "proposal_shift": "shift",
+    "proposal_reseq_m": "makespan",
+    "proposal_reseq_s": "deviation",
 }
 
 
@@ -293,9 +304,7 @@ class _Builder:
     def __init__(self, observation: Observation, params: SentinelParams) -> None:
         self.observation = observation
         self.params = params
-        self.timed = [
-            nominal_activity(observation, j)[0] > 0 for j in range(len(observation.status))
-        ]
+        self.timed = timed_activities(observation)
         self.candidates: list[Candidate] = []
         self.effects: set[tuple[str, tuple[int, ...]]] = set()
         self.solves = self.fallbacks = self.invalid = self.duplicates = 0
@@ -332,18 +341,26 @@ class _Builder:
         )
 
     def add(self, candidate: Candidate) -> None:
-        others = tuple(
-            op for op in candidate.decision.operations if not isinstance(op, Reseq | Shift)
-        )
-        plan = tuple(
-            day if timed else -1 for day, timed in zip(candidate.plan, self.timed, strict=True)
-        )
-        effect = (Decision(operations=others).model_dump_json(), plan)
-        if effect in self.effects:
+        key = effect(candidate, self.timed)
+        if key in self.effects:
             self.duplicates += 1
             return
-        self.effects.add(effect)
+        self.effects.add(key)
         self.candidates.append(candidate)
+
+
+def timed_activities(observation: Observation) -> list[bool]:
+    """Whether each activity of the observation has p_j > 0."""
+    return [nominal_activity(observation, j)[0] > 0 for j in range(len(observation.status))]
+
+
+def effect(candidate: Candidate, timed: Sequence[bool]) -> tuple[str, tuple[int, ...]]:
+    """What a candidate does: its operations other than RESEQ and SHIFT and the planned starts
+    it leaves for the activities with p_j > 0 (`timed`, see `timed_activities`). Candidates with
+    the same effect are duplicates (spec sections 6 and 10.3)."""
+    others = tuple(op for op in candidate.decision.operations if not isinstance(op, Reseq | Shift))
+    plan = tuple(day if on else -1 for day, on in zip(candidate.plan, timed, strict=True))
+    return Decision(operations=others).model_dump_json(), plan
 
 
 def optional_values(observation: Observation) -> dict[int, float]:
@@ -409,9 +426,18 @@ def single_substitutions(observation: Observation) -> list[Subst]:
 
 def most_backlogged_role(observation: Observation, horizon: int) -> int | None:
     """k* of the OVERTIME candidate (spec section 6): the role with the largest backlog
-    sum_j r_jk p_j / R_k over the unstarted and paused activities with LS_j <= t + `horizon`
-    (nominal durations, LS_j = LF_j - p_j for the deadline D, else the planned makespan); ties
-    by smallest id, None if every backlog is zero."""
+    (`backlogs`); ties by smallest id, None if every backlog is zero."""
+    backlog = backlogs(observation, horizon)
+    best = max(range(len(backlog)), key=lambda k: (backlog[k], -k), default=None)
+    if best is None or backlog[best] <= 0:
+        return None
+    return best
+
+
+def backlogs(observation: Observation, horizon: int) -> list[float]:
+    """The backlog of every role k (spec section 6): sum_j r_jk p_j / R_k over the unstarted
+    and paused activities with LS_j <= t + `horizon` (nominal durations, LS_j = LF_j - p_j for
+    the deadline D, else the planned makespan)."""
     t = observation.day
     deadline = observation.deadline
     sink = observation.instance.sink_id
@@ -426,7 +452,4 @@ def most_backlogged_role(observation: Observation, horizon: int) -> int | None:
             for k, r in enumerate(demands):
                 if r and capacities[k]:
                     backlog[k] += r * duration / capacities[k]
-    best = max(range(len(backlog)), key=lambda k: (backlog[k], -k), default=None)
-    if best is None or backlog[best] <= 0:
-        return None
-    return best
+    return backlog

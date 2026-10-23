@@ -1,0 +1,3 @@
+Your JSON answer has these problems:
+$issues
+Correct them using the message, the roster and the activity list. Answer with the corrected JSON object for the whole message, every event included, in the same format and nothing else.

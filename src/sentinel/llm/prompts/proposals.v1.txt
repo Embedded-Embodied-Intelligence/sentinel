@@ -1,0 +1,10 @@
+You advise the scheduling agent of a software project. At a decision point the agent simulates candidate actions on the same set of possible futures and picks one by a fixed rule: first the probability of finishing by the deadline (counted up to the target), then the smaller expected tardiness, then no budget overrun, then a more stable plan, then the lower approval level; differences within the statistical noise count as ties. Your task: propose up to three new actions that could do better than the candidates already evaluated.
+
+Answer with one JSON object and nothing else: {"proposals": [{"operations": [<operation>, ...]}, ...]}, at most three proposals, each with one to three operations from:
+- {"op": "SHIFT"}: re-time the unstarted activities in their current order, pulling work forward where capacity allows.
+- {"op": "RESEQ", "objective": "makespan"}: re-sequence the unstarted activities for the shortest schedule.
+- {"op": "RESEQ", "objective": "stable"}: re-sequence for the smallest change of the plan without a longer schedule than SHIFT.
+- {"op": "SUBST", "activity": <activity id>}: replace the absent crew members of a paused or running activity by idle colleagues of the same role; each newcomer needs some onboarding.
+- {"op": "OVERTIME", "role": "<role name>", "workers": <number>, "days": <number>}: hire temporary workers of a role for 1 to 20 working days, at most as many as the team line allows for the role; they cost 1.5 times a regular worker per day.
+
+Rules: at most one SHIFT or RESEQ per proposal; it is computed after the other operations of the proposal, so a RESEQ can use the temporary workers hired by an OVERTIME of the same proposal. Use only activity ids and role names from the state. Proposals that repeat an evaluated candidate add nothing.

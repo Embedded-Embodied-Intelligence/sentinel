@@ -465,14 +465,16 @@ def test_prompts_are_versioned_files() -> None:
 
 
 def test_only_the_wbs_and_experiment_packages_import_the_llm_layer() -> None:
-    """No simulation, scheduling, forecasting, policy or agent module imports `sentinel.llm` or
-    `sentinel.wbs`, so no rollout or simulation path can call an LLM."""
-    imports = re.compile(r"^\s*(?:from|import)\s+sentinel\.(llm|wbs)\b", re.MULTILINE)
+    """No simulation, scheduling, forecasting, policy or agent module imports `sentinel.llm`,
+    `sentinel.wbs` or `sentinel.interpret`, so no rollout or simulation path can call an LLM;
+    the interpretation layer and the experiments may (spec section 10)."""
+    imports = re.compile(r"^\s*(?:from|import)\s+sentinel\.(llm|wbs|interpret)\b", re.MULTILINE)
     source = REPO_ROOT / "src" / "sentinel"
     offenders = []
     for path in sorted(source.rglob("*.py")):
         package = path.relative_to(source).parts[0]
-        allowed = {"llm": ("llm", "wbs"), "wbs": ("llm", "wbs"), "experiments": ("llm", "wbs")}
+        llm_side = ("llm", "wbs", "interpret")
+        allowed = {"llm": llm_side, "wbs": llm_side, "interpret": llm_side, "experiments": llm_side}
         found = set(imports.findall(path.read_text(encoding="utf-8")))
         if found - set(allowed.get(package, ())):
             offenders.append(str(path.relative_to(source)))
