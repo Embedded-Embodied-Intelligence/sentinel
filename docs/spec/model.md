@@ -881,12 +881,15 @@ need a common role. A risk driver's share is the fraction of rollouts whose chai
   may ask for one at any time. It shows the chosen action in plain language, its effect against
   NOOP (`p̂`, the expected finish date `date(C̄ − 1)` with `C̄` the mean makespan of its
   rollouts rounded half up, the expected cost `ẑ`, the plan changes), the runner-up and the
-  explanation of §10.4.
+  explanation of §10.4. Each figure comes from the candidate's own rollouts in the deliberation
+  (`N`, or `N₁` for a candidate that racing dropped), so it is what Sentinel decided on.
 - **Autonomy.** `Λ` is a project setting (default 2, §8). A chosen action other than NOOP with
   `ℓ(a) < Λ` and without DESCOPE is applied at once and listed as applied automatically. Any
   other chosen action waits for the manager, who takes the place of the simulated human of §4:
-  there is no deferral and no approval delay `δ_h`; the urgency `τ_t` (§5) is shown, and an
-  action with `τ_t > τ_def` *can wait*.
+  there is no deferral, and the action applies when the manager approves it; the urgency `τ_t`
+  (§5) is shown, and an action with `τ_t > τ_def` *can wait*. The deliberation itself is that of
+  §6 with the parameters of §8, so its rollouts still imagine the approval delay `δ_h` of an
+  action that needs approval.
 - **Approve** applies the action to the current observation as on an approval day (§4): its
   SUBST, OVERTIME and DESCOPE operations unchanged and re-validated, its plan part planned again
   on the planning view they leave, all or nothing. The project then has the new plan, the named
