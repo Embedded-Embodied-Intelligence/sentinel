@@ -11,7 +11,7 @@
 | WP5 | Goal & Needs Engine, candidates, rollout selector, permission gate (§4–§6) | 2026-11-16 | done (studies `results/wp5/20261022-102609-e9d131b3` main, `20261022-193948-592f7183` ablation, `20261022-234437-49965457` autonomy levels) |
 | WP6 | LLM layer: client, cache, schemas; WBS extraction (RQ1), event parser, candidates, explanations | 2026-11-21 | done (both backends, OpenRouter pinned to Groq: RQ1 `results/wp6/20261023-215350-f5aad526`; RQ5 events `20261023-220452-f8a335f4`, proposals `20261023-220739-ad9fa2b7`, explanations `20261023-221218-1dc12a5f`, online check `20261023-221428-6a63c140`) |
 | WP7 | Paper artifacts from the committed runs (macros, tables, figures; English and Polish), RQ1 error analysis, reproduce command | 2026-11-25 | done (`paper/generated/` from `configs/paper.toml`; `sentinel reproduce --check`: 117 of 117 files identical) |
-| WP8 | Minimal dashboard, release package (the reproduce command came in WP7) | 2026-12-02 | todo |
+| WP8 | Minimal dashboard, release package (the reproduce command came in WP7) | 2026-12-02 | done (`sentinel dashboard`, example cockpits `docs/dashboard/`; `sentinel release --version 1.0.0` builds `dist/sentinel-1.0.0.zip`, not tagged) |
 
 Milestones: concept presentation ~2026-10-28 (needs WP1 table); submission 2026-12-02.
 
