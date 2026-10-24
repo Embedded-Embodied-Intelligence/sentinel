@@ -19,7 +19,16 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt, ValidationError
 
-from sentinel.llm import LlmClient, LlmResponse, Message, Prompt, RequestTooLarge, load_prompt
+from sentinel.llm import (
+    DomainIssue,
+    ErrorDetail,
+    LlmClient,
+    LlmResponse,
+    Message,
+    Prompt,
+    RequestTooLarge,
+    load_prompt,
+)
 from sentinel.model.instance import Activity, ProjectInstance, Role, make_workers
 
 EXTRACT_PROMPT = "wbs_extract"  # system prompt, prompts/wbs_extract.<version>.txt
@@ -468,9 +477,37 @@ class Session:
         return len(self.rounds) - 1
 
 
+def domain_issues(data: object) -> list[DomainIssue]:
+    """The model issues of a schema-valid answer as a cache without prompts keeps them (spec
+    section 10): each issue's kind and the index of the activity it names (the first of a
+    cycle; the team for the others), no message, since messages quote the answer."""
+    extraction = Extraction.model_validate(data)
+    first: dict[str, int] = {}
+    for index, activity in enumerate(extraction.activities):
+        first.setdefault(normalise_name(activity.name), index)
+    found = []
+    for issue in model_issues(extraction):
+        name = issue.activity if issue.activity is not None else next(iter(issue.cycle), None)
+        at = None if name is None else first.get(normalise_name(name))
+        found.append(DomainIssue(issue.kind, ("team",) if at is None else ("activities", at)))
+    return found
+
+
+def withheld_issue(detail: ErrorDetail) -> Issue:
+    """An issue of an answer that a cache without prompts withheld (spec section 10), as a
+    repair round sends it: its kind and place, without the values of the answer."""
+    kind = detail.type if detail.type in ISSUE_KINDS else "invalid_field"
+    where = detail.loc or "The answer"
+    text = kind.replace("_", " ")
+    return Issue(kind, f'{where} has the issue "{text}"; return the complete corrected JSON.')
+
+
 def answer_issues(response: LlmResponse[Extraction]) -> list[Issue]:
-    """Issues of an answer: unparseable or cut-off JSON as one issue, else `validate_extraction`."""
+    """Issues of an answer: unparseable or cut-off JSON as one issue, the issues of an answer
+    withheld for its domain issues (spec section 10), else `validate_extraction`."""
     error = response.error
+    if error is not None and error.kind == "domain":
+        return [withheld_issue(detail) for detail in error.details]
     if error is not None and error.kind in ("empty", "json", "truncated"):
         if error.kind == "truncated":
             message = "The answer was cut off before the JSON object was complete."
@@ -522,6 +559,7 @@ def single_shot(client: LlmClient, text: str, *, seed: int, settings: Extraction
         temperature=settings.temperature,
         seed=seed,
         max_tokens=settings.max_tokens,
+        validator=domain_issues,
     )
     return Round(0, response, tuple(answer_issues(response)))
 
@@ -541,6 +579,7 @@ def repair(client: LlmClient, text: str, *, seed: int, settings: ExtractionSetti
                 temperature=settings.temperature,
                 seed=seed,
                 max_tokens=settings.max_tokens,
+                validator=domain_issues,
             )
         except RequestTooLarge as exc:
             return Session(tuple(rounds), stopped=f"request too large: {exc}")

@@ -11,6 +11,8 @@ from sentinel.llm.client import BaseClient, ClientStats
 from sentinel.llm.core import (
     CacheMiss,
     CreditsExhausted,
+    DomainIssue,
+    DomainValidator,
     ErrorDetail,
     LlmClient,
     LlmError,
@@ -40,6 +42,8 @@ __all__ = [
     "CacheMode",
     "ClientStats",
     "CreditsExhausted",
+    "DomainIssue",
+    "DomainValidator",
     "ErrorDetail",
     "FakeLlmClient",
     "FakeReply",

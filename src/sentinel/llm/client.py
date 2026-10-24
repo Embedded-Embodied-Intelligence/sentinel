@@ -12,6 +12,7 @@ from pydantic import BaseModel, JsonValue
 from sentinel.llm.cache import CACHE_MODES, CacheMode, LlmCache
 from sentinel.llm.core import (
     CacheMiss,
+    DomainValidator,
     LlmResponse,
     Message,
     Reply,
@@ -124,10 +125,12 @@ class BaseClient(ABC):
         temperature: float = 0.0,
         seed: int,
         max_tokens: int,
+        validator: DomainValidator | None = None,
     ) -> LlmResponse[ModelT]:
         """Answer from the cache or the backend (by mode) and validate it against `schema`. A
-        cache without prompts stores an invalid answer as its issue list only, and the answer
-        comes back as stored, so that a replay sees what the recording saw."""
+        cache without prompts stores an invalid answer, and a schema-valid one in which the
+        domain `validator` finds issues, as its issue list only, and the answer comes back as
+        stored, so that a replay sees what the recording saw (spec section 10)."""
         request = self.request(
             messages, schema=schema, temperature=temperature, seed=seed, max_tokens=max_tokens
         )
@@ -142,7 +145,7 @@ class BaseClient(ABC):
             reply = self._send(request)
             if self.cache is not None:
                 if not self.cache.store_prompts:
-                    reply = withhold_invalid(reply, schema)
+                    reply = withhold_invalid(reply, schema, validator)
                 self.cache.put(request, reply)
         self.stats.add(reply, cache_hit)
         return validate_reply(reply, schema, key=key, cache_hit=cache_hit)

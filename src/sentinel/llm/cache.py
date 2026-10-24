@@ -8,8 +8,9 @@ of exactly the entries it used, from which the run can be repeated without any b
 
 A cache with `store_prompts=False` stores no message text: an entry keeps the key, the model
 metadata, the decoding parameters and the reply, and lookups work by key as before; the client
-stores an answer that fails its schema only as its issue list, without the text
-(`withhold_invalid`). It is mandatory for real (non-synthetic) data (spec §10, invariant 7);
+stores an answer that fails its schema, or a schema-valid one with issues of the call's domain
+validator, only as its issue list, without the text (`withhold_invalid`). It is mandatory for
+real (non-synthetic) data (spec §10, invariant 7);
 such a cache refuses to open a file that holds messages, so its bundles hold none either.
 """
 

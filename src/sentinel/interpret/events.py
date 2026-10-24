@@ -16,13 +16,22 @@ import json
 import math
 import re
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt, ValidationError
 
 from sentinel.interpret.team import Member, weekday_name
-from sentinel.llm import LlmClient, LlmResponse, Message, Prompt, RequestTooLarge, load_prompt
+from sentinel.llm import (
+    DomainIssue,
+    ErrorDetail,
+    LlmClient,
+    LlmResponse,
+    Message,
+    Prompt,
+    RequestTooLarge,
+    load_prompt,
+)
 from sentinel.simulation.state import (
     PAUSED,
     REMOVED,
@@ -277,10 +286,12 @@ class Context:
 
 @dataclass(frozen=True)
 class EventIssue:
-    """A problem of an answer, with the English message sent back in a repair round."""
+    """A problem of an answer, with the English message sent back in a repair round and the
+    index of the event it concerns (None: the answer as a whole)."""
 
     kind: IssueKind
     message: str
+    event: int | None = None
 
 
 @dataclass(frozen=True)
@@ -318,7 +329,7 @@ def read_answer(data: object, context: Context) -> Reading:
     seen: dict[tuple[str, object], int] = {}
     for index, entry in enumerate(entries):
         event, problems = _read_event(index, entry, context)
-        issues += problems
+        issues += [replace(problem, event=index) for problem in problems]
         if event is None:
             continue
         key = _key(event)
@@ -329,6 +340,7 @@ def read_answer(data: object, context: Context) -> Reading:
                     "duplicate",
                     f"events[{index}] repeats the {what[event.type]} of events[{seen[key]}]; "
                     "report each event once.",
+                    index,
                 )
             )
             continue
@@ -735,9 +747,31 @@ class ParseSession:
         return len(self.rounds) - 1
 
 
+def domain_issues(data: object, context: Context) -> list[DomainIssue]:
+    """The issues of a parsed answer as a cache without prompts keeps them (spec section 10):
+    each issue's kind and the event it concerns, no message, since messages quote the answer."""
+    return [
+        DomainIssue(issue.kind, () if issue.event is None else ("events", issue.event))
+        for issue in read_answer(data, context).issues
+    ]
+
+
+def withheld_issue(detail: ErrorDetail) -> EventIssue:
+    """An issue of an answer that a cache without prompts withheld (spec section 10), as a
+    repair round sends it: its kind and place, without the values of the answer."""
+    kind = detail.type if detail.type in ISSUE_KINDS else "invalid_field"
+    where = detail.loc or "The answer"
+    message = f'{where} has the issue "{kind.replace("_", " ")}"; give the complete answer again.'
+    event = re.fullmatch(r"events\[(\d+)\]", detail.loc)
+    return EventIssue(kind, message, None if event is None else int(event[1]))
+
+
 def answer_reading(response: LlmResponse[MessageEvents], context: Context) -> Reading:
-    """The reading of an answer: unparseable or cut-off JSON as one issue, else `read_answer`."""
+    """The reading of an answer: unparseable or cut-off JSON as one issue, the issues of an
+    answer withheld for its domain issues (spec section 10), else `read_answer`."""
     error = response.error
+    if error is not None and error.kind == "domain":
+        return Reading((), tuple(withheld_issue(detail) for detail in error.details))
     if error is not None and error.kind in ("empty", "json", "truncated"):
         if error.kind == "truncated":
             message = "The answer was cut off before the JSON object was complete."
@@ -799,6 +833,7 @@ def parse(
             temperature=settings.temperature,
             seed=seed,
             max_tokens=settings.max_tokens,
+            validator=lambda data: domain_issues(data, context),
         )
 
     first = call(parse_messages(context, message, prompt))

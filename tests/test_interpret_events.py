@@ -3,6 +3,7 @@ parser, validation, privacy, application to the observation and the repair loop.
 
 import json
 from collections.abc import Callable
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -27,7 +28,7 @@ from sentinel.interpret.events import (
 )
 from sentinel.interpret.messages import MessageSettings, generate, read_message
 from sentinel.interpret.team import names_of, next_week, next_weekday, roster
-from sentinel.llm import FakeLlmClient, backend_schema
+from sentinel.llm import FakeLlmClient, LlmCache, backend_schema
 from sentinel.model import ProjectInstance
 from sentinel.simulation.state import PAUSED, RUNNING, UNSTARTED
 
@@ -241,6 +242,47 @@ def test_the_repair_loop_fixes_a_caught_mistake_and_stops(contexts: list[Context
     never = FakeLlmClient(lambda messages: json.dumps(bad))
     stuck = parse(never, message, context, seed=3, settings=ParseSettings(max_tokens=256))
     assert stuck.repair_rounds == 3 and not stuck.final.reading.valid
+
+
+def test_an_answer_with_domain_issues_reaches_a_private_cache_only_as_issue_kinds(
+    contexts: list[Context], tmp_path: Path
+) -> None:
+    """Spec section 10 (v1.9.2): with `store_prompts = false` the parser's validator runs before
+    the cache write, so a schema-valid answer whose free text carries a reason but fails
+    validation is stored, returned and repaired as its issue kinds only; the replay agrees."""
+    context = contexts[0]
+    worker = next(m.worker for m in context.roster if context.observation.present[m.worker])
+    message = TeamMessage(day=context.day, author=worker, text="I can't come in today.")
+    leaky = {
+        "type": "new_activity",
+        "name": "cover while Ada has pneumonia",
+        "duration": 2,
+        "crew": {"nurse for the flu": 1},
+        "after": None,
+        "before": None,
+    }
+    good = {"events": [{"type": "absence", "worker": worker, "return_day": None}]}
+    answers = [json.dumps({"events": [good["events"][0], leaky]}), json.dumps(good)]
+    path = tmp_path / "private.jsonl"
+    settings = ParseSettings(max_tokens=256)
+    client = FakeLlmClient(answers, cache=LlmCache(path, store_prompts=False), mode="record")
+    session = parse(client, message, context, seed=3, settings=settings)
+    stored = path.read_text(encoding="utf-8")
+    for word in ("pneumonia", "Ada", "nurse", "flu", "cover"):
+        assert word not in stored
+    first = session.single_shot
+    assert first.response.error is not None and first.response.error.kind == "domain"
+    assert first.response.text == "" and first.reading.events == ()
+    assert [(i.kind, i.event) for i in first.reading.issues] == [("unknown_role", 1)]
+    assert "nurse" not in first.reading.issues[0].message
+    assert session.final.reading.valid and session.final.reading.events
+    assert "nurse" not in client.requests[1].messages[-1].content
+
+    replayer = FakeLlmClient([], cache=LlmCache(path, store_prompts=False), mode="replay")
+    again = parse(replayer, message, context, seed=3, settings=settings)
+    assert [r.reading for r in again.rounds] == [r.reading for r in session.rounds]
+    research = parse(FakeLlmClient(answers), message, context, seed=3, settings=settings)
+    assert research.single_shot.reading.events  # without a private cache the valid event stays
 
 
 def test_observations_differ_only_within_the_factor_tolerance(contexts: list[Context]) -> None:

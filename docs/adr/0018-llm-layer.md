@@ -117,3 +117,22 @@ for an answer that is not a JSON object. Valid answers and full records are unch
 **Consequences.** No answer text that failed its schema reaches a cache or bundle of real data;
 for such data, repair rounds see less of their previous answer. Research runs (`store_prompts =
 true`) and every committed cache and bundle are unaffected.
+
+### Amendment (WP8): answers with domain issues for real data
+
+**Context.** A schema-valid answer can still carry personal text in a free string field (a new
+activity's name, a crew's role key), and before WP8 such an answer was stored whole even when
+its domain validator rejected it (WP7 spec question 2; spec v1.9.2 §10).
+
+**Decision.** `LlmClient.complete` takes an optional domain `validator` (parsed answer → issues
+`DomainIssue(kind, loc)`). With `store_prompts = false` the client runs it before the cache
+write; an answer with issues is stored like an invalid one, with the error kind `domain` and per
+issue its kind (a code, else `*`) and its location with names outside the schema masked, and is
+returned as stored. The event parser (§10.2) and the WBS extraction (RQ1) pass their validators;
+their repair rounds turn the stored kinds into messages without values. Proposals (ids, enums and
+role names compiled later on the state) and explanations (checked for faithfulness after the
+call) pass none.
+
+**Consequences.** For real data, a rejected answer's free text never reaches a cache or bundle;
+an accepted answer is still stored whole. The validator is not part of the request key, so
+research runs and every committed cache and bundle are unaffected.

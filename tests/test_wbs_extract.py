@@ -189,6 +189,34 @@ def test_a_repair_session_without_prompts_replays_from_its_cache(tmp_path: Path)
     assert again.final.response.text == json.dumps(VALID) and replayer.stats.hit_rate == 1.0
 
 
+def test_domain_issues_reach_a_cache_without_prompts_only_as_kinds_and_places(
+    tmp_path: Path,
+) -> None:
+    """Spec section 10 (v1.9.2): a schema-valid answer whose names carry personal text and fail
+    validation is stored and repaired as issue kinds at answer positions, never as names."""
+    leaky = project(
+        act("Build payment API", 4, {"backend developers": 2}),
+        act("Test while Zofia has the flu", 2, {"tester": 1}, ["Zofia's sick leave"]),
+    )
+    path = tmp_path / "private.jsonl"
+    recorder = FakeLlmClient(
+        [json.dumps(leaky), json.dumps(VALID)],
+        cache=LlmCache(path, store_prompts=False),
+        mode="record",
+    )
+    session = repair(recorder, TEXT, seed=5, settings=SETTINGS)
+    assert "Zofia" not in path.read_text(encoding="utf-8")
+    first = session.single_shot
+    assert first.response.error is not None and first.response.error.kind == "domain"
+    assert [(i.kind, i.message.split(" has")[0]) for i in first.issues] == [
+        ("unknown_name", "activities[1]")
+    ]
+    assert "Zofia" not in recorder.requests[1].messages[-1].content
+    assert session.final.valid and session.repair_rounds == 1
+    research = single_shot(FakeLlmClient([json.dumps(leaky)]), TEXT, seed=5, settings=SETTINGS)
+    assert "Zofia" in research.issues[0].message  # research runs see the names
+
+
 def test_the_repair_loop_stops_after_three_rounds() -> None:
     answers = [
         "not json",

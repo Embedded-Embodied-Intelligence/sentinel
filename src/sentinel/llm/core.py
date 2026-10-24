@@ -5,13 +5,16 @@ A `Request` holds everything that shapes an answer (backend, model, model digest
 JSON schema and decoding parameters); the SHA-256 of its canonical JSON is the cache key. A
 backend returns a `Reply`, which the cache stores. `validate_reply` turns a reply into an
 `LlmResponse`: the answer must parse as JSON and validate against the pydantic schema, and a
-violation comes back as a structured `OutputError`, never as an exception.
+violation comes back as a structured `OutputError`, never as an exception. A call may pass the
+domain validator of its answers (`DomainValidator`); a cache without prompts runs it before it
+stores a schema-valid answer (`withhold_invalid`, spec section 10).
 """
 
 import hashlib
 import json
 import math
-from collections.abc import Mapping, Sequence
+import re
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, cast, get_args
 
@@ -26,9 +29,10 @@ from pydantic import (
 )
 
 ChatRole = Literal["system", "user", "assistant"]
-OutputErrorKind = Literal["empty", "json", "truncated", "schema"]
+OutputErrorKind = Literal["empty", "json", "truncated", "schema", "domain"]
 CHARS_PER_TOKEN = 3.0  # conservative token estimate for limits and the fake backend
 WITHHELD = "withheld"  # `Reply.meta` key of an invalid answer stored as its issue list only
+_ISSUE_KIND = re.compile(r"[a-z][a-z0-9_]*")  # a domain issue kind is a code, never free text
 
 
 class LlmError(RuntimeError):
@@ -126,12 +130,27 @@ class ErrorDetail:
 
 @dataclass(frozen=True)
 class OutputError:
-    """Why an answer is unusable: empty, not JSON, cut off at the token limit, or against the
-    schema (then with one detail per violation)."""
+    """Why an answer is unusable: empty, not JSON, cut off at the token limit, against the
+    schema (then with one detail per violation) or, as a cache without prompts stores it,
+    schema-valid with domain issues (`domain`, one detail per issue, its kind as the type)."""
 
     kind: OutputErrorKind
     message: str
     details: tuple[ErrorDetail, ...] = ()
+
+
+@dataclass(frozen=True)
+class DomainIssue:
+    """An issue that a domain validator finds in a schema-valid answer: its `kind`, a code such
+    as `unknown_worker`, and its location in the answer, e.g. ("events", 0); a cache without
+    prompts keeps only these, with names outside the schema masked (spec section 10)."""
+
+    kind: str
+    loc: tuple[int | str, ...] = ()
+
+
+# The domain validator of a call: the issues of a parsed, schema-valid answer.
+DomainValidator = Callable[[Any], Sequence[DomainIssue]]
 
 
 @dataclass(frozen=True)
@@ -159,7 +178,8 @@ class LlmResponse[ModelT: BaseModel]:
 
 class LlmClient(Protocol):
     """Chat completion constrained to a JSON schema; problems of the answer come back in
-    `LlmResponse.error`, while failures of the backend raise `LlmError`."""
+    `LlmResponse.error`, while failures of the backend raise `LlmError`. `validator` is the
+    domain validator of the answers, which a cache without prompts runs before storing one."""
 
     def complete[ModelT: BaseModel](
         self,
@@ -169,6 +189,7 @@ class LlmClient(Protocol):
         temperature: float = 0.0,
         seed: int,
         max_tokens: int,
+        validator: DomainValidator | None = None,
     ) -> LlmResponse[ModelT]: ...
 
 
@@ -249,12 +270,19 @@ def validate_reply[ModelT: BaseModel](
     )
 
 
-def withhold_invalid(reply: Reply, schema: type[BaseModel]) -> Reply:
+def withhold_invalid(
+    reply: Reply, schema: type[BaseModel], validator: DomainValidator | None = None
+) -> Reply:
     """The reply as a cache without prompts stores it (spec section 10, invariant 7): an answer
     that fails `schema` keeps no text, only its issue list (the error kind and message, and per
     schema violation its type and location, with every name that is no field or tag of the
-    schema masked as `*`); a valid answer is kept whole."""
-    _, _, error = _check(reply, schema, _schema_names(backend_schema(schema)))
+    schema masked as `*`); so does a schema-valid answer in which the call's domain `validator`
+    finds issues (kind `domain`, per issue its kind and masked location). Any other answer is
+    kept whole."""
+    names = _schema_names(backend_schema(schema))
+    parsed, _, error = _check(reply, schema, names)
+    if error is None and validator is not None:
+        error = _domain_error(validator(parsed), names)
     if error is None:
         return reply
     issues: dict[str, JsonValue] = {
@@ -296,6 +324,19 @@ def _check[ModelT: BaseModel](
                 )
                 error = OutputError("schema", f"{len(details)} schema violations", details)
     return parsed, value, error
+
+
+def _domain_error(issues: Sequence[DomainIssue], names: frozenset[str]) -> OutputError | None:
+    """The domain issues of an answer as stored without prompts: per issue its kind (`*` unless
+    it is a code) as the type and its location with names outside the schema masked."""
+    if not issues:
+        return None
+    details = tuple(
+        ErrorDetail(_location(issue.loc, names), kind, kind)
+        for issue in issues
+        for kind in [issue.kind if _ISSUE_KIND.fullmatch(issue.kind) else "*"]
+    )
+    return OutputError("domain", f"{len(details)} domain issues", details)
 
 
 def _stored_error(stored: Mapping[str, JsonValue]) -> OutputError:

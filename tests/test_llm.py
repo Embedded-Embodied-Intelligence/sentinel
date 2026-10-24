@@ -11,7 +11,7 @@ import re
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import pytest
 from pydantic import BaseModel, ConfigDict
@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict
 from sentinel.llm import (
     CacheMiss,
     CreditsExhausted,
+    DomainIssue,
     FakeLlmClient,
     FakeReply,
     GroqClient,
@@ -690,6 +691,58 @@ def test_a_cache_without_prompts_stores_an_invalid_answer_only_as_its_issue_list
     kept = full.complete(MESSAGES, schema=Strict, seed=0, max_tokens=64)
     assert kept.text == answers[0] and kept.parsed is not None  # research runs keep the text
     assert "pneumonia" in (tmp_path / "full.jsonl").read_text(encoding="utf-8")
+
+
+def _flags_reasons(data: Any) -> list[DomainIssue]:
+    """A domain validator: `b` must be a known value, `a` small (its issue kind quotes `b`)."""
+    issues = []
+    if data["b"] not in ("x", "y"):
+        issues.append(DomainIssue("unknown_value", ("b",)))
+    if data["a"] > 1:
+        issues.append(DomainIssue(f"too large for {data['b']}", ("a", data["b"])))
+    return issues
+
+
+def test_a_cache_without_prompts_stores_an_answer_with_domain_issues_only_as_its_issue_list(
+    tmp_path: Path,
+) -> None:
+    """Spec section 10 (v1.9.2): with `store_prompts = false` the domain validator runs before
+    the cache write and a schema-valid answer with domain issues keeps only their kinds and
+    masked locations; the client returns it as stored, a replay sees the same, and research
+    caches and calls without a cache keep the answer."""
+    answers = ['{"a": 1, "b": "flu"}', '{"a": 2, "b": "pneumonia"}', '{"a": 1, "b": "y"}']
+    path = tmp_path / "private.jsonl"
+    recorder = FakeLlmClient(answers, cache=LlmCache(path, store_prompts=False), mode="record")
+
+    def call(client: FakeLlmClient, seed: int) -> Any:
+        return client.complete(
+            MESSAGES, schema=Pair, seed=seed, max_tokens=64, validator=_flags_reasons
+        )
+
+    recorded = [call(recorder, seed) for seed in range(3)]
+    stored = path.read_text(encoding="utf-8")
+    for word in ("flu", "pneumonia", "too large"):
+        assert word not in stored
+    assert [r.error.kind if r.error else None for r in recorded] == ["domain", "domain", None]
+    assert [(d.loc, d.type) for d in recorded[0].error.details] == [("b", "unknown_value")]
+    assert [(d.loc, d.type) for d in recorded[1].error.details] == [
+        ("b", "unknown_value"),
+        ("a.*", "*"),
+    ]
+    assert [(r.text, r.parsed, r.value) for r in recorded[:2]] == [("", None, None)] * 2
+    assert recorded[2].value == Pair(a=1, b="y") and recorded[2].text == answers[2]
+
+    replayer = FakeLlmClient([], cache=LlmCache(path, store_prompts=False), mode="replay")
+    replayed = [call(replayer, seed) for seed in range(3)]
+    assert all(r.cache_hit for r in replayed)
+    assert [(r.text, r.value, r.error) for r in replayed] == [
+        (r.text, r.value, r.error) for r in recorded
+    ]
+
+    full = tmp_path / "full.jsonl"
+    kept = call(FakeLlmClient(answers[:1], cache=LlmCache(full)), 0)
+    assert kept.value == Pair(a=1, b="flu") and "flu" in full.read_text(encoding="utf-8")
+    assert call(FakeLlmClient(answers[:1]), 0).value == Pair(a=1, b="flu")
 
 
 def test_the_key_never_shows_in_reprs_errors_or_cache_files(tmp_path: Path) -> None:
