@@ -1,17 +1,18 @@
 {
   "run_id": "20261021-152439-8892ea21",
   "generator": "sentinel.experiments.policy_summary",
-  "generated_utc": "2026-10-21T18:24:36+00:00",
-  "git_commit": "11569a51581f0aa4d9a95281cd645927df927d9c",
+  "generated_utc": "2026-10-24T10:17:29+00:00",
+  "git_commit": "d07a0992953fae5969eea0b5bfabe12d54b72c7b",
   "git_dirty": false,
   "git_dirty_ignores": [
     "results"
   ],
-  "summary_settings_source": "run config",
+  "summary_settings_source": "configs/wp4_baselines.toml",
   "summary_settings": {
     "bootstrap_resamples": 1000,
     "bootstrap_seed": 2026,
     "reference_policy": "no_reaction",
+    "references": [],
     "table": "table_wp4",
     "figure_prefix": "fig_wp4"
   },
@@ -20,6 +21,16 @@
       "path": "results.csv.gz",
       "bytes": 730607,
       "sha256": "6d246f65f436c2c41067e98542ab53148749bb13ae051b41a5ba39b6023c09f4"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 32542,
+      "sha256": "a0476734445c3c0ceea42f19151cc29d8308f383124b49002f37832d9e4fc1b3"
+    },
+    {
+      "path": "configs/wp4_baselines.toml",
+      "bytes": 2187,
+      "sha256": "4c26a3d995942e2943daa21c6fdbcfe95d39a853e01a825e75fc23ad2b2da573"
     },
     {
       "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",
@@ -35,6 +46,7 @@
     "seed_mismatches": 0,
     "missing": 0
   },
+  "wp4b_check": null,
   "outputs": [
     "summary.md",
     "table_wp4.tex",

@@ -1,8 +1,8 @@
 # wp4_baselines: run 20261021-152439-8892ea21
 
-Generated from `results.csv.gz` by `sentinel.experiments.policy_summary` at commit `11569a51581f0aa4d9a95281cd645927df927d9c`; do not edit.
+Generated from `results.csv.gz` by `sentinel.experiments.policy_summary` at commit `d07a0992953fae5969eea0b5bfabe12d54b72c7b`; do not edit.
 
-- Policies of spec section 7 on `cpsat_det` baseline plans: NoReaction, AlwaysSubstitute, FullResolve, FullResolve(subst), StableResolve(subst). CP-SAT: T_cp = 0.1 deterministic s per stage, seed 0, one worker; T_r = 5.
+- Policies on `cpsat_det` baseline plans: NoReaction, AlwaysSubstitute, FullResolve, FullResolve(subst), StableResolve(subst). CP-SAT: T_cp = 0.1 deterministic s per stage, seed 0, one worker; T_r = 5.
 - Instances: every 4th of J30, every 4th of J60 in natural order; 4 replications per instance with the WP2b seeds, shared by all policies and scenarios (common random numbers). Scenarios: λ_S = 0.01, λ_N = 0.02.
 - On time for δ: C ≤ D = ceil((1 + δ) C*) (spec section 1.2), evaluated post hoc; truncated runs are late. In % with 95 % Wilson intervals over the runs of a cell, which understate the uncertainty across instances.
 - Deviation: realised deviation from the baseline plan in days; nervousness: changes of a planned start in the deviation set per run (spec section 7.1); substitutions: replaced crew members per run; onboarding: crew-member days o_j per replaced member; cost / B with β = 0.1. Means per run.

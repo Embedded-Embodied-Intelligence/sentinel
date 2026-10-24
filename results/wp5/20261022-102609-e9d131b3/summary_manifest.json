@@ -1,13 +1,13 @@
 {
   "run_id": "20261022-102609-e9d131b3",
   "generator": "sentinel.experiments.policy_summary",
-  "generated_utc": "2026-10-22T19:39:46+00:00",
-  "git_commit": "4153d0733a0907f11795890bdffd3d086aa3ed87",
+  "generated_utc": "2026-10-24T10:17:37+00:00",
+  "git_commit": "d07a0992953fae5969eea0b5bfabe12d54b72c7b",
   "git_dirty": false,
   "git_dirty_ignores": [
     "results"
   ],
-  "summary_settings_source": "run config",
+  "summary_settings_source": "configs/wp5_rq4_main.toml",
   "summary_settings": {
     "bootstrap_resamples": 1000,
     "bootstrap_seed": 2026,
@@ -23,6 +23,16 @@
       "path": "results.csv.gz",
       "bytes": 461975,
       "sha256": "3e1f1642998fabf7b0cf4c39a18fa97adbbf68d85d95adbca401268e235269d2"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 27995,
+      "sha256": "7817259920f3624929f8cf805185e4af993e00c0c3e0d1b5b88001e3d3c8d772"
+    },
+    {
+      "path": "configs/wp5_rq4_main.toml",
+      "bytes": 3230,
+      "sha256": "2fd24ec93aa90e9004c5465573c8da52f9b2a80e56709d49f69c6ac0c7dd04c5"
     },
     {
       "path": "results/wp2/20261020-181559-6534a712/results.csv.gz",

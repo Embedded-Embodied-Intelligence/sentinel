@@ -1,6 +1,6 @@
 # wp5_rq4_ablation: run 20261022-193948-592f7183
 
-Generated from `results.csv.gz` by `sentinel.experiments.policy_summary` at commit `583fd4f11af4e69908c14315965d2c11c6d37ccf`; do not edit.
+Generated from `results.csv.gz` by `sentinel.experiments.policy_summary` at commit `d07a0992953fae5969eea0b5bfabe12d54b72c7b`; do not edit.
 
 - Policies on `cpsat_det` baseline plans: NoReaction, AlwaysSubstitute, FullResolve, FullResolve(subst), StableResolve(subst), Sentinel scalarised, Sentinel Λ=2, Sentinel DESCOPE, Sentinel δ=0.3. CP-SAT: T_cp = 0.1 deterministic s per stage, seed 0, one worker; T_r = 5.
 - Instances: every 8th of J30 in natural order; 4 replications per instance with the WP2b seeds, shared by all policies and scenarios (common random numbers). Scenarios: λ_S = 0.01, λ_N = 0.02.
