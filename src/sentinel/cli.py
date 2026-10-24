@@ -118,6 +118,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     paper.add_argument("--config", type=Path, default=DEFAULT_PAPER_CONFIG)
     paper.add_argument("--out", type=Path, help="output directory (default: the config's)")
+    paper.add_argument(
+        "--readme",
+        type=Path,
+        default=Path("README.md"),
+        help="README whose results section is regenerated, unless --out is given",
+    )
     reproduce = commands.add_parser(
         "reproduce", help="check that the committed results regenerate, or print commands"
     )
@@ -308,6 +314,13 @@ def _paper(args: argparse.Namespace) -> int:
         return 2
     for path in written:
         print(path)
+    readme: Path = args.readme
+    if args.out is None and readme.is_file():  # the committed paper/generated/ was written
+        from sentinel.experiments.readme import update
+
+        numbers = next(p for p in written if p.name == "numbers.tex" and p.parent.name != "pl")
+        if update(readme, numbers):
+            print(f'{readme} (section "Results at a glance")')
     return 0
 
 

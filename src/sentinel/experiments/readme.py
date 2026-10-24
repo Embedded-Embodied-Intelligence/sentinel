@@ -1,0 +1,132 @@
+"""The README section "Results at a glance" (WP8): headline numbers of the five research
+questions, every one a macro of `paper/generated/numbers.tex` (English), written between the
+markers `<!-- results:begin -->` and `<!-- results:end -->` of README.md. `sentinel paper`
+rewrites the section after it writes `paper/generated/`; a test keeps the committed README equal
+to the section built from the committed macros (ADR-0020).
+"""
+
+from collections.abc import Mapping
+from pathlib import Path
+
+BEGIN = "<!-- results:begin -->"
+END = "<!-- results:end -->"
+_TEX = {r"\ensuremath{-}": "\u2212", r"\ensuremath{+}": "+", "{,}": ",", r"\,": " ", r"\%": "%"}
+
+
+def read_macros(path: Path) -> dict[str, str]:
+    """Every `\\newcommand{\\Name}{value}` of a macro file, the value as text."""
+    text = path.read_text(encoding="utf-8")
+    macros: dict[str, str] = {}
+    head = "\\newcommand{\\"  # \newcommand{\
+    start = text.find(head)
+    while start >= 0:
+        name_end = text.index("}", start + len(head))
+        name = text[start + len(head) : name_end]
+        if text[name_end + 1] != "{":
+            raise ValueError(f"macro {name} has no value in {path}")
+        depth, i = 0, name_end + 1
+        while True:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        macros[name] = _plain(text[name_end + 2 : i])
+        start = text.find(head, i)
+    return macros
+
+
+def _plain(value: str) -> str:
+    for tex, plain in _TEX.items():
+        value = value.replace(tex, plain)
+    if "\\" in value or "{" in value:
+        raise ValueError(f"unexpected TeX in a macro value: {value!r}")
+    return value
+
+
+def section(macros: Mapping[str, str]) -> str:
+    """The generated section, every number a macro (a missing one raises KeyError)."""
+    m = macros
+
+    def ci(name: str) -> str:
+        return f"{m[name]} [{m[name + 'Lo']}, {m[name + 'Hi']}]"
+
+    rows = [
+        (
+            "RQ1 WBS extraction (gpt-oss-120b, narrative texts)",
+            f"valid answers {m['RQoneValidGptOssNarrativeSingle']} % single shot → "
+            f"{m['RQoneValidGptOssNarrativeRepair']} % with repair; edge recall "
+            f"{m['RQoneEdgeRecallGptOssNarrativeSingle']} → "
+            f"{m['RQoneEdgeRecallGptOssNarrativeRepair']} (structured texts: "
+            f"{m['RQoneEdgeRecallGptOssStructuredSingle']})",
+        ),
+        (
+            "RQ2 scheduling (deviation from C*)",
+            f"J30: SGS-LFT {m['RQtwoGapSgsLftJthirty']} %, RBRS {m['RQtwoGapRbrsJthirty']} %, "
+            f"CP-SAT 10 s {m['RQtwoGapCpsatTenJthirty']} %; J60: "
+            f"{m['RQtwoGapSgsLftJsixty']} / {m['RQtwoGapRbrsJsixty']} / "
+            f"{m['RQtwoGapCpsatTenJsixty']} %",
+        ),
+        (
+            "RQ3 forecasts of P(C ≤ D) (Monte Carlo, J30)",
+            f"Brier skill score {m['RQthreeBssMcFullJthirtyFzero']} at the plan stage → "
+            f"{m['RQthreeBssMcFullJthirtyFeight']} with 80 % of the work done; at 40 %: AUC "
+            f"{m['RQthreeAucMcFullJthirtyFfour']}, PIT coverage of the central 80 % interval "
+            f"{m['RQthreePitCovMcFullJthirtyFfour']}",
+        ),
+        (
+            "RQ4 on time at D = ⌈1.2 C*⌉ (all λ_A)",
+            f"J30: Sentinel {m['RQfourOnTimeSentinelJthirty']} %, FullResolve "
+            f"{m['RQfourOnTimeFullResolveJthirty']} %, NoReaction "
+            f"{m['RQfourOnTimeNoReactionJthirty']} % (paired vs NoReaction "
+            f"{ci('RQfourVsNoReactionOnTimeSentinelJthirty')} pp); J60: "
+            f"{m['RQfourOnTimeSentinelJsixty']} / {m['RQfourOnTimeFullResolveJsixty']} / "
+            f"{m['RQfourOnTimeNoReactionJsixty']} % "
+            f"({ci('RQfourVsNoReactionOnTimeSentinelJsixty')} pp)",
+        ),
+        (
+            "RQ4 plan stability (nervousness per run)",
+            f"J30: Sentinel {m['RQfourNervousnessSentinelJthirty']}, FullResolve "
+            f"{m['RQfourNervousnessFullResolveJthirty']}; J60: "
+            f"{m['RQfourNervousnessSentinelJsixty']} / {m['RQfourNervousnessFullResolveJsixty']}",
+        ),
+        (
+            "RQ5 what the LLM contributes",
+            f"events parsed exactly {m['RQfiveEventExactGptOssRepair']} % (gpt-oss-120b) and "
+            f"{m['RQfiveEventExactQwenRepair']} % (qwen2.5:7b) of {m['RQfiveEventMessages']} "
+            f"messages, {m['RQfiveEventLeaksGptOssRepair']} reasons leaked; gpt-oss-120b "
+            f"proposals win {m['RQfivePropWinRateGptOss']} % of states against "
+            f"{m['RQfivePropWinRateRandom']} % for a random control; explanations fully "
+            f"faithful {m['RQfiveExplFaithfulGptOss']} % (gpt-oss-120b) and "
+            f"{m['RQfiveExplFaithfulQwen']} % (qwen2.5:7b)",
+        ),
+    ]
+    lines = [
+        BEGIN,
+        "<!-- generated by `sentinel paper` from paper/generated/numbers.tex; do not edit -->",
+        "",
+        "| Question | Result |",
+        "| --- | --- |",
+        *(f"| {question} | {result} |" for question, result in rows),
+        "",
+        "Intervals are 95 % cluster-bootstrap intervals over instances; pp = percentage points. "
+        "Every number is a macro of `paper/generated/numbers.tex`, whose comment names its "
+        "summary cell (`paper/generated/numbers.md`).",
+        END,
+    ]
+    return "\n".join(lines)
+
+
+def update(readme: Path, numbers: Path) -> bool:
+    """Replace the README's section by the one built from `numbers`; whether it changed."""
+    text = readme.read_text(encoding="utf-8")
+    begin, end = text.find(BEGIN), text.find(END)
+    if begin < 0 or end < begin:
+        raise ValueError(f"{readme} has no {BEGIN} ... {END} section")
+    new = text[:begin] + section(read_macros(numbers)) + text[end + len(END) :]
+    if new == text:
+        return False
+    readme.write_text(new, encoding="utf-8")
+    return True
