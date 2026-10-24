@@ -872,13 +872,14 @@ def test_only_the_wbs_and_experiment_packages_import_the_llm_layer() -> None:
     """No simulation, scheduling, forecasting, policy or agent module imports `sentinel.llm`,
     `sentinel.wbs`, `sentinel.interpret` or the cockpit (`sentinel.dashboard`, which explains
     recorded decisions with them), so no rollout or simulation path can call an LLM; the
-    interpretation layer, the experiments, the cockpit and the command line may (spec 10)."""
+    interpretation layer, the experiments, the cockpit, the application (`sentinel.app`, WP9)
+    and the command line may (spec 10)."""
     pattern = r"^\s*(?:from|import)\s+sentinel\.(llm|wbs|interpret|dashboard)\b"
     imports = re.compile(pattern, re.MULTILINE)
     source = REPO_ROOT / "src" / "sentinel"
     llm_side = ("llm", "wbs", "interpret")
     allowed = {name: llm_side for name in (*llm_side, "experiments")}
-    allowed |= {"dashboard": (*llm_side, "dashboard"), "cli.py": (*llm_side, "dashboard")}
+    allowed |= {name: (*llm_side, "dashboard") for name in ("dashboard", "app", "cli.py")}
     offenders = []
     for path in sorted(source.rglob("*.py")):
         package = path.relative_to(source).parts[0]
