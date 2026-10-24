@@ -8,6 +8,8 @@ with the method parameters of a study config (default `configs/wp2_noreaction.to
 `sentinel paper` writes `paper/generated/` from the runs of `configs/paper.toml`, and
 `sentinel reproduce --check` regenerates every committed summary and `paper/generated/` and
 compares them byte for byte (`--commands` prints how to recompute the runs).
+`sentinel dashboard --set j30 --instance j3026_7 --replication 1` writes the cockpit of one
+simulated project as one self-contained HTML file (WP8).
 """
 
 import argparse
@@ -44,6 +46,9 @@ from sentinel.simulation.baselines import (
 DEFAULT_STUDY_CONFIG = Path("configs/wp2_noreaction.toml")
 DEFAULT_PAPER_CONFIG = Path("configs/paper.toml")
 PROGRESS_INTERVAL_S = 10.0
+# Choices of `sentinel dashboard`, as in `sentinel.dashboard` (not imported here, it is heavy).
+EXPLAIN_MODES = ("template", "ollama", "openrouter")
+LANGUAGES = ("en", "pl")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -64,6 +69,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _paper(args)
     if args.command == "reproduce":
         return _reproduce(args)
+    if args.command == "dashboard":
+        return _dashboard(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -119,6 +126,38 @@ def _build_parser() -> argparse.ArgumentParser:
         "--commands", action="store_true", help="print the commands that recompute the runs"
     )
     reproduce.add_argument("--config", type=Path, default=DEFAULT_PAPER_CONFIG)
+    dashboard = commands.add_parser(
+        "dashboard", help="write the cockpit of one simulated project as one HTML file"
+    )
+    dashboard.add_argument("--set", required=True, dest="set_name", help="instance set, e.g. j30")
+    dashboard.add_argument("--instance", required=True, help="instance of the set, e.g. j3026_7")
+    dashboard.add_argument(
+        "--replication", type=int, default=0, help="replication of the WP2b seeds (default: 0)"
+    )
+    dashboard.add_argument(
+        "--lambda-a", type=float, default=0.01, help="absence rate lambda_A (default: 0.01)"
+    )
+    dashboard.add_argument(
+        "--delta-d", type=float, help="deadline slack (default: the Sentinel variant's, else 0.2)"
+    )
+    dashboard.add_argument(
+        "--policy", default="sentinel_full", help="a WP4 or WP5 policy (default: %(default)s)"
+    )
+    dashboard.add_argument(
+        "--compare", default="no_reaction", help="the second policy (default: %(default)s)"
+    )
+    dashboard.add_argument(
+        "--explain",
+        choices=EXPLAIN_MODES,
+        default="template",
+        help="explanations: template (no LLM) or an LLM through the cache (default: template)",
+    )
+    dashboard.add_argument("--lang", choices=LANGUAGES, default="en", help="label language")
+    dashboard.add_argument(
+        "--out", type=Path, help="output file (default: cockpit-<set>-<instance>-r<r>.html)"
+    )
+    dashboard.add_argument("--root", type=Path, help="PSPLIB data root (default: the config's)")
+    dashboard.add_argument("--cache", type=Path, help="baseline plan cache (default: the config's)")
     return parser
 
 
@@ -261,6 +300,43 @@ def _reproduce(args: argparse.Namespace) -> int:
     from sentinel.experiments.reproduce import check, commands
 
     return check(args.config) if args.check else commands(args.config)
+
+
+def _dashboard(args: argparse.Namespace) -> int:
+    # Imported here so that the other commands do not load the simulation and the LLM layer.
+    from sentinel.dashboard.cockpit import Options, write
+    from sentinel.dashboard.page import policy_name
+    from sentinel.dashboard.world import CockpitError
+    from sentinel.llm import LlmError
+
+    options = Options(
+        set_name=args.set_name,
+        instance=args.instance,
+        replication=args.replication,
+        lambda_a=args.lambda_a,
+        delta_d=args.delta_d,
+        policy=args.policy,
+        compare=args.compare,
+        explain=args.explain,
+        language=args.lang,
+        root=args.root,
+        cache=args.cache,
+    )
+    default = f"cockpit-{args.set_name}-{args.instance}-r{args.replication}.html"
+    out: Path = args.out or Path(default)
+    try:
+        path, cockpit = write(options, out)
+    except (CockpitError, LlmError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    world = cockpit.world
+    size = path.stat().st_size / 1000
+    print(f"{path} ({size:.0f} kB), {world.name} r{world.replication}, D = {world.deadline}")
+    for side in (cockpit.first, cockpit.second):
+        k = side.kpis
+        verdict = "on time" if k.on_time else f"late by {k.late_days} day(s)"
+        print(f"  {policy_name(side.run.name)}: C = {k.makespan}, {verdict}")
+    return 0
 
 
 def _baseline_task(

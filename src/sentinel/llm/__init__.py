@@ -2,8 +2,9 @@
 and OpenRouter and a scripted fake, a record/replay cache, JSON-schema-validated answers and
 versioned prompts (CLAUDE.md invariant 3; ADR-0018).
 
-Only `sentinel.wbs`, `sentinel.experiments` and the interpretation layer import this package;
-no simulation or rollout path calls an LLM.
+Only `sentinel.wbs`, `sentinel.experiments`, the interpretation layer and the cockpit
+(`sentinel.dashboard`, explanations of recorded decisions) import this package; no simulation or
+rollout path calls an LLM.
 """
 
 from sentinel.llm.cache import CACHE_MODES, DEFAULT_CACHE_DIR, CacheEntry, CacheMode, LlmCache

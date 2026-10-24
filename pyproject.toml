@@ -36,6 +36,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+allowed-confusables = ["–", "×"]  # en dash and multiplication sign of the cockpit's labels (WP8)
 
 [tool.ruff.lint.isort]
 known-first-party = ["sentinel"]

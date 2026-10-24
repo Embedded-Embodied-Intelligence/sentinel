@@ -30,6 +30,7 @@ src/sentinel/
   interpret/             # WP6b: event parser, action grammar and compiler, explanations (§10)
   experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
                          #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`)
+  dashboard/             # WP8: project cockpit (`sentinel dashboard`), one self-contained HTML
 scripts/                 # one-off utilities, e.g. fetch_psplib.py
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/
@@ -39,9 +40,11 @@ paper/generated/         # WP7: macros, tables, figures of the papers (English; 
 docs/                    # spec, ADRs, notes, reports, prompts
 ```
 
-Modules for later WPs are created when their WP starts, not before. Only `wbs/`, `interpret/`
-and `experiments/` import `llm/`; no simulation, scheduling, forecasting, policy or agent module
-imports `llm/`, `wbs/` or `interpret/` (a test enforces it), so no rollout can call an LLM.
+Modules for later WPs are created when their WP starts, not before. Only `wbs/`, `interpret/`,
+`experiments/`, `dashboard/` and `cli.py` import `llm/`; no simulation, scheduling, forecasting,
+policy or agent module imports `llm/`, `wbs/`, `interpret/` or `dashboard/` (a test enforces
+it), so no rollout can call an LLM. The cockpit calls an LLM only after its runs, to explain
+recorded decisions, and only through the cache (ADR-0021).
 
 ## Interfaces (stable contracts)
 
