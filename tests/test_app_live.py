@@ -409,7 +409,7 @@ def test_approve_and_reject_change_the_state_as_specified_and_are_logged() -> No
     assert [r.status for r in rebuilt.recommendations] == ["approved"]
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
 def test_actions_below_the_autonomy_level_apply_automatically() -> None:
     project = checked_in(planned(small(autonomy=3)), ABSENCE_CHECKIN)
     recommendation = planning.recommend(project)

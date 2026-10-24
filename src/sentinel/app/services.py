@@ -218,14 +218,16 @@ class Services:
         row = self._row(session, project_id)
         if row.kind != "live":
             raise AppError("not_a_live_project", "invalid")
-        cached = self._live.get(project_id)
-        if cached is not None and cached[0] == row.seq:
-            self._live.move_to_end(project_id)
-            return row, _copy(cached[1])
+        with self._guard:
+            cached = self._live.get(project_id)
+            if cached is not None and cached[0] == row.seq:
+                self._live.move_to_end(project_id)
+                return row, _copy(cached[1])
         state = replay(self.store.events(session, project_id))
-        self._live[project_id] = (state.seq, state)
-        while len(self._live) > 64:
-            self._live.popitem(last=False)
+        with self._guard:
+            self._live[project_id] = (state.seq, state)
+            while len(self._live) > 64:
+                self._live.popitem(last=False)
         return row, _copy(state)
 
     def _append(
@@ -333,8 +335,9 @@ class Services:
         with self._lock(project_id):
             if not self.store.delete_project(session, project_id):
                 raise AppError("project_not_found", "not_found")
-            self._live.pop(project_id, None)
-            self._sims.pop(project_id, None)
+            with self._guard:
+                self._live.pop(project_id, None)
+                self._sims.pop(project_id, None)
 
     def events(self, session: str, project_id: str) -> list[EventView]:
         self._row(session, project_id)
@@ -562,7 +565,9 @@ class Services:
             rows = [_row_of(i + 1, t, p) for i, (t, p) in enumerate(events)]
             try:
                 state = replay(rows)
-            except (ValueError, ValidationError, LiveError, KeyError) as exc:
+                if state.project.baseline is not None:
+                    state.project.check()  # the state must be one the engine could be in
+            except (ValueError, ValidationError, LiveError, KeyError, IndexError) as exc:
                 raise AppError("json_invalid", detail=type(exc).__name__) from exc
             self._check_tasks(state.project.definition, len(state.project.inserted))
             first = Created.model_validate(events[0][1]).model_copy(update={"source": "json"})
@@ -653,10 +658,11 @@ class Services:
         row = self._row(session, project_id)
         if row.kind != "simulator":
             raise AppError("not_a_simulator", "invalid")
-        cached = self._sims.get(project_id)
-        if cached is not None and cached[0] == row.seq:
-            self._sims.move_to_end(project_id)
-            return row, cached[1]
+        with self._guard:
+            cached = self._sims.get(project_id)
+            if cached is not None and cached[0] == row.seq:
+                self._sims.move_to_end(project_id)
+                return row, cached[1]
         events = self.store.events(session, project_id)
         spec = _simulator_spec([(e.type, e.payload) for e in events])
         try:
@@ -667,9 +673,10 @@ class Services:
         for event in events[1:]:
             if event.type == "advance":
                 simulation.advance(int(event.payload["days"]))
-        self._sims[project_id] = (row.seq, simulation)
-        while len(self._sims) > SIMULATIONS_KEPT:
-            self._sims.popitem(last=False)
+        with self._guard:
+            self._sims[project_id] = (row.seq, simulation)
+            while len(self._sims) > SIMULATIONS_KEPT:
+                self._sims.popitem(last=False)
         return row, simulation
 
     def simulator(self, session: str, project_id: str) -> simulator.SimulatorView:
@@ -697,7 +704,8 @@ class Services:
                 seq = self.store.append(
                     session, project_id, "advance", {"days": moved}, expected=row.seq
                 )
-                self._sims[project_id] = (seq, simulation)
+                with self._guard:
+                    self._sims[project_id] = (seq, simulation)
                 return simulator.simulator_view(project_id, seq, simulation).model_dump(mode="json")
 
         return self._submit(session, project_id, "advance", work, language)

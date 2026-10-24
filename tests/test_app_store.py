@@ -46,6 +46,7 @@ def test_events_are_append_only_and_owned_by_their_session(tmp_path: Path) -> No
     assert store.events(mine.id, project.id) == []
 
 
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
 def test_sandboxes_expire_with_their_projects_and_jobs(tmp_path: Path) -> None:
     store = Store(tmp_path / "app.db")
     demo, local = store.create_session(demo=True), store.ensure_session("local", demo=False)
@@ -58,7 +59,7 @@ def test_sandboxes_expire_with_their_projects_and_jobs(tmp_path: Path) -> None:
     assert [p.name for p in store.projects(local.id)] == ["Q"]
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
 def test_jobs_and_daily_usage(tmp_path: Path) -> None:
     store = Store(tmp_path / "app.db")
     session = store.create_session(demo=True)

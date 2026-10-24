@@ -380,7 +380,7 @@ def _live_rows(project: LiveProject) -> list[Row]:
             for day in range(tracked.start, end):
                 present = sum(
                     1
-                    for member in tracked.crew
+                    for member in tracked.crew_on(day)
                     if member in temps or project.absent(member, day) is None
                 )
                 if not any(node.demands):
@@ -443,7 +443,7 @@ def _live_events(project: LiveProject) -> list[DayEvents]:
             (
                 key
                 for key, tracked in project.tasks.items()
-                if absence.person in tracked.crew
+                if absence.person in tracked.crew_on(absence.start)
                 and tracked.start is not None
                 and tracked.start <= absence.start
                 and (tracked.finish is None or absence.start < tracked.finish)

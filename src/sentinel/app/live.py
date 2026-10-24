@@ -583,6 +583,15 @@ class Tracked:
     work: int = 0  # crew-member days done, e_j M_j
     crew: tuple[str, ...] = ()
     removed: int | None = None
+    crews: list[tuple[int, tuple[str, ...]]] = field(default_factory=list)  # (from day, crew)
+
+    def crew_on(self, day: int) -> tuple[str, ...]:
+        """The crew of the task on `day`: its crew from the start, as SUBST changed it."""
+        current: tuple[str, ...] = ()
+        for first, crew in self.crews:
+            if first <= day:
+                current = crew
+        return current or self.crew
 
 
 @dataclass
@@ -1102,6 +1111,8 @@ class LiveProject:
             tracked.start = progress.start
             tracked.finish = progress.finish
             tracked.work = progress.work
+            if progress.crew != tracked.crew or not tracked.crews:
+                tracked.crews = [(progress.start, progress.crew)]
             tracked.crew = progress.crew
         for record in effects.absences:
             self.absences = [
@@ -1183,6 +1194,7 @@ class LiveProject:
         self.sink_plan = action.sink_plan
         for key, crew in action.crews.items():
             self.tasks[key].crew = crew
+            self.tasks[key].crews.append((action.day, crew))
         self.handovers += action.handovers
         for key in action.removed:
             self.tasks[key].state = "removed"

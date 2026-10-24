@@ -3,7 +3,8 @@ error format, CSRF tokens, demo isolation and limits, LLM settings that never sh
 
 import json
 import os
-from collections.abc import Sequence
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import ExitStack
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -23,13 +24,25 @@ from sentinel.llm import FakeLlmClient, LlmCache, LlmClient, Message
 KEY = "gsk_" + "testkey0123456789abcdef"  # pragma: allowlist secret
 
 
-def client(
-    config: AppConfig, services: Services | None = None, app: FastAPI | None = None
-) -> tuple[TestClient, dict[str, str]]:
-    """A test client (a visitor) of a new app, or of `app`, and its session's CSRF header."""
-    test = TestClient(create_app(config, services) if app is None else app)
-    token = test.get("/api/session").json()["csrf_token"]
-    return test, {"X-CSRF-Token": token}
+Visitor = Callable[..., tuple[TestClient, dict[str, str]]]
+
+
+@pytest.fixture
+def client() -> Iterator[Visitor]:
+    """Make test clients (visitors) of a new app, or of `app`, each with its session's CSRF
+    header; each client keeps one event loop open until the test ends."""
+    with ExitStack() as stack:
+
+        def make(
+            config: AppConfig, services: Services | None = None, app: FastAPI | None = None
+        ) -> tuple[TestClient, dict[str, str]]:
+            test = stack.enter_context(
+                TestClient(create_app(config, services) if app is None else app)
+            )
+            token = test.get("/api/session").json()["csrf_token"]
+            return test, {"X-CSRF-Token": token}
+
+        yield make
 
 
 def local(tmp_path: Path) -> AppConfig:
@@ -50,9 +63,10 @@ def _definition(**update: Any) -> dict[str, Any]:
     return small().model_copy(update=update).model_dump(mode="json")
 
 
-def test_health_session_and_the_error_format(tmp_path: Path) -> None:
+def test_health_session_and_the_error_format(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
     assert test.get("/api/health").json() == {"status": "ok", "version": "1.0.0", "demo": False}
+    assert test.get("/api/docs").status_code == 404  # no HTML pages before WP9b
     session = test.get("/api/session").json()
     assert session["demo"] is False and len(session["csrf_token"]) == 64
     missing = test.get("/api/projects/nope?lang=pl")
@@ -73,9 +87,10 @@ def test_health_session_and_the_error_format(tmp_path: Path) -> None:
     assert forged.status_code == 403
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
-def test_a_live_project_through_the_api(tmp_path: Path) -> None:
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
+def test_a_live_project_through_the_api(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
+    assert "/api/projects" in test.get("/api/openapi.json").json()["paths"]
     created = test.post("/api/projects", json=_definition(), headers=csrf)
     assert created.status_code == 201
     project = created.json()
@@ -119,6 +134,8 @@ def test_a_live_project_through_the_api(tmp_path: Path) -> None:
     forecast = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert forecast["status"] == "done" and forecast["result"]["rollouts"] == 200
     assert forecast["result"]["drivers"]
+    again = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
+    assert again["result"] == forecast["result"]  # deterministic for the project's seed
     csv_text = test.get(f"/api/projects/{pid}/plan.csv").text
     assert csv_text.splitlines()[1].startswith("T1,Build API,started,,,2026-11-02,")
     cockpit = test.post(f"/api/projects/{pid}/cockpit", headers=csrf).json()
@@ -139,8 +156,8 @@ def test_a_live_project_through_the_api(tmp_path: Path) -> None:
     assert test.get(f"/api/projects/{pid}").status_code == 404
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
-def test_checkin_and_definition_errors_are_user_readable(tmp_path: Path) -> None:
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
+def test_checkin_and_definition_errors_are_user_readable(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
     pid = test.post("/api/projects", json=_definition(), headers=csrf).json()["id"]
     unplanned = test.post(
@@ -175,8 +192,8 @@ def test_checkin_and_definition_errors_are_user_readable(tmp_path: Path) -> None
     assert refused.status_code == 422 and refused.json()["error"]["code"] == "structure_frozen"
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
-def test_csv_import_and_templates(tmp_path: Path) -> None:
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
+def test_csv_import_and_templates(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
     template = test.get("/api/templates/tasks.csv")
     assert template.status_code == 200 and template.text.startswith("id,name,duration_days")
@@ -202,7 +219,9 @@ def test_csv_import_and_templates(tmp_path: Path) -> None:
     ]
 
 
-def test_llm_settings_are_kept_server_side_and_never_returned(tmp_path: Path) -> None:
+def test_llm_settings_are_kept_server_side_and_never_returned(
+    tmp_path: Path, client: Visitor
+) -> None:
     config = local(tmp_path)
     test, csrf = client(config)
     assert test.get("/api/settings/llm").json() == {
@@ -262,8 +281,10 @@ def _fake(explanation: dict[str, Any], seen: list[str]) -> Any:
     return factory
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
-def test_extraction_and_explanations_use_the_configured_model(tmp_path: Path) -> None:
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
+def test_extraction_and_explanations_use_the_configured_model(
+    tmp_path: Path, client: Visitor
+) -> None:
     config = local(tmp_path)
     explanation = {
         "summary": "Replace Ada on Build API to raise the chance to finish on time.",
@@ -308,7 +329,7 @@ def test_extraction_and_explanations_use_the_configured_model(tmp_path: Path) ->
     assert shown["explanation"]["source"] == "template"
 
 
-def test_demo_sessions_are_isolated(tmp_path: Path) -> None:
+def test_demo_sessions_are_isolated(tmp_path: Path, client: Visitor) -> None:
     config = demo(tmp_path)
     services = Services(config)
     app = create_app(config, services)
@@ -338,12 +359,13 @@ def test_demo_sessions_are_isolated(tmp_path: Path) -> None:
         == 403
     )
     assert alice.get("/api/docs").status_code == 404
+    assert alice.get("/api/openapi.json").status_code == 404
     # Without a session a state-changing request is refused rather than given a sandbox.
     fresh = TestClient(app)
     assert fresh.post("/api/projects", json=_definition()).status_code == 403
 
 
-def test_demo_limits(tmp_path: Path) -> None:
+def test_demo_limits(tmp_path: Path, client: Visitor) -> None:
     config = demo(
         tmp_path,
         projects_per_session=2,
@@ -381,8 +403,8 @@ def _session(services: Services, project_id: str) -> str:
         )
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
-def test_demo_request_rate_and_sandbox_expiry(tmp_path: Path) -> None:
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
+def test_demo_request_rate_and_sandbox_expiry(tmp_path: Path, client: Visitor) -> None:
     config = demo(tmp_path, requests_per_minute=5)
     services = Services(config)
     test, csrf = client(config, services)  # one request
@@ -402,8 +424,8 @@ def test_demo_request_rate_and_sandbox_expiry(tmp_path: Path) -> None:
     assert "sentinel_session" in test.cookies
 
 
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
-def test_session_info_reports_the_llm_and_limits(tmp_path: Path) -> None:
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
+def test_session_info_reports_the_llm_and_limits(tmp_path: Path, client: Visitor) -> None:
     test, _ = client(demo(tmp_path, projects_per_session=3))
     info = test.get("/api/session").json()
     assert info["demo"] is True and info["llm_available"] is False

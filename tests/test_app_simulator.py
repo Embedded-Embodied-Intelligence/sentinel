@@ -83,7 +83,7 @@ def test_the_comparison_runs_noreaction_on_the_same_world(tiny: ProjectInstance)
 
 
 @pytest.mark.data
-@pytest.mark.slow  # under 2 s; the default run has no room left (75 s)
+@pytest.mark.slow  # under 2 s, kept out of the 75 s default run
 def test_a_j30_world_matches_its_study_seed(psplib_root: Path) -> None:
     spec = SimulatorSpec(instance="j301_1", start=START, policy="full_resolve_subst", scenario=1)
     world = build_world(spec, psplib_root, Path("data/derived/baselines"))

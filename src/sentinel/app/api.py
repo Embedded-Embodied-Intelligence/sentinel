@@ -135,7 +135,6 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         from sentinel.app.showcase import install
 
         install(services)
-    docs = None if config.demo else "/api/docs"
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -145,7 +144,7 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
     app = FastAPI(
         title="Sentinel",
         version=_version(),
-        docs_url=docs,
+        docs_url=None,  # no HTML pages before WP9b; the schema is JSON
         redoc_url=None,
         openapi_url=None if config.demo else "/api/openapi.json",
         lifespan=lifespan,

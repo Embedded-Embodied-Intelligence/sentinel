@@ -71,5 +71,5 @@ addopts = ["-ra", "--strict-markers", "-m", "not slow"]
 filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated"]
 markers = [
     "data: needs downloaded PSPLIB data in data/psplib (run scripts/fetch_psplib.py)",
-    "slow: over 30 s, or a data test over 3 s; skipped by default, run with -m \"data or slow\"",
+    "slow: over 30 s, a data test over 3 s, or an app test kept out of the 75 s default run; skipped by default, run with -m \"data or slow\"",
 ]

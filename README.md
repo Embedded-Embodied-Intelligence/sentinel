@@ -112,6 +112,18 @@ default `sentinel_full`), `--compare` (default `no_reaction`), `--explain templa
 are reproduced exactly; [`docs/dashboard/`](docs/dashboard/README.md) holds three examples
 chosen by a deterministic query over the WP5 results (`scripts/example_cockpits.py`).
 
+## Application
+
+`uv run sentinel ui` serves the application on <http://127.0.0.1:8000> (spec §11): *live projects*
+that a project manager updates at check-ins, where Sentinel's recommendations below the autonomy
+level apply automatically and the others wait for approval, and *simulator projects* on PSPLIB
+worlds next to NoReaction. WP9a provides the JSON API (`/api/…`, its OpenAPI schema at
+`/api/openapi.json`); the pages follow in WP9b. Projects, settings (the optional LLM provider and
+its key, never returned by the API) and caches live in `--data-dir` (default
+`$XDG_DATA_HOME/sentinel`, outside the repository). `uv run sentinel ui --demo` runs the public
+demo: an anonymous sandbox per visitor with a showcase project and the limits of
+[`configs/app_demo.toml`](configs/app_demo.toml).
+
 ## Reproducing the results
 
 Every number, table and figure of the article (English) and the course report (Polish) comes
