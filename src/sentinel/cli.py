@@ -9,7 +9,8 @@ with the method parameters of a study config (default `configs/wp2_noreaction.to
 `sentinel reproduce --check` regenerates every committed summary and `paper/generated/` and
 compares them byte for byte (`--commands` prints how to recompute the runs).
 `sentinel dashboard --set j30 --instance j3026_7 --replication 1` writes the cockpit of one
-simulated project as one self-contained HTML file (WP8).
+simulated project as one self-contained HTML file, and `sentinel release --version 1.0.0` the
+release zip from `git archive` of HEAD, without tagging (WP8).
 """
 
 import argparse
@@ -71,6 +72,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _reproduce(args)
     if args.command == "dashboard":
         return _dashboard(args)
+    if args.command == "release":
+        return _release(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -158,6 +161,18 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     dashboard.add_argument("--root", type=Path, help="PSPLIB data root (default: the config's)")
     dashboard.add_argument("--cache", type=Path, help="baseline plan cache (default: the config's)")
+    release = commands.add_parser(
+        "release", help="build dist/sentinel-<version>.zip from git archive of HEAD (no tag)"
+    )
+    release.add_argument("--version", required=True, dest="release_version", help="e.g. 1.0.0")
+    release.add_argument(
+        "--include",
+        type=Path,
+        action="append",
+        default=[],
+        help="a file to add under docs/deliverables/ (repeatable), e.g. the final PDFs",
+    )
+    release.add_argument("--out", type=Path, help="output directory (default: dist)")
     return parser
 
 
@@ -336,6 +351,24 @@ def _dashboard(args: argparse.Namespace) -> int:
         k = side.kpis
         verdict = "on time" if k.on_time else f"late by {k.late_days} day(s)"
         print(f"  {policy_name(side.run.name)}: C = {k.makespan}, {verdict}")
+    return 0
+
+
+def _release(args: argparse.Namespace) -> int:
+    from sentinel.release import ReleaseError, build
+
+    try:
+        release = build(args.release_version, out_dir=args.out, includes=args.include)
+    except ReleaseError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    count = len(release.files) + len(release.added)
+    size = release.path.stat().st_size / 1e6
+    print(f"{release.path} ({size:.1f} MB): {count} files of commit {release.commit[:12]}")
+    for name, n in release.summary():
+        print(f"  {name}: {n}")
+    print("Not tagged or published. To tag the release:")
+    print(f"  {release.tag_command()}")
     return 0
 
 

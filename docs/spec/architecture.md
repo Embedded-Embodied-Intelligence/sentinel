@@ -17,6 +17,7 @@ output enters the decision layer only as validated, compiled objects (spec §10)
 src/sentinel/
   __init__.py
   cli.py                 # argparse entry point: `uv run sentinel ...`
+  release.py             # WP8: `sentinel release`, the zip of `git archive` HEAD (no tag)
   model/                 # §1 domain: instance.py, schedule.py (Schedule, validate_schedule)
   data/                  # PSPLIB loading/conversion, reference solutions (paths, parsing)
   scheduling/            # bounds.py (CPM, LB0), sgs.py, priority_rules.py, cpsat.py
