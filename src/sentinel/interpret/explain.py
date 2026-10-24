@@ -14,6 +14,7 @@ within its rounding, else it counts as a hallucinated number.
 
 import math
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
 
@@ -77,9 +78,12 @@ class RenderedRecord:
     values: tuple[float, ...]
 
 
-def describe_candidate(candidate: CandidateRecord, observation: Observation) -> str:
-    """A plain description of a candidate's action for a project manager."""
-    roles = role_names(observation.instance)
+def describe_candidate(
+    candidate: CandidateRecord, observation: Observation, roles: Sequence[str] | None = None
+) -> str:
+    """A plain description of a candidate's action for a project manager; `roles` names the
+    roles (default: the IT role names of spec section 1.1; a live project's own, WP9a)."""
+    roles = role_names(observation.instance) if roles is None else roles
     plan = {
         "shift": "re-time the unstarted activities in their current order",
         "reseq": "re-sequence the unstarted activities",
@@ -107,9 +111,13 @@ def describe_candidate(candidate: CandidateRecord, observation: Observation) -> 
 
 
 def render_record(
-    record: DecisionRecord, observation: Observation, params: SentinelParams
+    record: DecisionRecord,
+    observation: Observation,
+    params: SentinelParams,
+    roles: Sequence[str] | None = None,
 ) -> RenderedRecord:
-    """The record as English text (module docstring) and its numbers."""
+    """The record as English text (module docstring) and its numbers; `roles` as in
+    `describe_candidate`."""
     t, deadline, budget, needs = (
         observation.day,
         observation.deadline,
@@ -142,7 +150,7 @@ def render_record(
         else:
             fate = f"left the comparison at {c.eliminated}"
         lines.append(
-            f'- "{c.label}" ({describe_candidate(c, observation)}): {c.p_on_time:.2f}, '
+            f'- "{c.label}" ({describe_candidate(c, observation, roles)}): {c.p_on_time:.2f}, '
             f"{c.tardiness:.2f}, {c.overrun:.3f}, {c.deviation:.2f}, level {c.level}; {fate}"
         )
     runner = "none" if record.runner_up is None else f'"{record.runner_up}"'

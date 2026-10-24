@@ -9,7 +9,7 @@ rule candidates with their statistics from the `DecisionRecord`. Every number co
 observation or the record.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from sentinel.agent.candidates import backlogs, single_substitutions
 from sentinel.agent.decide import DecisionRecord
@@ -36,13 +36,15 @@ def state_summary(
     record: DecisionRecord,
     names: Mapping[int, str],
     params: SentinelParams,
+    roles: Sequence[str] | None = None,
 ) -> str:
     """The summary of the deliberation `record` on `observation` (module docstring); `names`
-    names the real activities."""
+    names the real activities and `roles` the roles (default: the IT role names of spec
+    section 1.1; a live project's own, WP9a)."""
     t, deadline, budget = observation.day, observation.deadline, observation.budget
     if deadline is None or budget is None or record.needs is None:
         raise ValueError("a state summary needs a deadline, a budget and the needs of NOOP")
-    roles = role_names(observation.instance)
+    roles = role_names(observation.instance) if roles is None else tuple(roles)
     capacities = [role.capacity for role in observation.instance.roles]
     noop = next((c for c in record.candidates if c.kind == "noop"), None)
     lines = [
