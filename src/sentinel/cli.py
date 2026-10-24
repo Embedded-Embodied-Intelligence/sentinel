@@ -10,7 +10,9 @@ with the method parameters of a study config (default `configs/wp2_noreaction.to
 compares them byte for byte (`--commands` prints how to recompute the runs).
 `sentinel dashboard --set j30 --instance j3026_7 --replication 1` writes the cockpit of one
 simulated project as one self-contained HTML file, and `sentinel release --version 1.0.0` the
-release zip from `git archive` of HEAD, without tagging (WP8).
+release zip from `git archive` of HEAD, without tagging (WP8). `sentinel ui` serves the
+application (WP9) on 127.0.0.1:8000; `--demo` gives every visitor an anonymous sandbox with the
+limits of `configs/app_demo.toml`.
 """
 
 import argparse
@@ -74,6 +76,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _dashboard(args)
     if args.command == "release":
         return _release(args)
+    if args.command == "ui":
+        return _ui(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -179,6 +183,24 @@ def _build_parser() -> argparse.ArgumentParser:
         help="a file to add under docs/deliverables/ (repeatable), e.g. the final PDFs",
     )
     release.add_argument("--out", type=Path, help="output directory (default: dist)")
+    ui = commands.add_parser("ui", help="serve the application (WP9) in the browser")
+    ui.add_argument("--host", default="127.0.0.1", help="address to bind (default: %(default)s)")
+    ui.add_argument("--port", type=int, default=8000, help="port (default: %(default)s)")
+    ui.add_argument(
+        "--data-dir",
+        type=Path,
+        help="database, settings and caches (default: $XDG_DATA_HOME/sentinel)",
+    )
+    ui.add_argument(
+        "--demo",
+        action="store_true",
+        help="public demo: a sandbox per visitor, with the limits of the config",
+    )
+    ui.add_argument(
+        "--config",
+        type=Path,
+        help="app config TOML (default: configs/app_demo.toml with --demo, else none)",
+    )
     return parser
 
 
@@ -382,6 +404,25 @@ def _release(args: argparse.Namespace) -> int:
         print(f"  {name}: {n}")
     print("Not tagged or published. To tag the release:")
     print(f"  {release.tag_command()}")
+    return 0
+
+
+def _ui(args: argparse.Namespace) -> int:
+    import uvicorn
+
+    from sentinel.app.api import create_app
+    from sentinel.app.config import DEMO_CONFIG, load_config
+
+    path = args.config if args.config is not None else (DEMO_CONFIG if args.demo else None)
+    overrides: dict[str, object] = {"data_dir": args.data_dir}
+    if args.demo:
+        overrides["demo"] = True
+    config = load_config(path, **overrides)
+    if config.demo:
+        print(f"demo mode: sandboxes expire after {config.limits.sandbox_hours:g} h")
+    print(f"data directory: {config.data_dir}")
+    app = create_app(config)
+    uvicorn.run(app, host=args.host, port=args.port, log_level="info")
     return 0
 
 

@@ -1,0 +1,19 @@
+# Demo mode of the application (WP9a; ADR-0024): `uv run sentinel ui --demo` reads this file.
+# Every visitor gets an anonymous sandbox (signed cookie) with a showcase project; sandboxes and
+# their projects are deleted 24 h after they were created.
+demo = true
+workers = 2                # background job threads of the server
+secure_cookies = true      # the demo is served over HTTPS (Tailscale Funnel)
+trust_proxy = true         # client addresses from X-Forwarded-For (the funnel's proxy)
+llm = "capped"             # the server's LLM provider with a daily cap ("off": no LLM features)
+showcase = true            # a seeded showcase project in every new sandbox
+
+[limits]
+projects_per_session = 5
+tasks_per_project = 60     # J30 and J60 simulator projects fit
+simulator_days = 60        # days per advance
+concurrent_jobs = 1        # per session
+requests_per_minute = 120  # per client address
+upload_kb = 512
+llm_calls_per_day = 200    # server-wide; an extraction or an explanation counts once
+sandbox_hours = 24
