@@ -1,13 +1,13 @@
 {
   "run_id": "20261023-215350-f5aad526",
   "generator": "sentinel.experiments.wbs_summary",
-  "generated_utc": "2026-10-23T22:04:50+00:00",
-  "git_commit": "9613932356a92bd5e362059bfb97c9c41cae9e83",
+  "generated_utc": "2026-10-24T09:43:46+00:00",
+  "git_commit": "238ac99f81740436414f6cf52919b40b889e0766",
   "git_dirty": false,
   "git_dirty_ignores": [
     "results"
   ],
-  "summary_settings_source": "run config",
+  "summary_settings_source": "configs/wp6_rq1.toml",
   "summary_settings": {
     "bootstrap_resamples": 2000,
     "bootstrap_seed": 2026,
@@ -24,11 +24,27 @@
       "path": "rounds.csv",
       "bytes": 78669,
       "sha256": "0b3fe1be3ffe295b1f613cd17126cec87fe1c7a8449d815d60626e0ad9002f5a"
+    },
+    {
+      "path": "llm_cache.jsonl.gz",
+      "bytes": 281707,
+      "sha256": "e41769cd7c777970d217b24463377461d3eddbe9937e031962432007173b4142"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 7699,
+      "sha256": "48ff836d575f8efc25ad68fbe6e8cd4eab16002ebd93f0172e2a9d12c790edee"
+    },
+    {
+      "path": "configs/wp6_rq1.toml",
+      "bytes": 3852,
+      "sha256": "511de184d1cba3a3953369c419d30ba37735af3408333c91898efc52f85a1968"
     }
   ],
   "outputs": [
     "summary.md",
     "table_wp6_rq1.tex",
+    "table_wp6_rq1_errors.tex",
     "fig_wp6_rq1.pdf",
     "fig_wp6_rq1.png"
   ]
