@@ -11,6 +11,7 @@ from the cache.
 """
 
 import argparse
+import csv
 import hashlib
 import shlex
 import sys
@@ -183,6 +184,27 @@ def text_rng_seed(*parts: str) -> int:
     """A seed from text (the oracle's mistakes): the first 8 bytes of a SHA-256."""
     digest = hashlib.sha256("\x1f".join(parts).encode("utf-8")).digest()
     return int.from_bytes(digest[:8], "little")
+
+
+def read_rows(path: Path) -> list[dict[str, Any]]:
+    """The rows of a study's CSV as the runner held them when it wrote the summaries: an empty
+    cell is None, an integer or a float is a number (booleans were written as 0/1), anything
+    else is text; `regenerate` of each study summarises them again without recomputation."""
+    with path.open(newline="", encoding="utf-8") as handle:
+        return [
+            {name: _typed(value) for name, value in row.items()} for row in csv.DictReader(handle)
+        ]
+
+
+def _typed(value: str) -> int | float | str | None:
+    if value == "":
+        return None
+    for kind in (int, float):
+        try:
+            return kind(value)
+        except ValueError:
+            continue
+    return value
 
 
 def write_run_bundle(run_dir: Path, clients: Clients) -> tuple[int, int]:

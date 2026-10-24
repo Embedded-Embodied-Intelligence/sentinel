@@ -1,0 +1,114 @@
+# Paper artifacts (WP7, ADR-0020): the result runs that the LNCS article (English) and the
+# course report (Polish) cite, one table per run, keyed by its role. `uv run sentinel paper`
+# reads only these runs and writes paper/generated/ (English) and paper/generated/pl/ (Polish).
+# It refuses a run whose manifest is missing, not completed, a smoke run or recorded with a
+# dirty tree, or whose data files (the manifest and every raw output; not the summaries, which
+# `sentinel reproduce --check` regenerates) differ from the SHA-256 pinned here.
+name = "paper"
+out_dir = "paper/generated"
+
+[runs.rq2]  # RQ2: priority rules and CP-SAT on J30 and J60 (WP1)
+path = "results/wp1/20261020-105318-3ba2e943"
+
+[runs.rq2.sha256]
+"manifest.json" = "af7777785543dc6124e5f0cdf1771136e2e73597b10b773b4d4b09de0f7da3af"  # pragma: allowlist secret
+"results.csv" = "5a7f5d86f2f01bcdf10f1ab39192a937131e4037806cfb3fe1eeb45d4712a0d4"  # pragma: allowlist secret
+
+[runs.calibration]  # scenario calibration: NoReaction on the scenario grid (WP2b)
+path = "results/wp2/20261020-181559-6534a712"
+
+[runs.calibration.sha256]
+"manifest.json" = "c19c167de9c2ebc3ac5b6ea9e99fdfbb3654b2bbe821f1c0c9493c823a97a35f"  # pragma: allowlist secret
+"results.csv.gz" = "e62e45724725adb363fdf03ea473d32b31fdb44cc4071d84eb59796df90a10aa"  # pragma: allowlist secret
+
+[runs.rq3]  # RQ3: forecast calibration (WP3b)
+path = "results/wp3/20261021-062709-2a8ba557"
+
+[runs.rq3.sha256]
+"manifest.json" = "4574c18f0469bbb17698b38af200f59dd85ecbf0f78eb7532822972c517ce0fa"  # pragma: allowlist secret
+"forecasts.csv.gz" = "8ff2714dc01763a208bf06d56f13d2de0b0a28939085ef73336c1d0dc41eb4f0"  # pragma: allowlist secret
+
+[runs.rq3_misspec]  # RQ3: misspecified forecasters (WP3b)
+path = "results/wp3/20261021-091408-f3e5892e"
+
+[runs.rq3_misspec.sha256]
+"manifest.json" = "5795af83e393211ffce5d5d6cb541f3b8bf646bb26d5424fa1392f188d4a0fe1"  # pragma: allowlist secret
+"forecasts.csv.gz" = "43a52556631aa53830a4c191280c597191529dacf785d7013a2058095a7696b7"  # pragma: allowlist secret
+
+[runs.rq4_baselines]  # RQ4: the five baselines, primary grid (WP4b)
+path = "results/wp4/20261021-152439-8892ea21"
+
+[runs.rq4_baselines.sha256]
+"manifest.json" = "a0476734445c3c0ceea42f19151cc29d8308f383124b49002f37832d9e4fc1b3"  # pragma: allowlist secret
+"results.csv.gz" = "6d246f65f436c2c41067e98542ab53148749bb13ae051b41a5ba39b6023c09f4"  # pragma: allowlist secret
+
+[runs.rq4_sensitivity]  # RQ4: the baselines at E[L] = 5 (WP4b)
+path = "results/wp4/20261021-182437-f25fdded"
+
+[runs.rq4_sensitivity.sha256]
+"manifest.json" = "7ccf61d57ae63b3c93123eddfa7e57fd86ccc903a2544b464784ad2916451cf3"  # pragma: allowlist secret
+"results.csv.gz" = "8fc51efdfa43e0d5fdc4c8b1bbb2454e08e0dce27f5a48c412d94c6d014c338a"  # pragma: allowlist secret
+
+[runs.rq4_main]  # RQ4: Sentinel against the baselines (WP5b)
+path = "results/wp5/20261022-102609-e9d131b3"
+
+[runs.rq4_main.sha256]
+"manifest.json" = "7817259920f3624929f8cf805185e4af993e00c0c3e0d1b5b88001e3d3c8d772"  # pragma: allowlist secret
+"results.csv.gz" = "3e1f1642998fabf7b0cf4c39a18fa97adbbf68d85d95adbca401268e235269d2"  # pragma: allowlist secret
+
+[runs.rq4_ablation]  # RQ4: ablation (WP5b)
+path = "results/wp5/20261022-193948-592f7183"
+
+[runs.rq4_ablation.sha256]
+"manifest.json" = "41d7d09e08fc6031306baf877f9ce7b25314462e762af83a01271c1ddd366069"  # pragma: allowlist secret
+"results.csv.gz" = "b4438f7cc62c3408d233b7c4c82624d9928b80df9ce62981d6fb94c5cae9bca7"  # pragma: allowlist secret
+
+[runs.rq4_autonomy]  # RQ4: autonomy levels 0 and 1 (WP5b)
+path = "results/wp5/20261022-234437-49965457"
+
+[runs.rq4_autonomy.sha256]
+"manifest.json" = "6e53c05ca631036919cc218c6e582662330c559d6025de753a79d9b35bbbadb9"  # pragma: allowlist secret
+"results.csv.gz" = "cbd4728de9d4dcd9c30b1a17e3bb45bda9897d69d0439a8772836f276b978f75"  # pragma: allowlist secret
+
+[runs.rq1]  # RQ1: WBS extraction, both backends (WP6c)
+path = "results/wp6/20261023-215350-f5aad526"
+
+[runs.rq1.sha256]
+"manifest.json" = "48ff836d575f8efc25ad68fbe6e8cd4eab16002ebd93f0172e2a9d12c790edee"  # pragma: allowlist secret
+"results.csv" = "ccffa24b4069455fb3109f647e39ded403f8fde1f0b2532255f04b91c3604ffb"  # pragma: allowlist secret
+"rounds.csv" = "0b3fe1be3ffe295b1f613cd17126cec87fe1c7a8449d815d60626e0ad9002f5a"  # pragma: allowlist secret
+"llm_cache.jsonl.gz" = "e41769cd7c777970d217b24463377461d3eddbe9937e031962432007173b4142"  # pragma: allowlist secret
+
+[runs.rq5_events]  # RQ5 role 1: events, both backends (WP6c)
+path = "results/wp6/20261023-220452-f8a335f4"
+
+[runs.rq5_events.sha256]
+"manifest.json" = "ce1f1794530040b12ec67edc948ba517dccddd624061d154740f39168fd43025"  # pragma: allowlist secret
+"results.csv" = "6c2e98ebf691f8eaa050f822bfd89c413caa4b26e2418f830ccf1cc4811f85d0"  # pragma: allowlist secret
+"messages.jsonl" = "72fe13cacffaa12f034ee2380b4148b853731b6728ce152baf6f57deceb6fe15"  # pragma: allowlist secret
+"llm_cache.jsonl.gz" = "382121e4942f4d739e3f5d44dc8d61616167c6a956c59c36570c18ae3060bdbe"  # pragma: allowlist secret
+
+[runs.rq5_proposals]  # RQ5 role 2: proposals, both backends (WP6c)
+path = "results/wp6/20261023-220739-ad9fa2b7"
+
+[runs.rq5_proposals.sha256]
+"manifest.json" = "2a3c0e675eb8f9991a54237b31fb804243332f1552e576c9268500cf8a7deeea"  # pragma: allowlist secret
+"results.csv" = "5406ac48cc53b41f0ff183145906b6dc75d34b117de1f883dc35bf558e752aef"  # pragma: allowlist secret
+"proposals.csv" = "b06627cb5024d5ec99ecb1e6323f8702e0df881598d7d1edca795e45eecde419"  # pragma: allowlist secret
+"llm_cache.jsonl.gz" = "cfda7e31393fb45a5b378e3ca4e8c125169666029fc21189642c1f0b6b169958"  # pragma: allowlist secret
+
+[runs.rq5_explanations]  # RQ5 role 3: explanations, both backends (WP6c)
+path = "results/wp6/20261023-221218-1dc12a5f"
+
+[runs.rq5_explanations.sha256]
+"manifest.json" = "e550e42f5046c0e1e5dd9403b50c0fc432fa3711c3e154cb5c6dbbae4c005d66"  # pragma: allowlist secret
+"results.csv" = "d4440760f6cf48d48e7d8d1c90d7dcb93ef03357f369cd648c9e7b65d02ba9fb"  # pragma: allowlist secret
+"llm_cache.jsonl.gz" = "2b00e702358e01ab61ed3eb10e861989f2bd42bebdfdd42ee024a6639852472c"  # pragma: allowlist secret
+
+[runs.rq5_online]  # RQ5: online check, OpenRouter (WP6c)
+path = "results/wp6/20261023-221428-6a63c140"
+
+[runs.rq5_online.sha256]
+"manifest.json" = "c2218caa28d9077f093b89185c76d120141fc7b0d0801645dfda7785bc250211"  # pragma: allowlist secret
+"results.csv" = "d3d43cf16dc32f955597cf5820392f34de7259ea5a01acd9bb3bdda7fc1a0fb1"  # pragma: allowlist secret
+"llm_cache.jsonl.gz" = "954c494e849c827d9d482f695757fe20f121f2006c77208d14e7550447c3d298"  # pragma: allowlist secret

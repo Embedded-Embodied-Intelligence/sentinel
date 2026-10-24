@@ -5,6 +5,9 @@ with the method parameters of a study config (default `configs/wp2_noreaction.to
 `sentinel summarise-forecasts results/wp3/<run_id>` regenerates the summaries of a forecast study,
 `sentinel summarise-policies results/wp4/<run_id>` those of a policy study and
 `sentinel summarise-wbs results/wp6/<run_id>` those of a WBS extraction study.
+`sentinel paper` writes `paper/generated/` from the runs of `configs/paper.toml`, and
+`sentinel reproduce --check` regenerates every committed summary and `paper/generated/` and
+compares them byte for byte (`--commands` prints how to recompute the runs).
 """
 
 import argparse
@@ -39,6 +42,7 @@ from sentinel.simulation.baselines import (
 )
 
 DEFAULT_STUDY_CONFIG = Path("configs/wp2_noreaction.toml")
+DEFAULT_PAPER_CONFIG = Path("configs/paper.toml")
 PROGRESS_INTERVAL_S = 10.0
 
 
@@ -56,6 +60,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _summarise_policies(args)
     if args.command == "summarise-wbs":
         return _summarise_wbs(args)
+    if args.command == "paper":
+        return _paper(args)
+    if args.command == "reproduce":
+        return _reproduce(args)
     parser.error(f"unknown command {args.command!r}")
 
 
@@ -95,6 +103,22 @@ def _build_parser() -> argparse.ArgumentParser:
         "summarise-wbs", help="regenerate the summaries of a WBS extraction study run"
     )
     wbs.add_argument("run_dir", type=Path, help="run directory with manifest.json")
+    paper = commands.add_parser(
+        "paper", help="generate paper/generated/ from the runs of configs/paper.toml"
+    )
+    paper.add_argument("--config", type=Path, default=DEFAULT_PAPER_CONFIG)
+    paper.add_argument("--out", type=Path, help="output directory (default: the config's)")
+    reproduce = commands.add_parser(
+        "reproduce", help="check that the committed results regenerate, or print commands"
+    )
+    mode = reproduce.add_mutually_exclusive_group(required=True)
+    mode.add_argument(
+        "--check", action="store_true", help="regenerate the summaries and paper/generated/"
+    )
+    mode.add_argument(
+        "--commands", action="store_true", help="print the commands that recompute the runs"
+    )
+    reproduce.add_argument("--config", type=Path, default=DEFAULT_PAPER_CONFIG)
     return parser
 
 
@@ -217,6 +241,26 @@ def _summarise_wbs(args: argparse.Namespace) -> int:
     for name in regenerate(run_dir):
         print(run_dir / name)
     return 0
+
+
+def _paper(args: argparse.Namespace) -> int:
+    # Imported here so that the other commands do not load matplotlib.
+    from sentinel.experiments.paper import RunRefused, generate
+
+    try:
+        written = generate(args.config, args.out)
+    except RunRefused as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
+    for path in written:
+        print(path)
+    return 0
+
+
+def _reproduce(args: argparse.Namespace) -> int:
+    from sentinel.experiments.reproduce import check, commands
+
+    return check(args.config) if args.check else commands(args.config)
 
 
 def _baseline_task(

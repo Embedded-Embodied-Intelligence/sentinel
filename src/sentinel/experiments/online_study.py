@@ -17,6 +17,7 @@ from the WP5 results, not rerun). Outputs: `results.csv` (one row per world), `s
 
 import csv
 import gzip
+import json
 import sys
 import time
 from collections.abc import Sequence
@@ -46,6 +47,7 @@ from sentinel.experiments.rq5_common import (
     item_seed,
     manifest,
     open_clients,
+    read_rows,
     run_main,
     write_run_bundle,
 )
@@ -373,6 +375,17 @@ def run(args: Any, command: str) -> Path:
     )
     runs.write_json(run_dir / "manifest.json", data)
     return run_dir
+
+
+def regenerate(run_dir: Path) -> list[str]:
+    """Regenerate summary.md of a run from its results.csv (`sentinel reproduce --check`; no
+    world is run again)."""
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    rows = read_rows(run_dir / RESULTS_FILE)
+    (run_dir / SUMMARY_FILE).write_text(
+        summary_markdown(manifest["run_id"], rows), encoding="utf-8"
+    )
+    return [SUMMARY_FILE]
 
 
 def main(argv: Sequence[str] | None = None) -> int:

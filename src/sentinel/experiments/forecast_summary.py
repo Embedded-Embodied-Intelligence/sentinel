@@ -22,7 +22,6 @@ from array import array
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, TextIO
 
@@ -38,7 +37,7 @@ from sentinel.experiments.forecast_config import (
     ForecastStudyConfig,
     SummarySettings,
 )
-from sentinel.experiments.runs import derive_seed, git_state, load_toml, utc_iso, write_json
+from sentinel.experiments.runs import derive_seed, load_toml, summary_provenance, write_json
 from sentinel.forecasting import metrics
 from sentinel.forecasting.metrics import BinSums, FloatArray, IntArray
 
@@ -1526,12 +1525,15 @@ def write_summaries(
     *,
     read: Sequence[Path] = (),
     settings_source: str = "run config",
+    pinned: Mapping[str, Any] | None = None,
 ) -> SummaryOutputs:
     """Generate summary.md, the LaTeX tables, the figures and summary_manifest.json from the
     run's forecasts file and, if configured, the reference run's. `read` lists the files read to
     obtain `config` and `settings_source` names the origin of its summary settings; both are
-    recorded. Forecasts files and manifests are only read, never written."""
-    git = git_state(GIT_EXCLUDE)
+    recorded. Forecasts files and manifests are only read, never written. `pinned`: a recorded
+    summary manifest whose provenance is kept (`summary_provenance`, `sentinel reproduce
+    --check`)."""
+    git, generated = summary_provenance(GIT_EXCLUDE, pinned)
     settings = config.summary
     forecasts = run_dir / results_file
     own = read_forecasts(forecasts)
@@ -1575,7 +1577,7 @@ def write_summaries(
         {
             "run_id": run_id,
             "generator": "sentinel.experiments.forecast_summary",
-            "generated_utc": utc_iso(datetime.now(UTC)),
+            "generated_utc": generated,
             "git_commit": git["commit"],
             "git_dirty": git["dirty"],
             "git_dirty_ignores": list(GIT_EXCLUDE),
@@ -1598,7 +1600,7 @@ def _file_record(path: Path, run_dir: Path) -> dict[str, Any]:
     return {"path": shown, "bytes": path.stat().st_size, "sha256": digest}
 
 
-def regenerate(run_dir: Path) -> SummaryOutputs:
+def regenerate(run_dir: Path, *, pinned: Mapping[str, Any] | None = None) -> SummaryOutputs:
     """Regenerate the summaries of an existing run directory from its manifest and forecasts,
     with the summary settings of its config file if that file still describes the run."""
     manifest_path = run_dir / MANIFEST_FILE
@@ -1611,4 +1613,5 @@ def regenerate(run_dir: Path) -> SummaryOutputs:
         manifest["results_file"],
         read=[manifest_path, *([] if source is None else [source])],
         settings_source=MANIFEST_FILE if source is None else source.as_posix(),
+        pinned=pinned,
     )

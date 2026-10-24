@@ -30,7 +30,6 @@ import math
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO, get_args
 
@@ -51,7 +50,7 @@ from sentinel.experiments.forecast_summary import (
     SeedCheck,
 )
 from sentinel.experiments.policy_config import PolicyStudyConfig
-from sentinel.experiments.runs import derive_seed, git_state, load_toml, utc_iso, write_json
+from sentinel.experiments.runs import derive_seed, load_toml, summary_provenance, write_json
 from sentinel.experiments.simulation_config import Scenario, met_column
 from sentinel.experiments.simulation_summary import wilson_interval
 from sentinel.forecasting.metrics import (
@@ -1211,12 +1210,14 @@ def write_summaries(
     *,
     read: Sequence[Path] = (),
     settings_source: str = "run config",
+    pinned: Mapping[str, Any] | None = None,
 ) -> PolicySummaryOutputs:
     """Generate summary.md, the LaTeX tables, the figures and summary_manifest.json from the
     run's results file and, if configured, the baselines of an earlier study. `read` lists the
     files read to obtain `config` and `settings_source` names the origin of its summary
-    settings; both are recorded. Inputs are never written."""
-    git = git_state(GIT_EXCLUDE)
+    settings; both are recorded. Inputs are never written. `pinned`: a recorded summary
+    manifest whose provenance is kept (`summary_provenance`, `sentinel reproduce --check`)."""
+    git, generated = summary_provenance(GIT_EXCLUDE, pinned)
     settings = config.summary
     results = run_dir / results_file
     rows = read_results(results, config.deltas)
@@ -1253,7 +1254,7 @@ def write_summaries(
         {
             "run_id": run_id,
             "generator": "sentinel.experiments.policy_summary",
-            "generated_utc": utc_iso(datetime.now(UTC)),
+            "generated_utc": generated,
             "git_commit": git["commit"],
             "git_dirty": git["dirty"],
             "git_dirty_ignores": list(GIT_EXCLUDE),
@@ -1295,7 +1296,7 @@ def _run_part(config: Mapping[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in config.items() if key != "summary"}
 
 
-def regenerate(run_dir: Path) -> PolicySummaryOutputs:
+def regenerate(run_dir: Path, *, pinned: Mapping[str, Any] | None = None) -> PolicySummaryOutputs:
     """Regenerate the summaries of an existing run directory from its manifest and results,
     with the summary settings of its config file if that file still describes the run."""
     manifest_path = run_dir / MANIFEST_FILE
@@ -1308,4 +1309,5 @@ def regenerate(run_dir: Path) -> PolicySummaryOutputs:
         manifest["results_file"],
         read=[manifest_path, *([] if source is None else [source])],
         settings_source=MANIFEST_FILE if source is None else source.as_posix(),
+        pinned=pinned,
     )

@@ -40,6 +40,7 @@ from sentinel.experiments.rq5_common import (
     item_seed,
     manifest,
     open_clients,
+    read_rows,
     run_main,
     text_rng_seed,
     write_run_bundle,
@@ -357,6 +358,20 @@ def run(args: Any, command: str) -> Path:
     )
     runs.write_json(run_dir / "manifest.json", data)
     return run_dir
+
+
+def regenerate(run_dir: Path) -> list[str]:
+    """Regenerate summary.md and the LaTeX table of a run from its manifest and results.csv
+    (`sentinel reproduce --check`; no explanation is checked again)."""
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    config = ExplanationStudyConfig.model_validate(manifest["config"])
+    rows = read_rows(run_dir / RESULTS_FILE)
+    table = f"{config.summary.table}.tex"
+    (run_dir / SUMMARY_FILE).write_text(
+        summary_markdown(manifest["run_id"], rows), encoding="utf-8"
+    )
+    (run_dir / table).write_text(latex_table(manifest["run_id"], rows), encoding="utf-8")
+    return [SUMMARY_FILE, table]
 
 
 def main(argv: Sequence[str] | None = None) -> int:
