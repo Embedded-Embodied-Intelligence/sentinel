@@ -24,15 +24,18 @@ src/sentinel/
   forecasting/           # WP3: Monte Carlo makespan distributions, calibration
   policies/              # WP4: NoReaction, AlwaysSubstitute, FullResolve, StableResolve
   agent/                 # WP5: needs, candidates, rollout selector, permission gate
-  llm/                   # WP6: client (Ollama/Groq), cache, schemas, prompts (English)
+  llm/                   # WP6: clients (Ollama; Groq and OpenRouter through one OpenAI-compatible
+                         #   client), record/replay cache, schemas, prompts (English)
   wbs/                   # WP6a: narrator, extraction, validation, scores (RQ1)
   interpret/             # WP6b: event parser, action grammar and compiler, explanations (§10)
-  experiments/           # runners, config loading, manifests, summaries, tables/figures
+  experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
+                         #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`)
 scripts/                 # one-off utilities, e.g. fetch_psplib.py
-configs/                 # experiment configs (TOML), one per experiment
+configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/
 data/                    # downloaded benchmark data (gitignored)
 results/<wp>/<run_id>/   # experiment outputs (small files committed)
+paper/generated/         # WP7: macros, tables, figures of the papers (English; Polish in pl/)
 docs/                    # spec, ADRs, notes, reports, prompts
 ```
 
@@ -50,8 +53,11 @@ imports `llm/`, `wbs/` or `interpret/` (a test enforces it), so no rollout can c
 - Scheduling functions are pure: `(instance, params, rng?) -> Schedule | SolveResult`.
 - Every randomized function takes an explicit `numpy.random.Generator`.
 - LLM calls: `LlmClient.complete(messages, schema=..., seed=..., ...) -> LlmResponse` through the
-  record/replay cache (ADR-0018); `interpret.actions.compile_proposal(...) -> Candidate | Issue`
-  is the only way a proposal becomes a candidate (spec §10.3).
+  record/replay cache (ADR-0018), over `OllamaClient` or the `OpenAICompatibleClient` of Groq
+  (`GroqClient`) and OpenRouter (`OpenRouterClient`, provider pinned); a call may pass a domain
+  validator, which a cache without prompts runs before it stores the answer (spec §10).
+  `interpret.actions.compile_proposal(...) -> Candidate | Issue` is the only way a proposal
+  becomes a candidate (spec §10.3).
 
 ## Data paths
 
@@ -68,3 +74,13 @@ imports `llm/`, `wbs/` or `interpret/` (a test enforces it), so no rollout can c
 `results/<wp>/<run_id>/` with `run_id = <UTC yyyymmdd-HHMMSS>-<config hash[:8]>`, containing
 `manifest.json`, `results.csv` and generated summaries (`summary.md`, LaTeX tables, figures).
 See the `experiment-run` skill.
+
+## Paper artifacts and reproduction (WP7)
+
+- `configs/paper.toml` lists the committed runs the papers cite, with the SHA-256 of their
+  manifests and raw outputs. `sentinel paper` turns their summaries into `paper/generated/`:
+  `numbers.tex` (LaTeX macros, each with its source cell), `tab_rq1.tex` … `tab_rq5.tex`,
+  `fig_*.pdf`, the Polish versions in `pl/`, `numbers.md` and `MANIFEST.json` (ADR-0020).
+- `sentinel reproduce --check` regenerates every committed summary and `paper/generated/` in a
+  temporary directory, without recomputation or LLM calls, and compares them byte for byte;
+  `sentinel reproduce --commands` prints the commands that recompute each run.

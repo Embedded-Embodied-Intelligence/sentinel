@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.9.1)
+# Sentinel — formal model (v1.9.2)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -40,7 +40,10 @@ role names (§1.1); the interpretation layer: team calendar, events from team me
 action grammar and its compilation, explanations (§10); v1.9.1 (WP6c) answers to the WP6b
 questions: LLM calls never in the engine or a rollout, only by the agent at a deliberation of a
 simulated world (§10), cache records without messages (`store_prompts = false`), mandatory for
-real data (§10), "about N days" as an announced lower bound of N days (§10.2).
+real data (§10), "about N days" as an announced lower bound of N days (§10.2). v1.9.2 (WP8)
+answers to the WP7 questions: with `store_prompts = false` an answer that fails its schema, and
+a schema-valid answer with domain issues, are stored only as their issue lists, the domain
+validator running before the cache write (§10).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -666,6 +669,15 @@ provider) and the response. With `store_prompts = true` it also holds the messag
 `store_prompts = false` is mandatory for real (non-synthetic) data, in the working cache and in
 every replay bundle (invariant 7, GDPR Art. 9); research runs on synthetic messages and
 fictional rosters keep the full records.
+With `store_prompts = false`, an answer that fails its schema is stored only as its issue list
+(error kind, and per violation its type and location, with names outside the schema masked);
+the client returns it as stored. In that mode a call with a domain validator (the event parser
+of §10.2, the WBS extraction of RQ1) runs it before the cache write, and a schema-valid answer
+with domain issues is likewise stored only as its issue list (per issue its kind and location,
+never a value of the answer) and returned as stored, so that a repair round sees only the issue
+kinds. A free-text field (a worker's name such as "Ada K. (flu)") therefore never reaches the
+cache unless the answer passes its validator. Research runs (`store_prompts = true`) are
+unchanged.
 
 ### §10.1 Team calendar
 
