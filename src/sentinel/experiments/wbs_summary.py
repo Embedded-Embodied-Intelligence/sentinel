@@ -8,8 +8,10 @@ Paired differences repair - single-shot are taken within sessions, since one ses
 both conditions, and carry 95 % percentile intervals of a cluster bootstrap over instances
 (Davison & Hinkley 1997; a cell pooled over the styles has two sessions per instance). Duration
 and crew accuracy are pooled over the matched activities of a cell (ratio of sums), the other
-scores are means over sessions; the makespan error is over sessions with a valid answer. To
-regenerate the summaries of a run:
+scores are means over sessions; the makespan error is over sessions with a valid answer. A run
+with a replay bundle also gets the error analysis of its missed precedence edges (WP7,
+`wbs_errors`: sessions replayed from the bundle, texts narrated from the PSPLIB data) as a
+section and `table_wp6_rq1_errors.tex`. To regenerate the summaries of a run:
 
     uv run sentinel summarise-wbs results/wp6/<run_id>
 """
@@ -20,7 +22,6 @@ import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,7 @@ from sentinel.experiments.forecast_summary import (
     SUMMARY_MANIFEST_FILE,
     Estimate,
 )
-from sentinel.experiments.runs import derive_seed, git_state, load_toml, utc_iso, write_json
+from sentinel.experiments.runs import derive_seed, load_toml, summary_provenance, write_json
 from sentinel.experiments.simulation_summary import wilson_interval
 from sentinel.experiments.wbs_config import WbsStudyConfig
 from sentinel.forecasting.metrics import (
@@ -658,10 +659,17 @@ def write_summaries(
     *,
     read: Sequence[Path] = (),
     settings_source: str = "run config",
+    pinned: Mapping[str, Any] | None = None,
 ) -> list[str]:
-    """Generate summary.md, the LaTeX table, the figure and summary_manifest.json from the
-    run's results.csv and rounds.csv; `read` lists further files read to obtain `config`."""
-    git = git_state(GIT_EXCLUDE)
+    """Generate summary.md, the LaTeX tables, the figure and summary_manifest.json from the
+    run's results.csv and rounds.csv, with the error analysis of the sessions replayed from the
+    run's bundle when it has one (WP7); `read` lists further files read to obtain `config`;
+    `pinned` is a recorded summary manifest whose provenance is kept (`summary_provenance`)."""
+    # Imported here: the error analysis replays sessions with the study's code, which imports
+    # this module.
+    from sentinel.experiments import wbs_errors, wbs_study
+
+    git, generated = summary_provenance(GIT_EXCLUDE, pinned)
     rows = read_results(run_dir / RESULTS_FILE)
     rounds = read_rounds(run_dir / ROUNDS_FILE)
     analysis = Analysis(rows, rounds, config)
@@ -670,16 +678,24 @@ def write_summaries(
         SUMMARY_FILE: summary_markdown(run_id, analysis, rows, git=git),
         f"{settings.table}.tex": latex_table(run_id, analysis),
     }
+    inputs = [run_dir / RESULTS_FILE, run_dir / ROUNDS_FILE]
+    bundle = run_dir / wbs_study.BUNDLE_FILE
+    if bundle.is_file():
+        errors = wbs_errors.replay_errors(run_dir, config)
+        section = wbs_errors.summary_section(errors, config, bundle.name)
+        texts[SUMMARY_FILE] += "\n" + "\n".join(section)
+        texts[f"{wbs_errors.TABLE}.tex"] = wbs_errors.latex_table(run_id, errors, config)
+        inputs.append(bundle)
     for name, text in texts.items():
         (run_dir / name).write_text(text, encoding="utf-8")
     files = [*texts, *write_figure(run_dir / settings.figure, analysis)]
-    inputs = [run_dir / RESULTS_FILE, run_dir / ROUNDS_FILE, *read]
+    inputs += read
     write_json(
         run_dir / SUMMARY_MANIFEST_FILE,
         {
             "run_id": run_id,
             "generator": "sentinel.experiments.wbs_summary",
-            "generated_utc": utc_iso(datetime.now(UTC)),
+            "generated_utc": generated,
             "git_commit": git["commit"],
             "git_dirty": git["dirty"],
             "git_dirty_ignores": list(GIT_EXCLUDE),
@@ -717,8 +733,9 @@ def _run_part(config: Mapping[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in config.items() if key != "summary"}
 
 
-def regenerate(run_dir: Path) -> list[str]:
-    """Regenerate the summaries of a run directory from its manifest and results files."""
+def regenerate(run_dir: Path, *, pinned: Mapping[str, Any] | None = None) -> list[str]:
+    """Regenerate the summaries of a run directory from its manifest and results files (with
+    `pinned`, the provenance of that recorded summary manifest)."""
     manifest_path = run_dir / MANIFEST_FILE
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     config, source = run_config(manifest)
@@ -728,4 +745,5 @@ def regenerate(run_dir: Path) -> list[str]:
         config,
         read=[manifest_path, *([] if source is None else [source])],
         settings_source=MANIFEST_FILE if source is None else source.as_posix(),
+        pinned=pinned,
     )

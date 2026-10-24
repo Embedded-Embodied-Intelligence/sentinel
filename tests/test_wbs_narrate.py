@@ -14,8 +14,11 @@ from sentinel.wbs.narrate import (
     ROLE_NAMES,
     STYLES,
     VOCABULARY,
+    _match,
+    _names,
     activity_names,
     dominant_role,
+    edge_phrasings,
     narrate,
     number_words,
     parse_narration,
@@ -146,6 +149,54 @@ def test_the_narrative_states_dependencies_in_both_directions_and_numbers_in_wor
     names = activity_names(instance, 0)
     order = [j for j in instance.topological_order() if j in names]
     assert blocks == [f'Activity "{names[j]}"' for j in order]
+
+
+def read_back_phrasings(text: str) -> list[tuple[str, str, str, str, int]]:
+    """The edges of a narrative as its templates state them: side, number form of the stating
+    block's duration, paragraph distance of the two blocks."""
+    paragraph_of: dict[str, int] = {}
+    form: dict[str, str] = {}
+    stated: list[tuple[str, str, str, str]] = []
+    current = ""
+    for index, paragraph in enumerate(text.strip().split("\n\n")):
+        for sentence in re.split(r"(?<=\.)\s+", paragraph.strip()):
+            kind, match = _match(sentence)
+            fields = match.groupdict()
+            if kind in ("full", "name_duration"):
+                current = str(fields["N"])
+                paragraph_of[current] = index
+                form[current] = "digits" if str(fields["D"])[0].isdigit() else "words"
+            elif kind == "after":
+                stated += [(name, current, "successor", current) for name in _names(fields["L"])]
+            elif kind == "before":
+                stated += [(current, name, "predecessor", current) for name in _names(fields["L"])]
+    return sorted(
+        (pred, succ, side, form[who], abs(paragraph_of[pred] - paragraph_of[succ]))
+        for pred, succ, side, who in stated
+    )
+
+
+def test_edge_phrasings_agree_with_the_text(build: Builder) -> None:
+    instance = synthetic(build)
+    edges = sum(len(activity.predecessors) for activity in truth(instance, 0).activities)
+    sides = set()
+    for seed in range(12):
+        phrasings = edge_phrasings(instance, style="narrative", seed=seed)
+        assert len(phrasings) == edges
+        text = narrate(instance, style="narrative", seed=seed)
+        assert sorted(
+            (e.predecessor, e.successor, e.side, e.numbers, e.distance) for e in phrasings
+        ) == read_back_phrasings(text)
+        sides |= {e.side for e in phrasings}
+    assert sides == {"successor", "predecessor"}
+    structured = edge_phrasings(instance, style="structured", seed=3)
+    names = activity_names(instance, 3)
+    order = [names[j] for j in instance.topological_order() if j in names]
+    assert len(structured) == edges
+    assert {(e.side, e.numbers) for e in structured} == {("successor", "digits")}
+    assert all(
+        e.distance == order.index(e.successor) - order.index(e.predecessor) for e in structured
+    )
 
 
 def test_number_words_read_back() -> None:

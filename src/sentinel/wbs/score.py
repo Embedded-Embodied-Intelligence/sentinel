@@ -126,33 +126,48 @@ def _ratio(numerator: int, denominator: int, *, empty: float) -> float:
     return numerator / denominator if denominator else empty
 
 
+def match_activities(
+    reading: Reading, truth: Extraction
+) -> tuple[dict[str, ExtractedActivity], list[str]]:
+    """The answer's entries matched one to one to true activities by normalised name (the
+    first entry of a name wins) and the unmatched entries' names."""
+    true_names = {normalise_name(a.name) for a in truth.activities}
+    matched: dict[str, ExtractedActivity] = {}
+    unmatched: list[str] = []
+    for position, entry in enumerate(reading.activities):
+        if entry is None:
+            unmatched.append(f"#{position} (invalid entry)")
+            continue
+        key = normalise_name(entry.name)
+        if key in true_names and key not in matched:
+            matched[key] = entry
+        else:
+            unmatched.append(entry.name)
+    return matched, unmatched
+
+
+def stated_edges(matched: Mapping[str, ExtractedActivity]) -> set[tuple[str, str]]:
+    """The precedence edges an answer states between matched activities, by normalised name."""
+    return {
+        (normalise_name(p), key)
+        for key, entry in matched.items()
+        for p in entry.predecessors
+        if normalise_name(p) in matched
+    }
+
+
 def score(answer: object, truth: Extraction, issues: Sequence[Issue]) -> Scores:
     """Scores of a parsed answer (None if it did not parse) with its validation issues."""
     reading = read_answer(answer)
     true_by_name = {normalise_name(a.name): a for a in truth.activities}
-    matched: dict[str, ExtractedActivity] = {}
-    unmatched_extracted: list[str] = []
-    for position, entry in enumerate(reading.activities):
-        if entry is None:
-            unmatched_extracted.append(f"#{position} (invalid entry)")
-            continue
-        key = normalise_name(entry.name)
-        if key in true_by_name and key not in matched:
-            matched[key] = entry
-        else:
-            unmatched_extracted.append(entry.name)
+    matched, unmatched_extracted = match_activities(reading, truth)
     true_edges = {
         (normalise_name(p), normalise_name(a.name))
         for a in truth.activities
         for p in a.predecessors
         if normalise_name(a.name) in matched and normalise_name(p) in matched
     }
-    extracted_edges = {
-        (normalise_name(p), key)
-        for key, entry in matched.items()
-        for p in entry.predecessors
-        if normalise_name(p) in matched
-    }
+    extracted_edges = stated_edges(matched)
     durations = sum(e.duration_days == true_by_name[k].duration_days for k, e in matched.items())
     crews = sum(_crew(e.crew) == _crew(true_by_name[k].crew) for k, e in matched.items())
     true_team = {normalise_role(member.role): member.count for member in truth.team}

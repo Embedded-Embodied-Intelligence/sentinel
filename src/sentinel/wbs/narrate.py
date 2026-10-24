@@ -14,12 +14,16 @@ name; the dummy source and sink are implicit. Each fact appears exactly once.
   the predecessor ("It must be finished before C begins."); numbers are sometimes words.
 
 The seed fixes the names, the same for both styles, and the narrative's choices.
-`parse_narration` reads both styles back by their templates (it recovers the instance
-exactly and rejects a fact stated twice); it checks the narrator and serves as an oracle.
+`edge_phrasings` tells, per true precedence edge, how the text states it (on which side, the
+number form of the stating block, the paragraph distance of the two activities; the RQ1 error
+analysis, WP7). `parse_narration` reads both styles back by their templates (it recovers the
+instance exactly and rejects a fact stated twice); it checks the narrator and serves as an
+oracle.
 """
 
 import re
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
@@ -29,6 +33,8 @@ from sentinel.wbs.extract import ExtractedActivity, Extraction, TeamMember
 
 Style = Literal["structured", "narrative"]
 STYLES: tuple[Style, ...] = ("structured", "narrative")
+EdgeSide = Literal["successor", "predecessor"]
+NumberForm = Literal["digits", "words"]
 ROLE_NAMES = ("backend developer", "frontend developer", "tester", "DevOps engineer")
 WORDS_PROBABILITY = 0.5  # narrative: a number is written as words with this probability
 SUCCESSOR_FORM_PROBABILITY = 0.5  # narrative: a dependency is stated with its successor
@@ -297,14 +303,47 @@ def _project(instance: ProjectInstance, names: Mapping[int, str]) -> Extraction:
     )
 
 
+@dataclass(frozen=True)
+class EdgePhrasing:
+    """How a description states the true edge `predecessor` -> `successor`: the side whose
+    block states it, how that block writes its duration, and the number of paragraphs between
+    the blocks of the two activities (structured: one paragraph per activity)."""
+
+    predecessor: str
+    successor: str
+    side: EdgeSide
+    numbers: NumberForm
+    distance: int
+
+
 def narrate(instance: ProjectInstance, *, style: Style, seed: int) -> str:
     """The project description of `instance` in `style`; the same seed gives the same text."""
+    return _describe(instance, style, seed)[0]
+
+
+def edge_phrasings(
+    instance: ProjectInstance, *, style: Style, seed: int
+) -> tuple[EdgePhrasing, ...]:
+    """The phrasing of every true edge in the text `narrate` writes with the same arguments, in
+    the order of the activities and their predecessors in `truth`."""
+    return _describe(instance, style, seed)[1]
+
+
+def _describe(
+    instance: ProjectInstance, style: Style, seed: int
+) -> tuple[str, tuple[EdgePhrasing, ...]]:
     names = activity_names(instance, seed)
     project = _project(instance, names)
     if style == "structured":
         by_name = {a.name: a for a in project.activities}
         topological = [by_name[names[j]] for j in instance.topological_order() if j in names]
-        return _structured(project, topological)
+        position = {activity.name: k for k, activity in enumerate(topological)}
+        phrasings = tuple(
+            EdgePhrasing(p, a.name, "successor", "digits", abs(position[a.name] - position[p]))
+            for a in project.activities
+            for p in a.predecessors
+        )
+        return _structured(project, topological), phrasings
     if style == "narrative":
         return _narrative(project, _stream(seed, _NARRATIVE_STREAM))
     raise ValueError(f"unknown style {style!r}; expected one of {STYLES}")
@@ -341,7 +380,9 @@ def _structured(project: Extraction, activities: Sequence[ExtractedActivity]) ->
     return "\n".join(lines) + "\n"
 
 
-def _narrative(project: Extraction, rng: np.random.Generator) -> str:
+def _narrative(
+    project: Extraction, rng: np.random.Generator
+) -> tuple[str, tuple[EdgePhrasing, ...]]:
     def say(n: int) -> str:
         return number_words(n) if n <= 99 and rng.random() < WORDS_PROBABILITY else str(n)
 
@@ -360,11 +401,15 @@ def _narrative(project: Extraction, rng: np.random.Generator) -> str:
             else:
                 before[predecessor].append(activity.name)
     blocks = []
+    order: list[str] = []
+    numbers: dict[str, NumberForm] = {}
     for index in rng.permutation(len(project.activities)):
         activity = project.activities[int(index)]
         name = f'"{activity.name}"'
         days = activity.duration_days
         duration = f"{say(days)} working {'day' if days == 1 else 'days'}"
+        order.append(activity.name)
+        numbers[activity.name] = "digits" if duration[0].isdigit() else "words"
         crew = (
             _join(
                 [
@@ -392,11 +437,27 @@ def _narrative(project: Extraction, rng: np.random.Generator) -> str:
         sentences += [statements[int(i)] for i in rng.permutation(len(statements))]
         blocks.append(" ".join(sentences))
     paragraphs = [opening]
+    paragraph: dict[str, int] = {}
     while blocks:
         size = 1 + int(rng.integers(3))
+        for placed in order[:size]:
+            paragraph[placed] = len(paragraphs)
         paragraphs.append(" ".join(blocks[:size]))
-        blocks = blocks[size:]
-    return "\n\n".join(paragraphs) + "\n"
+        blocks, order = blocks[size:], order[size:]
+    phrasings = []
+    for activity in project.activities:
+        for predecessor in activity.predecessors:
+            stated_after = predecessor in after[activity.name]
+            phrasings.append(
+                EdgePhrasing(
+                    predecessor,
+                    activity.name,
+                    "successor" if stated_after else "predecessor",
+                    numbers[activity.name if stated_after else predecessor],
+                    abs(paragraph[activity.name] - paragraph[predecessor]),
+                )
+            )
+    return "\n\n".join(paragraphs) + "\n", tuple(phrasings)
 
 
 def _dependency(template: str, name: str, others: Sequence[str], rng: np.random.Generator) -> str:

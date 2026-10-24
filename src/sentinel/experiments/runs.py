@@ -78,6 +78,18 @@ def git_state(exclude: Sequence[str] = ()) -> dict[str, Any]:
     return {"commit": commit, "dirty": bool(changes)}
 
 
+def summary_provenance(
+    exclude: Sequence[str] = (), pinned: Mapping[str, Any] | None = None
+) -> tuple[dict[str, Any], str]:
+    """The git state (`git_state(exclude)`) and UTC time a generated summary records; with
+    `pinned`, those of a recorded summary manifest (`git_commit`, `git_dirty`,
+    `generated_utc`), so that a regeneration can be compared byte for byte."""
+    if pinned is None:
+        return git_state(exclude), utc_iso(datetime.now(UTC))
+    git = {"commit": pinned.get("git_commit"), "dirty": pinned.get("git_dirty")}
+    return git, str(pinned.get("generated_utc"))
+
+
 def environment() -> dict[str, Any]:
     """Python and key package versions, platform, CPU model, logical core count and hostname."""
     return {
