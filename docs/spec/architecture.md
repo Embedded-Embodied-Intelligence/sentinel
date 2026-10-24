@@ -32,6 +32,8 @@ src/sentinel/
   experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
                          #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`)
   dashboard/             # WP8: project cockpit (`sentinel dashboard`), one self-contained HTML
+  app/                   # WP9: the application (spec section 11): live projects, simulator,
+                         #   SQLite store with an event log, services, FastAPI (`sentinel ui`)
 scripts/                 # one-off utilities, e.g. fetch_psplib.py
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/
@@ -45,7 +47,9 @@ Modules for later WPs are created when their WP starts, not before. Only `wbs/`,
 `experiments/`, `dashboard/` and `cli.py` import `llm/`; no simulation, scheduling, forecasting,
 policy or agent module imports `llm/`, `wbs/`, `interpret/` or `dashboard/` (a test enforces
 it), so no rollout can call an LLM. The cockpit calls an LLM only after its runs, to explain
-recorded decisions, and only through the cache (ADR-0021).
+recorded decisions, and only through the cache (ADR-0021). The application (`app/`) may import
+every other package; no research package imports `app/`, and only `app/` and `cli.py` import the
+web stack (FastAPI, uvicorn, Jinja2; a test enforces both, ADR-0022).
 
 ## Interfaces (stable contracts)
 
@@ -72,6 +76,21 @@ recorded decisions, and only through the cache (ADR-0021).
   states (`decision_states/`, WP6b)
 - `data/llm_cache/` — record/replay caches of LLM calls, one JSON-lines file per backend and
   study (gitignored); a run commits its replay bundle
+- the application's data directory (`sentinel ui --data-dir`, default
+  `$XDG_DATA_HOME/sentinel`, outside the repository): `sentinel.db` (SQLite: projects, the
+  event log, sessions, jobs), `settings.json` (the LLM provider and its key, mode 0600, never
+  returned by the API), `secret.key` (cookie signing key) and `llm_cache/` (caches without
+  prompts, spec section 10)
+
+## Application (WP9)
+
+`sentinel ui` serves the FastAPI app of `app/api.py` (uvicorn, 127.0.0.1 by default). The API
+calls the services of `app/services.py`, which hold no HTTP: live projects (`app/live.py`, spec
+section 11) and simulator projects (`app/simulator.py`) are rebuilt from their event log in the
+store (`app/store.py`, ADR-0023); long operations (plan, forecast, recommendation, simulator
+advance, cockpit) run in a background worker (`app/jobs.py`) with a job id and progress. With
+`--demo` every visitor gets an anonymous sandbox (signed cookie, limits, 24 h expiry, CSRF
+tokens; ADR-0024).
 
 ## Results
 

@@ -1,4 +1,4 @@
-# Sentinel — formal model (v1.9.2)
+# Sentinel — formal model (v2.0)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -43,7 +43,10 @@ simulated world (§10), cache records without messages (`store_prompts = false`)
 real data (§10), "about N days" as an announced lower bound of N days (§10.2). v1.9.2 (WP8)
 answers to the WP7 questions: with `store_prompts = false` an answer that fails its schema, and
 a schema-valid answer with domain issues, are stored only as their issue lists, the domain
-validator running before the cache write (§10).
+validator running before the cache write (§10). v2.0 (WP9a) live project mode: the calendar,
+team, tasks and presets of a live project, its baseline plan, check-ins and their mapping to the
+observation, forecasts, recommendations and decisions, and the simulator mode of the application
+(§11); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -758,3 +761,150 @@ the chosen action is cited; the deciding component is cited and right; every num
 digits in the summary matches a value of the record shown to the LLM within its rounding, else
 it counts as a hallucinated number. An explanation that passes all four checks is fully
 faithful.
+
+---
+
+## §11 Live project mode (WP9)
+
+The application runs the decision layer on a real project that a project manager updates at
+check-ins (*project mode*) and on a generated one with a hidden world (*simulator mode*). It adds
+no semantics to §1–§10: this section maps what the manager enters onto the instance (§1), the
+plan and the observation (§3), and the decisions of Sentinel (§4–§6) back onto the project.
+
+### §11.1 Calendar
+
+A project has a start date `d₀`. Working days are Monday to Friday without holidays (§10.1);
+model day `t` is the `t`-th working day on or after `d₀` (`t = 0` the first), `date(t)` its
+calendar date, and every date shown to users is a calendar date. For a date `d`, `first(d)` is
+the day of the first working day on or after `d` and `last(d)` that of the last working day on
+or before `d` (`−1` before `date(0)`).
+
+- A task that starts on date `s` has `S_j = first(s)`; one whose last day of work is `f` has
+  `F_j = last(f) + 1` (§3.1 d). A start `S_j` is shown as `date(S_j)`, a finish `F_j` as the
+  date of its last day of work, `date(F_j − 1)`.
+- The deadline is a date `d_D` by the end of which all work is done: `D = last(d_D) + 1`. A
+  makespan `C` (§1.3) is shown as the finish date `date(C − 1)`, so `C ≤ D` iff that date is not
+  after `d_D`.
+- A check-in dated `d` reports the state at the end of `d`: it is the observation of step 3 of
+  day `t = last(d) + 1` (`t = 0` for a date before `date(0)`), and what it leads to applies from
+  day `t` on. Check-ins come in date order; a later one on the same day `t` updates it.
+
+### §11.2 Team, tasks and settings
+
+- **Team.** People with a display name (unique) and a role. Role names are free text, matched as
+  in the WBS extraction (case, spacing and a final plural *s* ignored), and a project has any
+  number of roles. The capacity `R_k` of role `k` is its number of people (§1); its daily cost
+  `c_k` per person defaults to 1.0, a *cost unit*. Roles get the ids `0, 1, …` in the order of
+  their first person, people the worker ids `0, 1, …` in the order listed, so the dispatch rule
+  (§3.1 b) prefers people listed first.
+- **Tasks.** A name (unique), the estimated duration `p_j ≥ 1` in working days, the crew `r_jk`
+  per role (people needed, possibly none, §3.1 a), the predecessors (finish-to-start) and an
+  optional flag. Tasks get the activity ids `1, …, n` in the order listed; the source precedes
+  the tasks without predecessors and the sink follows those without successors (§1). The
+  optional tasks form `O` (§4); an optional task is no task's predecessor.
+- **Presets.** The estimation-uncertainty preset sets the PERT multiplier (§2.1, `λ = 4`):
+  `confident` (0.9, 1, 1.3), `typical` (0.8, 1, 1.6, the research default) or `uncertain`
+  (0.7, 1, 2.0). The disruption-rate preset sets `λ_A` (§2.2): `calm` 0.005, `typical` 0.01 or
+  `turbulent` 0.02, with `λ_S = 0.01`, `λ_N = 0.02` and `E[L] = 3`. Every value can be changed
+  in the advanced settings.
+- **Goals.** The deadline is a date (§11.1), the budget `B` is in cost units, by default that of
+  §1.2 with `β = 0.1` and the preset's PERT mean. `P(C ≤ D)` and recommendations need a
+  deadline.
+- **Validation** reports in plain language, in English or Polish: an empty or repeated name, an
+  unknown predecessor, dependency cycles listed by task name, a duration below one day, a crew
+  above the team size of a role (`r_jk > R_k`), an unknown role, an optional task that other
+  tasks depend on, a project without tasks, and a deadline before the critical path
+  (`D < LB0`, §1.4) with the earliest possible finish date.
+- **Structure.** The team, the tasks, their estimates, crews and dependencies can change until
+  the first check-in, and a change asks for a new baseline plan. From then on the plan's
+  structure changes only through check-ins (new tasks, more work, §11.3) and actions (§11.5);
+  names, the deadline, the budget and the settings can always change.
+
+### §11.3 Baseline plan and check-ins
+
+- **Baseline plan** `π⁰`: CP-SAT on the instance with one worker, a fixed seed and the
+  deterministic limit `T_cp` (§8), or the serial SGS with the LFT rule (§7; Kolisch 1996) if
+  CP-SAT finds no plan, checked by `validate_schedule` (§1.3). Tracking needs a baseline plan.
+- **Check-in** dated `d` (day `t`, §11.1): per task one of *not started*, *in progress* with the
+  share done `x ∈ [0, 1)` or *done* with its finish date, each started task optionally with its
+  start date and its crew; reported absences (person, first day, announced return date or none;
+  never a reason, invariant 7); work increases of tasks in progress (`+N` working days or a
+  factor `×F`); new tasks (fields of §11.2, inserted after one task `i` and before one task `s`
+  as in §10.2). Tasks not mentioned keep their state; a started task does not become unstarted
+  again, nor a done task undone.
+- **Mapping to the `Observation`** of day `t` (§3); everything not listed is as in the engine:
+  - *Starts and finishes.* A done task has `S_j < F_j ≤ t`, a started one `S_j < t`; without a
+    start date `S_j` is the planned start, clamped to the days since the previous check-in and
+    before the finish. A task starts only once its predecessors are done (`S_j ≥ F_i`).
+  - *Work done* in full-crew days: `e_j = x · p_j · ΠF`, with `ΠF` the product of the factors
+    reported for the task at earlier check-ins, rounded half up to whole crew-member days
+    (`e_j · max(1, M_j)` an integer, §3.1 a); a done task has `e_j = p_j · ΠF`. The share refers
+    to the task's own work, so SUBST onboarding (§3) stays in the remaining work.
+  - *Crews.* A crew is assigned at the start day by the rule of §3.1 (b): the lowest-id idle
+    present workers of each role, the tasks started since the previous check-in taken in order
+    of start day, planned start and id, a crew being reserved from `S_j` to `F_j`. The manager
+    may name the crew instead (people of the right roles in no crew reserved on `S_j`); if no
+    crew can be assigned, the check-in says so and asks for one.
+  - *Status.* A started, unfinished task is *running* if a crew member is present on day `t` or
+    it has no crew, else *paused* (§3.1 a).
+  - *Absences.* A person absent from `s = first(a)` with announced return date `r` is back on
+    day `first(r)`, so `L_low = first(r) − s ≥ 1` (§2.2); without a return date `L_low = 1`
+    (§10.2) and the absence lasts until a check-in gives its return date. The person is absent
+    on day `t` iff an absence covers `t`: `present = false`, `absent_since = s` and
+    `announced = L_low`. An absence that starts after `t` waits for a later check-in.
+  - *Work increases.* `×F` with `F > 1` is used as given; `+N` working days (`N > 0`) gives
+    `F = (R + N) / R`, with `R` the deterministic remaining work of §5.2 in full-crew days after
+    the check-in's progress. The shock `(j, e_j, F)` is appended to the observed shocks (§3).
+  - *New tasks* get the next ids `n + 2, …`, status unstarted and the planned start of §3.1 (e).
+  - *Cost so far*: the work done of every started task, `e_j` full-crew days at the daily cost of
+    its crew's people (temporary workers excluded), plus the pay `c_OT_k` of each temporary
+    worker for the days it was hired before `t` (§4).
+  - *Plan*: the current planned starts; the observation also reports `D`, `B`, `c_k`,
+    `c_OT_k = 1.5 c_k`, `O` and the presets (§3).
+
+### §11.4 Forecasts
+
+The forecast of day `t` runs `N = 200` NoReaction rollouts (§5.1) from the latest observation and
+its plan, with the seed `derive_seed(project seed, "forecast", t)`: `P(C ≤ D)`, the finish dates
+of the 10 %, 50 % and 90 % quantiles of `C` (§5.2), and the *risk drivers*, the tasks most often
+on the critical chain of a rollout. The critical chain of a completed rollout holds the
+activities from which tight links lead to the sink: `i → j` is tight if `i` is a predecessor of
+`j` with `F_i = S_j`, or, for a `j` without such a predecessor, if `F_i = S_j` and `i` and `j`
+need a common role. A risk driver's share is the fraction of rollouts whose chain holds it.
+
+### §11.5 Recommendations and decisions
+
+- A **recommendation** is a Sentinel deliberation (§5–§6) on the observation of the latest
+  check-in (`t = 0` before the first), with the seed `derive_seed(project seed, "sentinel", t)`,
+  the rule candidates (the LLM proposals of §10.3 are off by default), DESCOPE candidates if the
+  project has optional tasks, and the parameters of §8. One follows every check-in; the manager
+  may ask for one at any time. It shows the chosen action in plain language, its effect against
+  NOOP (`p̂`, the expected finish date `date(C̄ − 1)` with `C̄` the mean makespan of its
+  rollouts rounded half up, the expected cost `ẑ`, the plan changes), the runner-up and the
+  explanation of §10.4.
+- **Autonomy.** `Λ` is a project setting (default 2, §8). A chosen action other than NOOP with
+  `ℓ(a) < Λ` and without DESCOPE is applied at once and listed as applied automatically. Any
+  other chosen action waits for the manager, who takes the place of the simulated human of §4:
+  there is no deferral and no approval delay `δ_h`; the urgency `τ_t` (§5) is shown, and an
+  action with `τ_t > τ_def` *can wait*.
+- **Approve** applies the action to the current observation as on an approval day (§4): its
+  SUBST, OVERTIME and DESCOPE operations unchanged and re-validated, its plan part planned again
+  on the planning view they leave, all or nothing. The project then has the new plan, the named
+  substitutes in the crews (the replaced members leave them, §4), the temporary workers
+  "Temporary <role> 1, 2, …" hired from that day for `H` days (§4 OVERTIME) and the removed
+  optional task. An action that is no longer valid is discarded with its reason, and a fresh
+  recommendation follows. **Reject** records the rejection; **later** leaves the recommendation
+  open until the next check-in or recommendation replaces it.
+- Every definition change, baseline plan, check-in, recommendation and decision is an event of
+  the project's append-only log, from which the project is rebuilt deterministically.
+
+### §11.6 Simulator mode
+
+A simulator project is a PSPLIB instance (§1.1) shown with the IT role names, the narrator's task
+names (WP6a) and a roster of people (§10.2), a calendar start date, the presets of §11.2, the
+deadline `D = ceil((1 + δ_D) C*)` (§1.2; `C*` the reference makespan, else that of the baseline
+plan) and the budget of §1.2. A seed fixes its hidden world (§2.3). `advance(n)` executes the
+next `n` days of the engine (§3) on that world from the baseline plan under the chosen policy:
+Sentinel at autonomy `Λ` with the simulated human of §4, NoReaction or a policy of §7. Advanced
+to the end, the run equals `simulate` with the same plan, policy and seed. NoReaction is advanced
+on the same seed for a side-by-side comparison (common random numbers, §2.3).
