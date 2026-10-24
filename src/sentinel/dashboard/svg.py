@@ -150,6 +150,8 @@ def gantt(
     parts.append(
         f'<line x1="{num(LEFT)}" y1="{num(top - 4)}" x2="{num(LEFT + PLOT)}" y2="{num(top - 4)}" '
         f'stroke="{AXIS}" stroke-width="0.6"/>'
+        f'<text x="{num(LEFT - 6)}" y="{num(top + 1)}" text-anchor="end" class="lane">'
+        f"{escape(t['activity_axis'])}</text>"
     )
     for i, row in enumerate(rows):
         parts += _row(row, axis, top + i * ROW, color, key, t)

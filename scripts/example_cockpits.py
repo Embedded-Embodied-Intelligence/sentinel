@@ -143,30 +143,40 @@ def mismatches(cockpit: Cockpit, world: World) -> list[str]:
     return found
 
 
+def _count(n: int, word: str) -> str:
+    """`n` and `word`, the word in the plural unless n is 1 (its last word gets an s)."""
+    return f"{n} {word}" if n == 1 else f"{n} {word}s"
+
+
 def describe(cockpit: Cockpit) -> str:
     """One sentence about what the cockpit shows (for the README and the WP report)."""
     world, a, b = cockpit.world, cockpit.first.kpis, cockpit.second.kpis
     name_a, name_b = policy_name(cockpit.first.run.name), policy_name(cockpit.second.run.name)
 
     def outcome(k: Kpis, name: str) -> str:
-        verdict = "on time" if k.on_time else f"{k.late_days} days late"
+        verdict = "on time" if k.on_time else f"{_count(k.late_days, 'day')} late"
         return f"{name} finishes after {k.makespan} days ({verdict})"
 
     actions = []
     if a.plan_changes:
-        actions.append(f"{a.plan_changes} plan changes moving {a.moved} planned starts")
+        moved = _count(a.moved, "planned start")
+        actions.append(f"{_count(a.plan_changes, 'plan change')} moving {moved}")
     if a.hired:
-        actions.append(f"{a.hired} temporary workers (overtime cost {a.overtime_cost:.1f})")
+        hired = _count(a.hired, "temporary worker")
+        actions.append(f"{hired} (overtime cost {a.overtime_cost:.1f})")
     if a.substituted:
-        actions.append(f"{a.substituted} substituted crew members")
+        actions.append(_count(a.substituted, "substituted crew member"))
     if a.escalations:
+        deferrals = _count(a.deferrals or 0, "deferral")
         actions.append(
-            f"{a.escalations} escalations ({a.approvals} approved, {a.deferrals} deferrals)"
+            f"{_count(a.escalations, 'escalation')} ({a.approvals} approved, {deferrals})"
         )
     return (
         f"{world.name}, replication {world.replication}, D = {world.deadline}: "
-        f"{outcome(a, name_a)}, {outcome(b, name_b)}; {name_a} deliberates {a.deliberations} "
-        f"times and uses " + ("; ".join(actions) or "no intervention") + "."
+        f"{outcome(a, name_a)}, {outcome(b, name_b)}; {name_a} deliberates "
+        f"{_count(a.deliberations or 0, 'time')} and uses "
+        + ("; ".join(actions) or "no intervention")
+        + "."
     )
 
 
