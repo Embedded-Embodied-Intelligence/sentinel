@@ -1239,5 +1239,11 @@ def _manifest_provenance(pinned: Mapping[str, Any] | None) -> Mapping[str, Any] 
 
 
 def _record(path: Path, root: Path | None = None) -> dict[str, Any]:
-    shown = path.relative_to(root).as_posix() if root is not None else path.as_posix()
+    """Path (relative to `root`, else to the working directory when inside it), size and
+    SHA-256 of a file; relative paths keep MANIFEST.json independent of the checkout's place."""
+    base = root if root is not None else Path.cwd()
+    try:
+        shown = path.resolve().relative_to(base.resolve()).as_posix()
+    except ValueError:
+        shown = path.as_posix()
     return {"path": shown, "bytes": path.stat().st_size, "sha256": sha256_file(path)}
