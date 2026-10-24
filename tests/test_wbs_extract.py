@@ -3,11 +3,20 @@ answer becomes the instance, and the repair loop stops on a valid answer or afte
 
 import json
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from sentinel.llm import FakeLlmClient, FakeReply, Message, Reply, Request, RequestTooLarge
+from sentinel.llm import (
+    FakeLlmClient,
+    FakeReply,
+    LlmCache,
+    Message,
+    Reply,
+    Request,
+    RequestTooLarge,
+)
 from sentinel.model import validate_schedule
 from sentinel.scheduling.priority_rules import lft_priorities
 from sentinel.scheduling.sgs import serial_sgs
@@ -159,6 +168,25 @@ def test_the_repair_loop_stops_on_a_valid_answer() -> None:
     valid = FakeLlmClient([json.dumps(second)])
     assert repair(valid, TEXT, seed=1, settings=SETTINGS).repair_rounds == 0
     assert len(valid.requests) == 1
+
+
+def test_a_repair_session_without_prompts_replays_from_its_cache(tmp_path: Path) -> None:
+    private = {**VALID, "note": "Zofia is off with the flu"}
+    path = tmp_path / "private.jsonl"
+    recorder = FakeLlmClient(
+        [json.dumps(private), json.dumps(VALID)],
+        cache=LlmCache(path, store_prompts=False),
+        mode="record",
+    )
+    session = repair(recorder, TEXT, seed=3, settings=SETTINGS)
+    assert session.repair_rounds == 1 and session.final.valid
+    assert session.single_shot.response.text == "" and session.single_shot.issues
+    assert recorder.requests[1].messages[2] == Message(role="assistant", content="")
+    assert "Zofia" not in path.read_text(encoding="utf-8")
+    replayer = FakeLlmClient([], cache=LlmCache(path, store_prompts=False), mode="replay")
+    again = repair(replayer, TEXT, seed=3, settings=SETTINGS)
+    assert [r.issues for r in again.rounds] == [r.issues for r in session.rounds]
+    assert again.final.response.text == json.dumps(VALID) and replayer.stats.hit_rate == 1.0
 
 
 def test_the_repair_loop_stops_after_three_rounds() -> None:

@@ -11,9 +11,10 @@ import re
 import time
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Literal
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from sentinel.llm import (
     CacheMiss,
@@ -635,6 +636,60 @@ def test_a_cache_without_prompts_replays_by_key_and_holds_no_message_text(
     assert "Zofia" in full.read_text(encoding="utf-8")  # research runs keep the full record
     with pytest.raises(ValueError, match="holds message text"):
         LlmCache(full, store_prompts=False)
+
+
+class Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    a: int
+    b: Literal["x", "y"]
+
+
+def test_a_cache_without_prompts_stores_an_invalid_answer_only_as_its_issue_list(
+    tmp_path: Path,
+) -> None:
+    answers = [
+        '{"a": "one", "b": "x", "illness": "pneumonia"}',
+        "Zofia is in hospital with pneumonia.",
+        '{"a": 1, "b": "flu"}',
+        '{"a": 2, "b": "y"}',
+    ]
+    path = tmp_path / "private.jsonl"
+    recorder = FakeLlmClient(answers, cache=LlmCache(path, store_prompts=False), mode="record")
+    recorded = [
+        recorder.complete(MESSAGES, schema=Strict, seed=seed, max_tokens=64) for seed in range(4)
+    ]
+    stored = path.read_text(encoding="utf-8")
+    for word in ("pneumonia", "Zofia", "hospital", "illness", "flu", "one"):
+        assert word not in stored
+    assert [r.error.kind if r.error else None for r in recorded] == [
+        "schema",
+        "json",
+        "schema",
+        None,
+    ]
+    assert recorded[0].error is not None and recorded[2].error is not None
+    assert {(d.loc, d.type) for d in recorded[0].error.details} == {
+        ("a", "int_parsing"),
+        ("*", "extra_forbidden"),
+    }
+    assert [(d.loc, d.type) for d in recorded[2].error.details] == [("b", "literal_error")]
+    assert [(r.text, r.parsed) for r in recorded[:3]] == [("", None)] * 3
+    assert recorded[3].value == Strict(a=2, b="y") and recorded[3].text == answers[3]
+
+    replayer = FakeLlmClient([], cache=LlmCache(path, store_prompts=False), mode="replay")
+    replayed = [
+        replayer.complete(MESSAGES, schema=Strict, seed=seed, max_tokens=64) for seed in range(4)
+    ]
+    assert all(r.cache_hit for r in replayed)
+    assert [(r.text, r.parsed, r.value, r.error) for r in replayed] == [
+        (r.text, r.parsed, r.value, r.error) for r in recorded
+    ]
+
+    full = FakeLlmClient(answers[:1], cache=LlmCache(tmp_path / "full.jsonl"))
+    kept = full.complete(MESSAGES, schema=Strict, seed=0, max_tokens=64)
+    assert kept.text == answers[0] and kept.parsed is not None  # research runs keep the text
+    assert "pneumonia" in (tmp_path / "full.jsonl").read_text(encoding="utf-8")
 
 
 def test_the_key_never_shows_in_reprs_errors_or_cache_files(tmp_path: Path) -> None:

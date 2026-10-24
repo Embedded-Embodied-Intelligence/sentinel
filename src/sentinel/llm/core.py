@@ -13,7 +13,7 @@ import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast, get_args
 
 from pydantic import (
     BaseModel,
@@ -28,6 +28,7 @@ from pydantic import (
 ChatRole = Literal["system", "user", "assistant"]
 OutputErrorKind = Literal["empty", "json", "truncated", "schema"]
 CHARS_PER_TOKEN = 3.0  # conservative token estimate for limits and the fake backend
+WITHHELD = "withheld"  # `Reply.meta` key of an invalid answer stored as its issue list only
 
 
 class LlmError(RuntimeError):
@@ -223,7 +224,52 @@ def validate_reply[ModelT: BaseModel](
     reply: Reply, schema: type[ModelT], *, key: str, cache_hit: bool
 ) -> LlmResponse[ModelT]:
     """Parse the reply's text as JSON and validate it against `schema`; problems become the
-    response's `OutputError` (kind `truncated` when the backend stopped at the token limit)."""
+    response's `OutputError` (kind `truncated` when the backend stopped at the token limit). A
+    reply stored by `withhold_invalid` comes back without text, with its stored error."""
+    stored = reply.meta.get(WITHHELD)
+    parsed: Any = None
+    value: ModelT | None = None
+    error: OutputError | None
+    if isinstance(stored, dict):
+        error = _stored_error(stored)
+    else:
+        parsed, value, error = _check(reply, schema, None)
+    return LlmResponse(
+        text=reply.text,
+        parsed=parsed,
+        value=value,
+        error=error,
+        model=reply.model,
+        prompt_tokens=reply.prompt_tokens,
+        completion_tokens=reply.completion_tokens,
+        latency_s=reply.latency_s,
+        cache_hit=cache_hit,
+        finish_reason=reply.finish_reason,
+        key=key,
+    )
+
+
+def withhold_invalid(reply: Reply, schema: type[BaseModel]) -> Reply:
+    """The reply as a cache without prompts stores it (spec section 10, invariant 7): an answer
+    that fails `schema` keeps no text, only its issue list (the error kind and message, and per
+    schema violation its type and location, with every name that is no field or tag of the
+    schema masked as `*`); a valid answer is kept whole."""
+    _, _, error = _check(reply, schema, _schema_names(backend_schema(schema)))
+    if error is None:
+        return reply
+    issues: dict[str, JsonValue] = {
+        "kind": error.kind,
+        "message": error.message,
+        "details": [{"loc": detail.loc, "type": detail.type} for detail in error.details],
+    }
+    return reply.model_copy(update={"text": "", "meta": {**reply.meta, WITHHELD: issues}})
+
+
+def _check[ModelT: BaseModel](
+    reply: Reply, schema: type[ModelT], names: frozenset[str] | None
+) -> tuple[Any, ModelT | None, OutputError | None]:
+    """The parsed JSON, the schema model and the error of a reply; with `names`, violations
+    keep only masked locations and their types (`withhold_invalid`)."""
     parsed: Any = None
     value: ModelT | None = None
     error: OutputError | None = None
@@ -241,24 +287,57 @@ def validate_reply[ModelT: BaseModel](
                 value = schema.model_validate(parsed)
             except ValidationError as exc:
                 details = tuple(
-                    ErrorDetail(_location(e["loc"]), e["msg"], e["type"]) for e in exc.errors()
+                    ErrorDetail(
+                        _location(e["loc"], names),
+                        e["msg"] if names is None else e["type"],
+                        e["type"],
+                    )
+                    for e in exc.errors()
                 )
                 error = OutputError("schema", f"{len(details)} schema violations", details)
-    return LlmResponse(
-        text=reply.text,
-        parsed=parsed,
-        value=value,
-        error=error,
-        model=reply.model,
-        prompt_tokens=reply.prompt_tokens,
-        completion_tokens=reply.completion_tokens,
-        latency_s=reply.latency_s,
-        cache_hit=cache_hit,
-        finish_reason=reply.finish_reason,
-        key=key,
+    return parsed, value, error
+
+
+def _stored_error(stored: Mapping[str, JsonValue]) -> OutputError:
+    """The error of a reply as `withhold_invalid` stored it (a detail's message is its type)."""
+    kind = stored.get("kind")
+    if kind not in get_args(OutputErrorKind):
+        raise ValueError(f"a withheld reply has the unknown error kind {kind!r}")
+    details = stored.get("details")
+    return OutputError(
+        cast(OutputErrorKind, kind),
+        str(stored.get("message", "")),
+        tuple(
+            ErrorDetail(str(item.get("loc")), str(item.get("type")), str(item.get("type")))
+            for item in (details if isinstance(details, list) else [])
+            if isinstance(item, dict)
+        ),
     )
 
 
-def _location(loc: Sequence[int | str]) -> str:
-    path = "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in loc)
+def _schema_names(node: JsonValue) -> frozenset[str]:
+    """Every property name, constant and enumerated string of a JSON schema."""
+    names: set[str] = set()
+    stack = [node]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, list):
+            stack.extend(item)
+        elif isinstance(item, dict):
+            properties = item.get("properties")
+            if isinstance(properties, dict):
+                names.update(properties)
+            choices = item.get("enum")
+            for word in [item.get("const"), *(choices if isinstance(choices, list) else [])]:
+                if isinstance(word, str):
+                    names.add(word)
+            stack.extend(item.values())
+    return frozenset(names)
+
+
+def _location(loc: Sequence[int | str], names: frozenset[str] | None) -> str:
+    parts = [
+        part if names is None or isinstance(part, int) or part in names else "*" for part in loc
+    ]
+    path = "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts)
     return path.removeprefix(".")

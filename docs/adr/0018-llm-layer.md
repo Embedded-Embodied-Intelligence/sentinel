@@ -99,3 +99,21 @@ cloud runs replay the committed Ollama runs.
 model and serving provider stay those of the Groq smokes, but answers are not bit-identical to
 them (hosted model, another account); `groq` keeps working and its recorded caches still answer
 (a test pins a pre-WP6c request key).
+
+## Amendment (WP7, 2026-10-24): invalid replies without prompts
+
+**Context.** A cache without prompts (`store_prompts = false`, real data) still kept the text of
+an answer that failed its schema, e.g. an extra `reason` field or a failed generation echoing the
+message (WP6c spec question 1). Architect's answer: such a reply is stored only as its issue list.
+
+**Decision.** With `store_prompts = false` the client stores an answer that fails its schema
+with an empty text and its `OutputError` in `meta.withheld`: the kind and message, and per
+violation its type and location, where every name that is no field, constant or enumerated
+value of the schema is masked as `*` (pydantic's messages and an extra field's name can echo the
+answer). The client returns the reply as stored, also when recording, so that a replay makes the
+same requests: a repair round then sends an empty previous answer and the validator's issues
+for an answer that is not a JSON object. Valid answers and full records are unchanged.
+
+**Consequences.** No answer text that failed its schema reaches a cache or bundle of real data;
+for such data, repair rounds see less of their previous answer. Research runs (`store_prompts =
+true`) and every committed cache and bundle are unaffected.

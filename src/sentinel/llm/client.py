@@ -18,6 +18,7 @@ from sentinel.llm.core import (
     Request,
     backend_schema,
     validate_reply,
+    withhold_invalid,
 )
 
 
@@ -124,7 +125,9 @@ class BaseClient(ABC):
         seed: int,
         max_tokens: int,
     ) -> LlmResponse[ModelT]:
-        """Answer from the cache or the backend (by mode) and validate it against `schema`."""
+        """Answer from the cache or the backend (by mode) and validate it against `schema`. A
+        cache without prompts stores an invalid answer as its issue list only, and the answer
+        comes back as stored, so that a replay sees what the recording saw."""
         request = self.request(
             messages, schema=schema, temperature=temperature, seed=seed, max_tokens=max_tokens
         )
@@ -138,6 +141,8 @@ class BaseClient(ABC):
                 raise CacheMiss(f"{self.backend} request {key[:12]} is not in the cache (replay)")
             reply = self._send(request)
             if self.cache is not None:
+                if not self.cache.store_prompts:
+                    reply = withhold_invalid(reply, schema)
                 self.cache.put(request, reply)
         self.stats.add(reply, cache_hit)
         return validate_reply(reply, schema, key=key, cache_hit=cache_hit)

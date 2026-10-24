@@ -9,7 +9,7 @@
 | WP3 | Monte Carlo forecasts and calibration (RQ3) | 2026-11-06 | done |
 | WP4 | Baseline reactive policies (§7) | 2026-11-10 | done |
 | WP5 | Goal & Needs Engine, candidates, rollout selector, permission gate (§4–§6) | 2026-11-16 | done (studies `results/wp5/20261022-102609-e9d131b3` main, `20261022-193948-592f7183` ablation, `20261022-234437-49965457` autonomy levels) |
-| WP6 | LLM layer: client, cache, schemas; WBS extraction (RQ1), event parser, candidates, explanations | 2026-11-21 | in progress: WP6c done, runs pending |
+| WP6 | LLM layer: client, cache, schemas; WBS extraction (RQ1), event parser, candidates, explanations | 2026-11-21 | done (both backends, OpenRouter pinned to Groq: RQ1 `results/wp6/20261023-215350-f5aad526`; RQ5 events `20261023-220452-f8a335f4`, proposals `20261023-220739-ad9fa2b7`, explanations `20261023-221218-1dc12a5f`, online check `20261023-221428-6a63c140`) |
 | WP7 | Full experiments, statistics, figures (RQ4, RQ5) | 2026-11-25 | todo |
 | WP8 | Minimal dashboard, reproduce command, release package | 2026-12-02 | todo |
 
