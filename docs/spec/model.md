@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.0)
+# Sentinel — formal model (v2.0.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -46,7 +46,12 @@ a schema-valid answer with domain issues, are stored only as their issue lists, 
 validator running before the cache write (§10). v2.0 (WP9a) live project mode: the calendar,
 team, tasks and presets of a live project, its baseline plan, check-ins and their mapping to the
 observation, forecasts, recommendations and decisions, and the simulator mode of the application
-(§11); §1–§10 are unchanged.
+(§11); §1–§10 are unchanged. v2.0.1 (WP9b) answers to the WP9a questions: the share done leaves
+SUBST onboarding in the remaining work, accepted as a slightly pessimistic estimate (§11.3), and
+live and simulator projects may hire at least one temporary worker per role,
+`u ≤ max(1, ⌊γ R_k⌋)` (§11.2, §11.6; §4 unchanged for the research runs); the undo of an
+automatic plan change (§11.5) and the wording of every action and term in the application
+(§11.7).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -810,6 +815,13 @@ or before `d` (`−1` before `date(0)`).
 - **Goals.** The deadline is a date (§11.1), the budget `B` is in cost units, by default that of
   §1.2 with `β = 0.1` and the preset's PERT mean. `P(C ≤ D)` and recommendations need a
   deadline.
+- **Temporary workers.** A live project may hire at least one temporary worker of every role:
+  OVERTIME (§4) hires `u ≤ max(u_min, ⌊γ R_k⌋)` workers and at most that many of a role are hired
+  at a time, with `u_min = 1` in live and simulator projects (§11.6) and `u_min = 0` in the
+  research runs, where §4 holds as written. The observation of a live or simulator project also
+  reports `u_min` (`u_min = 0` adds nothing to §3), so the candidates of §6, their rollouts and
+  the engine apply the same cap; a role with fewer than `1/γ = 5` people can thus get the
+  OVERTIME candidate (WP9a question 2).
 - **Validation** reports in plain language, in English or Polish: an empty or repeated name, an
   unknown predecessor, dependency cycles listed by task name, a duration below one day, a crew
   above the team size of a role (`r_jk > R_k`), an unknown role, an optional task that other
@@ -839,7 +851,10 @@ or before `d` (`−1` before `date(0)`).
   - *Work done* in full-crew days: `e_j = x · p_j · ΠF`, with `ΠF` the product of the factors
     reported for the task at earlier check-ins, rounded half up to whole crew-member days
     (`e_j · max(1, M_j)` an integer, §3.1 a); a done task has `e_j = p_j · ΠF`. The share refers
-    to the task's own work, so SUBST onboarding (§3) stays in the remaining work.
+    to the task's own work, so SUBST onboarding (§3) stays in the remaining work until the task
+    is reported done: the remaining-work estimate is pessimistic by at most the `m_j o_j`
+    crew-member days of onboarding, which is accepted (WP9a question 1); the user guide says
+    that the estimate improves when the task is marked done.
   - *Crews.* A crew is assigned at the start day by the rule of §3.1 (b): the lowest-id idle
     present workers of each role, the tasks started since the previous check-in taken in order
     of start day, planned start and id, a crew being reserved from `S_j` to `F_j`. The manager
@@ -860,7 +875,7 @@ or before `d` (`−1` before `date(0)`).
     its crew's people (temporary workers excluded), plus the pay `c_OT_k` of each temporary
     worker for the days it was hired before `t` (§4).
   - *Plan*: the current planned starts; the observation also reports `D`, `B`, `c_k`,
-    `c_OT_k = 1.5 c_k`, `O` and the presets (§3).
+    `c_OT_k = 1.5 c_k`, `O`, `u_min = 1` (§11.2) and the presets (§3).
 
 ### §11.4 Forecasts
 
@@ -898,8 +913,14 @@ need a common role. A risk driver's share is the fraction of rollouts whose chai
   optional task. An action that is no longer valid is discarded with its reason, and a fresh
   recommendation follows. **Reject** records the rejection; **later** leaves the recommendation
   open until the next check-in or recommendation replaces it.
-- Every definition change, baseline plan, check-in, recommendation and decision is an event of
-  the project's append-only log, from which the project is rebuilt deterministically.
+- **Undo.** An action applied automatically that changes only the plan (SHIFT or RESEQ, without
+  SUBST, OVERTIME or DESCOPE) can be undone while no later check-in, recommendation, decision or
+  definition change exists: the planned starts it changed (and the sink's) get their values
+  before the action back, which restores the observation the recommendation was made on, and
+  the recommendation is listed as undone. An automatic action with other operations stays and is
+  shown as an entry of the project's history.
+- Every definition change, baseline plan, check-in, recommendation, decision and undo is an
+  event of the project's append-only log, from which the project is rebuilt deterministically.
 
 ### §11.6 Simulator mode
 
@@ -908,6 +929,53 @@ names (WP6a) and a roster of people (§10.2), a calendar start date, the presets
 deadline `D = ceil((1 + δ_D) C*)` (§1.2; `C*` the reference makespan, else that of the baseline
 plan) and the budget of §1.2. A seed fixes its hidden world (§2.3). `advance(n)` executes the
 next `n` days of the engine (§3) on that world from the baseline plan under the chosen policy:
-Sentinel at autonomy `Λ` with the simulated human of §4, NoReaction or a policy of §7. Advanced
-to the end, the run equals `simulate` with the same plan, policy and seed. NoReaction is advanced
-on the same seed for a side-by-side comparison (common random numbers, §2.3).
+Sentinel at autonomy `Λ` with the simulated human of §4, NoReaction or a policy of §7, with
+`u_min = 1` (§11.2). Advanced to the end, the run equals `simulate` with the same plan, policy,
+seed and `u_min`. NoReaction is advanced on the same seed for a side-by-side comparison
+(common random numbers, §2.3).
+
+### §11.7 Wording in the application
+
+The application speaks to project managers: no internal term of this document appears on its
+pages. Every action and term is shown with the wording below (English and Polish; `<…>` are
+names, dates or numbers; people's names are not declined in Polish). An action of several
+operations joins its parts in operation order, the plan part last: "<part>, then <part>" /
+"<część>, a następnie <część>", each later part starting in lower case.
+
+| Internal | English | Polish |
+| --- | --- | --- |
+| NOOP | No change — the plan is still the best | Bez zmian — plan wciąż jest najlepszy |
+| SHIFT | Move task dates without changing their order | Przesuń terminy zadań bez zmiany kolejności |
+| RESEQ-M | Re-plan to finish as early as possible | Ułóż zadania na nowo, aby skończyć jak najszybciej |
+| RESEQ-S | Re-plan with as few changes as possible | Ułóż zadania na nowo, zmieniając plan jak najmniej |
+| SUBST | Substitute: <person> takes over <absent person>'s part in <task> | Zastępstwo: <osoba> przejmuje udział osoby nieobecnej (<osoba nieobecna>) w zadaniu <zadanie> |
+| OVERTIME, `u = 1` | Extra person (temporary): <role> for <N> days | Dodatkowa osoba (tymczasowo): <rola> na <N> dni |
+| OVERTIME, `u > 1` | Extra people (temporary): <u> × <role> for <N> days | Dodatkowe osoby (tymczasowo): <u> × <rola> na <N> dni |
+| DESCOPE | Drop the optional task <task> | Zrezygnuj z zadania opcjonalnego <zadanie> |
+| `P(C ≤ D)`, `p̂` | chance of meeting the deadline (whole per cent) | szansa na dotrzymanie terminu (cały procent) |
+| `C`, `date(C − 1)` | finish date | data zakończenia |
+| median, 90 % quantile of `C` | most likely finish; bad case (1 in 10 later) | najbardziej prawdopodobny koniec; zły scenariusz (1 na 10 później) |
+| `D`, `B`, `ẑ`, `o` | deadline, budget, expected cost, expected overrun | termin, budżet, oczekiwany koszt, oczekiwane przekroczenie |
+| `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
+| rollout, `N` | simulated future, number of simulated futures | symulowany scenariusz, liczba scenariuszy |
+| deliberation, recommendation | Sentinel's analysis, recommendation | analiza Sentinela, rekomendacja |
+| check-in, observation of day `t` | check-in, status at the end of <date> | raport statusu, stan na koniec dnia <data> |
+| baseline plan `π⁰`, plan | original plan, plan | plan początkowy, plan |
+| activity, worker, role, crew | task, person, role, people on the task | zadanie, osoba, rola, osoby w zadaniu |
+| temporary worker | temporary <role> <n> | osoba tymczasowa: <rola> <n> |
+| D1, D2, D3 | someone is away, a task grows, new task | nieobecność, zadanie się wydłuża, nowe zadanie |
+| PERT preset confident, typical, uncertain | estimates: quite sure, usual, rough | szacunki: dość pewne, typowe, zgrubne |
+| `λ_A` preset calm, typical, turbulent | team: calm, usual, turbulent | zespół: spokojny, typowy, burzliwy |
+| `Λ` = 0, 1, 2, 3 | Only advise me; May shift dates; May re-plan the order; May also add people and substitutes | Tylko doradzaj; Może przesuwać terminy; Może zmieniać kolejność zadań; Może też dodawać osoby i zastępstwa |
+| gate: escalated (`ℓ ≥ Λ`) | needs your approval: affects people (SUBST), costs money (OVERTIME), changes scope (DESCOPE), changes the plan more than your setting allows (SHIFT, RESEQ) | wymaga Twojej zgody: dotyczy ludzi, kosztuje, zmienia zakres, zmienia plan bardziej, niż pozwala Twoje ustawienie |
+| gate: auto | applied automatically | zastosowane automatycznie |
+| `τ_t > τ_def` | can wait | może poczekać |
+| §10.4 badge faithful, not faithful | checked against the data; not confirmed by the data | sprawdzone z danymi; niepotwierdzone przez dane |
+| NoReaction, Sentinel | Nobody reacts, Sentinel | Nikt nie reaguje, Sentinel |
+| J30, J60 instance | small example project (30 tasks), medium example project (60 tasks) | mały przykładowy projekt (30 zadań), średni przykładowy projekt (60 zadań) |
+| LLM | AI | AI |
+
+Never shown: the symbols of this document (`Λ`, `λ`, `τ`, `δ`, `γ`, `θ`, `p̂`, …), the labels
+NOOP, SHIFT, RESEQ, SUBST, OVERTIME, DESCOPE and `OT(k)`, and the words makespan, rollout,
+deliberation, epoch, observation, baseline, seed, PERT, CP-SAT, SGS, PSPLIB, RCPSP, NoReaction,
+LLM and Monte Carlo. File formats (CSV, JSON) may be named.
