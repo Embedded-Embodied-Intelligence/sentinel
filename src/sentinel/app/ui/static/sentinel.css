@@ -308,6 +308,7 @@ details > summary { cursor: pointer; font-weight: 600; color: var(--link); paddi
 .kpis div { background: var(--surface-2); border-radius: var(--radius-small); padding: 0.6rem 0.75rem; }
 .kpis dt { font-size: 0.85rem; color: var(--text-2); }
 .kpis dd { margin: 0; font-weight: 700; font-size: 1.05rem; }
+.kpis dd .small { font-weight: 400; margin-top: 0.15rem; }
 .facts dt { font-weight: 600; }
 .facts dd { margin: 0 0 0.5rem; }
 .drivers, .threats { margin: 0 0 0.5rem; padding-left: 1.25rem; }
