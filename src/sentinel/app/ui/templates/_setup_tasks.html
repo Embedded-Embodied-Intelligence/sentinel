@@ -1,0 +1,92 @@
+<nav class="tabs" aria-label="{{ t('setup.tasks.ways') }}">
+  {% for name in ("describe", "import", "manual") %}
+  <a href="/projects/{{ project_id }}/setup/tasks?tab={{ name }}"{% if tab == name %} aria-current="page"{% endif %}>{{ t("setup.tab." ~ name) }}</a>
+  {% endfor %}
+</nav>
+{% if tab == "describe" %}
+<section class="panel" aria-labelledby="describe-title">
+  <h2 id="describe-title">{{ t("setup.tab.describe") }}</h2>
+  {% if llm %}
+  <form class="form" hx-post="/projects/{{ project_id }}/setup/describe" hx-target="#describe-result" novalidate>
+    <div class="field">
+      <label for="text">{{ t("setup.describe.label") }}</label>
+      <textarea id="text" name="text" rows="9" maxlength="20000" aria-describedby="text-hint" required></textarea>
+      <p class="hint" id="text-hint">{{ t("setup.describe.hint") }}</p>
+    </div>
+    <div class="actions"><button class="btn btn-primary">{{ t("setup.describe.read") }}</button></div>
+  </form>
+  <div id="describe-result" aria-live="polite"></div>
+  {% else %}
+  <p class="alert alert-info">{{ t("setup.describe.no_ai") }} <a href="/settings">{{ t("nav.settings") }}</a></p>
+  {% endif %}
+</section>
+{% elif tab == "import" %}
+<section class="panel" aria-labelledby="import-title">
+  <h2 id="import-title">{{ t("setup.tab.import") }}</h2>
+  <ol class="how-to">
+    <li>{{ t("setup.import.step1") }} <a href="/api/templates/tasks.csv" download>{{ t("setup.import.template") }}</a></li>
+    <li>{{ t("setup.import.step2", roles=roles | join(", ") if roles else "—") }}</li>
+    <li>{{ t("setup.import.step3") }}</li>
+  </ol>
+  <form class="form" hx-post="/projects/{{ project_id }}/setup/import" hx-encoding="multipart/form-data" hx-target="#import-result" novalidate>
+    <div class="field">
+      <label for="file">{{ t("setup.import.file") }}</label>
+      <input id="file" name="file" type="file" accept=".csv,text/csv" required>
+    </div>
+    <div class="actions"><button class="btn btn-primary">{{ t("setup.import.button") }}</button></div>
+  </form>
+  <div id="import-result" aria-live="polite"></div>
+</section>
+{% else %}
+<form id="tasks-form" class="form" hx-post="/projects/{{ project_id }}/setup/tasks" hx-target="#step" novalidate>
+  <p class="lead">{{ t("setup.tasks.lead") }}</p>
+  <div hx-post="/projects/{{ project_id }}/setup/tasks" hx-trigger="change delay:500ms from:#tasks-form" hx-include="#tasks-form" hx-vals='{"action": "autosave"}' hx-target="#save-status"></div>
+  {% with oob=false %}{% include "_issues.html" %}{% endwith %}
+  {% for error in cell_errors %}<p class="error-text">{{ error }}</p>{% endfor %}
+  {% if tasks %}
+  <div class="table-wrap">
+  <table class="table table-form tasks-table">
+    <caption class="vh">{{ t("setup.tasks.caption") }}</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="num">#</th>
+        <th scope="col">{{ t("setup.tasks.name") }}</th>
+        <th scope="col">{{ t("setup.tasks.days") }}</th>
+        {% for role in roles %}<th scope="col">{{ t("setup.tasks.people", role=role) }}</th>{% endfor %}
+        <th scope="col">{{ t("setup.tasks.after") }}</th>
+        <th scope="col">{{ t("setup.tasks.optional") }}</th>
+        <th scope="col"><span class="vh">{{ t("setup.remove") }}</span></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for task in tasks %}
+    {% set n = loop.index %}
+    <tr{% if loop.index0 in marked %} class="has-issue"{% endif %}>
+      <td class="num">{{ n }}<input type="hidden" name="task_key" value="{{ task.key }}"></td>
+      <td><label class="vh" for="tn-{{ task.key }}">{{ t("setup.tasks.name_of", n=n) }}</label><input id="tn-{{ task.key }}" name="task_name" value="{{ task.name }}" maxlength="120" autocomplete="off"{% if focus == task.key %} autofocus{% endif %}></td>
+      <td><label class="vh" for="td-{{ task.key }}">{{ t("setup.tasks.days_of", n=n) }}</label><input id="td-{{ task.key }}" class="short" name="task_days" value="{{ task.duration if task.duration else '' }}" inputmode="numeric"></td>
+      {% for role in roles %}
+      <td><label class="vh" for="c-{{ task.key }}-{{ loop.index0 }}">{{ t("setup.tasks.people_of", role=role, n=n) }}</label><input id="c-{{ task.key }}-{{ loop.index0 }}" class="short" name="crew_{{ task.key }}_{{ loop.index0 }}" value="{{ crew_of(task, role) }}" inputmode="numeric"></td>
+      {% endfor %}
+      <td><label class="vh" for="ta-{{ task.key }}">{{ t("setup.tasks.after_of", n=n) }}</label><input id="ta-{{ task.key }}" class="mid" name="after_{{ task.key }}" value="{{ after_numbers(task) }}" aria-describedby="after-hint" autocomplete="off">
+        {% if task.predecessors %}<span class="small muted">{{ after_names(task) }}</span>{% endif %}</td>
+      <td class="center"><input type="checkbox" id="to-{{ task.key }}" name="optional_{{ task.key }}"{% if task.optional %} checked{% endif %}><label class="vh" for="to-{{ task.key }}">{{ t("setup.tasks.optional_of", n=n) }}</label></td>
+      <td><button class="btn btn-quiet btn-small" name="action" value="remove:{{ task.key }}">{{ t("setup.remove") }}<span class="vh"> {{ task.name or n }}</span></button></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="hint" id="after-hint">{{ t("setup.tasks.after_hint") }}</p>
+  {% else %}
+  <p class="empty">{{ t("setup.tasks.empty") }}</p>
+  {% endif %}
+  <p><button class="btn" name="action" value="add"><span aria-hidden="true">+ </span>{{ t("setup.tasks.add") }}</button></p>
+  <div id="finish-area" aria-live="polite"></div>
+  <div class="actions">
+    <span id="save-status" aria-live="polite"></span>
+    <button class="btn" name="action" value="back">{{ t("setup.back") }}</button>
+    <button class="btn btn-primary" name="action" value="finish">{{ t("setup.finish") }}</button>
+  </div>
+</form>
+{% endif %}

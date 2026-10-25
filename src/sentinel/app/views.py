@@ -13,12 +13,12 @@ from pydantic import BaseModel, ConfigDict
 from sentinel.agent.decide import CandidateRecord
 from sentinel.app.calendar import WorkCalendar
 from sentinel.app.events import LiveState, LlmExplanation, RecommendationEntry, Source
-from sentinel.app.live import Issue, LiveProject, validate_definition
+from sentinel.app.live import AppliedAction, Issue, LiveProject, Tracked, validate_definition
 from sentinel.app.messages import render
 from sentinel.app.models import Language, ProjectDefinition
 from sentinel.app.planning import ForecastResult, Impact, sentinel_params
 from sentinel.dashboard.explain import template_explanation
-from sentinel.policies.base import Decision, Descope, Overtime, Reseq, Shift, Subst
+from sentinel.policies.base import LEVELS, Decision, Descope, Overtime, Reseq, Shift, Subst
 from sentinel.simulation.state import PAUSED, RUNNING, Observation
 
 
@@ -136,6 +136,10 @@ class ExplanationView(View):
 
 
 class RecommendationView(View):
+    """A recommendation (spec section 11.5): the action in words, its effect against no change,
+    why it needs approval ("people", "money", "scope", "plan"), the alternatives and whether its
+    automatic plan change can be undone."""
+
     seq: int
     day: int
     date: date
@@ -147,6 +151,8 @@ class RecommendationView(View):
     acts: bool
     level: int
     needs_approval: bool
+    approval_reasons: list[str]
+    can_undo: bool
     urgency: float | None
     can_wait: bool
     reason: str
@@ -211,6 +217,17 @@ class ForecastView(View):
     p90: date
     mean: float
     drivers: list[DriverView]
+    expected_cost: float | None = None
+    budget: float | None = None
+    p_within_budget: float | None = None
+
+
+class ForecastSummary(View):
+    """The forecast now and the chance of meeting the deadline before the latest check-in (the
+    trend shown with it; None without an earlier forecastable state or a deadline)."""
+
+    forecast: ForecastView
+    previous_p: float | None
 
 
 # --------------------------------------------------------------------------- builders
@@ -252,9 +269,12 @@ def project_view(
             status=baseline.status,
         ),
         tasks=task_views(project, observation, language),
-        people=person_views(project, observation),
+        people=person_views(project, observation, language),
         checkins=[CheckinView(date=d, day=t) for d, t in project.checkins],
-        recommendations=[recommendation_view(project, r, language) for r in state.recommendations],
+        recommendations=[
+            recommendation_view(project, r, language, state.can_undo(r))
+            for r in state.recommendations
+        ],
         open_recommendation=None if state.open is None else state.open.seq,
     )
 
@@ -264,7 +284,7 @@ def task_views(
 ) -> list[TaskView]:
     calendar = project.calendar
     definition = project.definition
-    names = person_names(project)
+    names = person_names(project, language)
     rows: list[TaskView] = []
     if observation is None or not project.tasks:
         for task in definition.tasks:
@@ -345,13 +365,25 @@ def task_views(
     return rows
 
 
-def person_names(project: LiveProject) -> dict[str, str]:
+def person_names(project: LiveProject, language: Language | None = None) -> dict[str, str]:
+    """The name of every person key; temporary workers as stored ("Temporary <role> n"), or in
+    `language` (spec section 11.7)."""
     names = {p.key: p.name for p in project.definition.team}
-    names.update({temp.key: temp.name for temp in project.temps})
+    if language is None or not project.temps:
+        names.update({temp.key: temp.name for temp in project.temps})
+        return names
+    role_names = project.require_model().role_names
+    numbers: dict[int, int] = {}
+    for temp in project.temps:
+        numbers[temp.role] = numbers.get(temp.role, 0) + 1
+        values = {"role": role_names[temp.role], "number": numbers[temp.role]}
+        names[temp.key] = render("temporary_person", language, values)
     return names
 
 
-def person_views(project: LiveProject, observation: Observation | None) -> list[PersonView]:
+def person_views(
+    project: LiveProject, observation: Observation | None, language: Language | None = None
+) -> list[PersonView]:
     calendar = project.calendar
     rows = []
     for w, person in enumerate(project.definition.team):
@@ -376,11 +408,12 @@ def person_views(project: LiveProject, observation: Observation | None) -> list[
         )
     if project.temps:
         model = project.require_model()
+        names = person_names(project, language)
         for temp in project.temps:
             rows.append(
                 PersonView(
                     key=temp.key,
-                    name=temp.name,
+                    name=names[temp.key],
                     role=model.role_names[temp.role],
                     temporary=True,
                     absent=False,
@@ -395,46 +428,40 @@ def person_views(project: LiveProject, observation: Observation | None) -> list[
 
 
 def describe(
-    decision: Decision, kind: str, project: LiveProject, day: int, language: Language
+    decision: Decision,
+    kind: str,
+    project: LiveProject,
+    day: int,
+    language: Language,
+    applied: AppliedAction | None = None,
 ) -> str:
-    """The action of a decision in plain language (spec section 11.5)."""
+    """The action of a decision in the wording of spec section 11.7: a part per operation in
+    operation order (a SUBST part per substitute, naming the absent member it replaces), the plan
+    part last, later parts in lower case. `applied` is the action as the recommendation of `day`
+    applied it, so that its own crew change is not taken for the crew it saw."""
     if not decision.operations:
         return render("action_noop", language)
     model = project.require_model()
-    calendar = project.calendar
     keys = {j: key for key, j in project.activity_ids().items()}
     nodes = project.nodes()
-    workers = project.worker_keys()
-    names = person_names(project)
+    names = person_names(project, language)
     parts = []
     plan_part = None
     for op in decision.operations:
         match op:
             case Subst():
-                who = ", ".join(
-                    names.get(workers[w], str(w)) for w in op.workers if w < len(workers)
-                )
-                parts.append(
-                    render(
-                        "action_subst",
-                        language,
-                        {"workers": who, "task": nodes[keys[op.activity]].name},
-                    )
-                )
+                task = nodes[keys[op.activity]].name
+                for worker, absent in replaced_members(project, op, day, applied):
+                    values = {
+                        "worker": names.get(worker, worker),
+                        "absent": names.get(absent, absent) if absent is not None else "?",
+                        "task": task,
+                    }
+                    parts.append(render("action_subst", language, values))
             case Overtime():
-                until = calendar.finish_date(day + op.days)
-                parts.append(
-                    render(
-                        "action_overtime",
-                        language,
-                        {
-                            "count": op.workers,
-                            "role": model.role_names[op.role],
-                            "days": op.days,
-                            "until": until.isoformat(),
-                        },
-                    )
-                )
+                code = "action_overtime_one" if op.workers == 1 else "action_overtime_many"
+                hire = {"count": op.workers, "role": model.role_names[op.role], "days": op.days}
+                parts.append(render(code, language, hire))
             case Descope():
                 parts.append(
                     render("action_descope", language, {"task": nodes[keys[op.activity]].name})
@@ -446,8 +473,69 @@ def describe(
                 plan_part = render("action_reseq_s" if stable else "action_reseq_m", language)
     if plan_part is not None:
         parts.append(plan_part)
-    text = render("action_then", language).join(parts)
-    return text[:1].upper() + text[1:]
+    first, *rest = parts
+    return render("action_then", language).join([first, *(_lower_first(p) for p in rest)])
+
+
+def _lower_first(text: str) -> str:
+    return text[:1].lower() + text[1:]
+
+
+def replaced_members(
+    project: LiveProject, op: Subst, day: int, applied: AppliedAction | None = None
+) -> list[tuple[str, str | None]]:
+    """(substitute, replaced member) person keys of a SUBST on `day` (spec section 4): within a
+    role, the substitutes in the order given replace the crew's absent members in increasing
+    worker id order; None if no absent member of the substitute's role is found."""
+    keys = {j: key for key, j in project.activity_ids().items()}
+    workers = project.worker_keys()
+    roles = project.worker_roles()
+    index = {key: w for w, key in enumerate(workers)}
+    tracked = project.tasks[keys[op.activity]]
+    crew = _crew_before(tracked, day, applied)
+    absent = sorted(
+        index[member]
+        for member in crew
+        if member in index and project.absent(member, day) is not None
+    )
+    pairs: list[tuple[str, str | None]] = []
+    for w in op.workers:
+        if w >= len(workers):
+            continue
+        match = next((a for a in absent if roles[a] == roles[w]), None)
+        if match is not None:
+            absent.remove(match)
+        pairs.append((workers[w], None if match is None else workers[match]))
+    return pairs
+
+
+def _crew_before(tracked: Tracked, day: int, applied: AppliedAction | None) -> tuple[str, ...]:
+    """The crew of a task as a recommendation of `day` saw it: its crew history up to `day`,
+    without the change of `applied`, the action that recommendation applied."""
+    after = None if applied is None else applied.crews.get(tracked.key)
+    crew: tuple[str, ...] = ()
+    for first, members in tracked.crews:
+        if first > day or (after is not None and first == day and members == after):
+            break
+        crew = members
+    return crew or tracked.crew
+
+
+APPROVAL_REASONS = {"subst": "people", "overtime": "money", "descope": "scope"}
+
+
+def approval_reasons(decision: Decision, autonomy: int) -> list[str]:
+    """Why an action needs the manager's approval (spec sections 4 and 11.7): "people" (SUBST),
+    "money" (OVERTIME), "scope" (DESCOPE) and "plan" (a plan change above the autonomy), each
+    once, for the operations of level at least Lambda and DESCOPE."""
+    reasons: list[str] = []
+    for op in decision.operations:
+        if op.kind == "noop" or (LEVELS[op.kind] < autonomy and op.kind != "descope"):
+            continue
+        reason = APPROVAL_REASONS.get(op.kind, "plan")
+        if reason not in reasons:
+            reasons.append(reason)
+    return reasons
 
 
 def _outcome(impact: Impact | None, calendar: WorkCalendar) -> OutcomeView | None:
@@ -467,7 +555,10 @@ def _outcome(impact: Impact | None, calendar: WorkCalendar) -> OutcomeView | Non
 
 
 def recommendation_view(
-    project: LiveProject, entry: RecommendationEntry, language: Language
+    project: LiveProject,
+    entry: RecommendationEntry,
+    language: Language,
+    can_undo: bool = False,
 ) -> RecommendationView:
     recommendation = entry.recommendation
     record = recommendation.record
@@ -477,10 +568,11 @@ def recommendation_view(
     kind = chosen.kind if chosen is not None else "noop"
     params = sentinel_params(project)
     nodes = project.nodes()
+    applied = entry.applied
     alternatives = [
         AlternativeView(
             label=c.label,
-            title=describe(c.decision, c.kind, project, recommendation.day, language),
+            title=describe(c.decision, c.kind, project, recommendation.day, language, applied),
             p_on_time=c.p_on_time,
             tardiness=c.tardiness,
             expected_cost=c.mean_cost,
@@ -489,6 +581,7 @@ def recommendation_view(
         for c in _alternatives(record.candidates, record.chosen, record.runner_up)
     ]
     reason = record.reason
+    needs_approval = recommendation.acts and params.needs_approval(decision)
     return RecommendationView(
         seq=entry.seq,
         day=recommendation.day,
@@ -497,10 +590,12 @@ def recommendation_view(
         status_text=render(f"status_{entry.status}", language),
         label=record.chosen,
         kind=kind,
-        title=describe(decision, kind, project, recommendation.day, language),
+        title=describe(decision, kind, project, recommendation.day, language, applied),
         acts=recommendation.acts,
         level=decision.level,
-        needs_approval=recommendation.acts and params.needs_approval(decision),
+        needs_approval=needs_approval,
+        approval_reasons=approval_reasons(decision, params.autonomy) if needs_approval else [],
+        can_undo=can_undo,
         urgency=recommendation.urgency,
         can_wait=recommendation.urgency is not None and recommendation.urgency > params.tau_def,
         reason=reason,
@@ -568,4 +663,7 @@ def forecast_view(project: LiveProject, result: ForecastResult) -> ForecastView:
         drivers=[
             DriverView(task=d.task, name=nodes[d.task].name, share=d.share) for d in result.drivers
         ],
+        expected_cost=result.mean_cost,
+        budget=project.require_model().budget,
+        p_within_budget=result.p_within_budget,
     )

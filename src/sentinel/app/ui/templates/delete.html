@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>{{ t("delete.title") }}</h1></div>
+<div class="panel">
+  <p>{{ t("delete.text", name=name) }}</p>
+  <form hx-post="/projects/{{ project_id }}/delete">
+    <div class="actions">
+      <a class="btn" href="/projects/{{ project_id }}">{{ t("common.cancel") }}</a>
+      <button class="btn btn-danger">{{ t("delete.confirm") }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+<div class="alert alert-error" role="alert">
+  <p><strong>{{ t("setup.import.failed") }}</strong></p>
+  <ul class="issues">{% for issue in issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+</div>

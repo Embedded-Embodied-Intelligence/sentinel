@@ -1,0 +1,11 @@
+<div class="page-head">
+  <p class="eyebrow"><a href="/">{{ t("nav.projects") }}</a> <span aria-hidden="true">›</span> {{ view.name }}</p>
+  <h1>{{ title }}</h1>
+  {% if view.tracking %}<p class="sub">{{ t("project.as_of", date=t.date(view.checkins[-1].date)) }}</p>{% else %}<p class="sub">{{ t("project.not_started", date=t.date(view.definition.start)) }}</p>{% endif %}
+</div>
+<nav class="tabs" aria-label="{{ t('project.sections') }}">
+  <a href="/projects/{{ view.id }}"{% if tab == 'overview' %} aria-current="page"{% endif %}>{{ t("project.tab.overview") }}</a>
+  {% if not view.finished %}<a href="/projects/{{ view.id }}/checkin"{% if tab == 'checkin' %} aria-current="page"{% endif %}>{{ t("project.tab.checkin") }}</a>{% endif %}
+  <a href="/projects/{{ view.id }}/history"{% if tab == 'history' %} aria-current="page"{% endif %}>{{ t("project.tab.history") }}</a>
+  <a href="/projects/{{ view.id }}/settings"{% if tab == 'settings' %} aria-current="page"{% endif %}>{{ t("project.tab.settings") }}</a>
+</nav>

@@ -1,0 +1,118 @@
+"""The message catalogue of the pages (WP9b; spec section 11.7): both languages for every key
+with the same placeholders, every key the templates use, and the formats people read."""
+
+import re
+import string
+from datetime import date
+from pathlib import Path
+
+import pytest
+from ui_check import problems
+
+from sentinel.app.messages import MESSAGES
+from sentinel.app.ui.text import CATALOGUE, Texts, plural_form
+
+UI = Path(__file__).parents[1] / "src/sentinel/app/ui"
+# Keys built from a prefix and a value in the templates and the code.
+FAMILIES = {
+    "setup.step.": ("basics", "team", "tasks"),
+    "setup.state.": ("done", "current", "todo"),
+    "setup.tab.": ("describe", "import", "manual"),
+    "preset.estimation.": ("confident", "typical", "uncertain"),
+    "preset.disruptions.": ("calm", "typical", "turbulent"),
+    "chance.level.": ("good", "warn", "bad", "neutral"),
+    "settings.provider.": ("none", "ollama", "groq", "openrouter"),
+    "autonomy.": ("0", "1", "2", "3"),
+    "rec.reason.": ("people", "money", "scope", "plan"),
+    "rec.badge.": ("faithful", "unfaithful"),
+    "history.show.": ("all", "checkins", "recommendations", "changes"),
+    "history.kind.": ("checkin", "recommendation", "decision", "change"),
+    "history.verdict.": ("approve", "reject", "later"),
+    "project.tab.": ("overview", "checkin", "history", "settings"),
+    "checkin.status.": ("not_started", "in_progress", "done"),
+    "sim.size.": ("j30", "j60"),
+    "sim.name.": ("j30", "j60"),
+    "sim.example_hint.": ("j30", "j60"),
+    "sim.manager.": ("sentinel", "no_reaction"),
+    "sim.kind.": ("absence", "grows", "new", "sentinel", "finish"),
+    "sim.days.": ("1", "5", "10", "end"),
+}
+HINTED = ("preset.estimation.", "preset.disruptions.", "settings.provider.", "autonomy.")
+
+
+def _fields(text: str) -> set[str]:
+    return {name for _, name, _, _ in string.Formatter().parse(text) if name}
+
+
+def test_both_languages_have_every_key_with_the_same_placeholders() -> None:
+    for key, (english, polish) in CATALOGUE.items():
+        assert english.strip() and polish.strip(), key
+        assert _fields(english) == _fields(polish), key
+    plural = {k.rsplit(".", 1)[0] for k in CATALOGUE if k.endswith((".one", ".few", ".many"))}
+    for base in plural:
+        assert all(f"{base}.{form}" in CATALOGUE for form in ("one", "few", "many")), base
+    assert set(MESSAGES["en"]) == set(MESSAGES["pl"])
+
+
+def test_every_key_the_pages_use_exists() -> None:
+    used: set[str] = set()
+    pattern = re.compile(r"""\b(?:t|texts|t\.plural|texts\.plural)\(\s*["']([a-z_.0-9]+)["']""")
+    for path in [*UI.glob("templates/*.html"), *UI.glob("*.py")]:
+        used |= set(pattern.findall(path.read_text(encoding="utf-8")))
+    for prefix, values in FAMILIES.items():
+        used |= {prefix + value for value in values}
+        if prefix in HINTED:
+            used |= {f"{prefix}{value}.hint" for value in values}
+    plural = {k.rsplit(".", 1)[0] for k in CATALOGUE if k.endswith(".one")}
+    missing = sorted(k for k in used if k not in CATALOGUE and k not in plural)
+    dynamic = {k for k in missing if k.endswith(".")}
+    assert sorted(set(missing) - dynamic) == []
+
+
+def test_internal_terms_are_not_in_the_catalogue() -> None:
+    for key, texts in CATALOGUE.items():
+        for text in texts:
+            assert problems(f"<p>{text}</p>") == [], key
+    shown = ("action_", "status_", "reason_", "progress_", "temporary_person")
+    for language in ("en", "pl"):
+        for code, text in MESSAGES[language].items():
+            if code.startswith(shown):
+                assert problems(f"<p>{text}</p>") == [], code
+
+
+@pytest.mark.parametrize(
+    ("language", "expected"),
+    [
+        ("en", ["one", "many", "many", "many", "many"]),
+        ("pl", ["one", "few", "many", "many", "few"]),
+    ],
+)
+def test_plural_forms(language: str, expected: list[str]) -> None:
+    assert [plural_form(language, n) for n in (1, 2, 5, 12, 22)] == expected  # type: ignore[arg-type]
+
+
+def test_formats_people_read() -> None:
+    en, pl = Texts("en"), Texts("pl")
+    this_year = date.today().year
+    assert en.date(date(this_year, 3, 16)).endswith("16\u00a0Mar")
+    assert pl.date(date(this_year, 3, 16)).startswith(
+        ("pon.", "wt.", "śr.", "czw.", "pt.", "sob.", "niedz.")
+    )
+    assert en.date(date(this_year + 1, 1, 4)).endswith(str(this_year + 1))
+    assert en.date(None) == "—"
+    assert [en.pct(p) for p in (0.0, 0.004, 0.645, 0.996, 1.0)] == [
+        "0\u00a0%",
+        "<\u00a01\u00a0%",
+        "65\u00a0%",
+        ">\u00a099\u00a0%",
+        "100\u00a0%",
+    ]
+    assert (en.decimal(1.5), pl.decimal(1.5), en.decimal(2.0)) == ("1.5", "1,5", "2")
+    assert (en.money(12345.4), pl.money(12345.4)) == ("12,345", "12\u00a0345")
+    assert (en.signed_money(-3.2), en.signed_money(0.2), en.signed_money(4)) == (
+        "\u22123",
+        "±0",
+        "+4",
+    )
+    assert en("nope") == "⟦nope⟧"
+    assert pl.plural("chip.tasks", 3) == "3 zadania" and en.plural("chip.tasks", 1) == "1 task"

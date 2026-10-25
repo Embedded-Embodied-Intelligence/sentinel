@@ -84,7 +84,8 @@ class Driver(_Frozen):
 
 class ForecastResult(_Frozen):
     """The forecast of day `day` (spec section 11.4): P(C <= D) (None without a deadline), the
-    10/50/90 % quantiles and the mean of the makespan C, and the risk drivers."""
+    10/50/90 % quantiles and the mean of the makespan C, the risk drivers, and for the budget
+    outlook the mean total cost of the rollouts and the share within the budget B."""
 
     day: int
     seed: int
@@ -94,6 +95,8 @@ class ForecastResult(_Frozen):
     mean: float
     truncated: int
     drivers: tuple[Driver, ...]
+    mean_cost: float = 0.0
+    p_within_budget: float | None = None
     wall_time_s: float = Field(default=0.0, exclude=True)
 
 
@@ -117,7 +120,8 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
         (j for j in counts if j in keys),
         key=lambda j: (-counts[j], -nodes[keys[j]].duration, j),
     )
-    deadline = observation.deadline
+    deadline, budget = observation.deadline, observation.budget
+    costs = [state.cost for state in states]
     q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
     return ForecastResult(
         day=observation.day,
@@ -128,6 +132,8 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
         mean=float(np.mean(makespans)),
         truncated=sum(state.start[state.sink] is None for state in states),
         drivers=tuple(Driver(task=keys[j], share=counts[j] / rollouts) for j in ranked[:DRIVERS]),
+        mean_cost=float(np.mean(costs)),
+        p_within_budget=None if budget is None else sum(c <= budget for c in costs) / rollouts,
         wall_time_s=time.perf_counter() - began,
     )
 

@@ -1,0 +1,3 @@
+{% if delta >= 2 %}<span class="trend trend-up"><span aria-hidden="true">▲ </span>{{ t.plural("trend.up", delta) }}</span>
+{% elif delta <= -2 %}<span class="trend trend-down"><span aria-hidden="true">▼ </span>{{ t.plural("trend.down", -delta) }}</span>
+{% else %}<span class="trend trend-flat"><span aria-hidden="true">▶ </span>{{ t("trend.flat") }}</span>{% endif %}

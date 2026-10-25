@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "_project_head.html" %}
+<article class="rec" aria-labelledby="rec-title">
+  <p class="eyebrow">{{ t("rec.from", date=t.date(rec.date)) }} · <span class="badge badge-{{ 'warn' if rec.status == 'open' else 'neutral' }}">{{ rec.status_text }}</span>{% if rec.can_wait and rec.status in ("open", "later") %} · <span class="badge badge-neutral">{{ t("rec.can_wait") }}</span>{% endif %}</p>
+  <h2 id="rec-title" class="rec-title">{{ rec.title }}</h2>
+  {% if chips %}
+  <ul class="chips chips-large" aria-label="{{ t('rec.effect') }}">
+    {% for chip in chips %}<li class="chip chip-{{ chip.tone }}"><span class="chip-label">{{ chip.label }}</span> {{ chip.text }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if rec.status in ("open", "later") and rec.needs_approval %}
+  <p class="alert alert-info">{{ t("rec.needs_approval") }}
+    {% for reason in rec.approval_reasons %}<span class="badge badge-neutral">{{ t("rec.reason." ~ reason) }}</span> {% endfor %}
+  </p>
+  {% elif rec.status == "auto" %}
+  <p class="alert alert-info">{{ t("rec.was_auto") }}{% if not rec.can_undo %} {{ t("rec.no_undo") }}{% endif %}</p>
+  {% elif rec.status == "discarded" and rec.discarded %}
+  <p class="alert alert-warn">{{ t("rec.discarded") }}</p>
+  {% endif %}
+
+  <section class="panel" aria-labelledby="why-title">
+    <h3 id="why-title">{{ t("rec.why") }}</h3>
+    <p>{{ why }}</p>
+    {% if rec.llm_explanation %}
+    {% set ai = rec.llm_explanation %}
+    <div class="ai-text">
+      <p class="eyebrow">{{ t("rec.ai_title") }} {% if ai.badge == "faithful" %}<span class="badge badge-good"><span aria-hidden="true">✓ </span>{{ t("rec.badge.faithful") }}</span>{% elif ai.badge == "unfaithful" %}<span class="badge badge-warn">{{ t("rec.badge.unfaithful") }}</span>{% endif %}</p>
+      {% if ai.text %}<p>{{ ai.text }}</p>{% else %}<p class="muted">{{ t("rec.ai_invalid") }}</p>{% endif %}
+    </div>
+    {% elif llm %}
+    <form hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/explain" hx-target="#explain-area">
+      <button class="btn btn-small">{{ t("rec.ask_ai") }}</button>
+    </form>
+    <div id="explain-area" aria-live="polite"></div>
+    {% endif %}
+  </section>
+
+  {% if rec.changes %}
+  <section class="panel" aria-labelledby="changes-title">
+    <h3 id="changes-title">{{ t("rec.changes_title") }}</h3>
+    <ul class="changes">
+      {% for change in rec.changes[:12] %}<li>{{ t("rec.change", task=change.name, old=t.date(change.old), new=t.date(change.new)) }}</li>{% endfor %}
+      {% if rec.changes | length > 12 %}<li class="muted">{{ t.plural("rec.more_changes", rec.changes | length - 12) }}</li>{% endif %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if rec.alternatives %}
+  <section class="panel" aria-labelledby="alt-title">
+    <h3 id="alt-title">{{ t("rec.alternatives") }}</h3>
+    <div class="table-wrap">
+    <table class="table">
+      <caption class="vh">{{ t("rec.alternatives") }}</caption>
+      <thead><tr><th scope="col">{{ t("rec.col.option") }}</th><th scope="col" class="num">{{ t("rec.col.chance") }}</th><th scope="col" class="num">{{ t("rec.col.delay") }}</th><th scope="col" class="num">{{ t("rec.col.cost") }}</th></tr></thead>
+      <tbody>
+        {% if rec.with_action %}
+        <tr class="chosen"><th scope="row">{{ rec.title }} <span class="badge badge-info">{{ t("rec.chosen") }}</span></th><td class="num">{{ t.pct(rec.with_action.p_on_time) }}</td><td class="num">{{ t.decimal(rec.with_action.tardiness) }}</td><td class="num">{{ t.money(rec.with_action.expected_cost) }}</td></tr>
+        {% endif %}
+        {% for alt in rec.alternatives %}
+        <tr><th scope="row">{{ t("rec.alt_noop") if alt.label == "NOOP" else alt.title }}{% if alt.dropped %} <span class="small muted">{{ t("rec.dropped") }}</span>{% endif %}</th><td class="num">{{ t.pct(alt.p_on_time) }}</td><td class="num">{{ t.decimal(alt.tardiness) }}</td><td class="num">{{ t.money(alt.expected_cost) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p class="hint">{{ t("rec.alt_note") }}</p>
+  </section>
+  {% endif %}
+
+  {% if rec.status in ("open", "later") and rec.acts %}
+  <form class="decision" hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/decision">
+    <div class="actions">
+      <button class="btn" name="verdict" value="reject">{{ t("rec.reject") }}</button>
+      {% if rec.status == "open" %}<button class="btn" name="verdict" value="later">{{ t("rec.later") }}</button>{% endif %}
+      <button class="btn btn-primary" name="verdict" value="approve">{{ t("rec.approve") }}</button>
+    </div>
+  </form>
+  {% elif rec.status == "auto" and rec.can_undo %}
+  <form hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/undo"><div class="actions"><button class="btn btn-primary">{{ t("overview.undo") }}</button></div></form>
+  {% else %}
+  <p class="actions"><a class="btn btn-primary" href="/projects/{{ view.id }}">{{ t("rec.back") }}</a></p>
+  {% endif %}
+</article>
+{% endblock %}

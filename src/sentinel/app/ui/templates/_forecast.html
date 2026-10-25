@@ -1,0 +1,41 @@
+{% if failed %}
+<div class="alert alert-error" role="alert">
+  <p>{{ t("overview.forecast_failed") }} {{ failed }}</p>
+  <button class="btn btn-small" hx-get="/projects/{{ view.id }}/forecast" hx-target="#forecast">{{ t("common.retry") }}</button>
+</div>
+{% elif summary is none %}
+<p class="muted">{{ t("overview.no_forecast") }}</p>
+{% else %}
+{% set f = summary.forecast %}
+{% if f.p_on_time is not none %}
+<p class="headline">
+  <span>{{ t("overview.chance") }}</span>
+  <strong class="headline-number">{{ t.pct(f.p_on_time) }}</strong>
+  <span class="badge badge-{{ level }}">{{ t("chance.level." ~ level) }}</span>
+  {% if delta is not none %}{% include "_trend.html" %}{% endif %}
+</p>
+{% else %}
+<p class="headline">{{ t("overview.no_deadline") }} <a href="/projects/{{ view.id }}/settings">{{ t("overview.set_deadline") }}</a></p>
+{% endif %}
+<dl class="kpis">
+  {% if f.deadline %}<div><dt>{{ t("overview.deadline") }}</dt><dd>{{ t.date(f.deadline) }}</dd></div>{% endif %}
+  <div><dt>{{ t("overview.likely") }}</dt><dd>{{ t.date(f.p50) }}</dd></div>
+  <div><dt>{{ t("overview.bad_case") }}</dt><dd>{{ t.date(f.p90) }}</dd></div>
+  {% if f.budget %}
+  <div><dt>{{ t("overview.spent") }}</dt><dd>{{ t("overview.spent_of", spent=t.money(view.cost_so_far or 0), budget=t.money(f.budget)) }}</dd></div>
+  <div><dt>{{ t("overview.expected_cost") }}</dt><dd>{{ t.money(f.expected_cost) }}{% if f.p_within_budget is not none %} <span class="small muted">({{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }})</span>{% endif %}</dd></div>
+  {% endif %}
+</dl>
+<p class="small muted">{{ t("overview.forecast_note", futures=f.rollouts) }}</p>
+<div id="drivers" hx-swap-oob="true">
+  {% set shown = f.drivers | selectattr("share", ">=", 0.05) | list %}
+  {% if shown %}
+  <ol class="drivers">
+    {% for d in shown[:3] %}
+    {% set count = (d.share * 10) | round | int %}
+    <li>{% if count >= 10 %}{{ t("overview.driver_all", task=d.name) }}{% else %}{{ t("overview.driver", task=d.name, count=[count, 1] | max) }}{% endif %}</li>
+    {% endfor %}
+  </ol>
+  {% else %}<p class="muted small">{{ t("overview.no_drivers") }}</p>{% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "_project_head.html" %}
+{% set d = view.definition %}
+<form class="form" hx-post="/projects/{{ view.id }}/settings" hx-target="main" hx-select="main" hx-swap="outerHTML" novalidate>
+  {% if errors %}<div class="alert alert-error" role="alert"><p>{{ t("form.fix_below") }}</p><ul class="issues">{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
+  <section class="panel" aria-labelledby="basics-title">
+    <h2 id="basics-title">{{ t("psettings.basics") }}</h2>
+    <div class="field">
+      <label for="name">{{ t("setup.name") }}</label>
+      <input id="name" name="name" value="{{ d.name }}" maxlength="120"{% if errors.get('name') %} aria-invalid="true"{% endif %}>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="deadline">{{ t("setup.deadline") }}</label>
+        <input id="deadline" name="deadline" type="date" value="{{ d.deadline or '' }}"{% if errors.get('deadline') %} aria-invalid="true"{% endif %}>
+      </div>
+      <div class="field">
+        <label for="budget">{{ t("setup.budget") }}</label>
+        <input id="budget" name="budget" inputmode="decimal" value="{{ d.budget if d.budget is not none else '' }}" aria-describedby="budget-hint"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
+        <p class="hint" id="budget-hint">{{ t("psettings.budget_hint", budget=t.money(view.budget or 0)) }}</p>
+      </div>
+    </div>
+  </section>
+  <section class="panel" aria-labelledby="autonomy-title">
+    <h2 id="autonomy-title">{{ t("psettings.autonomy") }}</h2>
+    <fieldset class="choices">
+      <legend class="vh">{{ t("psettings.autonomy") }}</legend>
+      {% for level in range(4) %}
+      <label class="choice">
+        <input type="radio" name="autonomy" value="{{ level }}"{% if d.settings.autonomy == level %} checked{% endif %}>
+        <span><strong>{{ t("autonomy." ~ level) }}</strong><span class="hint">{{ t("autonomy." ~ level ~ ".hint") }}</span></span>
+      </label>
+      {% endfor %}
+    </fieldset>
+  </section>
+  <section class="panel" aria-labelledby="presets-title">
+    <h2 id="presets-title">{{ t("psettings.presets") }}</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="estimation">{{ t("setup.estimation") }}</label>
+        <select id="estimation" name="estimation">{% for value in ("confident", "typical", "uncertain") %}<option value="{{ value }}"{% if d.settings.estimation == value %} selected{% endif %}>{{ t("preset.estimation." ~ value) }}</option>{% endfor %}</select>
+      </div>
+      <div class="field">
+        <label for="disruptions">{{ t("setup.disruptions") }}</label>
+        <select id="disruptions" name="disruptions">{% for value in ("calm", "typical", "turbulent") %}<option value="{{ value }}"{% if d.settings.disruptions == value %} selected{% endif %}>{{ t("preset.disruptions." ~ value) }}</option>{% endfor %}</select>
+      </div>
+    </div>
+  </section>
+  {% if roles %}
+  <section class="panel" aria-labelledby="costs-title">
+    <h2 id="costs-title">{{ t("psettings.costs") }}</h2>
+    <p class="hint">{{ t("psettings.costs_hint") }}</p>
+    <div class="grid-3">
+      {% for role in roles %}
+      <div class="field">
+        <label for="cost-{{ loop.index0 }}">{{ t("psettings.cost_of", role=role) }}</label>
+        <input id="cost-{{ loop.index0 }}" name="cost_{{ loop.index0 }}" inputmode="decimal" class="mid" value="{{ t.decimal(cost_of(role)) }}">
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% if llm %}
+  <section class="panel" aria-labelledby="ai-title">
+    <h2 id="ai-title">{{ t("psettings.ai") }}</h2>
+    <label class="check"><input type="checkbox" name="llm_proposals"{% if d.settings.llm_proposals %} checked{% endif %}> {{ t("psettings.ai_proposals") }}</label>
+  </section>
+  {% else %}
+  <input type="hidden" name="llm_proposals" value="{{ 'on' if d.settings.llm_proposals else '' }}">
+  {% endif %}
+  <input type="hidden" name="llm_explanations" value="{{ 'on' if d.settings.llm_explanations else '' }}">
+  <div class="actions"><button class="btn btn-primary">{{ t("common.save") }}</button></div>
+</form>
+<section class="panel" aria-labelledby="export-title">
+  <h2 id="export-title">{{ t("psettings.export") }}</h2>
+  <ul class="links">
+    <li><a href="/api/projects/{{ view.id }}/plan.csv" download>{{ t("psettings.export_plan") }}</a></li>
+    <li><a href="/api/projects/{{ view.id }}/export.json" download>{{ t("psettings.export_project") }}</a></li>
+  </ul>
+  <form hx-post="/projects/{{ view.id }}/report" hx-target="#report-area"><button class="btn">{{ t("psettings.report") }}</button></form>
+  <div id="report-area" aria-live="polite"></div>
+</section>
+<section class="panel danger-zone" aria-labelledby="delete-title">
+  <h2 id="delete-title">{{ t("psettings.delete") }}</h2>
+  <p>{{ t("psettings.delete_text") }}</p>
+  <a class="btn btn-danger" href="/projects/{{ view.id }}/delete">{{ t("psettings.delete_button") }}</a>
+</section>
+{% endblock %}

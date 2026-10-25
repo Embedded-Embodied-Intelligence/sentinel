@@ -6,8 +6,11 @@ repos:
     hooks:
       - id: check-added-large-files
         args: ["--maxkb=10000"]
+      # Vendored files stay byte-identical to their pinned releases (ADR-0025).
       - id: end-of-file-fixer
+        exclude: ^(src/sentinel/app/ui/static/htmx-[0-9.]+\.(min\.js|LICENSE\.txt)|tests/vendor/.*)$
       - id: trailing-whitespace
+        exclude: ^(src/sentinel/app/ui/static/htmx-[0-9.]+\.(min\.js|LICENSE\.txt)|tests/vendor/.*)$
       - id: check-toml
   - repo: local
     hooks:

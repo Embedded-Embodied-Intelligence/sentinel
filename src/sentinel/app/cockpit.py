@@ -265,7 +265,7 @@ def live_page(state: LiveState, language: Language, rows: Sequence[EventRow] = (
     ids = project.activity_ids()
     nodes = project.nodes()
     names = {ids[key]: node.name for key, node in nodes.items()}
-    people_by_key = person_names(project)
+    people_by_key = person_names(project, language)
     people = [people_by_key[key] for key in project.worker_keys()]
     t = LiveText(language, calendar, names, model.role_names, people)
     observation = project.observation()
@@ -540,7 +540,7 @@ def _log_row(project: LiveProject, entry: RecommendationEntry, language: Languag
     chosen = recommendation.chosen
     decision = chosen.decision if chosen is not None else record.decision
     kind = chosen.kind if chosen is not None else "noop"
-    title = describe(decision, kind, project, recommendation.day, language)
+    title = describe(decision, kind, project, recommendation.day, language, entry.applied)
     impact = recommendation.impact(record.chosen) or recommendation.impact("NOOP")
     p = "—" if impact is None else f"{impact.p_on_time:.2f}"
     if entry.explanation is not None:

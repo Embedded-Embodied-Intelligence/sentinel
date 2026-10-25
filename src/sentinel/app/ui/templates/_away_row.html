@@ -1,0 +1,21 @@
+<div class="row-group" data-row>
+  <input type="hidden" name="away_rows" value="{{ i }}">
+  <div class="field">
+    <label for="away-{{ i }}-person">{{ t("checkin.away.who") }}</label>
+    <select id="away-{{ i }}-person" name="away_{{ i }}_person">
+      <option value="">{{ t("checkin.away.choose") }}</option>
+      {% for person in people %}<option value="{{ person.key }}"{% if fv('away_' ~ i ~ '_person', '') == person.key %} selected{% endif %}>{{ person.name }} ({{ person.role }})</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="away-{{ i }}-from">{{ t("checkin.away.from") }}</label>
+    <input type="date" id="away-{{ i }}-from" name="away_{{ i }}_from" value="{{ fv('away_' ~ i ~ '_from', default_date) }}">
+    {% if errors.get('away_' ~ i ~ '_from') %}<p class="error-text">{{ errors['away_' ~ i ~ '_from'] }}</p>{% endif %}
+  </div>
+  <div class="field">
+    <label for="away-{{ i }}-back">{{ t("checkin.away.back") }}</label>
+    <input type="date" id="away-{{ i }}-back" name="away_{{ i }}_back" value="{{ fv('away_' ~ i ~ '_back', '') }}">
+    {% if errors.get('away_' ~ i ~ '_back') %}<p class="error-text">{{ errors['away_' ~ i ~ '_back'] }}</p>{% endif %}
+  </div>
+  <button type="button" class="btn btn-quiet btn-small" data-remove-row>{{ t("setup.remove") }}</button>
+</div>

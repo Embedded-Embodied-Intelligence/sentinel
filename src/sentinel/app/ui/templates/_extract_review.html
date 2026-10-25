@@ -1,0 +1,20 @@
+<div class="panel review">
+  <h3>{{ t("setup.describe.found", count=tasks | length) }}</h3>
+  {% if issues %}<p class="alert alert-warn">{{ t("setup.describe.issues", count=issues) }}</p>{% endif %}
+  <div class="table-wrap">
+  <table class="table">
+    <caption class="vh">{{ t("setup.describe.caption") }}</caption>
+    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t("setup.tasks.name") }}</th><th scope="col" class="num">{{ t("setup.tasks.days") }}</th><th scope="col">{{ t("setup.describe.people") }}</th><th scope="col">{{ t("setup.tasks.after") }}</th></tr></thead>
+    <tbody>
+    {% for task in tasks %}
+    <tr><td class="num">{{ loop.index }}</td><td>{{ task.name }}</td><td class="num">{{ task.duration }}</td><td>{{ crew_text(task) }}</td><td>{{ after_names(task) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if team %}<p>{{ t("setup.describe.team", people=team | join(", ")) }}</p>{% endif %}
+  <form hx-post="/projects/{{ project_id }}/setup/use-extraction" hx-target="#step">
+    <input type="hidden" name="draft" value="{{ draft }}">
+    <div class="actions"><button class="btn btn-primary">{{ t("setup.describe.use") }}</button></div>
+  </form>
+</div>

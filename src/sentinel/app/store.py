@@ -412,6 +412,16 @@ class Store:
             )
             return int(row.fetchone()[0])
 
+    def project_jobs(self, session: str, project: str) -> list[JobRow]:
+        """The queued or running jobs of a project, oldest first."""
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT * FROM jobs WHERE session = ? AND project = ? "
+                "AND status IN ('queued', 'running') ORDER BY created",
+                (session, project),
+            ).fetchall()
+            return [_job(row) for row in rows]
+
     def fail_unfinished_jobs(self) -> int:
         """Mark the jobs a previous server process left queued or running as failed."""
         with self._write() as db:

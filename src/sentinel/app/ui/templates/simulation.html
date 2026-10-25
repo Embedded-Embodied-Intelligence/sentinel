@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <p class="eyebrow"><a href="/">{{ t("nav.projects") }}</a> <span aria-hidden="true">›</span> {{ t("sim.title") }}</p>
+  <h1>{{ sim.name }}</h1>
+  <p class="sub">{{ t("sim.size." ~ sim.spec.set_name) }} · {{ t("preset.disruptions." ~ sim.spec.disruptions) }} · {{ t("sim.managed_by", manager=t("sim.manager." ~ sim.spec.policy) if sim.spec.policy in ("sentinel", "no_reaction") else sim.spec.policy) }}</p>
+</div>
+<section class="panel" aria-labelledby="state-title">
+  <h2 id="state-title">{{ t("sim.state_title", date=t.date(sim.as_of)) }}</h2>
+  <dl class="kpis">
+    <div><dt>{{ t("overview.deadline") }}</dt><dd>{{ t.date(sim.deadline) }}</dd></div>
+    <div><dt>{{ t("sim.original_finish") }}</dt><dd>{{ t.date(sim.baseline_finish) }}</dd></div>
+    <div><dt>{{ t("sim.days_done") }}</dt><dd>{{ sim.days }}</dd></div>
+    <div><dt>{{ t("sim.budget") }}</dt><dd>{{ t.money(sim.budget) }}</dd></div>
+  </dl>
+  <div class="sides">
+    {% for side in sides %}
+    <div class="side">
+      <h3>{{ t("sim.manager." ~ side.policy) if side.policy in ("sentinel", "no_reaction") else side.policy }}</h3>
+      <p><progress max="{{ side.tasks_total }}" value="{{ side.done_tasks }}" aria-label="{{ t('sim.tasks_done', done=side.done_tasks, total=side.tasks_total) }}"></progress> {{ t("sim.tasks_done", done=side.done_tasks, total=side.tasks_total) }}</p>
+      <p class="small">{{ t("sim.cost_so_far", cost=t.money(side.cost), share=t.pct(side.cost_ratio)) }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% if not sim.finished %}
+  <div id="advance-area" aria-live="polite">{% if continue_run %}<div hx-post="/projects/{{ sim.id }}/advance" hx-vals='{"days": "end"}' hx-trigger="load" hx-target="#advance-area"></div>{% endif %}</div>
+  <form class="advance" hx-post="/projects/{{ sim.id }}/advance" hx-target="#advance-area">
+    <p class="small muted">{{ t("sim.advance_by") }}</p>
+    <div class="actions actions-left">
+      <button class="btn" name="days" value="1">{{ t("sim.days.1") }}</button>
+      <button class="btn btn-primary" name="days" value="5">{{ t("sim.days.5") }}</button>
+      <button class="btn" name="days" value="10">{{ t("sim.days.10") }}</button>
+      <button class="btn" name="days" value="end">{{ t("sim.days.end") }}</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+
+{% if sim.finished %}
+<section class="panel" aria-labelledby="compare-title">
+  <h2 id="compare-title">{{ t("sim.compare_title") }}</h2>
+  <div class="table-wrap">
+  <table class="table compare">
+    <caption class="vh">{{ t("sim.compare_title") }}</caption>
+    <thead><tr><th scope="col">{{ t("sim.col.measure") }}</th>{% for side in sides %}<th scope="col">{{ t("sim.manager." ~ side.policy) if side.policy in ("sentinel", "no_reaction") else side.policy }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      <tr><th scope="row">{{ t("sim.col.finish") }}</th>{% for side in sides %}<td>{{ t.date(side.finish) if side.finish else "—" }}</td>{% endfor %}</tr>
+      <tr><th scope="row">{{ t("sim.col.on_time") }}</th>{% for side in sides %}<td>{% if side.on_time %}<span class="badge badge-good"><span aria-hidden="true">✓ </span>{{ t("sim.on_time") }}</span>{% else %}<span class="badge badge-bad"><span aria-hidden="true">✗ </span>{{ t.plural("sim.late", side.late_days or 0) }}</span>{% endif %}</td>{% endfor %}</tr>
+      <tr><th scope="row">{{ t("sim.col.cost") }}</th>{% for side in sides %}<td>{{ t.money(side.cost) }} ({{ t.pct(side.cost_ratio) }})</td>{% endfor %}</tr>
+      <tr><th scope="row">{{ t("sim.col.changes") }}</th>{% for side in sides %}<td>{{ side.plan_changes }}</td>{% endfor %}</tr>
+      <tr><th scope="row">{{ t("sim.col.hired") }}</th>{% for side in sides %}<td>{{ side.hired }}</td>{% endfor %}</tr>
+      <tr><th scope="row">{{ t("sim.col.substituted") }}</th>{% for side in sides %}<td>{{ side.substituted }}</td>{% endfor %}</tr>
+    </tbody>
+  </table>
+  </div>
+  <p>{{ verdict }}</p>
+  <form hx-post="/projects/{{ sim.id }}/report" hx-target="#report-area"><button class="btn">{{ t("sim.report") }}</button></form>
+  <div id="report-area" aria-live="polite"></div>
+</section>
+{% endif %}
+
+<section class="panel" aria-labelledby="timeline-title">
+  <h2 id="timeline-title">{{ t("sim.timeline_title") }}</h2>
+  {% if timeline %}
+  <ol class="timeline">
+    {% for entry in timeline %}
+    <li class="tl-item tl-{{ entry.kind }}">
+      <p class="tl-when">{{ entry.when }} · <span class="tl-kind">{{ t("sim.kind." ~ entry.kind) }}</span></p>
+      <p class="tl-title">{{ entry.text }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}<p class="empty">{{ t("sim.timeline_empty") }}</p>{% endif %}
+</section>
+<p class="actions actions-left"><a class="btn btn-quiet" href="/projects/{{ sim.id }}/delete">{{ t("sim.delete") }}</a></p>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>{{ t("settings.title") }}</h1><p class="lead">{{ t("settings.lead") }}</p></div>
+{% if demo %}
+<div class="panel">
+  <p class="alert alert-info">{{ t("settings.demo") }}</p>
+  <dl class="facts">
+    <dt>{{ t("settings.provider") }}</dt><dd>{{ t("settings.provider." ~ view.provider) }}</dd>
+    <dt>{{ t("settings.status") }}</dt><dd>{{ t("settings.available") if view.available else t("settings.unavailable") }}</dd>
+  </dl>
+</div>
+{% else %}
+<form class="form panel" hx-post="/settings" novalidate>
+  <fieldset class="choices">
+    <legend>{{ t("settings.provider") }}</legend>
+    {% for provider in providers %}
+    <label class="choice">
+      <input type="radio" name="provider" value="{{ provider }}"{% if view.provider == provider %} checked{% endif %}>
+      <span><strong>{{ t("settings.provider." ~ provider) }}</strong><span class="hint">{{ t("settings.provider." ~ provider ~ ".hint") }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <div class="grid-2">
+    <div class="field">
+      <label for="model">{{ t("settings.model") }}</label>
+      <input id="model" name="model" value="{{ view.model or '' }}" maxlength="200" autocomplete="off" aria-describedby="model-hint">
+      <p class="hint" id="model-hint">{{ t("settings.model_hint") }}</p>
+    </div>
+    <div class="field">
+      <label for="host">{{ t("settings.host") }}</label>
+      <input id="host" name="host" value="{{ view.host or '' }}" maxlength="300" autocomplete="off" placeholder="http://127.0.0.1:11434" aria-describedby="host-hint">
+      <p class="hint" id="host-hint">{{ t("settings.host_hint") }}</p>
+    </div>
+  </div>
+  <div class="field">
+    <label for="api_key">{{ t("settings.key") }}</label>
+    <input id="api_key" name="api_key" type="password" autocomplete="new-password" maxlength="500" placeholder="{{ '••••••••' if view.has_key else '' }}" aria-describedby="key-hint">
+    <p class="hint" id="key-hint">{{ t("settings.key_saved") if view.has_key else t("settings.key_hint") }}</p>
+    {% if view.has_key %}<label class="check"><input type="checkbox" name="forget_key"> {{ t("settings.forget_key") }}</label>{% endif %}
+  </div>
+  <div id="test-result" aria-live="polite"></div>
+  <div class="actions">
+    <button class="btn" hx-post="/settings/test" hx-target="#test-result">{{ t("settings.test") }}</button>
+    <button class="btn btn-primary">{{ t("common.save") }}</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

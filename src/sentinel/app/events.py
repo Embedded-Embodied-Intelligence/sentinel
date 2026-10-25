@@ -3,7 +3,8 @@
 A live project's log starts with `created` and holds `definition` changes, the `baseline` plan,
 `checkin`s with their resolved effects, `recommendation`s (the decision record, the impacts and
 an action applied automatically), `decision`s of the manager (with the action as approved, or
-why it was discarded) and `explanation`s by an LLM. `replay` rebuilds the project and the state
+why it was discarded), the `undo` of an automatic plan change (the planned starts restored) and
+`explanation`s by an LLM. `replay` rebuilds the project and the state
 of every recommendation from it without any solver call or rollout. A simulator project's log
 holds its `simulator` spec and the days it was advanced (`advance`).
 """
@@ -22,7 +23,7 @@ from sentinel.app.store import EventRow
 Source = Literal["new", "csv", "json", "text", "showcase"]
 Verdict = Literal["approve", "reject", "later"]
 RecommendationStatus = Literal[
-    "none", "auto", "open", "later", "approved", "rejected", "discarded", "superseded"
+    "none", "auto", "open", "later", "approved", "rejected", "discarded", "superseded", "undone"
 ]
 OPEN: tuple[RecommendationStatus, ...] = ("open", "later")
 
@@ -59,6 +60,15 @@ class Decided(_Event):
     verdict: Verdict
     applied: AppliedAction | None = None
     discarded: str | None = None
+
+
+class Undone(_Event):
+    """The undo of an automatic plan change (spec section 11.5): the planned starts it changed
+    and the sink's, with their values before it."""
+
+    recommendation: int
+    plan: dict[str, int]
+    sink_plan: int
 
 
 class FactCheck(_Event):
@@ -103,6 +113,7 @@ EVENTS: dict[str, type[_Event]] = {
     "recommendation": Recommended,
     "decision": Decided,
     "explanation": Explained,
+    "undo": Undone,
 }
 
 
@@ -121,12 +132,14 @@ class RecommendationEntry:
 @dataclass
 class LiveState:
     """A live project rebuilt from its log: the project, its recommendations, how it was
-    created and the sequence number of its last event."""
+    created, the sequence number of its last event and of its last event that changed the
+    project (every event but an explanation)."""
 
     project: LiveProject
     source: Source
     seq: int
     recommendations: list[RecommendationEntry] = field(default_factory=list)
+    last_change: int = 0
 
     def recommendation(self, seq: int) -> RecommendationEntry | None:
         return next((r for r in self.recommendations if r.seq == seq), None)
@@ -139,6 +152,17 @@ class LiveState:
     @property
     def latest(self) -> RecommendationEntry | None:
         return self.recommendations[-1] if self.recommendations else None
+
+    def can_undo(self, entry: RecommendationEntry) -> bool:
+        """Whether an automatic action can be undone (spec section 11.5): it changed only the
+        plan and nothing but explanations came after it."""
+        action = entry.applied
+        return (
+            entry.status == "auto"
+            and action is not None
+            and entry.seq == self.last_change
+            and not (action.crews or action.temps or action.handovers or action.removed)
+        )
 
 
 def parse(row: EventRow) -> _Event:
@@ -154,6 +178,7 @@ def replay(rows: Sequence[EventRow]) -> LiveState:
         raise ValueError("a live project's log starts with a 'created' event")
     first = Created.model_validate(rows[0].payload)
     state = LiveState(LiveProject(first.definition), first.source, rows[0].seq)
+    state.last_change = rows[0].seq
     for row in rows[1:]:
         apply(state, row.seq, parse(row))
     return state
@@ -195,13 +220,24 @@ def apply(state: LiveState, seq: int, event: _Event) -> None:
                 found.status = "rejected"
             else:
                 found.status = "later"
+        case Undone():
+            found = state.recommendation(event.recommendation)
+            if found is None or found.applied is None:
+                raise ValueError(f"undo of unknown action {event.recommendation}")
+            for key, start in event.plan.items():
+                project.tasks[key].planned = start
+            project.sink_plan = event.sink_plan
+            project.actions = [a for a in project.actions if a is not found.applied]
+            found.status = "undone"
         case Explained():
             found = state.recommendation(event.recommendation)
             if found is not None:
                 found.explanation = event.explanation
+            state.seq = seq
+            return
         case _:
             raise ValueError(f"unexpected event {type(event).__name__} in a live project")
-    state.seq = seq
+    state.seq = state.last_change = seq
 
 
 def _supersede(state: LiveState) -> None:

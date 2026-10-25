@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ t("error.title") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t("error.title") }}</h1>
+</div>
+{% include "_error.html" %}
+<p class="actions"><a class="btn btn-primary" href="/">{{ t("error.home") }}</a></p>
+{% endblock %}

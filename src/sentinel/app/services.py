@@ -35,6 +35,7 @@ from sentinel.app.events import (
     LiveState,
     Recommended,
     Source,
+    Undone,
     Verdict,
     replay,
 )
@@ -60,6 +61,7 @@ from sentinel.app.store import (
     now,
 )
 from sentinel.app.views import (
+    ForecastSummary,
     IssueView,
     ProjectSummary,
     ProjectView,
@@ -74,6 +76,7 @@ from sentinel.simulation.state import Observation
 from sentinel.wbs.extract import Extraction
 
 SIMULATIONS_KEPT = 8  # simulator projects kept in memory; others are re-simulated
+FORECASTS_KEPT = 128  # forecasts kept in memory, by project and last change
 
 
 class ErrorView(BaseModel):
@@ -177,6 +180,7 @@ class Services:
         self._locks: dict[str, threading.RLock] = {}
         self._live: OrderedDict[str, tuple[int, LiveState]] = OrderedDict()
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
+        self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
         self.showcase: Callable[[str], None] | None = None  # set by the web layer (demo)
 
     def close(self) -> None:
@@ -288,6 +292,10 @@ class Services:
             return self.simulator(session, project_id)
         _, state = self._state(session, project_id)
         return project_view(row.id, state, language, row.name)
+
+    def state(self, session: str, project_id: str) -> LiveState:
+        """A live project's state (a copy) for the pages."""
+        return self._state(session, project_id)[1]
 
     def validate(self, definition: ProjectDefinition, language: Language) -> list[IssueView]:
         return issue_views(validate_definition(definition), language)
@@ -499,6 +507,89 @@ class Services:
                 self.recommend(session, project_id, language)
         return self.live(session, project_id, language)
 
+    def undo(self, session: str, project_id: str, seq: int, language: Language) -> ProjectView:
+        """Undo an automatic plan change (spec section 11.5): the planned starts it changed get
+        their values before it back."""
+        with self._lock(project_id):
+            row, state = self._state(session, project_id)
+            entry = state.recommendation(seq)
+            if entry is None:
+                raise AppError("recommendation_not_found", "not_found")
+            if not state.can_undo(entry) or entry.applied is None:
+                raise AppError("undo_impossible", "conflict")
+            rows = [e for e in self.store.events(session, project_id) if e.seq < seq]
+            before = replay(rows).project
+            plan = {key: before.tasks[key].planned for key in entry.applied.plan}
+            event = Undone(recommendation=seq, plan=plan, sink_plan=before.sink_plan)
+            self._append(session, row, "undo", event)
+        return self.live(session, project_id, language)
+
+    def forecast_summary(
+        self, session: str, project_id: str, language: Language
+    ) -> ForecastSummary | None:
+        """The forecast of the project now (spec section 11.4) and the chance of meeting the
+        deadline before its latest check-in (the trend), None for a project without a valid
+        plan or a finished one. Computed in the request (0.2-0.5 s) and cached by the project's
+        last change, since a forecast is deterministic for its state."""
+        _, state = self._state(session, project_id)
+        if not _forecastable(state.project):
+            return None
+        current = forecast_view(state.project, self._forecast(project_id, state))
+        previous = None
+        rows = self.store.events(session, project_id)
+        checkins = [row.seq for row in rows if row.type == "checkin"]
+        if checkins and current.p_on_time is not None:
+            before = replay([row for row in rows if row.seq < checkins[-1]])
+            if _forecastable(before.project) and before.project.definition.deadline is not None:
+                previous = self._forecast(project_id, before).p_on_time
+        return ForecastSummary(forecast=current, previous_p=previous)
+
+    def _forecast(self, project_id: str, state: LiveState) -> planning.ForecastResult:
+        key = (project_id, state.last_change)
+        with self._guard:
+            found = self._forecasts.get(key)
+            if found is not None:
+                self._forecasts.move_to_end(key)
+                return found
+        result = planning.forecast(state.project)
+        with self._guard:
+            self._forecasts[key] = result
+            while len(self._forecasts) > FORECASTS_KEPT:
+                self._forecasts.popitem(last=False)
+        return result
+
+    def read_message(
+        self, session: str, project_id: str, text: str, when: date, language: Language
+    ) -> JobView:
+        """The events of a check-in message read by the LLM (spec section 10.2) in a job, as
+        reports for the manager to confirm; nothing is saved."""
+        if not text.strip():
+            raise AppError("message_empty")
+        if not self.llm.available:
+            raise AppError("llm_disabled", "unavailable")
+        _, state = self._state(session, project_id)
+        _ready(state.project, need_deadline=False)
+        seed = derive_seed(state.project.definition.settings.seed, "llm", "message", text)
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            progress(0.05, "reading")
+            _, current = self._state(session, project_id)
+            draft = self.llm.read_message(current.project, text, when, seed)
+            return draft.model_dump(mode="json")
+
+        return self._submit(session, project_id, "message", work, language)
+
+    def test_llm(self, session: str, language: Language) -> JobView:
+        """A connection test of the configured language model in a job."""
+        if not self.llm.available:
+            raise AppError("llm_disabled", "unavailable")
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            progress(0.1, "testing")
+            return {"model": self.llm.test()}
+
+        return self._submit(session, None, "llm_test", work, language)
+
     def explain(self, session: str, project_id: str, seq: int, language: Language) -> JobView:
         """An LLM explanation of a recommendation with its faithfulness badge (spec 10.4)."""
         _, state = self._state(session, project_id)
@@ -679,6 +770,13 @@ class Services:
                 self._sims.popitem(last=False)
         return row, simulation
 
+    def with_simulation[T](
+        self, session: str, project_id: str, read: Callable[[simulator.Simulation], T]
+    ) -> T:
+        """`read` applied to a simulator project's runs while no job advances them."""
+        with self._lock(project_id):
+            return read(self._simulation(session, project_id)[1])
+
     def simulator(self, session: str, project_id: str) -> simulator.SimulatorView:
         with self._lock(project_id):
             row, simulation = self._simulation(session, project_id)
@@ -753,6 +851,15 @@ def _validate(definition: ProjectDefinition) -> list[Issue]:
     return validate_definition(definition)
 
 
+def _forecastable(project: LiveProject) -> bool:
+    """Whether a forecast can be made: a valid definition with a plan, not yet finished."""
+    return (
+        project.baseline is not None
+        and not project.finished
+        and not errors(_validate(project.definition))
+    )
+
+
 def _ready(project: LiveProject, *, need_deadline: bool = True) -> None:
     """Refuse an operation on a project without a valid definition, a plan or a deadline."""
     found = errors(_validate(project.definition))
@@ -768,7 +875,13 @@ def _ready(project: LiveProject, *, need_deadline: bool = True) -> None:
 
 def _copy(state: LiveState) -> LiveState:
     """A copy of a cached state that an operation may change."""
-    return LiveState(state.project.copy(), state.source, state.seq, [*state.recommendations])
+    return LiveState(
+        state.project.copy(),
+        state.source,
+        state.seq,
+        [*state.recommendations],
+        state.last_change,
+    )
 
 
 def _row_of(seq: int, event_type: str, payload: dict[str, Any]) -> EventRow:

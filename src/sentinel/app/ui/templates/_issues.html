@@ -1,0 +1,10 @@
+<div id="issues" class="issues-panel"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% if issues %}
+  <div class="alert alert-warn">
+    <p><strong>{{ t("setup.issues_title") }}</strong></p>
+    <ul class="issues">
+      {% for issue in issues %}<li id="issue-{{ loop.index }}">{{ issue.message }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>

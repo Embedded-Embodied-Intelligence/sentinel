@@ -1,0 +1,16 @@
+<div class="row-group" data-row>
+  <input type="hidden" name="grow_rows" value="{{ i }}">
+  <div class="field">
+    <label for="grow-{{ i }}-task">{{ t("checkin.grow.task") }}</label>
+    <select id="grow-{{ i }}-task" name="grow_{{ i }}_task">
+      <option value="">{{ t("checkin.grow.choose") }}</option>
+      {% for task in running %}<option value="{{ task.key }}"{% if fv('grow_' ~ i ~ '_task', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="grow-{{ i }}-days">{{ t("checkin.grow.days") }}</label>
+    <input id="grow-{{ i }}-days" name="grow_{{ i }}_days" inputmode="decimal" class="short" value="{{ fv('grow_' ~ i ~ '_days', '') }}">
+    {% if errors.get('grow_' ~ i ~ '_days') %}<p class="error-text">{{ errors['grow_' ~ i ~ '_days'] }}</p>{% endif %}
+  </div>
+  <button type="button" class="btn btn-quiet btn-small" data-remove-row>{{ t("setup.remove") }}</button>
+</div>

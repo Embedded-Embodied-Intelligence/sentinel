@@ -1,6 +1,8 @@
 """The optional language model of the application (spec section 10; CLAUDE.md invariants 3, 4
-and 7): the provider settings, the client, and the two features that use it, the extraction of
-tasks from a text (WP6a) and the explanation of a recommendation (spec section 10.4).
+and 7): the provider settings, the client, and the features that use it: the extraction of
+tasks from a text (WP6a), the explanation of a recommendation (spec section 10.4), the proposals
+of the action grammar (spec section 10.3), the events of a manager's check-in message (spec
+section 10.2) and a connection test.
 
 The settings (provider, model, Ollama host, API key) live in `settings.json` in the data
 directory, outside the repository, readable by the owner only; the API reports whether a key is
@@ -13,6 +15,7 @@ explanation, counts once).
 import json
 import os
 from collections.abc import Callable, Mapping, Sequence
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -23,22 +26,43 @@ from sentinel.agent.decide import DecisionRecord
 from sentinel.agent.params import SentinelParams
 from sentinel.app.errors import AppError
 from sentinel.app.events import FactCheck, LlmExplanation
+from sentinel.app.live import LiveProject, role_key
+from sentinel.app.models import AbsenceReport, NewTaskReport, WorkIncreaseReport
 from sentinel.app.store import Store
 from sentinel.experiments.proposal_study import compile_entries
 from sentinel.interpret.actions import ProposalSettings, answer_entries, ask
 from sentinel.interpret.describe import state_summary
+from sentinel.interpret.events import (
+    STATUS_TEXT,
+    AbsenceEvent,
+    Context,
+    NewActivityEvent,
+    ParseSettings,
+    TeamMessage,
+    WorkIncreaseEvent,
+    parse,
+)
 from sentinel.interpret.explain import ExplainSettings, check, explain, render_record
+from sentinel.interpret.team import Member, weekday_name
 from sentinel.llm import (
+    BaseClient,
     GroqClient,
     LlmCache,
     LlmClient,
     LlmError,
+    Message,
     OllamaClient,
     OpenRouterClient,
     Secret,
 )
-from sentinel.simulation.state import Observation
-from sentinel.wbs.extract import ExtractionSettings, Session, repair
+from sentinel.simulation.state import (
+    RUNNING,
+    Observation,
+    nominal_activity,
+    nominal_world,
+    successor_lists,
+)
+from sentinel.wbs.extract import ExtractionSettings, Session, normalise_name, normalise_role, repair
 
 Provider = Literal["none", "ollama", "groq", "openrouter"]
 DEFAULT_MODELS: dict[str, str] = {
@@ -56,6 +80,7 @@ OPENROUTER_PROVIDER: dict[str, JsonValue] = {
 EXTRACTION = ExtractionSettings(prompt_version="v1", max_tokens=4096, max_repair_rounds=3)
 EXPLANATION = ExplainSettings(prompt_version="v1", max_tokens=2048)
 PROPOSALS = ProposalSettings(prompt_version="v1", max_tokens=2048)
+EVENTS = ParseSettings(prompt_version="v1", max_tokens=2048, max_repair_rounds=3)
 USAGE_KEY = "llm"
 
 
@@ -271,4 +296,167 @@ class LlmService:
             chosen_named=faith.chosen_named,
             component_right=faith.component_right,
             hallucinated=faith.hallucinated,
+        )
+
+    def read_message(
+        self, project: LiveProject, text: str, when: date, seed: int
+    ) -> "MessageDraft":
+        """The events of a manager's check-in message dated `when` (spec section 10.2, the WP6b
+        parser with its repair rounds), as check-in reports for the manager to confirm one by
+        one; never a reason for an absence (invariant 7)."""
+        context = LiveContext(project, when)
+        client = self.client()
+        message = TeamMessage(day=context.day, author=0, text=text)
+        try:
+            session = parse(client, message, context, seed=seed, settings=EVENTS)
+        except LlmError as exc:
+            raise AppError("llm_failed", "unavailable", detail=type(exc).__name__) from exc
+        final = session.final
+        if final.response.value is None and not final.reading.events:
+            detail = "no answer" if final.response.error is None else final.response.error.kind
+            raise AppError("parse_failed", "invalid", detail=detail)
+        return context.draft(final.reading.events, len(final.reading.issues))
+
+    def test(self) -> str:
+        """Ask the configured model for a fixed answer, past the cache's replay (a connection
+        test); the model's name, or AppError with the reason."""
+        client = self.client()
+        if isinstance(client, BaseClient):
+            client.mode = "record"  # a test must reach the provider, not the cache
+        messages = [
+            Message(role="system", content='Answer with the JSON object {"ok": true} only.'),
+            Message(role="user", content="Connection test."),
+        ]
+        try:
+            response = client.complete(messages, schema=Ping, seed=0, max_tokens=512)
+        except LlmError as exc:
+            raise AppError("llm_failed", "unavailable", detail=type(exc).__name__) from exc
+        if response.value is None:
+            reason = "no answer" if response.error is None else response.error.kind
+            raise AppError("llm_failed", "unavailable", detail=reason)
+        return str(getattr(client, "model", "?"))
+
+
+class Ping(BaseModel):
+    """The answer of a connection test."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    ok: bool
+
+
+class MessageDraft(BaseModel):
+    """The events read from a check-in message, as check-in reports to confirm, and the number
+    of issues the parser's last answer still had."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    absences: tuple[AbsenceReport, ...] = ()
+    increases: tuple[WorkIncreaseReport, ...] = ()
+    new_tasks: tuple[NewTaskReport, ...] = ()
+    issues: int = 0
+
+
+class LiveContext(Context):
+    """The parser's context (spec section 10.2) for a live project's check-in message: the
+    project's own role names, task names and team, and today the check-in date. The prompt
+    numbers working days from a Monday, so a day is shown shifted by the weekday of the
+    project's first working day (`offset`) and shifted back when read."""
+
+    def __init__(self, project: LiveProject, when: date) -> None:
+        # The fields of `Context` are set here, with the live project's roles (the base class
+        # takes the narrator's role names, which a live project does not use).
+        observation = project.observation()
+        model = project.require_model()
+        calendar = project.calendar
+        ids = project.activity_ids()
+        nodes = project.nodes()
+        self.project = project
+        self.when = when
+        self.offset = calendar.origin.weekday()
+        self.observation = observation
+        self.day = max(0, calendar.last(when)) + self.offset
+        self.names = dict(
+            sorted(
+                (ids[key], node.name)
+                for key, node in nodes.items()
+                if project.tasks[key].state != "removed"
+            )
+        )
+        members = [
+            Member(worker=w, name=person.name, role=model.role_ids[role_key(person.role)])
+            for w, person in enumerate(project.definition.team)
+        ]
+        self.roster = tuple(members)
+        self.members = {member.worker: member for member in members}
+        self.by_member_name = {member.name: member.worker for member in members}
+        self.roles = model.role_names
+        self.role_index = {normalise_role(role): k for k, role in enumerate(self.roles)}
+        self.capacities = tuple(role.capacity for role in observation.instance.roles)
+        self.sink = observation.instance.sink_id
+        self.successors = successor_lists(observation)
+        self.by_name = {normalise_name(name): j for j, name in self.names.items()}
+        world = nominal_world(observation)
+        self.remaining = {}
+        for j, status in enumerate(observation.status):
+            if status == RUNNING and j in self.names:
+                unit = max(1, sum(nominal_activity(observation, j)[1]))
+                self.remaining[j] = max(0.1, round(world.remaining[j] / unit, 1))
+
+    def render(self, message: TeamMessage) -> str:
+        """As `Context.render`, the author being the project manager, not a team member."""
+        observation, t = self.observation, self.day
+        lines = [
+            f"Today is day {t}, a {weekday_name(t)}.",
+            "",
+            "Team roster (worker id and name per role; * marks people absent today):",
+        ]
+        for k, role in enumerate(self.roles):
+            people = [
+                f"{m.worker} {m.name}{'' if observation.present[m.worker] else '*'}"
+                for m in self.roster
+                if m.role == k
+            ]
+            lines.append(f"- {role}: {', '.join(people)}")
+        lines += ["", "Activities (id, name, status; running ones with their remaining work):"]
+        for j, name in self.names.items():
+            entry = f'{j} "{name}": {STATUS_TEXT[observation.status[j]]}'
+            if j in self.remaining:
+                entry += f", {self.remaining[j]:.1f} days of work left"
+            lines.append(entry)
+        author = f"the project manager on day {t} ({weekday_name(t)})"
+        lines += ["", f"Message from {author}:", message.text]
+        return "\n".join(lines)
+
+    def draft(self, events: Sequence[object], issues: int) -> MessageDraft:
+        """The accepted events as check-in reports (person and task keys, calendar dates)."""
+        project = self.project
+        calendar = project.calendar
+        keys = {j: key for key, j in project.activity_ids().items()}
+        people = [person.key for person in project.definition.team]
+        absences, increases, new_tasks = [], [], []
+        for event in events:
+            match event:
+                case AbsenceEvent(worker=w, return_day=r) if w < len(people):
+                    back = None if r is None else calendar.date_of(r - self.offset)
+                    absences.append(
+                        AbsenceReport(person=people[w], first_day=self.when, return_date=back)
+                    )
+                case WorkIncreaseEvent(activity=j, factor=factor) if j in keys and factor > 1:
+                    increases.append(WorkIncreaseReport(task=keys[j], factor=round(factor, 2)))
+                case NewActivityEvent() if event.duration >= 1:
+                    new_tasks.append(
+                        NewTaskReport(
+                            name=event.name.strip()[:120],
+                            duration=event.duration,
+                            crew={role: count for role, count in event.crew.items() if count > 0},
+                            after=None if event.after is None else keys.get(event.after),
+                            before=None if event.before is None else keys.get(event.before),
+                        )
+                    )
+        return MessageDraft(
+            absences=tuple(absences),
+            increases=tuple(increases),
+            new_tasks=tuple(new_tasks),
+            issues=issues,
         )

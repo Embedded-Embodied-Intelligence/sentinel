@@ -1,0 +1,51 @@
+<form class="form" hx-post="{{ action }}" hx-target="#step" novalidate>
+  {% if errors %}
+  <div class="alert alert-error" role="alert"><p>{{ t("form.fix_below") }}</p></div>
+  {% endif %}
+  <div class="field">
+    <label for="name">{{ t("setup.name") }}</label>
+    <input id="name" name="name" value="{{ basics.name }}" maxlength="120" autocomplete="off" required{% if errors.get('name') %} aria-invalid="true" aria-describedby="name-error"{% endif %}>
+    {% with name="name" %}{% include "_field_error.html" %}{% endwith %}
+  </div>
+  <div class="grid-2">
+    <div class="field">
+      <label for="start">{{ t("setup.start") }}</label>
+      <input id="start" name="start" type="date" value="{{ basics.start or '' }}" required{% if errors.get('start') %} aria-invalid="true" aria-describedby="start-error"{% endif %}>
+      {% with name="start" %}{% include "_field_error.html" %}{% endwith %}
+    </div>
+    <div class="field">
+      <label for="deadline">{{ t("setup.deadline") }}</label>
+      <input id="deadline" name="deadline" type="date" value="{{ basics.deadline or '' }}" aria-describedby="deadline-hint{% if errors.get('deadline') %} deadline-error{% endif %}"{% if errors.get('deadline') %} aria-invalid="true"{% endif %}>
+      <p class="hint" id="deadline-hint">{{ t("setup.deadline_hint") }}</p>
+      {% with name="deadline" %}{% include "_field_error.html" %}{% endwith %}
+    </div>
+  </div>
+  <div class="field">
+    <label for="budget">{{ t("setup.budget") }}</label>
+    <input id="budget" name="budget" inputmode="decimal" value="{{ basics.budget if basics.budget is not none else '' }}" aria-describedby="budget-hint{% if errors.get('budget') %} budget-error{% endif %}"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
+    <p class="hint" id="budget-hint">{{ t("setup.budget_hint") }}</p>
+    {% with name="budget" %}{% include "_field_error.html" %}{% endwith %}
+  </div>
+  <fieldset class="choices">
+    <legend>{{ t("setup.estimation") }}</legend>
+    {% for value in ("confident", "typical", "uncertain") %}
+    <label class="choice">
+      <input type="radio" name="estimation" value="{{ value }}"{% if basics.estimation == value %} checked{% endif %}>
+      <span><strong>{{ t("preset.estimation." ~ value) }}</strong><span class="hint">{{ t("preset.estimation." ~ value ~ ".hint") }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <fieldset class="choices">
+    <legend>{{ t("setup.disruptions") }}</legend>
+    {% for value in ("calm", "typical", "turbulent") %}
+    <label class="choice">
+      <input type="radio" name="disruptions" value="{{ value }}"{% if basics.disruptions == value %} checked{% endif %}>
+      <span><strong>{{ t("preset.disruptions." ~ value) }}</strong><span class="hint">{{ t("preset.disruptions." ~ value ~ ".hint") }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <div class="actions">
+    <a class="btn" href="{{ '/projects/' ~ project_id if project_id else '/' }}">{{ t("common.cancel") }}</a>
+    <button class="btn btn-primary" name="action" value="next">{{ t("setup.next") }}</button>
+  </div>
+</form>

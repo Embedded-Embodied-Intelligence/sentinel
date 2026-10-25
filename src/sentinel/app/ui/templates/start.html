@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head with-actions">
+  <div>
+    <h1>{{ t("start.title") }}</h1>
+    <p class="lead">{{ t("start.what") }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/simulator">{{ t("start.try_simulator") }}</a>
+    <a class="btn btn-primary" href="/new"><span aria-hidden="true">+ </span>{{ t("start.new") }}</a>
+  </div>
+</div>
+{% if cards %}
+<ul class="cards" aria-label="{{ t('start.list') }}">
+  {% for card in cards %}
+  <li class="card">
+    <h2 class="card-title"><a href="{{ card.href }}">{{ card.name }}</a></h2>
+    {% if card.kind == "simulator" %}
+      <p class="card-meta"><span class="badge badge-info">{{ t("start.simulator_badge") }}</span> {{ t("sim.size." ~ card.size) }}</p>
+      <p class="card-meta">{{ t("start.sim_days", days=card.days) }} · {{ t("sim.manager." ~ card.manager) if card.manager in ("sentinel", "no_reaction") else card.manager }}</p>
+    {% elif not card.planned %}
+      <p class="card-meta"><span class="badge badge-neutral">{{ t("start.draft") }}</span></p>
+      <p class="card-meta">{{ t("start.draft_hint") }}</p>
+      <p><a class="btn btn-small" href="{{ card.href }}">{{ t("start.continue") }}</a></p>
+    {% else %}
+      <p class="card-meta">{% if card.deadline %}{{ t("start.deadline", date=t.date(card.deadline)) }}{% else %}{{ t("start.no_deadline") }}{% endif %}</p>
+      {% if card.finished %}
+      <p class="card-meta"><span class="badge badge-good">{{ t("start.finished") }}</span></p>
+      {% elif card.deadline %}
+      <div class="card-chance" hx-get="/projects/{{ card.id }}/chance" hx-trigger="load" hx-swap="innerHTML">
+        <p class="muted"><span class="spinner" aria-hidden="true"></span> {{ t("start.calculating") }}</p>
+      </div>
+      {% endif %}
+      <p class="card-meta">{% if card.pending %}<span class="badge badge-warn"><span aria-hidden="true">● </span>{{ t.plural("start.pending", card.pending) }}</span>{% else %}{{ t("start.no_pending") }}{% endif %}</p>
+      {% if card.as_of %}<p class="card-meta small muted">{{ t("start.as_of", date=t.date(card.as_of)) }}</p>{% else %}<p class="card-meta small muted">{{ t("start.not_tracked") }}</p>{% endif %}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty-state">
+  <h2>{{ t("start.empty_title") }}</h2>
+  <p>{{ t("start.empty") }}</p>
+  <p class="actions"><a class="btn" href="/simulator">{{ t("start.try_simulator") }}</a><a class="btn btn-primary" href="/new">{{ t("start.new") }}</a></p>
+</div>
+{% endif %}
+{% endblock %}

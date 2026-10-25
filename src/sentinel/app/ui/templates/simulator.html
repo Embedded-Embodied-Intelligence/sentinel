@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>{{ t("sim.title") }}</h1><p class="lead">{{ t("sim.lead") }}</p></div>
+{% if not available %}
+<div class="empty-state"><p>{{ t("sim.unavailable") }}</p></div>
+{% else %}
+<form class="form panel" hx-post="/simulator" hx-target="#sim-start" novalidate>
+  <fieldset class="choices">
+    <legend>{{ t("sim.example") }}</legend>
+    {% for example in examples %}
+    <label class="choice">
+      <input type="radio" name="example" value="{{ example.key }}"{% if loop.first %} checked{% endif %}>
+      <span><strong>{{ t("sim.size." ~ example.size) }}</strong><span class="hint">{{ t("sim.example_hint." ~ example.size) }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <fieldset class="choices">
+    <legend>{{ t("setup.disruptions") }}</legend>
+    {% for value in ("calm", "typical", "turbulent") %}
+    <label class="choice">
+      <input type="radio" name="disruptions" value="{{ value }}"{% if value == "typical" %} checked{% endif %}>
+      <span><strong>{{ t("preset.disruptions." ~ value) }}</strong><span class="hint">{{ t("preset.disruptions." ~ value ~ ".hint") }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <fieldset class="choices">
+    <legend>{{ t("sim.manager") }}</legend>
+    {% for value in ("sentinel", "no_reaction") %}
+    <label class="choice">
+      <input type="radio" name="policy" value="{{ value }}"{% if value == "sentinel" %} checked{% endif %}>
+      <span><strong>{{ t("sim.manager." ~ value) }}</strong><span class="hint">{{ t("sim.manager." ~ value ~ ".hint") }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  <div id="sim-start" aria-live="polite"></div>
+  <div class="actions"><button class="btn btn-primary">{{ t("sim.start") }}</button></div>
+</form>
+{% endif %}
+{% endblock %}

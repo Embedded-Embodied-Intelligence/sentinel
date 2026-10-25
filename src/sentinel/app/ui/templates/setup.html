@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <p class="eyebrow">{{ t("setup.eyebrow") }}</p>
+  <h1>{{ title }}</h1>
+</div>
+<ol class="steps" aria-label="{{ t('setup.progress') }}">
+  {% for name in ("basics", "team", "tasks") %}
+  {% set n = loop.index %}
+  <li class="{{ 'done' if n < index else 'current' if n == index else 'todo' }}"{% if n == index %} aria-current="step"{% endif %}>
+    {% if project_id and n < index %}<a href="/projects/{{ project_id }}/setup/{{ name }}">{% endif %}
+    <span class="step-n" aria-hidden="true">{{ "✓" if n < index else n }}</span>
+    <span>{{ t("setup.step." ~ name) }}</span><span class="vh"> — {{ t("setup.state." ~ ('done' if n < index else 'current' if n == index else 'todo')) }}</span>
+    {% if project_id and n < index %}</a>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+<p class="sub">{{ t("setup.step_of", n=index, total=3) }}</p>
+<div id="step">
+{% include "_setup_" ~ step ~ ".html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "_project_head.html" %}
+<nav class="filters" aria-label="{{ t('history.filter') }}">
+  {% for name in filters %}<a class="btn btn-small{% if show == name %} active{% endif %}" href="/projects/{{ view.id }}/history?show={{ name }}"{% if show == name %} aria-current="true"{% endif %}>{{ t("history.show." ~ name) }}</a>{% endfor %}
+</nav>
+{% if items %}
+<ol class="timeline">
+  {% for item in items %}
+  <li class="tl-item tl-{{ item.kind }}">
+    <p class="tl-when">{{ item.when }} · <span class="tl-kind">{{ t("history.kind." ~ item.kind) }}</span></p>
+    <p class="tl-title">{% if item.href %}<a href="{{ item.href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</p>
+    {% if item.lines %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="empty">{{ t("history.empty") }}</p>
+{% endif %}
+{% endblock %}

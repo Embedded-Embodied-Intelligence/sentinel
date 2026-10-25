@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="{{ t.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="htmx-config" content='{{ htmx_config }}'>
+<title>{% block title %}{{ title }}{% endblock %} · Sentinel</title>
+<link rel="stylesheet" href="{{ static('sentinel.css') }}">
+<link rel="icon" href="{{ static('favicon.svg') }}" type="image/svg+xml">
+<script src="{{ static(htmx) }}" defer></script>
+<script src="{{ static('sentinel.js') }}" defer></script>
+</head>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'>
+<a class="skip" href="#main">{{ t("nav.skip") }}</a>
+<header class="top">
+  <div class="wrap top-row">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>Sentinel</a>
+    <nav class="nav" aria-label="{{ t('nav.label') }}">
+      <ul>
+        <li><a href="/"{% if nav == 'projects' %} aria-current="page"{% endif %}>{{ t("nav.projects") }}</a></li>
+        <li><a href="/simulator"{% if nav == 'simulator' %} aria-current="page"{% endif %}>{{ t("nav.simulator") }}</a></li>
+        <li><a href="/how-it-works"{% if nav == 'how' %} aria-current="page"{% endif %}>{{ t("nav.how") }}</a></li>
+        <li><a href="/settings"{% if nav == 'settings' %} aria-current="page"{% endif %}>{{ t("nav.settings") }}</a></li>
+      </ul>
+    </nav>
+    <div class="lang" role="group" aria-label="{{ t('nav.language') }}">
+      <a href="/lang/pl?next={{ here | urlencode }}" lang="pl" hreflang="pl"{% if t.lang == 'pl' %} aria-current="true"{% endif %}><span aria-hidden="true">PL</span><span class="vh">Polski</span></a>
+      <a href="/lang/en?next={{ here | urlencode }}" lang="en" hreflang="en"{% if t.lang == 'en' %} aria-current="true"{% endif %}><span aria-hidden="true">EN</span><span class="vh">English</span></a>
+    </div>
+  </div>
+</header>
+{% if demo %}
+<p class="demo-note"><span class="wrap">{{ t.plural("demo.note", demo_hours) }}</span></p>
+{% endif %}
+<main id="main" class="wrap" tabindex="-1">
+  <div id="flash" class="flash" role="status" aria-live="polite">
+    {% if flash %}<p class="alert alert-success">{{ flash }}</p>{% endif %}
+  </div>
+  {% block content %}{% endblock %}
+</main>
+<footer class="foot">
+  <div class="wrap">{{ t("footer.text") }} · <a href="/how-it-works">{{ t("nav.how") }}</a> · {{ t("footer.version", version=version) }}</div>
+</footer>
+</body>
+</html>

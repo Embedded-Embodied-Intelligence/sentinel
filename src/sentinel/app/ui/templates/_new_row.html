@@ -1,0 +1,36 @@
+<div class="row-group row-group-wide" data-row>
+  <input type="hidden" name="new_rows" value="{{ i }}">
+  <div class="field">
+    <label for="new-{{ i }}-name">{{ t("checkin.new.name") }}</label>
+    <input id="new-{{ i }}-name" name="new_{{ i }}_name" maxlength="120" value="{{ fv('new_' ~ i ~ '_name', '') }}">
+    {% if errors.get('new_' ~ i ~ '_name') %}<p class="error-text">{{ errors['new_' ~ i ~ '_name'] }}</p>{% endif %}
+  </div>
+  <div class="field">
+    <label for="new-{{ i }}-days">{{ t("checkin.new.days") }}</label>
+    <input id="new-{{ i }}-days" name="new_{{ i }}_days" class="short" inputmode="numeric" value="{{ fv('new_' ~ i ~ '_days', '') }}">
+    {% if errors.get('new_' ~ i ~ '_days') %}<p class="error-text">{{ errors['new_' ~ i ~ '_days'] }}</p>{% endif %}
+  </div>
+  {% for role in roles %}
+  <div class="field">
+    <label for="new-{{ i }}-crew-{{ loop.index0 }}">{{ t("setup.tasks.people", role=role) }}</label>
+    <input id="new-{{ i }}-crew-{{ loop.index0 }}" name="new_{{ i }}_crew_{{ loop.index0 }}" class="short" inputmode="numeric" value="{{ fv('new_' ~ i ~ '_crew_' ~ loop.index0, '') }}">
+    <input type="hidden" name="new_{{ i }}_role_{{ loop.index0 }}" value="{{ role }}">
+  </div>
+  {% endfor %}
+  <div class="field">
+    <label for="new-{{ i }}-after">{{ t("checkin.new.after") }}</label>
+    <select id="new-{{ i }}-after" name="new_{{ i }}_after">
+      <option value="">{{ t("checkin.new.after_none") }}</option>
+      {% for task in view.tasks if task.state != "removed" %}<option value="{{ task.key }}"{% if fv('new_' ~ i ~ '_after', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="new-{{ i }}-before">{{ t("checkin.new.before") }}</label>
+    <select id="new-{{ i }}-before" name="new_{{ i }}_before">
+      <option value="">{{ t("checkin.new.before_none") }}</option>
+      {% for task in view.tasks if task.state == "not_started" %}<option value="{{ task.key }}"{% if fv('new_' ~ i ~ '_before', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <label class="check"><input type="checkbox" name="new_{{ i }}_optional"{% if fv('new_' ~ i ~ '_optional', '') %} checked{% endif %}> {{ t("checkin.new.optional") }}</label>
+  <button type="button" class="btn btn-quiet btn-small" data-remove-row>{{ t("setup.remove") }}</button>
+</div>

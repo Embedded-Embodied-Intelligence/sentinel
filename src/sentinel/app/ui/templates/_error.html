@@ -1,0 +1,9 @@
+<div class="alert alert-error" role="alert">
+  <p><strong>{{ message }}</strong></p>
+  {% if details %}
+  <ul class="issues">
+    {% for detail in details %}<li>{{ detail }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if reference %}<p class="small">{{ t("error.reference", reference=reference) }}</p>{% endif %}
+</div>

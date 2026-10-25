@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "_project_head.html" %}
+<div class="overview">
+  <section class="panel headline-panel" aria-labelledby="chance-title">
+    <h2 id="chance-title" class="vh">{{ t("overview.chance_title") }}</h2>
+    {% if view.finished %}
+      <p class="headline">{{ t("overview.finished") }}</p>
+    {% else %}
+    <div id="forecast" hx-get="/projects/{{ view.id }}/forecast" hx-trigger="load" hx-swap="innerHTML">
+      <div role="status"><p class="muted"><span class="spinner" aria-hidden="true"></span> {{ t("overview.calculating") }}</p></div>
+    </div>
+    {% endif %}
+    {% if not view.finished %}
+    <div class="actions">
+      <form hx-post="/projects/{{ view.id }}/ask" hx-target="#ask-area"><button class="btn">{{ t("overview.ask") }}</button></form>
+      <a class="btn btn-primary" href="/projects/{{ view.id }}/checkin">{{ t("overview.checkin") }}</a>
+    </div>
+    <div id="ask-area" aria-live="polite"></div>
+    {% endif %}
+  </section>
+
+  {% if job %}
+  <section class="panel" aria-labelledby="working-title">
+    <h2 id="working-title">{{ t("overview.working_title") }}</h2>
+    {% with label=t("job.recommend"), query="label=job.recommend&next=/projects/" ~ view.id %}{% include "_job.html" %}{% endwith %}
+  </section>
+  {% endif %}
+
+  {% if open_recs %}
+  <section aria-labelledby="pending-title">
+    <h2 id="pending-title">{{ t("overview.pending_title") }}</h2>
+    {% for rec in open_recs %}{% include "_rec_card.html" %}{% endfor %}
+  </section>
+  {% endif %}
+
+  {% if checked %}
+  <section class="panel info-card" aria-labelledby="checked-title">
+    <h2 id="checked-title"><span aria-hidden="true">✓ </span>{{ t("overview.checked_title") }}</h2>
+    <p>{{ t("overview.checked") }} <a href="/projects/{{ view.id }}/recommendations/{{ checked.seq }}">{{ t("overview.details") }}</a></p>
+  </section>
+  {% endif %}
+
+  {% if auto %}
+  <section class="panel info-card" aria-labelledby="auto-title">
+    <h2 id="auto-title"><span aria-hidden="true">ℹ </span>{{ t("overview.auto_title") }}</h2>
+    <p>{{ auto.title }}</p>
+    <p class="small muted">{{ t("overview.auto_text", date=t.date(auto.date)) }}</p>
+    <div class="actions">
+      <a class="btn btn-small" href="/projects/{{ view.id }}/recommendations/{{ auto.seq }}">{{ t("overview.details") }}</a>
+      {% if auto.can_undo %}
+      <form hx-post="/projects/{{ view.id }}/recommendations/{{ auto.seq }}/undo"><button class="btn btn-small">{{ t("overview.undo") }}</button></form>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="panel" aria-labelledby="threats-title">
+    <h2 id="threats-title">{{ t("overview.threats_title") }}</h2>
+    <div id="drivers"><p class="muted small">{{ t("overview.drivers_wait") }}</p></div>
+    {% if away or late %}
+    <ul class="threats">
+      {% for person in away %}
+      {% set absence = person.absences[-1] if person.absences else none %}
+      <li><span class="badge badge-warn">{{ t("overview.away_badge") }}</span> {% if absence and absence.return_date %}{{ t("overview.away_back", person=person.name, date=t.date(absence.return_date)) }}{% else %}{{ t("overview.away_open", person=person.name) }}{% endif %}</li>
+      {% endfor %}
+      {% for task in late %}
+      <li><span class="badge badge-warn">{{ t("overview.late_badge") }}</span> {{ t("overview.late", task=task.name, date=t.date(task.planned_start)) }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
+  <section class="panel" aria-labelledby="plan-title">
+    <h2 id="plan-title">{{ t("overview.plan_title") }}</h2>
+    <ul class="legend" aria-label="{{ t('chart.legend') }}">
+      <li><span class="swatch sw-original" aria-hidden="true"></span>{{ t("chart.legend.original") }}</li>
+      <li><span class="swatch sw-done" aria-hidden="true"></span>{{ t("chart.legend.done") }}</li>
+      <li><span class="swatch sw-running" aria-hidden="true"></span>{{ t("chart.legend.running") }}</li>
+      <li><span class="swatch sw-planned" aria-hidden="true"></span>{{ t("chart.legend.planned") }}</li>
+      <li><span class="swatch sw-away" aria-hidden="true"></span>{{ t("chart.legend.away") }}</li>
+    </ul>
+    <div class="chart-wrap">{{ chart | safe }}</div>
+    <details class="chart-table">
+      <summary>{{ t("chart.as_table") }}</summary>
+      <div class="table-wrap">
+      <table class="table">
+        <caption class="vh">{{ t("chart.title") }}</caption>
+        <thead><tr><th scope="col">{{ t("chart.col.task") }}</th><th scope="col">{{ t("chart.col.state") }}</th><th scope="col">{{ t("chart.col.dates") }}</th></tr></thead>
+        <tbody>
+        {% for task in view.tasks %}
+        <tr><td>{{ task.name }}{% if task.added %} <span class="badge badge-neutral">{{ t("chart.new") }}</span>{% endif %}</td><td>{{ task.state_text }}{% if task.percent is not none %} ({{ task.percent | round | int }} %){% endif %}</td>
+        <td>{% if task.state == "done" %}{{ t.date(task.start) }} – {{ t.date(task.finish) }}{% elif task.start %}{{ t("chart.since", date=t.date(task.start)) }}{% elif task.planned_start %}{{ t.date(task.planned_start) }} – {{ t.date(task.planned_finish) }}{% else %}—{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </details>
+  </section>
+</div>
+{% endblock %}
