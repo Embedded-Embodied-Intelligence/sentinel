@@ -37,6 +37,7 @@ LAMBDA_N = 0.02
 MEAN_ABSENCE = 3.0
 DEFAULT_SEED = 2026
 BUDGET_RESERVE = 0.10  # beta of the default budget (spec section 1.2)
+OVERTIME_FLOOR = 1  # u_min: temporary workers a live or simulator project may always hire (11.2)
 
 
 class _Frozen(BaseModel):

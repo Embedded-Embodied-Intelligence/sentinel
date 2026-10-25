@@ -341,6 +341,7 @@ def _hand_made_observation() -> Observation:
         budget=derive_budget(instance, 0.1, None, PertParams()),
         costs=(1.0, 1.0),
         overtime_costs=(1.5, 1.5),
+        overtime_floor=1,  # u_min of a live project (spec section 11.2)
     )
 
 

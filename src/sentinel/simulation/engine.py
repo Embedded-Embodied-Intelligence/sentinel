@@ -232,6 +232,7 @@ def simulate(
     debug: bool = False,
     budget: float | None = None,
     optional: Collection[int] = (),
+    overtime_floor: int = 0,
 ) -> SimulationResult:
     """Execute `plan` under `policy` for one replication seed (spec sections 2-3).
 
@@ -247,7 +248,8 @@ def simulate(
     spec section 5.2); recording changes nothing else. Observations report the `budget` B
     (default: the instance's, else that of spec section 1.2 with beta = 0.1 and the run's c_k)
     and the `optional` activities O that DESCOPE may remove (spec section 4); neither changes a
-    run without interventions.
+    run without interventions. `overtime_floor` is the minimum u_min of the OVERTIME cap, 1 for
+    the application's simulator projects (spec sections 11.2 and 11.6), else 0.
     """
     if len(plan.starts) != instance.n_activities:
         raise ValueError(
@@ -279,6 +281,7 @@ def simulate(
         handover_factor=handover_factor,
         budget=budget,
         optional=optional,
+        overtime_floor=overtime_floor,
     )
     run = Run(
         state,
@@ -893,7 +896,7 @@ def _hire(state: EngineState, op: Overtime, t: int) -> str | None:
     roles = state.instance.roles
     if op.role >= len(roles):
         return f"role {op.role} does not exist"
-    cap = overtime_cap(roles[op.role].capacity)
+    cap = overtime_cap(roles[op.role].capacity, floor=state.overtime_floor)
     hired = sum(1 for temp in state.temporary if temp.role == op.role and temp.left is None)
     if hired + op.workers > cap:
         return (

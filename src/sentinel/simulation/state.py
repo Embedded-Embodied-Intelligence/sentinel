@@ -24,10 +24,12 @@ OVERTIME_CAP: Final = 0.2  # gamma: at most floor(gamma R_k) temporary workers o
 OVERTIME_RATE: Final = 1.5  # c_OT_k / c_k, the daily cost of a temporary worker (spec 4, 8)
 
 
-def overtime_cap(capacity: int, cap: float = OVERTIME_CAP) -> int:
-    """floor(gamma R_k): the temporary workers of a role with R_k = `capacity` that may be hired
-    at once (spec section 4); the floor ignores rounding noise below 1e-9."""
-    return math.floor(cap * capacity + 1e-9)
+def overtime_cap(capacity: int, cap: float = OVERTIME_CAP, floor: int = 0) -> int:
+    """max(u_min, floor(gamma R_k)): the temporary workers of a role with R_k = `capacity` that
+    may be hired at once (spec section 4), with the minimum u_min = `floor` of live and simulator
+    projects (spec section 11.2; 0 in the research runs); the floor ignores rounding noise below
+    1e-9."""
+    return max(floor, math.floor(cap * capacity + 1e-9))
 
 
 def onboarding_days(work: float, handover_factor: float = HANDOVER_FACTOR) -> int:
@@ -113,7 +115,8 @@ class Observation(BaseModel):
     section 1.2), `costs` the daily costs c_k and `overtime_costs` the c_OT_k of temporary
     workers (spec section 4); the engine always reports them. `optional` lists the optional
     activities O that DESCOPE may remove; an activity it removed has the status "removed" (spec
-    section 4).
+    section 4). `overtime_floor` is the minimum u_min of the OVERTIME cap, 1 in live and
+    simulator projects (spec section 11.2) and 0, left out of serialisation, in research runs.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -141,6 +144,7 @@ class Observation(BaseModel):
     costs: tuple[float, ...] = ()
     overtime_costs: tuple[float, ...] = ()
     optional: tuple[NonNegativeInt, ...] = Field(default=(), exclude_if=_unset)
+    overtime_floor: NonNegativeInt = Field(default=0, exclude_if=_unset)
 
 
 def worker_roles(observation: Observation) -> list[int]:
@@ -198,6 +202,7 @@ class EngineState:
         "open_since",
         "optional",
         "overtime_cost",
+        "overtime_floor",
         "pending",
         "pert",
         "plan",
@@ -239,6 +244,7 @@ class EngineState:
         handover_factor: float = HANDOVER_FACTOR,
         budget: float | None = None,
         optional: Collection[int] = (),
+        overtime_floor: int = 0,
     ) -> None:
         acts = instance.activities
         n = len(acts)
@@ -251,6 +257,7 @@ class EngineState:
         self.role_costs = tuple(role_costs)
         self.budget = budget
         self.optional = frozenset(optional)
+        self.overtime_floor = overtime_floor  # u_min of the OVERTIME cap (spec section 11.2)
         self.descoped: list[tuple[int, int]] = []
         self.sink = n - 1
         self.day = 0
@@ -461,6 +468,7 @@ class EngineState:
             costs=self.role_costs,
             overtime_costs=tuple(OVERTIME_RATE * c for c in self.role_costs),
             optional=tuple(sorted(self.optional)),
+            overtime_floor=self.overtime_floor,
         )
 
 
@@ -552,6 +560,7 @@ def state_from_observation(
         handover_factor=handover_factor,
         budget=observation.budget,
         optional=observation.optional,
+        overtime_floor=observation.overtime_floor,
     )
     for act in observation.inserted:
         new = state.add_activity(

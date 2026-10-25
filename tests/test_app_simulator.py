@@ -1,11 +1,12 @@
 """Simulator projects (WP9a; spec section 11.6): advancing day by day is deterministic for the
-seed and gives the run of `simulate` with the same plan, policy and seed."""
+seed and gives the run of `simulate` with the same plan, policy, seed and u_min."""
 
 from datetime import date
 from pathlib import Path
 
 import pytest
 
+from sentinel.app.models import OVERTIME_FLOOR
 from sentinel.app.simulator import (
     PolicyRun,
     Simulation,
@@ -54,6 +55,7 @@ def reference(world: World, policy: str):  # type: ignore[no-untyped-def]
         deadline=world.deadline,
         review_period=5,
         budget=world.budget,
+        overtime_floor=OVERTIME_FLOOR,  # u_min of simulator projects (spec section 11.6)
     )
 
 

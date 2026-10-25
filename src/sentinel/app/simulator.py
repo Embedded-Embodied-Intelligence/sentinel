@@ -20,7 +20,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from sentinel.agent.params import SentinelParams
 from sentinel.app.calendar import WorkCalendar
-from sentinel.app.models import ESTIMATION_PRESETS, Disruptions, Estimation, Settings
+from sentinel.app.models import (
+    ESTIMATION_PRESETS,
+    OVERTIME_FLOOR,
+    Disruptions,
+    Estimation,
+    Settings,
+)
 from sentinel.dashboard.world import Observed
 from sentinel.data.psplib_loader import instance_path, list_instances, load_psplib
 from sentinel.data.reference import ReferenceKind, load_reference, reference_path
@@ -195,6 +201,7 @@ class PolicyRun:
             max_days=day_limit(instance, world.deadline),
             handover_factor=HANDOVER_FACTOR,
             budget=world.budget,
+            overtime_floor=OVERTIME_FLOOR,
         )
         self.run = Run(self.state, self.streams, self.policy, review_period=REVIEW_PERIOD)
         self.day = 0  # the next day to execute

@@ -234,7 +234,7 @@ def compile_proposal(
                 k = by_role.get(normalise_role(op.role))
                 if k is None:
                     return ActionIssue("unknown_role", f'"{op.role}" is not a role of the team')
-                cap = overtime_cap(instance.roles[k].capacity)
+                cap = overtime_cap(instance.roles[k].capacity, floor=observation.overtime_floor)
                 if not 1 <= op.workers <= cap or not 1 <= op.days <= MAX_OVERTIME_DAYS:
                     return ActionIssue(
                         "out_of_range",
@@ -323,7 +323,10 @@ def random_proposals(
     instance = observation.instance
     roles = role_names(instance)
     eligible = sorted(s.activity for s in single_substitutions(observation))
-    hireable = [k for k, role in enumerate(instance.roles) if overtime_cap(role.capacity) >= 1]
+    floor = observation.overtime_floor
+    hireable = [
+        k for k, role in enumerate(instance.roles) if overtime_cap(role.capacity, floor=floor) >= 1
+    ]
     proposals: list[Proposal] = []
     for _ in range(count):
         size = int(rng.integers(1, MAX_OPERATIONS + 1))
@@ -358,7 +361,7 @@ def random_proposals(
                     operations.append(SubstOp(op="SUBST", activity=j))
                 case _:
                     k = hire.pop(int(rng.integers(len(hire))))
-                    cap = overtime_cap(instance.roles[k].capacity)
+                    cap = overtime_cap(instance.roles[k].capacity, floor=floor)
                     operations.append(
                         OvertimeOp(
                             op="OVERTIME",

@@ -64,7 +64,7 @@ def state_summary(
             f"{record.needs.p_on_time:.2f}."
         )
     lines.append(f"Budget: {budget:.1f}, spent so far {observation.cost:.1f}.")
-    caps = [overtime_cap(c) for c in capacities]
+    caps = [overtime_cap(c, floor=observation.overtime_floor) for c in capacities]
     team = ", ".join(
         f"{role} {c} (up to {cap})" for role, c, cap in zip(roles, capacities, caps, strict=True)
     )

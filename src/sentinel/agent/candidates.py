@@ -157,7 +157,8 @@ def generate(
     if params.variant != "no_overtime":
         role = most_backlogged_role(observation, 2 * params.review_period)
         if role is not None:
-            workers = overtime_cap(observation.instance.roles[role].capacity)
+            capacity = observation.instance.roles[role].capacity
+            workers = overtime_cap(capacity, floor=observation.overtime_floor)
             if workers > 0:
                 hire = Overtime(role=role, workers=workers, days=params.window)
                 builder.offer(f"OT({role})+RESEQ-M", "ot_reseq_m", (hire,))

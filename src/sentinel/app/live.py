@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sentinel.app.calendar import WorkCalendar
 from sentinel.app.models import (
     BUDGET_RESERVE,
+    OVERTIME_FLOOR,
     CheckIn,
     NewTaskReport,
     ProjectDefinition,
@@ -880,6 +881,7 @@ class LiveProject:
             costs=model.costs,
             overtime_costs=tuple(OVERTIME_RATE * c for c in model.costs),
             optional=tuple(optional),
+            overtime_floor=OVERTIME_FLOOR,
         )
 
     # ---- check-ins
