@@ -619,13 +619,25 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Na podstawie {futures} symulowanych scenariuszy projektu od obecnego stanu.",
     ),
     "overview.driver": (
-        "“{task}” holds up the finish in {count} of 10 simulated futures.",
-        "„{task}” opóźnia zakończenie w {count} na 10 symulowanych scenariuszy.",
+        "“{task}” is on the critical path in {count} of 10 simulated futures.",
+        "„{task}” leży na ścieżce krytycznej w {count} na 10 symulowanych scenariuszy.",
     ),
     "overview.no_drivers": ("No single task stands out.", "Żadne zadanie się nie wyróżnia."),
     "overview.driver_all": (
-        "“{task}” holds up the finish in every simulated future.",
-        "„{task}” opóźnia zakończenie w każdym symulowanym scenariuszu.",
+        "“{task}” is on the critical path in every simulated future.",
+        "„{task}” leży na ścieżce krytycznej w każdym symulowanym scenariuszu.",
+    ),
+    "overview.drivers_note": (
+        "The critical path is the chain of tasks that sets the finish date: any delay on it "
+        "delays the project.",
+        "Ścieżka krytyczna to łańcuch zadań wyznaczający datę zakończenia: każde opóźnienie na "
+        "niej opóźnia projekt.",
+    ),
+    "rec.rough": (
+        "“Without a change” was set aside early and simulated fewer times, so its chance is a "
+        "rougher figure than the forecast on the overview.",
+        "Wariant „bez zmian” odrzucono na wstępie i zasymulowano rzadziej, więc jego szansa jest "
+        "mniej dokładna niż prognoza na stronie przeglądu.",
     ),
     "overview.checked_title": ("Sentinel checked the new status", "Sentinel sprawdził nowy stan"),
     "overview.checked": (
@@ -655,7 +667,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chart.tip_original": ("{task}: original plan", "{task}: plan początkowy"),
     "chart.new": ("(new)", "(nowe)"),
     "chart.status": ("Status {date}", "Stan {date}"),
-    "chart.deadline": ("Deadline", "Termin"),
+    "chart.deadline": ("Deadline {date}", "Termin {date}"),
     "chart.today": ("Today", "Dziś"),
     "chart.legend": ("Legend", "Legenda"),
     "chart.legend.original": ("Original plan", "Plan początkowy"),

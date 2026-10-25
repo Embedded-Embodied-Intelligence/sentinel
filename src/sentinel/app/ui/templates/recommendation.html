@@ -8,6 +8,7 @@
   <ul class="chips chips-large" aria-label="{{ t('rec.effect') }}">
     {% for chip in chips %}<li class="chip chip-{{ chip.tone }}"><span class="chip-label">{{ chip.label }}</span> {{ chip.text }}</li>{% endfor %}
   </ul>
+  {% if rec.without and rec.with_action and rec.without.rollouts < rec.with_action.rollouts %}<p class="hint">{{ t("rec.rough") }}</p>{% endif %}
   {% endif %}
 
   {% if rec.status in ("open", "later") and rec.needs_approval %}

@@ -224,6 +224,8 @@ main { padding-top: 1.5rem; padding-bottom: 3rem; outline: none; }
 
 /* ---- forms */
 .form { max-width: 60rem; }
+.form-wide { max-width: none; }
+.block { display: block; }
 .field { margin-bottom: 1rem; }
 .field > label, legend { display: block; font-weight: 600; margin-bottom: 0.3rem; }
 .hint { color: var(--muted); font-size: 0.875rem; margin: 0.25rem 0 0; }
@@ -282,7 +284,9 @@ details > summary { cursor: pointer; font-weight: 600; color: var(--link); paddi
 .table-form td { padding: 0.3rem 0.35rem; }
 .table-form input { min-height: 2.25rem; }
 .has-issue td:first-child, .has-issue legend { box-shadow: inset 4px 0 0 var(--warn); }
-.tasks-table input:not(.short):not(.mid):not([type="checkbox"]) { min-width: 12rem; }
+.tasks-table input:not(.short):not(.mid):not([type="checkbox"]) { min-width: 14rem; }
+.tasks-table input.short { width: 3.75rem; }
+.tasks-table th { white-space: normal; }
 
 /* ---- cards and overview */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem;

@@ -38,7 +38,7 @@
   <div id="import-result" aria-live="polite"></div>
 </section>
 {% else %}
-<form id="tasks-form" class="form" hx-post="/projects/{{ project_id }}/setup/tasks" hx-target="#step" novalidate>
+<form id="tasks-form" class="form form-wide" hx-post="/projects/{{ project_id }}/setup/tasks" hx-target="#step" novalidate>
   <p class="lead">{{ t("setup.tasks.lead") }}</p>
   <div hx-post="/projects/{{ project_id }}/setup/tasks" hx-trigger="change delay:500ms from:#tasks-form" hx-include="#tasks-form" hx-vals='{"action": "autosave"}' hx-target="#save-status"></div>
   {% with oob=false %}{% include "_issues.html" %}{% endwith %}

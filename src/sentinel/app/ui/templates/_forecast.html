@@ -23,7 +23,7 @@
   <div><dt>{{ t("overview.bad_case") }}</dt><dd>{{ t.date(f.p90) }}</dd></div>
   {% if f.budget %}
   <div><dt>{{ t("overview.spent") }}</dt><dd>{{ t("overview.spent_of", spent=t.money(view.cost_so_far or 0), budget=t.money(f.budget)) }}</dd></div>
-  <div><dt>{{ t("overview.expected_cost") }}</dt><dd>{{ t.money(f.expected_cost) }}{% if f.p_within_budget is not none %} <span class="small muted">({{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }})</span>{% endif %}</dd></div>
+  <div><dt>{{ t("overview.expected_cost") }}</dt><dd>{{ t.money(f.expected_cost) }}{% if f.p_within_budget is not none %}<span class="small muted block">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}</dd></div>
   {% endif %}
 </dl>
 <p class="small muted">{{ t("overview.forecast_note", futures=f.rollouts) }}</p>
@@ -36,6 +36,7 @@
     <li>{% if count >= 10 %}{{ t("overview.driver_all", task=d.name) }}{% else %}{{ t("overview.driver", task=d.name, count=[count, 1] | max) }}{% endif %}</li>
     {% endfor %}
   </ol>
+  <p class="hint">{{ t("overview.drivers_note") }}</p>
   {% else %}<p class="muted small">{{ t("overview.no_drivers") }}</p>{% endif %}
 </div>
 {% endif %}

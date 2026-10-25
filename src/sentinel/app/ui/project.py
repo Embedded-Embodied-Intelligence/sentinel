@@ -367,7 +367,7 @@ def router(ui: Ui) -> APIRouter:
         roles = team_roles(view.definition.team)
         today = date.today()
         last = view.checkins[-1].date if view.checkins else None
-        default = today if last is None or today >= last else last
+        default = max(today, last or today, view.definition.start)
 
         def fv(name: str, fallback: object = "") -> object:
             """The value the manager entered (after a refused submit), else `fallback`."""

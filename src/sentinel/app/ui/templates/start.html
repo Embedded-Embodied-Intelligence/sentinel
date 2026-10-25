@@ -5,10 +5,12 @@
     <h1>{{ t("start.title") }}</h1>
     <p class="lead">{{ t("start.what") }}</p>
   </div>
+  {% if cards %}
   <div class="actions">
     <a class="btn" href="/simulator">{{ t("start.try_simulator") }}</a>
     <a class="btn btn-primary" href="/new"><span aria-hidden="true">+ </span>{{ t("start.new") }}</a>
   </div>
+  {% endif %}
 </div>
 {% if cards %}
 <ul class="cards" aria-label="{{ t('start.list') }}">

@@ -239,12 +239,15 @@ def gantt(project: LiveProject, texts: Texts, today: date | None = None) -> str:
             a, b = row.planned
             cls = "bar-rest" if row.actual is not None else "bar-planned"
             parts.append(_bar(x(a), x(b), mid - BAR / 2 + 2, BAR - 2, cls, row.tip))
-    lines = [(t, "line-status", texts("chart.status", date=texts.day_month(calendar.date_of(t))))]
+    status = project.checkins[-1][0] if project.checkins else calendar.date_of(0)
+    lines = [(t, "line-status", texts("chart.status", date=texts.day_month(status)))]
     if model.deadline is not None:
-        lines.append((model.deadline, "line-deadline", texts("chart.deadline")))
-    if today is not None:
-        now = calendar.checkin_day(today)
-        if 0 <= now <= horizon and now != t:
+        last_day = project.definition.deadline or calendar.date_of(model.deadline - 1)
+        label = texts("chart.deadline", date=texts.day_month(last_day))
+        lines.append((model.deadline, "line-deadline", label))
+    if today is not None and calendar.date_of(0) <= today:
+        now = calendar.first(today)  # the line stands at the start of today
+        if now <= horizon and now != t:
             lines.append((now, "line-today", texts("chart.today")))
     for k, (day, cls, label) in enumerate(lines):
         xd = num(x(day))
