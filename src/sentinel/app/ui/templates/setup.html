@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page-head">
-  <p class="eyebrow">{{ t("setup.eyebrow") }}</p>
+  {% if project_id %}<p class="eyebrow">{{ t("setup.eyebrow") }}</p>{% endif %}
   <h1>{{ title }}</h1>
 </div>
 <ol class="steps" aria-label="{{ t('setup.progress') }}">

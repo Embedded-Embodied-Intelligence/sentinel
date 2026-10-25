@@ -72,8 +72,11 @@ def browser() -> Iterator[Any]:
     with sync_api.sync_playwright() as playwright:
         try:
             chromium = playwright.chromium.launch()
-        except sync_api.Error as exc:  # pragma: no cover - depends on the machine
-            pytest.skip(f"Chromium for Playwright cannot start: {str(exc).splitlines()[0]}")
+        except sync_api.Error:  # pragma: no cover - depends on the machine
+            pytest.skip(
+                "Chromium for Playwright cannot start: run `uv run playwright install chromium` "
+                "(on Linux also `sudo apt-get install libnss3 libnspr4 libasound2t64`)"
+            )
         yield chromium
         chromium.close()
 
@@ -158,7 +161,6 @@ def test_a_project_from_a_spreadsheet_to_an_approved_recommendation(
     page.context.close()
 
 
-@pytest.mark.data
 def test_the_simulator_runs_to_the_end_and_compares(browser: Any, local: Server) -> None:
     if not local.services.instances("j30"):
         pytest.skip("PSPLIB data not available (run scripts/fetch_psplib.py)")

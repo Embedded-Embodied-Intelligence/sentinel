@@ -67,7 +67,8 @@ Intervals are 95 % cluster-bootstrap intervals over instances; pp = percentage p
   [`docs/roadmap.md`](docs/roadmap.md) — work packages and status
 - [`docs/reports/`](docs/reports/) — work package reports; [`docs/notes/`](docs/notes/) — notes
   for the papers, [limitations](docs/notes/limitations.md)
-- [`docs/dashboard/`](docs/dashboard/README.md) — example cockpits (open in a browser)
+- [`docs/dashboard/`](docs/dashboard/README.md) — example cockpits (open in a browser);
+  [`docs/ui/`](docs/ui/) — screenshots of the application's pages
 - [`results/`](results/) — committed runs; [`paper/generated/`](paper/generated/) — macros,
   tables and figures of the papers
 - `src/sentinel/` — Python package; `tests/` — pytest suite; `scripts/` — utilities; `configs/`
@@ -114,15 +115,24 @@ chosen by a deterministic query over the WP5 results (`scripts/example_cockpits.
 
 ## Application
 
-`uv run sentinel ui` serves the application on <http://127.0.0.1:8000> (spec §11): *live projects*
-that a project manager updates at check-ins, where Sentinel's recommendations below the autonomy
-level apply automatically and the others wait for approval, and *simulator projects* on PSPLIB
-worlds next to NoReaction. WP9a provides the JSON API (`/api/…`, its OpenAPI schema at
-`/api/openapi.json`); the pages follow in WP9b. Projects, settings (the optional LLM provider and
-its key, never returned by the API) and caches live in `--data-dir` (default
-`$XDG_DATA_HOME/sentinel`, outside the repository). `uv run sentinel ui --demo` runs the public
-demo: an anonymous sandbox per visitor with a showcase project and the limits of
-[`configs/app_demo.toml`](configs/app_demo.toml).
+`uv run sentinel ui` serves the application on <http://127.0.0.1:8000> (spec §11): pages for
+project managers in Polish (default) or English, without a single technical term (spec §11.7).
+A project is created in three steps (basics; team; tasks described in words, imported from a
+spreadsheet or entered in a table), and its overview shows the chance of meeting the deadline
+with its trend, the most likely and the bad-case finish dates, the budget outlook, what
+threatens the deadline and a plan-and-progress chart. A *check-in* reports progress, absences
+(never their reasons), growing and new tasks, or a message the optional AI turns into the same
+events; Sentinel's recommendation follows with its effect, reasons and alternatives, to approve,
+reject or postpone, and automatic plan changes can be undone. The *simulator* runs an example
+project day by day under Sentinel next to nobody reacting. Screenshots: [`docs/ui/`](docs/ui/).
+The pages use the JSON API's services (`/api/…`, the OpenAPI schema at `/api/openapi.json`);
+projects, settings (the optional AI provider and its key, never shown again) and caches live in
+`--data-dir` (default `$XDG_DATA_HOME/sentinel`, outside the repository).
+`uv run sentinel ui --demo` runs the public demo: an anonymous sandbox per visitor with a
+showcase project and the limits of [`configs/app_demo.toml`](configs/app_demo.toml). The
+end-to-end browser tests need Chromium for Playwright (`uv run playwright install chromium`,
+on Linux also `sudo apt-get install libnss3 libnspr4 libasound2t64`) and run with
+`uv run pytest -q -m e2e`.
 
 ## Reproducing the results
 

@@ -2,6 +2,8 @@
 Polish and English without internal terms, missing texts, raw codes or ISO dates (spec section
 11.7); the friendly error pages; and the undo of an automatic plan change (spec section 11.5)."""
 
+import html
+import json
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -88,9 +90,7 @@ def site(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Site]:
         # Copies of the open project by its JSON export: approved, and changed automatically.
         export = client.get(f"/api/projects/{ids['open']}/export.json").json()
         for name in ("approved", "auto"):
-            files = {
-                "file": ("p.json", __import__("json").dumps(export).encode(), "application/json")
-            }
+            files = {"file": ("p.json", json.dumps(export).encode(), "application/json")}
             response = client.post("/api/import/json", files=files, headers=headers)
             assert response.status_code == 201
             ids[name] = response.json()["id"]
@@ -350,3 +350,143 @@ def test_undo_restores_the_plan_before_an_automatic_change(site: Site) -> None:
     )
     twice = client.post(f"/projects/{pid}/recommendations/{entry.seq}/undo", headers=headers)
     assert twice.status_code == 409
+
+
+def test_language_switch_ask_settings_report_and_delete(site: Site) -> None:
+    client, headers, ids = site.client, site.headers, site.ids
+    switched = client.get("/lang/en", params={"next": "/how-it-works"}, follow_redirects=False)
+    assert switched.status_code == 303 and switched.headers["location"] == "/how-it-works"
+    assert "sentinel_lang=en" in switched.headers["set-cookie"]
+    away = client.get("/lang/pl", params={"next": "//evil.example/x"}, follow_redirects=False)
+    assert away.headers["location"] == "/"
+    client.cookies.delete("sentinel_lang")
+    pid = ids["calm"]
+    asked = client.post(f"/projects/{pid}/ask", headers=headers)
+    job = re.search(r'hx-get="(/jobs/[^"]+)"', asked.text)
+    assert job is not None
+    done = client.get(job.group(1).replace("&amp;", "&"), headers=headers)
+    assert re.fullmatch(rf"/projects/{pid}/recommendations/\d+", done.headers["HX-Redirect"])
+    form = {"name": "Calm project", "deadline": "2026-12-18", "autonomy": "1", "cost_0": "2"}
+    saved = client.post(f"/projects/{pid}/settings", data=form, headers=headers)
+    assert saved.headers["HX-Redirect"].endswith("flash=settings_saved")
+    definition = client.get(f"/api/projects/{pid}").json()["definition"]
+    assert definition["name"] == "Calm project" and definition["settings"]["autonomy"] == 1
+    assert definition["roles"] == [{"role": "Developer", "daily_cost": 2.0}]
+    report = client.post(f"/projects/{pid}/report", headers=headers)
+    job = re.search(r'hx-get="(/jobs/[^"]+)"', report.text)
+    assert job is not None
+    ready = client.get(job.group(1).replace("&amp;", "&"), headers=headers)
+    link = re.search(r'href="(/api/jobs/[^"]+/cockpit.html)"', ready.text)
+    assert link is not None and "<svg" in client.get(link.group(1)).text
+    gone = client.post(f"/projects/{ids['draft']}/delete", headers=headers)
+    assert gone.headers["HX-Redirect"] == "/?flash=deleted"
+    assert client.get(f"/projects/{ids['draft']}/setup/team").status_code == 404
+
+
+def test_ai_features_through_the_pages(tmp_path: Path) -> None:
+    from sentinel.llm import FakeLlmClient, LlmCache, LlmClient
+
+    extraction = {
+        "team": [{"role": "Developer", "count": 2}],
+        "activities": [
+            {"name": "Design", "duration_days": 2, "crew": {"Developer": 1}, "predecessors": []},
+            {
+                "name": "Build",
+                "duration_days": 3,
+                "crew": {"Developer": 2},
+                "predecessors": ["Design"],
+            },
+        ],
+    }
+
+    def answer(messages: Any) -> str:
+        system = messages[0].content
+        if system.startswith("You turn messages"):  # Ada (worker 0) back on day 10 (Mon 16 Nov)
+            return json.dumps({"events": [{"type": "absence", "worker": 0, "return_day": 10}]})
+        if system.startswith("Answer with the JSON object"):
+            return json.dumps({"ok": True})
+        return json.dumps(extraction)
+
+    def factory(settings: Any, cache: LlmCache) -> LlmClient:
+        assert cache.store_prompts is False
+        return FakeLlmClient(answer, cache=cache)
+
+    config = AppConfig(data_dir=tmp_path / "ai", inline_jobs=True)
+    with TestClient(create_app(config, Services(config, llm_factory=factory))) as client:
+        csrf = client.get("/api/session").json()["csrf_token"]
+        headers = {"X-CSRF-Token": csrf, "HX-Request": "true"}
+
+        def finish(response: Any) -> Any:
+            job = re.search(r'hx-get="(/jobs/[^"]+)"', response.text)
+            assert job is not None, response.text[:300]
+            return client.get(job.group(1).replace("&amp;", "&"), headers=headers)
+
+        tested = finish(client.post("/settings/test", data={"provider": "ollama"}, headers=headers))
+        assert "scripted" in tested.text and problems(tested.text) == []
+        pid = _create(client, headers, small())
+        found = finish(
+            client.post(
+                f"/projects/{pid}/setup/describe",
+                data={"text": "Design, then build."},
+                headers=headers,
+            )
+        )
+        assert problems(found.text) == [] and "Design" in found.text
+        draft = re.search(r'name="draft" value="([^"]+)"', found.text)
+        assert draft is not None
+        used = client.post(
+            f"/projects/{pid}/setup/use-extraction",
+            data={"draft": html.unescape(draft.group(1))},
+            headers=headers,
+        )
+        assert used.headers["HX-Redirect"].endswith("tab=manual")
+        tasks = client.get(f"/api/projects/{pid}").json()["definition"]["tasks"]
+        assert [t["name"] for t in tasks] == ["Design", "Build"]
+        other = _create(client, headers, small())
+        client.post(f"/api/projects/{other}/plan", headers=headers)
+        read = finish(
+            client.post(
+                f"/projects/{other}/checkin/message",
+                data={"message": "Ada is out until Monday the 16th.", "date": "2026-11-04"},
+                headers=headers,
+            )
+        )
+        assert problems(read.text) == []
+        value = re.search(r'name="msg_absence" value="([^"]+)"', read.text)
+        assert value is not None
+        absence = json.loads(html.unescape(value.group(1)))
+        assert absence == {"person": "a", "first_day": "2026-11-04", "return_date": "2026-11-16"}
+
+
+@pytest.mark.data
+@pytest.mark.slow  # a simulator world and 10 simulated days, about 7 s
+def test_the_simulator_pages(tmp_path: Path, psplib_root: Path) -> None:
+    config = AppConfig(data_dir=tmp_path / "sim", inline_jobs=True, psplib_root=psplib_root)
+    with TestClient(create_app(config)) as client:
+        csrf = client.get("/api/session").json()["csrf_token"]
+        headers = {"X-CSRF-Token": csrf, "HX-Request": "true"}
+        for language in LANGUAGES:
+            setup = client.get("/simulator", params={"lang": language})
+            assert setup.status_code == 200 and problems(setup.text) == []
+        created = client.post(
+            "/simulator",
+            data={"example": "small", "disruptions": "turbulent", "policy": "sentinel"},
+            headers=headers,
+        )
+        job = re.search(r'hx-get="(/jobs/[^"]+)"', created.text)
+        assert job is not None
+        pid = (
+            client.get(job.group(1).replace("&amp;", "&"), headers=headers)
+            .headers["HX-Redirect"]
+            .split("/")[2]
+        )
+        advanced = client.post(f"/projects/{pid}/advance", data={"days": "10"}, headers=headers)
+        job = re.search(r'hx-get="(/jobs/[^"]+)"', advanced.text)
+        assert job is not None
+        client.get(job.group(1).replace("&amp;", "&"), headers=headers)
+        for language in LANGUAGES:
+            page = client.get(f"/projects/{pid}", params={"lang": language})
+            assert page.status_code == 200 and problems(page.text) == []
+            assert "timeline" in page.text
+        start = client.get("/", params={"lang": "en"})
+        assert "Days simulated: 10" in start.text and problems(start.text) == []

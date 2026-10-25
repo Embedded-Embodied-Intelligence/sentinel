@@ -4,6 +4,7 @@ progress of background jobs (WP9b; ADR-0025)."""
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
@@ -12,8 +13,8 @@ from sentinel.app.errors import AppError
 from sentinel.app.llm import LlmSettingsUpdate, Provider
 from sentinel.app.services import JobView
 from sentinel.app.simulator import SimulatorSpec
-from sentinel.app.ui.core import LANG_COOKIE, STATIC_DIR, Ui, is_htmx, local_path
-from sentinel.app.ui.forms import Form, text_of
+from sentinel.app.ui.core import LANG_COOKIE, STATIC_DIR, Ui, local_path
+from sentinel.app.ui.forms import Form
 from sentinel.app.views import ForecastSummary
 
 PROVIDERS: tuple[Provider, ...] = ("none", "ollama", "groq", "openrouter")
@@ -195,7 +196,7 @@ def router(ui: Ui) -> APIRouter:
         form = await Form.read(request)
         _save_settings(request, form)
         job = services.test_llm(ui.session(request), ui.language(request))
-        return _job_fragment(request, job, "job.llm_test")
+        return job_progress(ui, request, job, "job.llm_test")
 
     @routes.get("/lang/{code}")
     def language(request: Request, code: str) -> Response:
@@ -209,9 +210,6 @@ def router(ui: Ui) -> APIRouter:
     def favicon() -> Response:
         data = (STATIC_DIR / "favicon.svg").read_bytes()
         return Response(data, media_type="image/svg+xml")
-
-    def _job_fragment(request: Request, job: JobView, label: str, **query: str) -> Response:
-        return job_progress(ui, request, job, label, **query)
 
     @routes.get("/jobs/{job_id}")
     def job(request: Request, job_id: str) -> Response:
@@ -260,15 +258,6 @@ def router(ui: Ui) -> APIRouter:
 
 def job_progress(ui: Ui, request: Request, job: JobView, label: str, **query: str) -> Response:
     """The fragment of a running job, which polls `/jobs/{id}` until it is done."""
-    from urllib.parse import urlencode
-
     texts = ui.texts(request)
     values = {"label": label} | query
     return ui.page(request, "_job.html", job=job, label=texts(label), query=urlencode(values))
-
-
-def text_value(form: Form, name: str) -> str:
-    return text_of(form, name)
-
-
-__all__ = ["chance_level", "is_htmx", "job_progress", "router", "trend"]

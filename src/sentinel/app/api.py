@@ -26,6 +26,7 @@ from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, File, Form, Query, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.responses import Response as FastResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -515,4 +516,5 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
     from sentinel.app.ui.core import mount
 
     mount(app, ui)
+    app.add_middleware(GZipMiddleware, minimum_size=1024)  # pages, scripts and JSON
     return app

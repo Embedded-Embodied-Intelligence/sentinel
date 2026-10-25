@@ -112,8 +112,9 @@ def test_a_live_project_through_the_api(tmp_path: Path, client: Visitor) -> None
     assert view["as_of"] == "2026-11-05" and view["tracking"] is True
     seq = view["open_recommendation"]
     recommendation = next(r for r in view["recommendations"] if r["seq"] == seq)
-    assert recommendation["title"] == "Let Cleo take over for the absent crew of “Build API”"
+    assert recommendation["title"] == "Substitute: Cleo takes over Ada's part in “Build API”"
     assert recommendation["needs_approval"] is True
+    assert recommendation["approval_reasons"] == ["people"]  # SUBST (spec section 11.7)
     assert recommendation["with_action"]["p_on_time"] > recommendation["without"]["p_on_time"]
     approved = test.post(
         f"/api/projects/{pid}/recommendations/{seq}/decision",

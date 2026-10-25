@@ -6,9 +6,8 @@ the project's last change), the recommendation of spec section 11.5 with the fig
 simulated futures, and the event log for the history.
 """
 
-from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -26,9 +25,9 @@ from sentinel.app.events import (
 from sentinel.app.live import LiveProject
 from sentinel.app.models import CheckIn
 from sentinel.app.services import JobView
-from sentinel.app.ui.charts import gantt, rows_of
+from sentinel.app.ui.charts import gantt
 from sentinel.app.ui.core import Ui, is_htmx
-from sentinel.app.ui.forms import FieldError, Form, read_checkin, read_settings, team_roles
+from sentinel.app.ui.forms import Form, read_checkin, read_settings, team_roles
 from sentinel.app.ui.pages import chance_level, job_progress, trend
 from sentinel.app.ui.text import Texts
 from sentinel.app.views import ProjectView, RecommendationView, TaskView
@@ -319,7 +318,6 @@ def router(ui: Ui) -> APIRouter:
             late=late,
             job=None if job is None else services.job(session, job.id, ui.language(request)),
             chart=gantt(state.project, texts, date.today()),
-            rows=rows_of(state.project, texts),
             chips=impact_chips,
             why=why_text,
         )
@@ -620,6 +618,3 @@ def message_review(ui: Ui, request: Request, view: JobView) -> Response:
         names=names,
         people=people,
     )
-
-
-__all__ = ["FieldError", "Sequence", "datetime", "message_review", "router", "why_text"]
