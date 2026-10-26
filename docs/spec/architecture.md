@@ -32,9 +32,16 @@ src/sentinel/
   experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
                          #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`)
   dashboard/             # WP8: project cockpit (`sentinel dashboard`), one self-contained HTML
-  app/                   # WP9: the application (spec section 11): live projects, simulator,
-                         #   SQLite store with an event log, services, FastAPI (`sentinel ui`)
-scripts/                 # one-off utilities, e.g. fetch_psplib.py
+  app/                   # WP9: the application (spec section 11): live projects (live.py),
+                         #   planning.py (plan, forecast, recommendation and its comparison),
+                         #   simulator.py, events.py and store.py (SQLite event log), services.py,
+                         #   views.py, api.py (FastAPI, `sentinel ui`), security.py (demo
+                         #   sessions, CSRF, client addresses), showcase.py, names.py and
+                         #   vocabulary/<lang>.toml (names of the example projects per language)
+    ui/                  # WP9b: the pages: Jinja2 templates, text.py (catalogue PL/EN), forms,
+                         #   charts (SVG), routes per screen; static/ (CSS, vendored HTMX)
+scripts/                 # one-off utilities, e.g. fetch_psplib.py; run_demo.sh (public demo),
+                         #   setup_e2e_libs.sh (Chromium libraries without root)
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/
 data/                    # downloaded benchmark data (gitignored)
@@ -77,20 +84,28 @@ web stack (FastAPI, uvicorn, Jinja2; a test enforces both, ADR-0022).
 - `data/llm_cache/` — record/replay caches of LLM calls, one JSON-lines file per backend and
   study (gitignored); a run commits its replay bundle
 - the application's data directory (`sentinel ui --data-dir`, default
-  `$XDG_DATA_HOME/sentinel`, outside the repository): `sentinel.db` (SQLite: projects, the
-  event log, sessions, jobs), `settings.json` (the LLM provider and its key, mode 0600, never
-  returned by the API), `secret.key` (cookie signing key) and `llm_cache/` (caches without
-  prompts, spec section 10)
+  `$XDG_DATA_HOME/sentinel`, outside the repository; `/data`, a named volume, in Docker):
+  `sentinel.db` (SQLite: projects, the event log, sessions, jobs), `settings.json` (the LLM
+  provider and its key, mode 0600, never returned by the API), `secret.key` (cookie signing
+  key) and `llm_cache/` (caches without prompts, spec section 10)
 
 ## Application (WP9)
 
 `sentinel ui` serves the FastAPI app of `app/api.py` (uvicorn, 127.0.0.1 by default). The API
-calls the services of `app/services.py`, which hold no HTTP: live projects (`app/live.py`, spec
-section 11) and simulator projects (`app/simulator.py`) are rebuilt from their event log in the
-store (`app/store.py`, ADR-0023); long operations (plan, forecast, recommendation, simulator
-advance, cockpit) run in a background worker (`app/jobs.py`) with a job id and progress. With
-`--demo` every visitor gets an anonymous sandbox (signed cookie, limits, 24 h expiry, CSRF
-tokens; ADR-0024).
+and the pages (`app/ui/`, ADR-0025) call the services of `app/services.py`, which hold no HTTP:
+live projects (`app/live.py`, spec section 11) and simulator projects (`app/simulator.py`) are
+rebuilt from their event log in the store (`app/store.py`, ADR-0023); long operations (plan,
+forecast, recommendation, simulator advance, cockpit) run in a background worker
+(`app/jobs.py`) with a job id and progress. With `--demo` every visitor gets an anonymous
+sandbox (signed cookie, limits, 24 h expiry, CSRF tokens; ADR-0024).
+
+### Deployment options (WP9c, ADR-0026)
+
+| Option | Who | How | Notes |
+| --- | --- | --- | --- |
+| Laptop | one manager | `uv sync`, `uv run sentinel ui` → http://127.0.0.1:8000 | data in `~/.local/share/sentinel` |
+| Company server | a team, IT runs it | `docker compose up -d` (multi-stage image, Python 3.12 slim, non-root, `HEALTHCHECK` on `/api/health`), optional `ollama` profile for a local AI | data in the `sentinel-data` volume; put it behind the company's HTTPS proxy |
+| Public course demo | anyone with the link | `scripts/run_demo.sh` (`sentinel ui --demo` on 127.0.0.1 under tmux or a user systemd service) and `tailscale funnel` (HTTPS) | per-visitor sandboxes; `X-Forwarded-For` trusted only from 127.0.0.1; `docs/deploy.md` |
 
 ## Results
 

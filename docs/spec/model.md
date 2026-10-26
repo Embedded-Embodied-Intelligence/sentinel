@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.0.1)
+# Sentinel — formal model (v2.0.2)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -51,7 +51,12 @@ SUBST onboarding in the remaining work, accepted as a slightly pessimistic estim
 live and simulator projects may hire at least one temporary worker per role,
 `u ≤ max(1, ⌊γ R_k⌋)` (§11.2, §11.6; §4 unchanged for the research runs); the undo of an
 automatic plan change (§11.5) and the wording of every action and term in the application
-(§11.7).
+(§11.7). v2.0.2 (WP9c) answers to the WP9b questions: the figures shown with a recommendation
+come from one comparison on the forecast's sampled worlds (§11.5), the tasks that threaten the
+deadline are counted over the late rollouts without structural, zero-duration and finished tasks
+(§11.4), the simulator states that it uses the application's settings (§11.6), costs are shown
+in cost units with their meaning and changes also as a share of the budget, and the example
+projects are named in the user's language (§11.2, §11.6, §11.7).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -814,7 +819,8 @@ or before `d` (`−1` before `date(0)`).
   in the advanced settings.
 - **Goals.** The deadline is a date (§11.1), the budget `B` is in cost units, by default that of
   §1.2 with `β = 0.1` and the preset's PERT mean. `P(C ≤ D)` and recommendations need a
-  deadline.
+  deadline. Every cost is shown in cost units with their meaning, a cost unit being a
+  person-day while every `c_k` is 1, and a change of cost also as a share of `B` (§11.7).
 - **Temporary workers.** A live project may hire at least one temporary worker of every role:
   OVERTIME (§4) hires `u ≤ max(u_min, ⌊γ R_k⌋)` workers and at most that many of a role are hired
   at a time, with `u_min = 1` in live and simulator projects (§11.6) and `u_min = 0` in the
@@ -881,11 +887,21 @@ or before `d` (`−1` before `date(0)`).
 
 The forecast of day `t` runs `N = 200` NoReaction rollouts (§5.1) from the latest observation and
 its plan, with the seed `derive_seed(project seed, "forecast", t)`: `P(C ≤ D)`, the finish dates
-of the 10 %, 50 % and 90 % quantiles of `C` (§5.2), and the *risk drivers*, the tasks most often
-on the critical chain of a rollout. The critical chain of a completed rollout holds the
-activities from which tight links lead to the sink: `i → j` is tight if `i` is a predecessor of
-`j` with `F_i = S_j`, or, for a `j` without such a predecessor, if `F_i = S_j` and `i` and `j`
-need a common role. A risk driver's share is the fraction of rollouts whose chain holds it.
+of the 10 %, 50 % and 90 % quantiles of `C` (§5.2), and the *tasks that threaten the deadline*.
+The critical chain of a completed rollout holds the activities from which tight links lead to
+the sink: `i → j` is tight if `i` is a predecessor of `j` with `F_i = S_j`, or, for a `j`
+without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
+
+- **Threats** (v2.0.2, WP9b question 2). A task's share is the fraction of the completed late
+  rollouts (`C > D`) whose critical chain holds it; the tasks are ranked by their share, then
+  by duration (longer first) and id, and shown as "decides the deadline in `k` of 10 late
+  scenarios", `k` the share in tenths rounded half up (`k ≥ 1`; "in every late scenario" for a
+  share of 1, "in nearly every" for `k = 10` below 1). Left out are the *structural* tasks,
+  through which every source–sink path of the required tasks passes (optional tasks and dropped
+  ones are not on these paths, since they can be or were dropped), the tasks of zero duration,
+  and the tasks already done or dropped (nothing can change them any more). If no task remains,
+  the page says that the risk is spread across the plan; without a late rollout, that the
+  project is late in none of the simulated futures; without a deadline, there is no threat.
 
 ### §11.5 Recommendations and decisions
 
@@ -895,9 +911,19 @@ need a common role. A risk driver's share is the fraction of rollouts whose chai
   project has optional tasks, and the parameters of §8. One follows every check-in; the manager
   may ask for one at any time. It shows the chosen action in plain language, its effect against
   NOOP (`p̂`, the expected finish date `date(C̄ − 1)` with `C̄` the mean makespan of its
-  rollouts rounded half up, the expected cost `ẑ`, the plan changes), the runner-up and the
-  explanation of §10.4. Each figure comes from the candidate's own rollouts in the deliberation
-  (`N`, or `N₁` for a candidate that racing dropped), so it is what Sentinel decided on.
+  rollouts rounded half up, the expected cost `ẑ`, the plan changes), the alternatives, the
+  runner-up and the explanation of §10.4.
+- **One comparison** (v2.0.2, WP9b question 1). The decision is that of §6, racing included.
+  For display, after the decision, NOOP, the chosen action and the alternatives shown are
+  evaluated on the `N = 200` sampled worlds of the forecast of the same day (§11.4: its seed and
+  rollout layout, so NOOP's rollouts are the forecast's), each applied as in the rollouts of §6
+  (an action that needs approval is approved `δ_h` days later in each world). Every figure shown
+  with a recommendation comes from this comparison, so "no change" has the overview's chance on
+  the same project and day, and after an automatic action the overview shows the action's
+  figures. The alternatives shown are the runner-up first, then the candidates racing kept, then
+  the rest by `min(p, θ_D)` and `T`, at most five, NOOP always among them; on the page they are
+  listed by their own figures after the runner-up. The comparison can order the alternatives
+  differently from racing; the decision stands.
 - **Autonomy.** `Λ` is a project setting (default 2, §8). A chosen action other than NOOP with
   `ℓ(a) < Λ` and without DESCOPE is applied at once and listed as applied automatically. Any
   other chosen action waits for the manager, who takes the place of the simulated human of §4:
@@ -932,7 +958,17 @@ next `n` days of the engine (§3) on that world from the baseline plan under the
 Sentinel at autonomy `Λ` with the simulated human of §4, NoReaction or a policy of §7, with
 `u_min = 1` (§11.2). Advanced to the end, the run equals `simulate` with the same plan, policy,
 seed and `u_min`. NoReaction is advanced on the same seed for a side-by-side comparison
-(common random numbers, §2.3).
+(common random numbers, §2.3). The simulator page says that it uses the application's settings
+(at least one temporary person per role, §11.2), not the setup of the studies, so a run can
+differ from their results (v2.0.2, WP9b question 3).
+
+- **Names** (v2.0.2). The roles, people and tasks of a simulator project, and the showcase project
+  of the demo, are named in the user's language from a vocabulary file per language: the
+  simulator draws names as the studies do (the narrator's task names and the roster of §10.2,
+  with the same seeds) from the language's words, the English words being the narrator's, so
+  that the English names are the studies' and the Polish ones their translations. A simulator
+  project's names follow the language of the page; the showcase is copied into a new demo
+  sandbox in the language of the visitor's first request (Polish unless English was chosen).
 
 ### §11.7 Wording in the application
 
@@ -956,6 +992,9 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | `C`, `date(C − 1)` | finish date | data zakończenia |
 | median, 90 % quantile of `C` | most likely finish; bad case (1 in 10 later) | najbardziej prawdopodobny koniec; zły scenariusz (1 na 10 później) |
 | `D`, `B`, `ẑ`, `o` | deadline, budget, expected cost, expected overrun | termin, budżet, oczekiwany koszt, oczekiwane przekroczenie |
+| a cost `x`, of `B` (v2.0.2) | <x> cost units, <x> of <B> cost units (person-days) | <x> jednostek kosztu, <x> z <B> jednostek kosztu (osobodni) |
+| a change of cost `Δz` (v2.0.2) | +<Δz> units, +<Δz/B> % of the budget | +<Δz> jedn., +<Δz/B> % budżetu |
+| threat (v2.0.2) | <task> decides the deadline in <k> of 10 late scenarios; the risk is spread across the plan | <zadanie> decyduje o terminie w <k> na 10 scenariuszy z opóźnieniem; ryzyko rozkłada się na cały plan |
 | `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
 | rollout, `N` | simulated future, number of simulated futures | symulowany scenariusz, liczba scenariuszy |
 | deliberation, recommendation | Sentinel's analysis, recommendation | analiza Sentinela, rekomendacja |
@@ -974,6 +1013,10 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | NoReaction, Sentinel | Nobody reacts, Sentinel | Nikt nie reaguje, Sentinel |
 | J30, J60 instance | small example project (30 tasks), medium example project (60 tasks) | mały przykładowy projekt (30 zadań), średni przykładowy projekt (60 zadań) |
 | LLM | AI | AI |
+
+The meaning "(person-days)" / "(osobodni)" is shown while every daily cost `c_k` is 1; with other
+daily costs a cost unit is the manager's own unit (§11.2). Plural forms follow the language (e.g.
+"1 jednostka", "3 jednostki", "5 jednostek kosztu").
 
 Never shown: the symbols of this document (`Λ`, `λ`, `τ`, `δ`, `γ`, `θ`, `p̂`, …), the labels
 NOOP, SHIFT, RESEQ, SUBST, OVERTIME, DESCOPE and `OT(k)`, and the words makespan, rollout,
