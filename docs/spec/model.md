@@ -994,7 +994,7 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | `D`, `B`, `ẑ`, `o` | deadline, budget, expected cost, expected overrun | termin, budżet, oczekiwany koszt, oczekiwane przekroczenie |
 | a cost `x`, of `B` (v2.0.2) | <x> cost units, <x> of <B> cost units (person-days) | <x> jednostek kosztu, <x> z <B> jednostek kosztu (osobodni) |
 | a change of cost `Δz` (v2.0.2) | +<Δz> units, +<Δz/B> % of the budget | +<Δz> jedn., +<Δz/B> % budżetu |
-| threat (v2.0.2) | <task> decides the deadline in <k> of 10 late scenarios; the risk is spread across the plan | <zadanie> decyduje o terminie w <k> na 10 scenariuszy z opóźnieniem; ryzyko rozkłada się na cały plan |
+| threat (v2.0.2) | The task <task> decides the deadline in <k> of 10 late scenarios; the risk is spread across the plan | Zadanie <zadanie> decyduje o terminie w <k> na 10 scenariuszy z opóźnieniem; ryzyko rozkłada się na cały plan |
 | `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
 | rollout, `N` | simulated future, number of simulated futures | symulowany scenariusz, liczba scenariuszy |
 | deliberation, recommendation | Sentinel's analysis, recommendation | analiza Sentinela, rekomendacja |
