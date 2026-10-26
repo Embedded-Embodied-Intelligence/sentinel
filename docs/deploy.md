@@ -102,8 +102,8 @@ HTTPS at `https://<machine>.<tailnet>.ts.net/`.
 1. In the Tailscale admin console: **DNS → HTTPS Certificates** on, and Funnel allowed for the
    machine (the first `tailscale funnel` prints a link that enables it).
 2. Your user must be allowed to change Tailscale's serve settings. If `tailscale funnel` says
-   *Access denied*, someone with root runs `sudo tailscale set --operator=$USER` once. On WSL2
-   a root shell is also available from Windows: `wsl -u root`.
+   *Access denied*, run once `sudo tailscale set --operator=$USER`. Without sudo on WSL2, open a
+   root shell from Windows (`wsl -u root`) and run `tailscale set --operator=<your user name>`.
 3. Optional, an AI model for the demo (the demo has no settings page): run the app once in the
    normal mode on the demo's data, choose the provider on Settings, then stop it:
    `uv run sentinel ui --data-dir ~/.local/share/sentinel-demo --port 8001`. The demo then uses
