@@ -1,11 +1,13 @@
 """Screenshots of the main screens for the report and the presentation (WP9b).
 
-Seeds a temporary data directory with the showcase project (a live project with two check-ins
-and an open recommendation), a draft of the same project for the wizard's task step and a small
-example simulator run finished under Sentinel, serves the app in-process and captures the start
-page, the wizard's step 3, the overview, the check-in, the recommendation and the simulator's
-comparison at 1280x800 with Playwright's Chromium (light mode). About a minute (the simulator
-run). The PNGs go to docs/ui/ (committed); their total size is printed and must stay <= 3 MB.
+Seeds a temporary data directory with the showcase project in the chosen language (a live
+project with two check-ins and an open recommendation), a draft of the same project for the
+wizard's task step and a small example simulator run finished under Sentinel, serves the app
+in-process and captures the start page, the wizard's steps 1 and 3, the overview and its
+threats, the check-in, the recommendation and the options it compared, the project settings,
+the simulator and its comparison at 1280x800 with Playwright's Chromium (light mode). About a
+minute (the simulator run). The PNGs go to docs/ui/ (committed, used by the user guides); the
+total of a language is printed and must stay <= 3 MB.
 
     uv run python scripts/ui_screenshots.py [--lang pl] [--out docs/ui]
 """
@@ -96,13 +98,20 @@ def main() -> int:
         time.sleep(0.05)
     base = f"http://127.0.0.1:{port}"
     showcase_id = ids["showcase"]
+    recommendation = f"/projects/{showcase_id}/recommendations/{rec}"
+    # (name, path, element to wait for, element to scroll to)
     shots = [
-        ("start", "/", None),
-        ("wizard_tasks", f"/projects/{ids['draft']}/setup/tasks", None),
-        ("overview", f"/projects/{showcase_id}", "#forecast .headline"),
-        ("checkin", f"/projects/{showcase_id}/checkin", None),
-        ("recommendation", f"/projects/{showcase_id}/recommendations/{rec}", None),
-        ("simulator_comparison", f"/projects/{ids['simulator']}", "#compare-title"),
+        ("start", "/", None, None),
+        ("wizard_basics", "/new", None, None),
+        ("wizard_tasks", f"/projects/{ids['draft']}/setup/tasks", None, None),
+        ("overview", f"/projects/{showcase_id}", "#forecast .headline", None),
+        ("overview_threats", f"/projects/{showcase_id}", "#drivers ol", "#threats-title"),
+        ("checkin", f"/projects/{showcase_id}/checkin", None, None),
+        ("recommendation", recommendation, None, None),
+        ("recommendation_options", recommendation, None, "#alt-title"),
+        ("settings", f"/projects/{showcase_id}/settings", None, "#autonomy-title"),
+        ("simulator", "/simulator", None, None),
+        ("simulator_comparison", f"/projects/{ids['simulator']}", None, "#compare-title"),
     ]
     args.out.mkdir(parents=True, exist_ok=True)
     total = 0
@@ -115,13 +124,13 @@ def main() -> int:
         )
         context.add_cookies([{"name": "sentinel_lang", "value": args.lang, "url": base}])
         page = context.new_page()
-        for name, path, ready in shots:
+        for name, path, ready, scroll in shots:
             page.goto(base + path)
             page.wait_for_load_state("networkidle")
             if ready is not None:
                 page.wait_for_selector(ready, timeout=30_000)
-            if name == "simulator_comparison":
-                page.locator("#compare-title").scroll_into_view_if_needed()
+            if scroll is not None:  # the element at the top, with a little space above it
+                page.locator(scroll).evaluate("e => e.scrollIntoView({block: 'start'})")
                 page.evaluate("window.scrollBy(0, -16)")
             target = args.out / f"{args.lang}_{name}.png"
             page.screenshot(path=str(target))

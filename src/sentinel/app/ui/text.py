@@ -618,16 +618,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Na podstawie {futures} symulowanych scenariuszy projektu od obecnego stanu.",
     ),
     "overview.driver": (
-        "“{task}” decides the deadline in {count} of 10 late scenarios.",
-        "„{task}” decyduje o terminie w {count} na 10 scenariuszy z opóźnieniem.",
+        "The task “{task}” decides the deadline in {count} of 10 late scenarios.",
+        "Zadanie „{task}” decyduje o terminie w {count} na 10 scenariuszy z opóźnieniem.",
     ),
     "overview.driver_nearly": (
-        "“{task}” decides the deadline in nearly every late scenario.",
-        "„{task}” decyduje o terminie w niemal każdym scenariuszu z opóźnieniem.",
+        "The task “{task}” decides the deadline in nearly every late scenario.",
+        "Zadanie „{task}” decyduje o terminie w niemal każdym scenariuszu z opóźnieniem.",
     ),
     "overview.driver_all": (
-        "“{task}” decides the deadline in every late scenario.",
-        "„{task}” decyduje o terminie w każdym scenariuszu z opóźnieniem.",
+        "The task “{task}” decides the deadline in every late scenario.",
+        "Zadanie „{task}” decyduje o terminie w każdym scenariuszu z opóźnieniem.",
     ),
     "overview.spread": (
         "No single task decides the deadline: the risk is spread across the plan.",
