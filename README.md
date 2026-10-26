@@ -68,7 +68,9 @@ Intervals are 95 % cluster-bootstrap intervals over instances; pp = percentage p
 - [`docs/reports/`](docs/reports/) — work package reports; [`docs/notes/`](docs/notes/) — notes
   for the papers, [limitations](docs/notes/limitations.md)
 - [`docs/dashboard/`](docs/dashboard/README.md) — example cockpits (open in a browser);
-  [`docs/ui/`](docs/ui/) — screenshots of the application's pages
+  [`docs/ui/`](docs/ui/) — screenshots of the application's pages; user guides
+  ([Polish](docs/user-guide-pl.md), [English](docs/user-guide-en.md)),
+  [deployment](docs/deploy.md), [usability test](docs/usability/protocol-pl.md)
 - [`results/`](results/) — committed runs; [`paper/generated/`](paper/generated/) — macros,
   tables and figures of the papers
 - `src/sentinel/` — Python package; `tests/` — pytest suite; `scripts/` — utilities; `configs/`
@@ -129,10 +131,13 @@ The pages use the JSON API's services (`/api/…`, the OpenAPI schema at `/api/o
 projects, settings (the optional AI provider and its key, never shown again) and caches live in
 `--data-dir` (default `$XDG_DATA_HOME/sentinel`, outside the repository).
 `uv run sentinel ui --demo` runs the public demo: an anonymous sandbox per visitor with a
-showcase project and the limits of [`configs/app_demo.toml`](configs/app_demo.toml). The
-end-to-end browser tests need Chromium for Playwright (`uv run playwright install chromium`,
-on Linux also `sudo apt-get install libnss3 libnspr4 libasound2t64`) and run with
-`uv run pytest -q -m e2e`.
+showcase project and the limits of [`configs/app_demo.toml`](configs/app_demo.toml), published
+with `scripts/run_demo.sh` and Tailscale Funnel. On a company server it runs in Docker
+(`docker compose up -d --build`; ADR-0026). How to use it: the user guides
+([Polish](docs/user-guide-pl.md), [English](docs/user-guide-en.md)); how to run it:
+[`docs/deploy.md`](docs/deploy.md). The end-to-end browser tests need Chromium for Playwright
+(`uv run playwright install chromium`, on Linux its libraries without root by
+`scripts/setup_e2e_libs.sh`) and run with `uv run pytest -q -m e2e`.
 
 ## Reproducing the results
 

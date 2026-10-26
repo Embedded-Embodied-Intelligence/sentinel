@@ -181,7 +181,7 @@ def release_notes(
     files: Sequence[str],
     deliverables: Sequence[str],
 ) -> str:
-    """RELEASE.md: what the package holds and how to install, test, check and read it."""
+    """RELEASE.md: what the package holds and how to install, test, check, run and read it."""
     counts = Counter(PurePosixPath(p).parts[0] for p in files)
     rows = "\n".join(f"| `{name}` | {n} |" for name, n in sorted(counts.items()))
     cockpits = sorted(p for p in files if p.startswith("docs/dashboard/") and p.endswith(".html"))
@@ -224,13 +224,32 @@ uv run python scripts/fetch_psplib.py --sets j30 j60  # PSPLIB into data/psplib
 ## Test and check the results
 
 ```bash
-uv run pytest -q                    # unit tests (about 75 s); data tests skip without data/
+uv run pytest -q                    # unit tests (about 85 s); data tests skip without data/
 uv run pytest -q -m "data or slow"  # tests that need PSPLIB and the slow ones (about 10 min)
+uv run pytest -q -m e2e             # the pages in a browser (Playwright's Chromium, about 2 min)
 uv run sentinel reproduce --check   # every summary and paper/generated/ regenerated and compared
 ```
 
 `reproduce --check` recomputes nothing and calls no LLM; `uv run sentinel reproduce --commands`
 prints how to recompute each run (about 23 h on 4 cores).
+
+## The application
+
+`sentinel ui` serves the application for project managers (spec section 11; Polish, with
+English): projects set up from a description, a spreadsheet or a table, check-ins, the chance
+of meeting the deadline, recommendations to approve and a simulator. `sentinel ui --demo` is
+the public demo with a sandbox per visitor.
+
+```bash
+uv run sentinel ui                  # http://127.0.0.1:8000 on a laptop
+docker compose up -d --build        # on a company server: the image of the Dockerfile
+```
+
+- `docs/user-guide-pl.md`, `docs/user-guide-en.md`: the user guides, with screenshots
+  (`docs/ui/`) and installation for IT, AI options and costs included.
+- `docs/deploy.md`: the laptop, the company server (Docker, `docker-compose.yml` with an
+  optional local AI) and the public demo behind Tailscale Funnel (`scripts/run_demo.sh`).
+- `docs/usability/`: the usability test protocol (Polish) and its results template.
 
 ## Example cockpits
 

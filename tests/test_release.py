@@ -75,6 +75,8 @@ def test_a_release_holds_the_tracked_files_its_notes_and_the_deliverables(
         assert archive.read(prefix + "docs/deliverables/report.pdf") == b"%PDF-1.7\n"
     assert release.commit in notes and "`docs/dashboard/j30_example.html`" in notes
     assert "`docs/deliverables/report.pdf`" in notes and "reproduce --check" in notes
+    assert "uv run sentinel ui" in notes and "docker compose up" in notes  # the app (WP9c)
+    assert "`docs/user-guide-pl.md`" in notes and "`docs/deploy.md`" in notes
     assert release.tag_command().startswith('git tag -a v1.0.0 -m "Sentinel 1.0.0" ')
     first = release.path.read_bytes()
     assert build("1.0.0", repo=repo, includes=[report]).path.read_bytes() == first
