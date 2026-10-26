@@ -38,8 +38,6 @@ def tiny_world(tiny: ProjectInstance, policy: str, autonomy: int = 2) -> World:
         reference=None,
         deadline=plan.makespan + 1,
         budget=derive_budget(tiny, 0.1, params=spec.pert),
-        roles=("backend developer",),
-        people=("Ada K.", "Ben L.", "Chen M."),
     )
 
 

@@ -11,14 +11,14 @@
     <div><dt>{{ t("overview.deadline") }}</dt><dd>{{ t.date(sim.deadline) }}</dd></div>
     <div><dt>{{ t("sim.original_finish") }}</dt><dd>{{ t.date(sim.baseline_finish) }}</dd></div>
     <div><dt>{{ t("sim.days_done") }}</dt><dd>{{ sim.days }}</dd></div>
-    <div><dt>{{ t("sim.budget") }}</dt><dd>{{ t.money(sim.budget) }}</dd></div>
+    <div><dt>{{ t("sim.budget") }}</dt><dd>{{ t.cost(sim.budget) }} <span class="unit">{{ t("cost.person_days") }}</span></dd></div>
   </dl>
   <div class="sides">
     {% for side in sides %}
     <div class="side">
       <h3>{{ t("sim.manager." ~ side.policy) if side.policy in ("sentinel", "no_reaction") else side.policy }}</h3>
       <p><progress max="{{ side.tasks_total }}" value="{{ side.done_tasks }}" aria-label="{{ t('sim.tasks_done', done=side.done_tasks, total=side.tasks_total) }}"></progress> {{ t("sim.tasks_done", done=side.done_tasks, total=side.tasks_total) }}</p>
-      <p class="small">{{ t("sim.cost_so_far", cost=t.money(side.cost), share=t.pct(side.cost_ratio)) }}</p>
+      <p class="small">{{ t("sim.cost_so_far", cost=t.cost_short(side.cost), share=t.pct(side.cost_ratio)) }}</p>
     </div>
     {% endfor %}
   </div>
@@ -46,7 +46,7 @@
     <tbody>
       <tr><th scope="row">{{ t("sim.col.finish") }}</th>{% for side in sides %}<td>{{ t.date(side.finish) if side.finish else "—" }}</td>{% endfor %}</tr>
       <tr><th scope="row">{{ t("sim.col.on_time") }}</th>{% for side in sides %}<td>{% if side.on_time %}<span class="badge badge-good"><span aria-hidden="true">✓ </span>{{ t("sim.on_time") }}</span>{% else %}<span class="badge badge-bad"><span aria-hidden="true">✗ </span>{{ t.plural("sim.late", side.late_days or 0) }}</span>{% endif %}</td>{% endfor %}</tr>
-      <tr><th scope="row">{{ t("sim.col.cost") }}</th>{% for side in sides %}<td>{{ t.money(side.cost) }} ({{ t.pct(side.cost_ratio) }})</td>{% endfor %}</tr>
+      <tr><th scope="row">{{ t("sim.col.cost") }}</th>{% for side in sides %}<td>{{ t.cost_short(side.cost) }} ({{ t.pct(side.cost_ratio) }})</td>{% endfor %}</tr>
       <tr><th scope="row">{{ t("sim.col.changes") }}</th>{% for side in sides %}<td>{{ side.plan_changes }}</td>{% endfor %}</tr>
       <tr><th scope="row">{{ t("sim.col.hired") }}</th>{% for side in sides %}<td>{{ side.hired }}</td>{% endfor %}</tr>
       <tr><th scope="row">{{ t("sim.col.substituted") }}</th>{% for side in sides %}<td>{{ side.substituted }}</td>{% endfor %}</tr>
@@ -54,6 +54,7 @@
   </table>
   </div>
   <p>{{ verdict }}</p>
+  <p class="hint">{{ t("sim.settings_note") }} {{ t("cost.note.person_days") }}</p>
   <form hx-post="/projects/{{ sim.id }}/report" hx-target="#report-area"><button class="btn">{{ t("sim.report") }}</button></form>
   <div id="report-area" aria-live="polite"></div>
 </section>

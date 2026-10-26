@@ -425,3 +425,7 @@ def test_actions_below_the_autonomy_level_apply_automatically() -> None:
     apply(state, 4, Recommended(recommendation=recommendation, applied=action))
     assert state.recommendations[0].status == "auto"
     assert state.project.observation().assigned[1] == (2, 1)
+    # the overview after the change shows the action's figure (one comparison, spec 11.5)
+    shown = recommendation.impact(chosen.label)
+    assert shown is not None
+    assert planning.forecast(state.project).p_on_time == shown.p_on_time

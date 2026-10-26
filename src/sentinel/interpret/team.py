@@ -8,7 +8,7 @@ permutation; roles carry the IT names of spec section 1.1. Real activities are n
 WP6a narrator's vocabulary; D3 activities get fresh names from the same vocabulary.
 """
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -16,7 +16,7 @@ import numpy as np
 from sentinel.model.instance import ProjectInstance
 from sentinel.simulation.state import Observation
 from sentinel.wbs.extract import normalise_name
-from sentinel.wbs.narrate import VOCABULARY, activity_names
+from sentinel.wbs.narrate import VOCABULARY, Vocabulary, activity_names
 
 WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
 FIRST_NAMES = (
@@ -112,40 +112,49 @@ class Member:
     role: int
 
 
-def roster(instance: ProjectInstance, seed: int) -> tuple[Member, ...]:
-    """A unique name per original worker, in worker order: the combinations of FIRST_NAMES and
-    INITIALS in a seeded random order."""
-    total = len(FIRST_NAMES) * len(INITIALS)
+def roster(
+    instance: ProjectInstance, seed: int, first_names: Sequence[str] = FIRST_NAMES
+) -> tuple[Member, ...]:
+    """A unique name per original worker, in worker order: the combinations of `first_names`
+    (FIRST_NAMES) and INITIALS in a seeded random order."""
+    total = len(first_names) * len(INITIALS)
     if len(instance.workers) > total:
         raise ValueError(f"the roster names {total} workers, got {len(instance.workers)}")
     order = np.random.default_rng(seed).permutation(total)
     members = []
     for worker, code in zip(instance.workers, order, strict=False):
         first, initial = divmod(int(code), len(INITIALS))
-        members.append(Member(worker.id, f"{FIRST_NAMES[first]} {INITIALS[initial]}.", worker.role))
+        members.append(Member(worker.id, f"{first_names[first]} {INITIALS[initial]}.", worker.role))
     return tuple(members)
 
 
-def fresh_name(demands: tuple[int, ...], used: Iterable[str], rng: np.random.Generator) -> str:
+def fresh_name(
+    demands: tuple[int, ...],
+    used: Iterable[str],
+    rng: np.random.Generator,
+    vocabulary: Vocabulary = VOCABULARY,
+) -> str:
     """A verb and object of the vocabulary of the dominant role of `demands` (most people, ties
     to the lower role; role 0 without demands) that no name in `used` has."""
     taken = {normalise_name(name) for name in used}
     role = max(range(len(demands)), key=lambda k: (demands[k], -k)) if any(demands) else 0
-    verbs, objects = VOCABULARY[role]
+    verbs, objects = vocabulary[role]
     free = [f"{v} {o}" for o in objects for v in verbs if normalise_name(f"{v} {o}") not in taken]
     if not free:
         raise ValueError(f"the vocabulary of role {role} is exhausted")
     return free[int(rng.integers(len(free)))]
 
 
-def names_of(observation: Observation, seed: int) -> dict[int, str]:
+def names_of(
+    observation: Observation, seed: int, vocabulary: Vocabulary = VOCABULARY
+) -> dict[int, str]:
     """Names of the real activities of an observation: the narrator's names of the instance's
     activities (`activity_names` with `seed`) and fresh names for its D3 activities, drawn in
-    id order from a stream of `seed`."""
-    names = activity_names(observation.instance, seed)
+    id order from a stream of `seed`; another `vocabulary` names them in another language."""
+    names = activity_names(observation.instance, seed, vocabulary)
     rng = np.random.default_rng([seed, 1])
     for inserted in observation.inserted:
-        names[inserted.id] = fresh_name(inserted.demands, names.values(), rng)
+        names[inserted.id] = fresh_name(inserted.demands, names.values(), rng, vocabulary)
     return names
 
 

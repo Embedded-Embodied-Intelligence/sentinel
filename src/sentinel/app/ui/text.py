@@ -343,10 +343,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "setup.budget": ("Budget (optional)", "Budżet (opcjonalnie)"),
     "setup.budget_hint": (
-        "In the unit of the daily costs of the roles (by default one person-day is 1). Leave it "
-        "empty and Sentinel estimates it from the tasks.",
-        "W jednostce dziennych kosztów ról (domyślnie jeden osobodzień to 1). Pozostaw puste, a "
-        "Sentinel oszacuje go na podstawie zadań.",
+        "In cost units: by default one cost unit is one person-day (one person working for a "
+        "day). Leave it empty and Sentinel estimates it from the tasks.",
+        "W jednostkach kosztu: domyślnie jedna jednostka to jeden osobodzień (dzień pracy jednej "
+        "osoby). Pozostaw puste, a Sentinel oszacuje go na podstawie zadań.",
     ),
     "setup.estimation": ("How sure are the time estimates?", "Jak pewne są szacunki czasu?"),
     "setup.disruptions": (
@@ -608,7 +608,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.likely": ("Most likely finish", "Najbardziej prawdopodobny koniec"),
     "overview.bad_case": ("Bad case (1 in 10 later)", "Zły scenariusz (1 na 10 później)"),
     "overview.spent": ("Spent so far", "Wydano do tej pory"),
-    "overview.spent_of": ("{spent} of {budget}", "{spent} z {budget}"),
     "overview.expected_cost": ("Expected total cost", "Oczekiwany koszt całkowity"),
     "overview.within_budget": (
         "{p} chance to stay within the budget",
@@ -619,25 +618,36 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Na podstawie {futures} symulowanych scenariuszy projektu od obecnego stanu.",
     ),
     "overview.driver": (
-        "“{task}” is on the critical path in {count} of 10 simulated futures.",
-        "„{task}” leży na ścieżce krytycznej w {count} na 10 symulowanych scenariuszy.",
+        "“{task}” decides the deadline in {count} of 10 late scenarios.",
+        "„{task}” decyduje o terminie w {count} na 10 scenariuszy z opóźnieniem.",
     ),
-    "overview.no_drivers": ("No single task stands out.", "Żadne zadanie się nie wyróżnia."),
+    "overview.driver_nearly": (
+        "“{task}” decides the deadline in nearly every late scenario.",
+        "„{task}” decyduje o terminie w niemal każdym scenariuszu z opóźnieniem.",
+    ),
     "overview.driver_all": (
-        "“{task}” is on the critical path in every simulated future.",
-        "„{task}” leży na ścieżce krytycznej w każdym symulowanym scenariuszu.",
+        "“{task}” decides the deadline in every late scenario.",
+        "„{task}” decyduje o terminie w każdym scenariuszu z opóźnieniem.",
+    ),
+    "overview.spread": (
+        "No single task decides the deadline: the risk is spread across the plan.",
+        "Żadne pojedyncze zadanie nie przesądza o terminie: ryzyko rozkłada się na cały plan.",
+    ),
+    "overview.no_late": (
+        "The project is late in none of the simulated futures.",
+        "W żadnym symulowanym scenariuszu projekt się nie spóźnia.",
+    ),
+    "overview.threats_no_deadline": (
+        "Set a deadline to see what threatens it.",
+        "Ustaw termin, aby zobaczyć, co mu zagraża.",
     ),
     "overview.drivers_note": (
-        "The critical path is the chain of tasks that sets the finish date: any delay on it "
-        "delays the project.",
-        "Ścieżka krytyczna to łańcuch zadań wyznaczający datę zakończenia: każde opóźnienie na "
-        "niej opóźnia projekt.",
-    ),
-    "rec.rough": (
-        "“Without a change” was set aside early and simulated fewer times, so its chance is a "
-        "rougher figure than the forecast on the overview.",
-        "Wariant „bez zmian” odrzucono na wstępie i zasymulowano rzadziej, więc jego szansa jest "
-        "mniej dokładna niż prognoza na stronie przeglądu.",
+        "A task decides the deadline in a late scenario when it lies on the chain of tasks that "
+        "sets the finish date there. Tasks the whole plan depends on, such as the first and the "
+        "last one, and tasks already done are not listed.",
+        "Zadanie decyduje o terminie w scenariuszu z opóźnieniem, gdy leży w nim na łańcuchu "
+        "zadań wyznaczającym datę zakończenia. Nie wymieniamy zadań, od których zależy cały plan "
+        "(np. pierwszego i ostatniego), ani zadań już zakończonych.",
     ),
     "overview.checked_title": ("Sentinel checked the new status", "Sentinel sprawdził nowy stan"),
     "overview.checked": (
@@ -826,6 +836,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "rec.chosen": ("recommended", "polecana"),
     "rec.dropped": ("(set aside early)", "(odrzucona na wstępie)"),
     "rec.alt_note": (
+        "Every option was tried on the same {futures} simulated futures as the forecast on the "
+        "overview, so “No change (keep the plan)” has the overview's chance.",
+        "Każdą możliwość sprawdzono na tych samych {futures} symulowanych scenariuszach co "
+        "prognozę na stronie przeglądu, więc „Bez zmian (zachowaj plan)” ma tę samą szansę.",
+    ),
+    "rec.alt_note_own": (
         "Every option was tried on the same simulated futures. Options set aside early were "
         "clearly worse in the first ones, so fewer futures were simulated for them.",
         "Każdą możliwość sprawdzono na tych samych symulowanych scenariuszach. Możliwości "
@@ -864,6 +880,13 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Bez zmian szansa na dotrzymanie terminu wynosi {p}.",
     ),
     "why.with": (
+        "Sentinel weighed {options} options. On the same {futures} simulated futures as the "
+        "forecast on the overview, this one gives a {p} chance of meeting the deadline.",
+        "Sentinel rozważył możliwości ({options}). Na tych samych {futures} symulowanych "
+        "scenariuszach co prognoza na stronie przeglądu ta zmiana daje szansę {p} na dotrzymanie "
+        "terminu.",
+    ),
+    "why.with_own": (
         "Sentinel tried {options} options, each on up to {futures} simulated futures; with this "
         "one the chance is {p}.",
         "Sentinel sprawdził możliwości ({options}), każdą na maksymalnie {futures} symulowanych "
@@ -968,8 +991,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "psettings.presets": ("Estimates and turbulence", "Szacunki i burzliwość"),
     "psettings.costs": ("Daily cost of one person", "Dzienny koszt jednej osoby"),
     "psettings.costs_hint": (
-        "In your own unit, e.g. a currency. A temporary person costs one and a half times as much.",
-        "W Twojej jednostce, np. walucie. Osoba tymczasowa kosztuje półtora raza więcej.",
+        "One person's working day in cost units: 1 by default, so a cost unit is a person-day; "
+        "you may use your own unit, e.g. a currency. A temporary person costs one and a half "
+        "times as much.",
+        "Dzień pracy jednej osoby w jednostkach kosztu: domyślnie 1, więc jednostka to osobodzień; "
+        "możesz użyć własnej jednostki, np. waluty. Osoba tymczasowa kosztuje półtora raza "
+        "więcej.",
     ),
     "psettings.cost_of": ("Daily cost: {role}", "Koszt dzienny: {role}"),
     "psettings.ai": ("AI features", "Funkcje AI"),
@@ -1007,6 +1034,14 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu — z nieobecnościami, "
         "wydłużającymi się zadaniami i nową pracą — i porównaj to z brakiem reakcji na te same "
         "zdarzenia.",
+    ),
+    "sim.settings_note": (
+        "The simulator uses the application's settings, not the setup of the research studies: "
+        "for example, at least one temporary person per role can always be added, so a run can "
+        "differ from the studies' results.",
+        "Symulator używa ustawień aplikacji, a nie ustawień badań: na przykład zawsze można dodać "
+        "co najmniej jedną osobę tymczasową w każdej roli, więc przebieg może się różnić od "
+        "wyników badań.",
     ),
     "sim.unavailable": (
         "The example projects are not installed on this server.",
@@ -1179,6 +1214,30 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "bez reakcji {other}).",
     ),
     "sim.delete": ("Delete this simulation", "Usuń tę symulację"),
+    # ---- cost units (spec section 11.2): values, values of a budget, short forms, changes
+    "cost.units.one": ("{value} cost unit", "{value} jednostka kosztu"),
+    "cost.units.few": ("{value} cost units", "{value} jednostki kosztu"),
+    "cost.units.many": ("{value} cost units", "{value} jednostek kosztu"),
+    "cost.of.one": ("{spent} of {budget} cost unit", "{spent} z {budget} jednostki kosztu"),
+    "cost.of.few": ("{spent} of {budget} cost units", "{spent} z {budget} jednostek kosztu"),
+    "cost.of.many": ("{spent} of {budget} cost units", "{spent} z {budget} jednostek kosztu"),
+    "cost.short.one": ("{value} unit", "{value} jedn."),
+    "cost.short.few": ("{value} units", "{value} jedn."),
+    "cost.short.many": ("{value} units", "{value} jedn."),
+    "cost.change": ("{units}, {share} of the budget", "{units}, {share} budżetu"),
+    "cost.change_small": (
+        "{units}, under 1\u00a0% of the budget",
+        "{units}, poniżej 1\u00a0% budżetu",
+    ),
+    "cost.person_days": ("(person-days)", "(osobodni)"),
+    "cost.note.person_days": (
+        "Costs are in cost units: one cost unit is one person-day.",
+        "Koszty podano w jednostkach kosztu: jedna jednostka to jeden osobodzień.",
+    ),
+    "cost.note.custom": (
+        "Costs are in cost units, as set by the daily costs in the project settings.",
+        "Koszty podano w jednostkach kosztu, zgodnie z dziennymi kosztami w ustawieniach projektu.",
+    ),
 }
 
 
@@ -1271,8 +1330,39 @@ class Texts:
         text = f"{number:,}".replace(",", separator)
         return f"{MINUS}{text}" if value < -0.5 else text
 
-    def signed_money(self, value: float) -> str:
-        number = math.floor(abs(value) + 0.5)
+    def cost(self, value: float) -> str:
+        """A cost in cost units: "84 cost units" ("84 jednostki kosztu")."""
+        return self.plural("cost.units", _whole(value), value=self.money(value))
+
+    def cost_of(self, spent: float, budget: float) -> str:
+        """Spent of a budget: "27 of 84 cost units" ("27 z 84 jednostek kosztu")."""
+        form = f"cost.of.{plural_form(self.lang, _whole(budget))}"
+        return self(form, spent=self.money(spent), budget=self.money(budget))
+
+    def cost_short(self, value: float) -> str:
+        """A cost in short: "92 units" ("92 jedn.")."""
+        return self.plural("cost.short", _whole(value), value=self.money(value))
+
+    def cost_change(self, value: float, budget: float | None) -> str:
+        """A change of cost in units and as a share of the budget: "+1 unit, +1 % of the
+        budget" ("+1 jedn., +1 % budżetu"); "±0" when it rounds to nothing."""
+        number = _whole(value)
         if number == 0:
             return "±0"
-        return ("+" if value > 0 else MINUS) + self.money(abs(value))
+        units = ("+" if value > 0 else MINUS) + self.cost_short(abs(value))
+        if not budget:
+            return units
+        percent = math.floor(100 * abs(value) / budget + 0.5)
+        if percent == 0:
+            return self("cost.change_small", units=units)
+        share = f"{'+' if value > 0 else MINUS}{percent}{NBSP}%"
+        return self("cost.change", units=units, share=share)
+
+    def tenths(self, share: float) -> int:
+        """A share in tenths, rounded half up: 0.74 -> 7 ("7 of 10")."""
+        return math.floor(10 * share + 0.5)
+
+
+def _whole(value: float) -> int:
+    """A cost as the whole number shown (rounded half up, as `Texts.money`)."""
+    return math.floor(abs(value) + 0.5)

@@ -181,7 +181,8 @@ class Services:
         self._live: OrderedDict[str, tuple[int, LiveState]] = OrderedDict()
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
         self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
-        self.showcase: Callable[[str], None] | None = None  # set by the web layer (demo)
+        # set by the web layer (demo): seeds a sandbox with the showcase in a language
+        self.showcase: Callable[[str, Language], None] | None = None
 
     def close(self) -> None:
         self.jobs.shutdown()
@@ -191,11 +192,11 @@ class Services:
     def local_session(self) -> SessionRow:
         return self.store.ensure_session(LOCAL_SESSION, demo=False)
 
-    def new_session(self) -> SessionRow:
-        """A new demo sandbox, with the showcase project if configured."""
+    def new_session(self, language: Language = "pl") -> SessionRow:
+        """A new demo sandbox, with the showcase project in `language` if configured."""
         session = self.store.create_session(demo=True)
         if self.showcase is not None:
-            self.showcase(session.id)
+            self.showcase(session.id, language)
         return session
 
     def expire_sandboxes(self) -> int:
@@ -289,7 +290,7 @@ class Services:
         """A live project's view, or a simulator project's."""
         row = self._row(session, project_id)
         if row.kind == "simulator":
-            return self.simulator(session, project_id)
+            return self.simulator(session, project_id, language)
         _, state = self._state(session, project_id)
         return project_view(row.id, state, language, row.name)
 
@@ -741,7 +742,7 @@ class Services:
 
         def work(progress: Progress) -> Mapping[str, Any]:
             progress(0.05, "preparing")
-            return self.simulator(session, row.id).model_dump(mode="json")
+            return self.simulator(session, row.id, language).model_dump(mode="json")
 
         return self._submit(session, row.id, "simulator", work, language)
 
@@ -777,10 +778,12 @@ class Services:
         with self._lock(project_id):
             return read(self._simulation(session, project_id)[1])
 
-    def simulator(self, session: str, project_id: str) -> simulator.SimulatorView:
+    def simulator(
+        self, session: str, project_id: str, language: Language = "en"
+    ) -> simulator.SimulatorView:
         with self._lock(project_id):
             row, simulation = self._simulation(session, project_id)
-            return simulator.simulator_view(row.id, row.seq, simulation)
+            return simulator.simulator_view(row.id, row.seq, simulation, language)
 
     def advance(self, session: str, project_id: str, days: int, language: Language) -> JobView:
         """Advance a simulator project by `days` days in a job (spec section 11.6)."""
@@ -804,7 +807,8 @@ class Services:
                 )
                 with self._guard:
                     self._sims[project_id] = (seq, simulation)
-                return simulator.simulator_view(project_id, seq, simulation).model_dump(mode="json")
+                view = simulator.simulator_view(project_id, seq, simulation, language)
+                return view.model_dump(mode="json")
 
         return self._submit(session, project_id, "advance", work, language)
 

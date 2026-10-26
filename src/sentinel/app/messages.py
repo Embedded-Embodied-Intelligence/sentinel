@@ -119,6 +119,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "action_descope": "Drop the optional task “{task}”",
         "action_then": ", then ",
         "temporary_person": "temporary {role} {number}",
+        "temporary_role": "temporary {role}",
         "reason_needs_met": "no action is needed: the plan is on track",
         "reason_only_candidate": "no other action was possible",
         "reason_racing": "the other actions were clearly worse in the first simulated futures",
@@ -346,6 +347,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "action_descope": "Zrezygnuj z zadania opcjonalnego „{task}”",
         "action_then": ", a następnie ",
         "temporary_person": "osoba tymczasowa: {role} {number}",
+        "temporary_role": "osoba tymczasowa: {role}",
         "reason_needs_met": "działanie nie jest potrzebne: plan jest na dobrej drodze",
         "reason_only_candidate": "żadne inne działanie nie było możliwe",
         "reason_racing": "pozostałe działania wypadły wyraźnie gorzej w pierwszych "

@@ -471,8 +471,9 @@ def _live_events(project: LiveProject) -> list[DayEvents]:
 
 
 def _live_forecasts(state: LiveState, rows: Sequence[EventRow]) -> list[Forecast]:
-    """NOOP's forecast at every recommendation: its rollouts repeated on the recommendation's
-    worlds (seed and rollout count of the record), so P(on time) equals the record's."""
+    """NOOP's forecast at every recommendation: its rollouts repeated on the worlds of the
+    figures shown (the comparison's seed, spec section 11.5 v2.0.2; before it, the record's),
+    so P(on time) equals the one shown."""
     found = []
     for entry in state.recommendations:
         recommendation = entry.recommendation
@@ -484,7 +485,9 @@ def _live_forecasts(state: LiveState, rows: Sequence[EventRow]) -> list[Forecast
             continue
         project = replay(before).project
         observation = project.observation()
-        evaluator = Evaluator(observation, recommendation.seed, sentinel_params(project))
+        comparison = recommendation.comparison
+        seed = recommendation.seed if comparison is None else comparison.seed
+        evaluator = Evaluator(observation, seed, sentinel_params(project))
         makespans = evaluator.extend(noop(observation), impact.rollouts).makespan[: impact.rollouts]
         p10, p50, p90 = (float(q) for q in np.quantile(np.asarray(makespans), [0.1, 0.5, 0.9]))
         forecast = Forecast(recommendation.day, impact.rollouts, impact.p_on_time, p10, p50, p90)
@@ -507,7 +510,7 @@ def _live_kpis(state: LiveState, cost: float, language: Language) -> str:
     calendar = project.calendar
     assert project.baseline is not None
     latest = next(
-        (e.recommendation for e in reversed(state.recommendations) if e.recommendation.impacts),
+        (e.recommendation for e in reversed(state.recommendations) if e.recommendation.shown),
         None,
     )
     noop_impact = None if latest is None else latest.impact("NOOP")

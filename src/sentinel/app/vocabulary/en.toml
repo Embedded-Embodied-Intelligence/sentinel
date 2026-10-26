@@ -1,0 +1,101 @@
+# English names of the application's example projects (spec sections 11.2 and 11.6; WP9c
+# answer 4): the showcase project of the demo, and the roles, task words and people of the
+# simulator. The simulator words are those of the research narrator and roster (WP6), so the
+# English simulator shows the studies' names (a test checks it). Every language has the same
+# keys, and lists of the same length.
+
+[showcase]
+project = "Online shop relaunch"
+
+[showcase.roles]
+backend = "Backend developer"
+frontend = "Frontend developer"
+tester = "Tester"
+devops = "DevOps engineer"
+designer = "Designer"
+
+[showcase.people]
+ada = "Ada Turner"
+ben = "Ben Carter"
+cyrus = "Cyrus Hill"
+chloe = "Chloe Brooks"
+dmitri = "Dmitri Hayes"
+esra = "Esra Collins"
+felix = "Felix Ward"
+grace = "Grace Parker"
+
+[showcase.tasks]
+T1 = "Requirements workshop"
+T2 = "Checkout UX design"
+T3 = "Product catalogue API"
+T4 = "Payment integration"
+T5 = "Checkout UI"
+T6 = "Catalogue UI"
+T7 = "Cloud infrastructure"
+T8 = "CI/CD pipeline"
+T9 = "Integration tests"
+T10 = "Performance tests"
+T11 = "Gift cards"
+T12 = "Launch"
+N1 = "Accessibility review"
+
+[simulator]
+roles = [
+    "backend developer", "frontend developer", "tester", "DevOps engineer",
+]
+first_names = [
+    "Ada", "Ben", "Chen", "Dana", "Emil", "Farah", "Gita", "Hugo", "Ines", "Jonas", "Kofi",
+    "Lena", "Mateo", "Nora", "Omar", "Priya", "Quinn", "Rosa", "Sven", "Tara", "Umar", "Vera",
+    "Wei", "Xavi", "Yara", "Zoe", "Aiko", "Bruno", "Carla", "Dmitri", "Elif", "Felix", "Grace",
+    "Hamid", "Ivo", "Julia", "Kenji", "Lucia", "Malik", "Nadia", "Oskar", "Paula", "Rafael",
+    "Sara", "Tomasz", "Uma", "Viktor", "Wanda", "Yusuf", "Zofia", "Amara", "Bogdan", "Chloe",
+    "Diego", "Esra", "Filip", "Hana", "Igor", "Jana", "Kamal",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Implement", "Build", "Design", "Refactor", "Extend", "Optimize",
+]
+objects = [
+    "payment API", "order service", "authentication service", "search backend",
+    "notification service", "reporting module", "inventory service", "billing engine",
+    "data import job", "caching layer", "invoice generator", "audit log", "recommendation engine",
+    "session store", "rate limiter", "export service", "webhook handler", "pricing engine",
+    "user database schema", "message queue consumer",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Build", "Design", "Implement", "Redesign", "Polish", "Prototype",
+]
+objects = [
+    "checkout page", "login screen", "product catalog view", "user profile page",
+    "admin dashboard", "search results page", "shopping cart widget", "onboarding wizard",
+    "settings panel", "order history view", "notification center", "landing page", "help center",
+    "navigation menu", "invoice viewer", "report charts", "signup form", "contact form",
+    "pricing page", "error pages",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Test", "Verify", "Validate", "Review", "Audit", "Check",
+]
+objects = [
+    "payment flow", "login flow", "checkout process", "search feature", "user registration",
+    "order workflow", "invoice export", "notification delivery", "admin permissions",
+    "data migration", "mobile layout", "API contracts", "release candidate", "security settings",
+    "report accuracy", "password reset", "shopping cart", "accessibility", "performance budget",
+    "error handling",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Set up", "Configure", "Automate", "Harden", "Upgrade", "Migrate",
+]
+objects = [
+    "CI pipeline", "staging environment", "production cluster", "database backups",
+    "log aggregation", "container registry", "load balancer", "secrets vault", "alerting rules",
+    "deployment scripts", "CDN cache", "DNS records", "TLS certificates", "test environment",
+    "metrics dashboards", "disaster recovery", "build servers", "network firewall",
+    "artifact storage", "autoscaling policies",
+]

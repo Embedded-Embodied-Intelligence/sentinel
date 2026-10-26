@@ -16,6 +16,7 @@ from app_cases import ABSENCE_CHECKIN, small
 from fastapi.testclient import TestClient
 from ui_check import problems, visible_text
 
+from sentinel.app import names
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits
 from sentinel.app.events import Recommended
@@ -225,6 +226,27 @@ def test_the_states_show_what_happened(site: Site, language: str) -> None:
     assert keep in _get(
         site, f"/projects/{ids['calm']}/recommendations/{_last(site, 'calm', language)}", language
     )
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_one_comparison_and_costs_in_cost_units(site: Site, language: str) -> None:
+    """WP9c answers 1 and 4: "no change" on a recommendation is the overview's chance on the
+    same project and day; costs are cost units with their meaning, changes also a share of the
+    budget."""
+    pid = site.ids["open"]
+    forecast = _get(site, f"/projects/{pid}/forecast", language, htmx=True)
+    found = re.search(r'headline-number">([^<]+)<', forecast)
+    assert found is not None
+    chance = found.group(1)
+    page = _get(site, f"/projects/{pid}/recommendations/{_last(site, 'open', language)}", language)
+    assert f"{chance} →" in page  # the chip: no change → with the action
+    unit, meaning, short, note = {
+        "pl": ("jednostek kosztu", "(osobodni)", "25 jedn.", "jedna jednostka to jeden osobodzień"),
+        "en": ("cost units", "(person-days)", "25 units", "one cost unit is one person-day"),
+    }[language]
+    assert unit in forecast and meaning in forecast
+    assert short in page and note in page  # the options compared, in cost units
+    assert ("rzadziej" if language == "pl" else "rougher") not in page  # the v2.0.1 note
 
 
 def _last(site: Site, name: str, language: str) -> int:
@@ -468,6 +490,9 @@ def test_the_simulator_pages(tmp_path: Path, psplib_root: Path) -> None:
         for language in LANGUAGES:
             setup = client.get("/simulator", params={"lang": language})
             assert setup.status_code == 200 and problems(setup.text) == []
+            # the simulator runs with the application's settings (WP9c answer 3)
+            note = "a nie ustawień badań" if language == "pl" else "not the setup of the research"
+            assert note in setup.text
         created = client.post(
             "/simulator",
             data={"example": "small", "disruptions": "turbulent", "policy": "sentinel"},
@@ -484,9 +509,15 @@ def test_the_simulator_pages(tmp_path: Path, psplib_root: Path) -> None:
         job = re.search(r'hx-get="(/jobs/[^"]+)"', advanced.text)
         assert job is not None
         client.get(job.group(1).replace("&amp;", "&"), headers=headers)
+        first = {lang: set(names.vocabulary(lang).simulator.first_names) for lang in LANGUAGES}
         for language in LANGUAGES:
             page = client.get(f"/projects/{pid}", params={"lang": language})
             assert page.status_code == 200 and problems(page.text) == []
             assert "timeline" in page.text
+            # people named in the page's language (WP9c answer 4), e.g. "Zofia N." in Polish
+            shown = set(re.findall(r"(\w+) [A-Z]\.", visible_text(page.text)))
+            other = "en" if language == "pl" else "pl"
+            assert shown & (first[language] - first[other])
+            assert not shown & (first[other] - first[language])
         start = client.get("/", params={"lang": "en"})
         assert "Days simulated: 10" in start.text and problems(start.text) == []

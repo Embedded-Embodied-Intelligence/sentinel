@@ -1,12 +1,13 @@
 """The computations of a live project (spec sections 11.3-11.5): the baseline plan, the forecast
-with its risk drivers, the recommendation (a Sentinel deliberation with the effect of its main
-candidates) and the approval of a recommended action. All are deterministic for the project's
-seed; none is called inside a rollout.
+with the tasks that threaten the deadline, the recommendation (a Sentinel deliberation, then the
+comparison shown with it on the forecast's sampled worlds) and the approval of a recommended
+action. All are deterministic for the project's seed; none is called inside a rollout.
 """
 
 import math
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Mapping
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,7 +16,7 @@ from sentinel.agent.candidates import Candidate, approve, noop
 from sentinel.agent.decide import CandidateRecord, DecisionRecord
 from sentinel.agent.evaluate import Evaluator
 from sentinel.agent.params import SentinelParams
-from sentinel.app.live import Baseline, LiveError, LiveProject, Model, issue
+from sentinel.app.live import Baseline, LiveError, LiveProject, Model, Node, issue
 from sentinel.experiments.runs import derive_seed
 from sentinel.forecasting.beliefs import Belief
 from sentinel.forecasting.forecast import QUANTILES, REVIEW_PERIOD, rollout_streams
@@ -31,8 +32,9 @@ from sentinel.simulation.state import EngineState, Observation, state_from_obser
 
 T_CP = 0.1  # deterministic seconds of CP-SAT per plan (spec section 8)
 CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
-FORECAST_ROLLOUTS = 200  # N of the forecast (spec sections 5.2 and 11.4)
-DRIVERS = 5  # risk drivers shown
+FORECAST_ROLLOUTS = 200  # N of the forecast and of the comparison shown (spec 5.2, 11.4, 11.5)
+DRIVERS = 5  # tasks that threaten the deadline, at most
+SHOWN = 5  # alternatives shown with a recommendation besides its action, at most (11.5)
 
 
 class _Frozen(BaseModel):
@@ -76,7 +78,8 @@ def baseline_plan(model: Model, *, deterministic_time_limit: float = T_CP) -> Ba
 
 
 class Driver(_Frozen):
-    """A task on the critical chain of `share` of the rollouts (spec section 11.4)."""
+    """A task that threatens the deadline (spec section 11.4): on the critical chain of `share`
+    of the late rollouts."""
 
     task: str
     share: float
@@ -84,8 +87,9 @@ class Driver(_Frozen):
 
 class ForecastResult(_Frozen):
     """The forecast of day `day` (spec section 11.4): P(C <= D) (None without a deadline), the
-    10/50/90 % quantiles and the mean of the makespan C, the risk drivers, and for the budget
-    outlook the mean total cost of the rollouts and the share within the budget B."""
+    10/50/90 % quantiles and the mean of the makespan C, the tasks that threaten the deadline
+    with the number of `late` rollouts they are counted over, and for the budget outlook the
+    mean total cost of the rollouts and the share within the budget B."""
 
     day: int
     seed: int
@@ -95,6 +99,7 @@ class ForecastResult(_Frozen):
     mean: float
     truncated: int
     drivers: tuple[Driver, ...]
+    late: int = 0
     mean_cost: float = 0.0
     p_within_budget: float | None = None
     wall_time_s: float = Field(default=0.0, exclude=True)
@@ -103,24 +108,26 @@ class ForecastResult(_Frozen):
 def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> ForecastResult:
     """NoReaction rollouts from the current observation (spec sections 5.1 and 11.4), exactly
     those of `sentinel.forecasting.forecast.forecast` with the seed derive_seed(project seed,
-    "forecast", t), keeping each rollout's final state for its critical chain."""
+    "forecast", t), keeping each rollout's final state for its critical chain: the tasks that
+    threaten the deadline are ranked by their share of the completed late rollouts (C > D)
+    whose chain holds them, structural, zero-duration and finished tasks left out."""
     began = time.perf_counter()
     observation = project.observation()
     seed = derive_seed(project.definition.settings.seed, "forecast", str(observation.day))
     makespans, states = forecast_rollouts(observation, rollouts, seed)
-    counts: defaultdict[int, int] = defaultdict(int)
-    for state in states:
-        if state.start[state.sink] is not None:
-            for j in critical_chain(state):
-                counts[j] += 1
-    ids = project.activity_ids()
-    keys = {j: key for key, j in ids.items()}
-    nodes = project.nodes()
-    ranked = sorted(
-        (j for j in counts if j in keys),
-        key=lambda j: (-counts[j], -nodes[keys[j]].duration, j),
-    )
     deadline, budget = observation.deadline, observation.budget
+    ids = project.activity_ids()
+    nodes = project.nodes()
+    candidates = {ids[key]: key for key in threat_candidates(project, nodes)}
+    late = [
+        state
+        for state, makespan in zip(states, makespans, strict=True)
+        if deadline is not None and makespan > deadline and state.start[state.sink] is not None
+    ]
+    counts: Counter[int] = Counter()
+    for state in late:
+        counts.update(j for j in critical_chain(state) if j in candidates)
+    ranked = sorted(counts, key=lambda j: (-counts[j], -nodes[candidates[j]].duration, j))
     costs = [state.cost for state in states]
     q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
     return ForecastResult(
@@ -131,11 +138,57 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
         quantiles=(q10, q50, q90),
         mean=float(np.mean(makespans)),
         truncated=sum(state.start[state.sink] is None for state in states),
-        drivers=tuple(Driver(task=keys[j], share=counts[j] / rollouts) for j in ranked[:DRIVERS]),
+        drivers=tuple(
+            Driver(task=candidates[j], share=counts[j] / len(late)) for j in ranked[:DRIVERS]
+        ),
+        late=len(late),
         mean_cost=float(np.mean(costs)),
         p_within_budget=None if budget is None else sum(c <= budget for c in costs) / rollouts,
         wall_time_s=time.perf_counter() - began,
     )
+
+
+def threat_candidates(project: LiveProject, nodes: Mapping[str, Node]) -> list[str]:
+    """The tasks that may be named as threats to the deadline (spec section 11.4): not
+    structural, of positive duration, and neither done nor dropped."""
+    dropped = {key for key, tracked in project.tasks.items() if tracked.state == "removed"}
+    done = {key for key, tracked in project.tasks.items() if tracked.state == "done"}
+    optional = {key for key, node in nodes.items() if node.optional}
+    skeleton = structural(nodes, optional | dropped)
+    return [
+        key
+        for key, node in nodes.items()
+        if key not in skeleton and key not in done | dropped and node.duration > 0
+    ]
+
+
+def structural(nodes: Mapping[str, Node], left_out: set[str]) -> set[str]:
+    """The tasks that every source-sink path passes through (spec section 11.4) in the network
+    of the required tasks, without the tasks `left_out` (the optional ones and those dropped,
+    which have no edges any more): a task is structural if no path reaches the sink without
+    it."""
+    graph = {
+        key: [s for s in node.successors if s not in left_out]
+        for key, node in nodes.items()
+        if key not in left_out
+    }
+    firsts = [key for key in graph if not any(p in graph for p in nodes[key].predecessors)]
+
+    def bypassed(avoid: str) -> bool:
+        """Whether a path from the source reaches the sink without `avoid`."""
+        stack = [key for key in firsts if key != avoid]
+        seen = set(stack)
+        while stack:
+            key = stack.pop()
+            if not graph[key]:
+                return True
+            for successor in graph[key]:
+                if successor != avoid and successor not in seen:
+                    seen.add(successor)
+                    stack.append(successor)
+        return False
+
+    return {key for key in graph if not bypassed(key)}
 
 
 def forecast_rollouts(
@@ -220,17 +273,32 @@ class PlanChange(_Frozen):
     new: int
 
 
+class Comparison(_Frozen):
+    """The figures shown with a recommendation (spec section 11.5, v2.0.2): NOOP, the chosen
+    action and the alternatives shown, evaluated after the deliberation on the `rollouts`
+    sampled worlds of the forecast of the same day (its `seed`, section 11.4), so that NOOP has
+    the forecast's chance; `impacts` in the order shown: the choice, the runner-up, then the
+    other alternatives by their chance and expected delay."""
+
+    seed: int
+    rollouts: int
+    impacts: tuple[Impact, ...]
+
+
 class Recommendation(_Frozen):
     """A recommendation as stored (spec section 11.5): the decision record of the deliberation,
-    the impacts of NOOP, the choice and the runner-up, the urgency tau_t, the seed of the
-    epoch's rollouts and the planned starts the chosen action moves (deviation set, spec 7)."""
+    the comparison shown with it, the urgency tau_t, the seed of the epoch's rollouts and the
+    planned starts the chosen action moves (deviation set, spec 7). `impacts` are the figures
+    of recommendations stored before v2.0.2 (NOOP, the choice and the runner-up on their own
+    rollouts of the deliberation), shown when there is no comparison."""
 
     day: int
     seed: int
     record: DecisionRecord
-    impacts: tuple[Impact, ...]
+    impacts: tuple[Impact, ...] = ()
     urgency: float | None
     changes: tuple[PlanChange, ...] = ()
+    comparison: Comparison | None = None
 
     @property
     def chosen(self) -> CandidateRecord | None:
@@ -241,8 +309,13 @@ class Recommendation(_Frozen):
         """Whether it recommends an action other than NOOP."""
         return self.record.chosen != "NOOP" and self.chosen is not None
 
+    @property
+    def shown(self) -> tuple[Impact, ...]:
+        """The figures shown: the comparison's, else those stored before v2.0.2."""
+        return self.impacts if self.comparison is None else self.comparison.impacts
+
     def impact(self, label: str) -> Impact | None:
-        return next((i for i in self.impacts if i.label == label), None)
+        return next((i for i in self.shown if i.label == label), None)
 
 
 def sentinel_params(project: LiveProject) -> SentinelParams:
@@ -259,9 +332,9 @@ def sentinel_params(project: LiveProject) -> SentinelParams:
 
 
 def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Recommendation:
-    """A Sentinel deliberation on the current observation (spec sections 6 and 11.5) and the
-    impacts of NOOP, the chosen candidate and the runner-up, whose rollouts are those of the
-    deliberation (the same seed and worlds; checked against the record)."""
+    """A Sentinel deliberation on the current observation (spec sections 6 and 11.5), then the
+    comparison shown with it: NOOP, the chosen candidate and the alternatives shown on the
+    sampled worlds of the forecast of the day (`compare`)."""
     observation = project.observation()
     if observation.deadline is None:
         raise LiveError([issue("no_deadline")])
@@ -271,42 +344,66 @@ def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Reco
     seed = project.definition.settings.seed
     sentinel = Sentinel(params, seed=seed, keep_records=False, proposer=proposer)
     record = sentinel.deliberate(observation)
-    epoch_seed = derive_seed(seed, "sentinel", str(observation.day))
-    evaluator = Evaluator(observation, epoch_seed, params)
-    impacts = []
-    wanted = [label for label in ("NOOP", record.chosen, record.runner_up) if label is not None]
-    for label in dict.fromkeys(wanted):
-        stats = next((c for c in record.candidates if c.label == label), None)
-        if stats is None and label == "NOOP" and record.needs is not None:
-            impacts.append(_noop_impact(evaluator, observation, record))
-            continue
-        if stats is None:
-            continue
-        outcomes = evaluator.extend(candidate_of(stats, observation), stats.rollouts)
-        on_time = sum(outcomes.on_time[: stats.rollouts]) / stats.rollouts
-        if abs(on_time - stats.p_on_time) > 1e-12:
-            raise RuntimeError(f"{label}: P(on time) {on_time} differs from the record's")
-        impacts.append(
-            Impact(
-                label=label,
-                kind=stats.kind,
-                p_on_time=stats.p_on_time,
-                tardiness=stats.tardiness,
-                mean_cost=stats.mean_cost,
-                overrun=stats.overrun,
-                rollouts=stats.rollouts,
-                mean_makespan=float(np.mean(outcomes.makespan[: stats.rollouts])),
-            )
-        )
     chosen = next((c for c in record.candidates if c.label == record.chosen), None)
     return Recommendation(
         day=observation.day,
-        seed=epoch_seed,
+        seed=derive_seed(seed, "sentinel", str(observation.day)),
         record=record,
-        impacts=tuple(impacts),
         urgency=_finite(Sentinel.urgency(observation)),
         changes=() if chosen is None else plan_changes(project, observation, chosen.decision),
+        comparison=compare(observation, record, params, seed),
     )
+
+
+def shown_labels(record: DecisionRecord, limit: int = SHOWN) -> list[str]:
+    """The candidates a recommendation shows (spec section 11.5), in order: the chosen one,
+    then at most `limit` alternatives (the runner-up first, then those racing kept, then the
+    rest by min(p, theta_D) and T), and NOOP last if it is not among them."""
+    others = sorted(
+        (c for c in record.candidates if c.label != record.chosen),
+        key=lambda c: (c.label != record.runner_up, c.dropped, -c.capped, c.tardiness),
+    )
+    labels = [record.chosen, *(c.label for c in others[:limit])]
+    return labels if "NOOP" in labels else [*labels, "NOOP"]
+
+
+def compare(
+    observation: Observation,
+    record: DecisionRecord,
+    params: SentinelParams,
+    project_seed: int,
+    rollouts: int = FORECAST_ROLLOUTS,
+) -> Comparison:
+    """The comparison shown with a recommendation (spec section 11.5, v2.0.2): the candidates
+    of `shown_labels` on the sampled worlds of the forecast of the observed day, its seed
+    derive_seed(project seed, "forecast", t) and `rollouts` (N = 200), so that NOOP's rollouts
+    are the forecast's (common random numbers, spec 2.3). The decision is not revisited."""
+    seed = derive_seed(project_seed, "forecast", str(observation.day))
+    evaluator = Evaluator(observation, seed, params)
+    records = {c.label: c for c in record.candidates}
+    impacts: list[Impact] = []
+    for label in shown_labels(record):
+        stats = records.get(label)
+        if stats is None and label != "NOOP":
+            continue
+        candidate = noop(observation) if stats is None else candidate_of(stats, observation)
+        outcomes = evaluator.extend(candidate, rollouts)
+        mean_cost = math.fsum(outcomes.cost) / rollouts
+        impacts.append(
+            Impact(
+                label=label,
+                kind=candidate.kind,
+                p_on_time=sum(outcomes.on_time) / rollouts,
+                tardiness=sum(outcomes.tardiness) / rollouts,
+                mean_cost=mean_cost,
+                overrun=evaluator.overrun(mean_cost),
+                rollouts=rollouts,
+                mean_makespan=float(np.mean(outcomes.makespan)),
+            )
+        )
+    chosen, *others = impacts
+    others.sort(key=lambda i: (i.label != record.runner_up, -i.p_on_time, i.tardiness))
+    return Comparison(seed=seed, rollouts=rollouts, impacts=(chosen, *others))
 
 
 def plan_changes(
@@ -324,24 +421,6 @@ def plan_changes(
         PlanChange(task=keys[j], old=observation.plan[j], new=start)
         for j, start in sorted(moved.items())
         if j in keys and j not in fresh and start != observation.plan[j]
-    )
-
-
-def _noop_impact(evaluator: Evaluator, observation: Observation, record: DecisionRecord) -> Impact:
-    """NOOP's impact when the needs gate stopped the deliberation (no candidate statistics)."""
-    assert record.needs is not None
-    n = record.needs.rollouts
-    outcomes = evaluator.extend(noop(observation), n)
-    cost = float(np.mean(outcomes.cost[:n]))
-    return Impact(
-        label="NOOP",
-        kind="noop",
-        p_on_time=record.needs.p_on_time,
-        tardiness=float(np.mean(outcomes.tardiness[:n])),
-        mean_cost=cost,
-        overrun=evaluator.overrun(cost),
-        rollouts=n,
-        mean_makespan=float(np.mean(outcomes.makespan[:n])),
     )
 
 

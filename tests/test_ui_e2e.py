@@ -276,16 +276,15 @@ def test_the_main_screens_have_no_serious_accessibility_violations(
     browser: Any, local: Server, scheme: str
 ) -> None:
     services = local.services
-    if not any(p.name == showcase.definition().name for p in services.projects(LOCAL_SESSION)):
+    name = showcase.definition("pl").name
+    if not any(p.name == name for p in services.projects(LOCAL_SESSION)):
         showcase.install(services)
         assert services.showcase is not None
-        services.showcase(LOCAL_SESSION)
-    pid = next(
-        p.id for p in services.projects(LOCAL_SESSION) if p.name == showcase.definition().name
-    )
+        services.showcase(LOCAL_SESSION, "pl")
+    pid = next(p.id for p in services.projects(LOCAL_SESSION) if p.name == name)
     seq = services.live(LOCAL_SESSION, pid, "pl").open_recommendation
     draft = services.create(
-        LOCAL_SESSION, showcase.definition().model_copy(update={"name": "Draft"}), "pl"
+        LOCAL_SESSION, showcase.definition("pl").model_copy(update={"name": "Draft"}), "pl"
     ).id
     paths = [
         "/",

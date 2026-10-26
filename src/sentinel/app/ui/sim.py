@@ -11,6 +11,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
 from sentinel.agent.decide import DecisionRecord
+from sentinel.app import names
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
 from sentinel.app.simulator import PolicyRun, Simulation, SimulatorSpec
@@ -18,7 +19,6 @@ from sentinel.app.ui.core import Ui
 from sentinel.app.ui.forms import Form
 from sentinel.app.ui.pages import job_progress
 from sentinel.app.ui.text import Texts
-from sentinel.interpret.team import names_of
 from sentinel.policies.base import Decision, Descope, Overtime, Reseq, Shift, Subst
 from sentinel.simulation.events import Absence, NewActivity, WorkIncrease
 from sentinel.simulation.state import Observation, worker_roles
@@ -141,9 +141,9 @@ def timeline(run: PolicyRun, texts: Texts) -> list[Entry]:
     world = run.world
     calendar = world.calendar
     state = run.state
-    tasks = names_of(state.observe(), world.spec.names_seed)
-    people = list(world.people)
-    roles = list(world.roles)
+    tasks = names.task_names(state.observe(), world.spec.names_seed, texts.lang)
+    people = list(names.people(world.instance, world.spec.names_seed, texts.lang))
+    roles = list(names.role_names(world.instance, texts.lang))
     entries: list[Entry] = []
     for event in run.run.events or ():
         when = texts.date(calendar.date_of(event.day))
@@ -256,7 +256,7 @@ def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
     services = ui.services
     session = ui.session(request)
     texts = ui.texts(request)
-    view = services.simulator(session, project_id)
+    view = services.simulator(session, project_id, texts.lang)
 
     def build(simulation: Simulation) -> list[Entry]:
         return timeline(simulation.main, texts)

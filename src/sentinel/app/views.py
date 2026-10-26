@@ -115,12 +115,16 @@ class ChangeView(View):
 
 
 class AlternativeView(View):
+    """An option compared with the recommended action; `dropped`: racing set it aside early in
+    the deliberation (spec section 6)."""
+
     label: str
     title: str
     p_on_time: float
     tardiness: float
     expected_cost: float
     dropped: bool
+    runner_up: bool = False
 
 
 class ExplanationView(View):
@@ -138,7 +142,9 @@ class ExplanationView(View):
 class RecommendationView(View):
     """A recommendation (spec section 11.5): the action in words, its effect against no change,
     why it needs approval ("people", "money", "scope", "plan"), the alternatives and whether its
-    automatic plan change can be undone."""
+    automatic plan change can be undone. `compared`: its figures come from the comparison on
+    the forecast's simulated futures (v2.0.2), not from the deliberation's own; `options`: the
+    number of candidates Sentinel weighed."""
 
     seq: int
     day: int
@@ -161,6 +167,9 @@ class RecommendationView(View):
     without: OutcomeView | None
     changes: list[ChangeView]
     alternatives: list[AlternativeView]
+    compared: bool = False
+    options: int = 0
+    budget: float | None = None
     explanation: ExplanationView
     llm_explanation: ExplanationView | None
     discarded: str | None
@@ -192,6 +201,7 @@ class ProjectView(View):
     deadline: date | None
     budget: float | None
     cost_so_far: float | None
+    person_days: bool = True  # every daily cost is the default cost unit: a person-day (11.2)
     baseline: BaselineView | None
     tasks: list[TaskView]
     people: list[PersonView]
@@ -217,6 +227,7 @@ class ForecastView(View):
     p90: date
     mean: float
     drivers: list[DriverView]
+    late: int = 0
     expected_cost: float | None = None
     budget: float | None = None
     p_within_budget: float | None = None
@@ -260,6 +271,7 @@ def project_view(
         deadline=definition.deadline,
         budget=None if model is None else model.budget,
         cost_so_far=None if observation is None else observation.cost,
+        person_days=all(cost.daily_cost == 1.0 for cost in definition.roles),
         baseline=None
         if baseline is None
         else BaselineView(
@@ -569,17 +581,41 @@ def recommendation_view(
     params = sentinel_params(project)
     nodes = project.nodes()
     applied = entry.applied
-    alternatives = [
-        AlternativeView(
-            label=c.label,
-            title=describe(c.decision, c.kind, project, recommendation.day, language, applied),
-            p_on_time=c.p_on_time,
-            tardiness=c.tardiness,
-            expected_cost=c.mean_cost,
-            dropped=c.dropped,
-        )
-        for c in _alternatives(record.candidates, record.chosen, record.runner_up)
-    ]
+    records = {c.label: c for c in record.candidates}
+
+    def title(label: str) -> str:
+        c = records.get(label)
+        if c is None:
+            return render("action_noop", language)
+        return describe(c.decision, c.kind, project, recommendation.day, language, applied)
+
+    if recommendation.comparison is not None:
+        alternatives = [
+            AlternativeView(
+                label=i.label,
+                title=title(i.label),
+                p_on_time=i.p_on_time,
+                tardiness=i.tardiness,
+                expected_cost=i.mean_cost,
+                dropped=i.label in records and records[i.label].dropped,
+                runner_up=i.label == record.runner_up,
+            )
+            for i in recommendation.comparison.impacts
+            if i.label != record.chosen
+        ]
+    else:  # stored before v2.0.2: the deliberation's own figures
+        alternatives = [
+            AlternativeView(
+                label=c.label,
+                title=title(c.label),
+                p_on_time=c.p_on_time,
+                tardiness=c.tardiness,
+                expected_cost=c.mean_cost,
+                dropped=c.dropped,
+                runner_up=c.label == record.runner_up,
+            )
+            for c in _alternatives(record.candidates, record.chosen, record.runner_up)
+        ]
     reason = record.reason
     needs_approval = recommendation.acts and params.needs_approval(decision)
     return RecommendationView(
@@ -612,6 +648,9 @@ def recommendation_view(
             for change in recommendation.changes
         ],
         alternatives=alternatives,
+        compared=recommendation.comparison is not None,
+        options=len(record.candidates),
+        budget=project.require_model().budget,
         explanation=ExplanationView(
             text=template_explanation(record, language).summary, source="template"
         ),
@@ -623,7 +662,8 @@ def recommendation_view(
 def _alternatives(
     candidates: Sequence[CandidateRecord], chosen: str, runner_up: str | None
 ) -> list[CandidateRecord]:
-    """The other candidates, the runner-up first, then those racing kept, then the rest."""
+    """The other candidates of a recommendation stored before v2.0.2: the runner-up first,
+    then those racing kept, then the rest."""
     others = [c for c in candidates if c.label != chosen]
     return sorted(others, key=lambda c: (c.label != runner_up, c.dropped, -c.capped, c.tardiness))
 
@@ -663,6 +703,7 @@ def forecast_view(project: LiveProject, result: ForecastResult) -> ForecastView:
         drivers=[
             DriverView(task=d.task, name=nodes[d.task].name, share=d.share) for d in result.drivers
         ],
+        late=result.late,
         expected_cost=result.mean_cost,
         budget=project.require_model().budget,
         p_within_budget=result.p_within_budget,

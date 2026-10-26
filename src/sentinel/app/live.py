@@ -596,7 +596,7 @@ class Tracked:
 
 
 @dataclass
-class _Node:
+class Node:
     """A task of the current network: duration, demands, crew size unit M_j (1 without crew),
     predecessors and successors by key (the source and sink left out)."""
 
@@ -678,15 +678,15 @@ class LiveProject:
 
     # ---- the network
 
-    def nodes(self) -> dict[str, _Node]:
+    def nodes(self) -> dict[str, Node]:
         """The current network of tasks by key: definition tasks, then those added at
         check-ins; removed tasks keep no edges (spec section 4 DESCOPE)."""
         model = self.require_model()
         roles = model.role_ids
-        nodes: dict[str, _Node] = {}
+        nodes: dict[str, Node] = {}
         for act in model.instance.activities[1:-1]:
             task = self.definition.tasks[act.id - 1]
-            nodes[task.key] = _Node(
+            nodes[task.key] = Node(
                 task.key,
                 task.name,
                 act.duration,
@@ -704,7 +704,7 @@ class LiveProject:
             for role, count in added.crew.items():
                 if count > 0:
                     demands[roles[role_key(role)]] += count
-            node = _Node(
+            node = Node(
                 added.key,
                 added.name,
                 added.duration,
@@ -1227,7 +1227,7 @@ def _overlap(a: AbsenceRecord, b: AbsenceRecord) -> bool:
     return a.start < b_end and b.start < a_end
 
 
-def _descendants(nodes: Mapping[str, _Node], key: str) -> set[str]:
+def _descendants(nodes: Mapping[str, Node], key: str) -> set[str]:
     seen: set[str] = set()
     stack = list(nodes[key].successors)
     while stack:

@@ -109,10 +109,21 @@ def test_formats_people_read() -> None:
     ]
     assert (en.decimal(1.5), pl.decimal(1.5), en.decimal(2.0)) == ("1.5", "1,5", "2")
     assert (en.money(12345.4), pl.money(12345.4)) == ("12,345", "12\u00a0345")
-    assert (en.signed_money(-3.2), en.signed_money(0.2), en.signed_money(4)) == (
-        "\u22123",
-        "±0",
-        "+4",
-    )
+    # cost units (spec section 11.2; WP9c answer 4)
+    assert pl.cost_of(27.4, 84) == "27 z 84 jednostek kosztu"
+    assert en.cost_of(27.4, 84) == "27 of 84 cost units"
+    assert [pl.cost(v) for v in (1, 3, 5, 22, 1235)] == [
+        "1 jednostka kosztu",
+        "3 jednostki kosztu",
+        "5 jednostek kosztu",
+        "22 jednostki kosztu",
+        "1\u00a0235 jednostek kosztu",
+    ]
+    assert (en.cost(1), en.cost(91)) == ("1 cost unit", "91 cost units")
+    assert pl.cost_change(1.2, 84) == "+1 jedn., +1\u00a0% budżetu"
+    assert en.cost_change(-9.6, 84) == "\u221210 units, \u221211\u00a0% of the budget"
+    assert pl.cost_change(1, 500) == "+1 jedn., poniżej 1\u00a0% budżetu"
+    assert (en.cost_change(0.2, 84), en.cost_change(3, None)) == ("±0", "+3 units")
+    assert [en.tenths(s) for s in (0.04, 0.05, 0.74, 0.95)] == [0, 1, 7, 10]
     assert en("nope") == "⟦nope⟧"
     assert pl.plural("chip.tasks", 3) == "3 zadania" and en.plural("chip.tasks", 1) == "1 task"

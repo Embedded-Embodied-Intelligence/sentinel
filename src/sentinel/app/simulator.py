@@ -19,12 +19,15 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from sentinel.agent.params import SentinelParams
+from sentinel.app import names
 from sentinel.app.calendar import WorkCalendar
+from sentinel.app.messages import render
 from sentinel.app.models import (
     ESTIMATION_PRESETS,
     OVERTIME_FLOOR,
     Disruptions,
     Estimation,
+    Language,
     Settings,
 )
 from sentinel.dashboard.world import Observed
@@ -32,7 +35,6 @@ from sentinel.data.psplib_loader import instance_path, list_instances, load_pspl
 from sentinel.data.reference import ReferenceKind, load_reference, reference_path
 from sentinel.experiments.policy_runs import WP2B_BASELINE
 from sentinel.experiments.runs import derive_seed
-from sentinel.interpret.team import names_of, roster
 from sentinel.model import ProjectInstance
 from sentinel.policies.base import Policy
 from sentinel.policies.registry import make_policy
@@ -56,7 +58,6 @@ from sentinel.simulation.uncertainty import (
     derive_deadline,
     role_costs,
 )
-from sentinel.wbs.narrate import role_names
 
 BASE_SEED = 2026  # world seeds of the studies (WP2b)
 REVIEW_PERIOD = 5  # T_r (spec section 8)
@@ -118,7 +119,7 @@ class SimulatorSpec(BaseModel):
 
 @dataclass(frozen=True)
 class World:
-    """The instance, its plan and goals, and the names shown for roles, tasks and people."""
+    """The instance, its plan and goals (the names shown come from `sentinel.app.names`)."""
 
     spec: SimulatorSpec
     instance: ProjectInstance
@@ -127,8 +128,6 @@ class World:
     reference: ReferenceKind | None
     deadline: int
     budget: float
-    roles: tuple[str, ...]
-    people: tuple[str, ...]
 
     @property
     def calendar(self) -> WorkCalendar:
@@ -166,8 +165,6 @@ def build_world(spec: SimulatorSpec, root: Path, cache: Path) -> World:
         reference=reference,
         deadline=derive_deadline(c_star, spec.delta_d),
         budget=derive_budget(instance, 0.10, params=spec.pert),
-        roles=role_names(instance),
-        people=tuple(member.name for member in roster(instance, spec.names_seed)),
     )
 
 
@@ -339,11 +336,13 @@ class SimulatorView(BaseModel):
     compare: SimSide | None
 
 
-def side_view(run: PolicyRun) -> SimSide:
+def side_view(run: PolicyRun, language: Language = "en") -> SimSide:
+    """One run as shown, with the names of `language` (WP9c answer 4)."""
     world, state = run.world, run.state
     calendar = world.calendar
-    names = names_of(state.observe(), world.spec.names_seed)
-    people = list(world.people)
+    tasks_named = names.task_names(state.observe(), world.spec.names_seed, language)
+    people = list(names.people(world.instance, world.spec.names_seed, language))
+    roles = names.role_names(world.instance, language)
     n_people = len(people)
     shocks: dict[int, float] = {}
     for j, _, factor in state.work_increases:
@@ -371,13 +370,15 @@ def side_view(run: PolicyRun) -> SimSide:
             percent = round(min(99.9, 100 * state.done[j] / total), 1)
         start, finish = state.start[j], state.finish[j]
         crew = [
-            people[w] if w < n_people else f"Temporary {world.roles[state.role[w]]}"
+            people[w]
+            if w < n_people
+            else render("temporary_role", language, {"role": roles[state.role[w]]})
             for w in state.assigned[j]
         ]
         tasks.append(
             SimTask(
                 id=j,
-                name=names.get(j, f"Task {j}"),
+                name=tasks_named.get(j, f"{j}"),
                 duration=duration,
                 state=shown,
                 percent=percent,
@@ -419,7 +420,9 @@ def side_view(run: PolicyRun) -> SimSide:
     )
 
 
-def simulator_view(project_id: str, seq: int, simulation: Simulation) -> SimulatorView:
+def simulator_view(
+    project_id: str, seq: int, simulation: Simulation, language: Language = "en"
+) -> SimulatorView:
     world = simulation.world
     spec = world.spec
     calendar = world.calendar
@@ -429,7 +432,7 @@ def simulator_view(project_id: str, seq: int, simulation: Simulation) -> Simulat
         seq=seq,
         spec=spec,
         instance=world.instance.name,
-        roles=list(world.roles),
+        roles=list(names.role_names(world.instance, language)),
         team=len(world.instance.workers),
         deadline=calendar.finish_date(world.deadline),
         deadline_day=world.deadline,
@@ -440,6 +443,6 @@ def simulator_view(project_id: str, seq: int, simulation: Simulation) -> Simulat
         days=simulation.days,
         as_of=calendar.date_of(simulation.days),
         finished=simulation.finished,
-        main=side_view(simulation.main),
-        compare=None if simulation.compare is None else side_view(simulation.compare),
+        main=side_view(simulation.main, language),
+        compare=None if simulation.compare is None else side_view(simulation.compare, language),
     )

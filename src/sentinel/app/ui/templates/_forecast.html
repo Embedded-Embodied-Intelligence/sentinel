@@ -22,21 +22,27 @@
   <div><dt>{{ t("overview.likely") }}</dt><dd>{{ t.date(f.p50) }}</dd></div>
   <div><dt>{{ t("overview.bad_case") }}</dt><dd>{{ t.date(f.p90) }}</dd></div>
   {% if f.budget %}
-  <div><dt>{{ t("overview.spent") }}</dt><dd>{{ t("overview.spent_of", spent=t.money(view.cost_so_far or 0), budget=t.money(f.budget)) }}</dd></div>
-  <div><dt>{{ t("overview.expected_cost") }}</dt><dd>{{ t.money(f.expected_cost) }}{% if f.p_within_budget is not none %}<span class="small muted block">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}</dd></div>
+  <div><dt>{{ t("overview.spent") }}</dt><dd>{{ t.cost_of(view.cost_so_far or 0, f.budget) }}{% if view.person_days %} <span class="unit">{{ t("cost.person_days") }}</span>{% endif %}</dd></div>
+  <div><dt>{{ t("overview.expected_cost") }}</dt><dd>{{ t.cost(f.expected_cost) }}{% if f.p_within_budget is not none %}<span class="small muted block">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}</dd></div>
   {% endif %}
 </dl>
 <p class="small muted">{{ t("overview.forecast_note", futures=f.rollouts) }}</p>
 <div id="drivers" hx-swap-oob="true">
+  {% if f.p_on_time is none %}
+  <p class="muted small">{{ t("overview.threats_no_deadline") }}</p>
+  {% elif f.late == 0 %}
+  <p class="muted small">{{ t("overview.no_late") }}</p>
+  {% else %}
   {% set shown = f.drivers | selectattr("share", ">=", 0.05) | list %}
   {% if shown %}
   <ol class="drivers">
     {% for d in shown[:3] %}
-    {% set count = (d.share * 10) | round | int %}
-    <li>{% if count >= 10 %}{{ t("overview.driver_all", task=d.name) }}{% else %}{{ t("overview.driver", task=d.name, count=[count, 1] | max) }}{% endif %}</li>
+    {% set count = t.tenths(d.share) %}
+    <li>{% if d.share >= 1 %}{{ t("overview.driver_all", task=d.name) }}{% elif count >= 10 %}{{ t("overview.driver_nearly", task=d.name) }}{% else %}{{ t("overview.driver", task=d.name, count=count) }}{% endif %}</li>
     {% endfor %}
   </ol>
   <p class="hint">{{ t("overview.drivers_note") }}</p>
-  {% else %}<p class="muted small">{{ t("overview.no_drivers") }}</p>{% endif %}
+  {% else %}<p class="muted small">{{ t("overview.spread") }}</p>{% endif %}
+  {% endif %}
 </div>
 {% endif %}

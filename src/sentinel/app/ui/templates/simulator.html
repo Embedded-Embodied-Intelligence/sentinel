@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-head"><h1>{{ t("sim.title") }}</h1><p class="lead">{{ t("sim.lead") }}</p></div>
+<div class="page-head"><h1>{{ t("sim.title") }}</h1><p class="lead">{{ t("sim.lead") }}</p><p class="hint">{{ t("sim.settings_note") }}</p></div>
 {% if not available %}
 <div class="empty-state"><p>{{ t("sim.unavailable") }}</p></div>
 {% else %}

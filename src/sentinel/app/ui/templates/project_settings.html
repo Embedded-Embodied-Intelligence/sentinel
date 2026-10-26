@@ -18,7 +18,7 @@
       <div class="field">
         <label for="budget">{{ t("setup.budget") }}</label>
         <input id="budget" name="budget" inputmode="decimal" value="{{ d.budget if d.budget is not none else '' }}" aria-describedby="budget-hint"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
-        <p class="hint" id="budget-hint">{{ t("psettings.budget_hint", budget=t.money(view.budget or 0)) }}</p>
+        <p class="hint" id="budget-hint">{{ t("psettings.budget_hint", budget=t.cost(view.budget or 0)) }}</p>
       </div>
     </div>
   </section>

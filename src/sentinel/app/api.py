@@ -208,7 +208,7 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
             if session is None:
                 if request.method in UNSAFE_METHODS:  # a fresh sandbox has no token yet
                     return refuse(request, "csrf_failed", 403, language)
-                session = services.new_session()
+                session = services.new_session(language)
                 new_session = session.id
             session_id = session.id
         else:

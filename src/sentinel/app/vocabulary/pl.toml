@@ -1,0 +1,108 @@
+# Polish names of the application's example projects (spec sections 11.2 and 11.6; WP9c
+# answer 4): the showcase project of the demo, and the roles, task words and people of the
+# simulator. The lists follow en.toml item by item (the same keys and lengths), so the same
+# seed gives the Polish translation of an English name. A task name is a noun of the activity
+# and its object in the genitive ("Implementacja API płatności"); no name has a comma, a digit
+# or a full stop.
+
+[showcase]
+project = "Nowa odsłona sklepu internetowego"
+
+[showcase.roles]
+backend = "Programista backendu"
+frontend = "Programista frontendu"
+tester = "Tester"
+devops = "Inżynier DevOps"
+designer = "Projektant UX"
+
+[showcase.people]
+ada = "Anna Nowak"
+ben = "Bartosz Kowalski"
+cyrus = "Cezary Mazur"
+chloe = "Celina Wiśniewska"
+dmitri = "Dawid Lewandowski"
+esra = "Ewa Zielińska"
+felix = "Filip Wójcik"
+grace = "Gabriela Kamińska"
+
+[showcase.tasks]
+T1 = "Warsztat wymagań"
+T2 = "Projekt UX procesu zakupu"
+T3 = "API katalogu produktów"
+T4 = "Integracja płatności"
+T5 = "Interfejs procesu zakupu"
+T6 = "Interfejs katalogu"
+T7 = "Infrastruktura w chmurze"
+T8 = "Potok CI/CD"
+T9 = "Testy integracyjne"
+T10 = "Testy wydajności"
+T11 = "Karty podarunkowe"
+T12 = "Uruchomienie sklepu"
+N1 = "Przegląd dostępności"
+
+[simulator]
+roles = [
+    "programista backendu", "programista frontendu", "tester", "inżynier DevOps",
+]
+first_names = [
+    "Adam", "Agata", "Bartosz", "Barbara", "Cezary", "Celina", "Damian", "Dorota", "Edward",
+    "Ewa", "Filip", "Franciszka", "Grzegorz", "Gabriela", "Henryk", "Halina", "Igor", "Iwona",
+    "Jakub", "Joanna", "Kamil", "Katarzyna", "Łukasz", "Lena", "Marek", "Magdalena", "Norbert",
+    "Natalia", "Oskar", "Olga", "Paweł", "Patrycja", "Robert", "Renata", "Stanisław", "Sylwia",
+    "Tomasz", "Teresa", "Wojciech", "Weronika", "Zbigniew", "Zofia", "Artur", "Alicja",
+    "Bogdan", "Beata", "Dariusz", "Dominika", "Emil", "Elżbieta", "Jan", "Julia", "Krzysztof",
+    "Karolina", "Michał", "Marta", "Piotr", "Paulina", "Szymon", "Sara",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Implementacja", "Budowa", "Projekt", "Refaktoryzacja", "Rozbudowa", "Optymalizacja",
+]
+objects = [
+    "API płatności", "usługi zamówień", "usługi uwierzytelniania", "zaplecza wyszukiwarki",
+    "usługi powiadomień", "modułu raportów", "usługi magazynowej", "silnika rozliczeń",
+    "procesu importu danych", "warstwy pamięci podręcznej", "generatora faktur",
+    "dziennika audytu", "silnika polecania produktów", "magazynu sesji", "ogranicznika żądań",
+    "usługi eksportu", "obsługi webhooków", "silnika cen", "schematu bazy użytkowników",
+    "konsumenta kolejki komunikatów",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Budowa", "Projekt", "Implementacja", "Przeprojektowanie", "Dopracowanie", "Prototyp",
+]
+objects = [
+    "strony zamówienia", "ekranu logowania", "widoku katalogu produktów",
+    "strony profilu użytkownika", "panelu administratora", "strony wyników wyszukiwania",
+    "widżetu koszyka", "kreatora pierwszych kroków", "panelu ustawień",
+    "widoku historii zamówień", "centrum powiadomień", "strony startowej", "centrum pomocy",
+    "menu nawigacji", "podglądu faktur", "wykresów raportów", "formularza rejestracji",
+    "formularza kontaktowego", "strony cennika", "stron błędów",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Testy", "Weryfikacja", "Walidacja", "Przegląd", "Audyt", "Kontrola",
+]
+objects = [
+    "procesu płatności", "procesu logowania", "procesu zamówienia", "funkcji wyszukiwania",
+    "rejestracji użytkowników", "obsługi zamówień", "eksportu faktur",
+    "dostarczania powiadomień", "uprawnień administratora", "migracji danych",
+    "układu mobilnego", "kontraktów API", "wersji kandydującej", "ustawień bezpieczeństwa",
+    "poprawności raportów", "resetu hasła", "koszyka zakupów", "dostępności",
+    "limitów wydajności", "obsługi błędów",
+]
+
+[[simulator.tasks]]
+verbs = [
+    "Uruchomienie", "Konfiguracja", "Automatyzacja", "Zabezpieczenie", "Aktualizacja",
+    "Migracja",
+]
+objects = [
+    "potoku CI", "środowiska przedprodukcyjnego", "klastra produkcyjnego",
+    "kopii zapasowych bazy", "agregacji logów", "rejestru kontenerów",
+    "równoważenia obciążenia", "sejfu sekretów", "reguł alertów", "skryptów wdrożeniowych",
+    "pamięci podręcznej CDN", "rekordów DNS", "certyfikatów TLS", "środowiska testowego",
+    "pulpitów metryk", "odtwarzania po awarii", "serwerów budowania", "zapory sieciowej",
+    "magazynu artefaktów", "zasad autoskalowania",
+]

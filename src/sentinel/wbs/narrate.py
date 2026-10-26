@@ -43,7 +43,8 @@ _NAMES_STREAM, _NARRATIVE_STREAM = 0, 1  # spawn keys of the seed's two random s
 
 # Verbs and objects per role; every verb fits every object of its role. No name contains a
 # comma, "and", a digit or a period, so lists of quoted names read unambiguously.
-VOCABULARY: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+Vocabulary = tuple[tuple[tuple[str, ...], tuple[str, ...]], ...]
+VOCABULARY: Vocabulary = (
     (
         ("Implement", "Build", "Design", "Refactor", "Extend", "Optimize"),
         (
@@ -250,21 +251,24 @@ def dominant_role(activity: Activity) -> int:
     return max(range(len(activity.demands)), key=lambda k: (activity.demands[k], -k))
 
 
-def activity_names(instance: ProjectInstance, seed: int) -> dict[int, str]:
+def activity_names(
+    instance: ProjectInstance, seed: int, vocabulary: Vocabulary = VOCABULARY
+) -> dict[int, str]:
     """Unique names of the real activities: verb and object of the dominant role's vocabulary.
 
     Objects of a role are drawn without replacement (a seeded permutation) and get a seeded
     verb; once a role's objects are used up, they come back with verbs not yet paired with
-    them. Activities are named in id order.
+    them. Activities are named in id order. Another `vocabulary` of the same shape names them
+    in another language (the application, WP9c).
     """
     role_names(instance)  # at most four roles, one vocabulary each
     rng = _stream(seed, _NAMES_STREAM)
-    queues = [[objects[i] for i in rng.permutation(len(objects))] for _, objects in VOCABULARY]
+    queues = [[objects[i] for i in rng.permutation(len(objects))] for _, objects in vocabulary]
     used: set[str] = set()
     names: dict[int, str] = {}
     for activity in instance.activities[1:-1]:
         k = dominant_role(activity) if activity.demands else 0
-        verbs, objects = VOCABULARY[k]
+        verbs, objects = vocabulary[k]
         queue = queues[k]
         for _ in range(len(objects)):
             thing = queue.pop(0)

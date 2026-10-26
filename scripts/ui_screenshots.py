@@ -29,6 +29,7 @@ from sentinel.app.simulator import SimulatorSpec
 from sentinel.app.store import LOCAL_SESSION
 
 WIDTH, HEIGHT = 1280, 800
+DRAFT = {"pl": "szkic", "en": "draft"}
 LIMIT_BYTES = 3 * 1024 * 1024
 
 
@@ -43,9 +44,10 @@ def seed(services: Services, language: str) -> dict[str, str]:
     services.local_session()
     showcase.install(services)
     assert services.showcase is not None
-    services.showcase(LOCAL_SESSION)
+    services.showcase(LOCAL_SESSION, language)  # type: ignore[arg-type]
     ids = {"showcase": services.projects(LOCAL_SESSION)[0].id}
-    draft = showcase.definition().model_copy(update={"name": "Online shop relaunch (draft)"})
+    definition = showcase.definition(language)  # type: ignore[arg-type]
+    draft = definition.model_copy(update={"name": f"{definition.name} ({DRAFT[language]})"})
     ids["draft"] = services.create(LOCAL_SESSION, draft, language).id  # type: ignore[arg-type]
     name = "Przykładowy projekt (mały)" if language == "pl" else "Example project (small)"
     spec = SimulatorSpec(

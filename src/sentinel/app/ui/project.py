@@ -37,11 +37,11 @@ NEXT_DAYS = 10  # unstarted tasks planned within this many working days are show
 
 
 def why_text(rec: RecommendationView, texts: Texts) -> str:
-    """Why Sentinel recommends the action, in plain language from the recommendation's own
-    figures (spec sections 10.4 and 11.5; the template explanation without internal terms)."""
+    """Why Sentinel recommends the action, in plain language from the figures shown with it
+    (spec sections 10.4 and 11.5; the template explanation without internal terms)."""
     before = rec.without
     after = rec.with_action
-    options = len(rec.alternatives) + 1
+    options = max(rec.options, len(rec.alternatives) + 1)
     if not rec.acts or after is None:
         if before is None:
             return texts("why.keep_plain")
@@ -53,7 +53,7 @@ def why_text(rec: RecommendationView, texts: Texts) -> str:
         parts.append(texts("why.without", p=texts.pct(before.p_on_time)))
     parts.append(
         texts(
-            "why.with",
+            "why.with" if rec.compared else "why.with_own",
             options=options,
             futures=after.rollouts,
             p=texts.pct(after.p_on_time),
@@ -62,7 +62,7 @@ def why_text(rec: RecommendationView, texts: Texts) -> str:
     if after.tardiness >= 0.05:
         parts.append(texts("why.delay", days=texts.decimal(after.tardiness)))
     parts.append(texts("why.reason", reason=rec.reason_text))
-    runner = next((a for a in rec.alternatives if not a.dropped), None)
+    runner = next((a for a in rec.alternatives if a.runner_up), None)
     if runner is not None:
         title = texts("rec.alt_noop") if runner.label == "NOOP" else runner.title
         parts.append(texts("why.runner", title=title, p=texts.pct(runner.p_on_time)))
@@ -112,7 +112,7 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
         chips.append(Chip(texts("chip.finish"), text, tone))
     cost = after.expected_cost - before.expected_cost
     tone = "bad" if cost > 0.5 else "good" if cost < -0.5 else "neutral"
-    chips.append(Chip(texts("chip.cost"), texts.signed_money(cost), tone))
+    chips.append(Chip(texts("chip.cost"), texts.cost_change(cost, rec.budget), tone))
     chips.append(Chip(texts("chip.moved"), texts.plural("chip.tasks", len(rec.changes))))
     return chips
 
