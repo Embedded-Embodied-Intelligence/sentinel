@@ -168,7 +168,9 @@ def events(language: Language = "pl") -> tuple[tuple[str, dict[str, Any]], ...]:
 
 def install(services: Any) -> None:
     """Seed the showcase project into every new sandbox of `services`, in the language of the
-    request that created the sandbox (Polish unless the visitor chose English)."""
+    request that created the sandbox (Polish unless the visitor chose English). The Polish one
+    is computed now, so that the first visitor does not wait for it."""
+    events("pl")
 
     def seed(session: str, language: Language = "pl") -> None:
         log = events(language)

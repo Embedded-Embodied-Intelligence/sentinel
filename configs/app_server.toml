@@ -1,0 +1,7 @@
+# The application on a company server (WP9c, ADR-0026), e.g. the Docker image of
+# docker-compose.yml: `sentinel ui --config configs/app_server.toml`. Not the demo: there are no
+# accounts, so serve it only inside the company network or behind a proxy that signs people in.
+data_dir = "/data"                         # projects, settings, keys and caches (a volume)
+workers = 2                                # background job threads
+psplib_root = "/data/psplib"               # the simulator's example projects, fetched once
+baseline_cache = "/data/derived/baselines" # their original plans, computed on first use

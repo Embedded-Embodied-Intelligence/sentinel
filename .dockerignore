@@ -1,0 +1,15 @@
+# The build context of the Dockerfile (WP9c, ADR-0026): only pyproject.toml, uv.lock, README.md,
+# LICENSE, src/, configs/ and scripts/fetch_psplib.py are copied; everything else stays out, and
+# secrets and data never enter the image.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+!configs/
+!scripts/fetch_psplib.py
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*

@@ -11,7 +11,9 @@ an anonymous sandbox, created on the first request), and the CSRF token of the s
 state-changing request (`X-CSRF-Token`; the pages send it with every HTMX request). The LLM
 settings endpoints, which never return the key, do not exist in the demo; no endpoint shows
 files, settings or another session's data, and no page shows a stack trace: an unexpected error
-is logged with a reference id, which the page or the JSON error names.
+is logged with a reference id, which the page or the JSON error names. The client address of
+the limits is the TCP peer, or behind the local proxy of the demo its X-Forwarded-For
+(`security.client_address`); `/api/client-address` reports it to requests from 127.0.0.1 only.
 """
 
 import json
@@ -43,9 +45,11 @@ from sentinel.app.models import CheckIn, Language, ProjectDefinition
 from sentinel.app.security import (
     CSRF_COOKIE,
     CSRF_HEADER,
+    LOCAL_PROXY,
     SESSION_COOKIE,
     UNSAFE_METHODS,
     RateLimiter,
+    client_address,
     csrf_token,
     csrf_valid,
     load_key,
@@ -76,7 +80,8 @@ STATUS: dict[ErrorKind, int] = {
     "unavailable": 503,
 }
 EXPIRY_CHECK_S = 60.0
-UNGUARDED = ("/api/health", "/favicon.ico")
+UNLIMITED = ("/api/health", "/favicon.ico")  # neither limited nor given a session
+SESSIONLESS = ("/api/client-address",)  # rate-limited, but no sandbox is made for it
 
 
 def _version() -> str:
@@ -90,6 +95,17 @@ class Health(BaseModel):
     status: Literal["ok"] = "ok"
     version: str
     demo: bool
+
+
+class ClientAddress(BaseModel):
+    """What the app sees of a request (WP9c, the public demo's check): the address its limits
+    count, the TCP peer, the X-Forwarded-For header and whether it was trusted."""
+
+    address: str
+    peer: str | None
+    forwarded_for: str | None
+    trusted: bool
+    limited: bool
 
 
 class SessionInfo(BaseModel):
@@ -188,15 +204,15 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
     ) -> Response:
         language = _language(request)
         path = request.url.path
-        if path.startswith(STATIC_PREFIX) or path in UNGUARDED:
+        if path.startswith(STATIC_PREFIX) or path in UNLIMITED:
             return await call_next(request)
-        if limiter is not None:
-            address = request.client.host if request.client else "?"
-            forwarded = request.headers.get("x-forwarded-for")
-            if config.trust_proxy and forwarded:
-                address = forwarded.split(",")[0].strip()
-            if not limiter.allow(address):
-                return refuse(request, "rate_limited", 429, language)
+        peer = request.client.host if request.client else None
+        address = client_address(peer, request.headers.get("x-forwarded-for"), config.trust_proxy)
+        request.state.address = address
+        if limiter is not None and not limiter.allow(address):
+            return refuse(request, "rate_limited", 429, language)
+        if path in SESSIONLESS:
+            return await call_next(request)
         new_session = None
         if config.demo:
             now = time.monotonic()
@@ -313,6 +329,23 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
     @app.get("/api/health", response_model=Health)
     def health() -> Health:
         return Health(version=_version(), demo=config.demo)
+
+    @app.get("/api/client-address", response_model=ClientAddress)
+    def client(request: Request) -> ClientAddress:
+        """The address the limits count for this request; only for requests from 127.0.0.1
+        (the server itself, or the demo's local proxy), others get 404."""
+        peer = request.client.host if request.client else None
+        if peer != LOCAL_PROXY:
+            raise StarletteHTTPException(status_code=404)
+        forwarded = request.headers.get("x-forwarded-for")
+        address = str(request.state.address)
+        return ClientAddress(
+            address=address,
+            peer=peer,
+            forwarded_for=forwarded,
+            trusted=address != peer,
+            limited=limiter is not None,
+        )
 
     @app.get("/api/session", response_model=SessionInfo)
     def session_info(request: Request) -> SessionInfo:

@@ -422,7 +422,9 @@ def _ui(args: argparse.Namespace) -> int:
         print(f"demo mode: sandboxes expire after {config.limits.sandbox_hours:g} h")
     print(f"data directory: {config.data_dir}")
     app = create_app(config)
-    uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+    # The app reads X-Forwarded-For itself, trusting it only from 127.0.0.1 (WP9c), so uvicorn
+    # must not rewrite the client address first.
+    uvicorn.run(app, host=args.host, port=args.port, log_level="info", proxy_headers=False)
     return 0
 
 

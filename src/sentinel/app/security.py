@@ -5,7 +5,8 @@ secret key (`secret.key` in the data directory, created on first start, mode 060
 cannot forge or guess another session. Every state-changing request carries the session's CSRF
 token in the `X-CSRF-Token` header (double submit: the token is also a cookie that the page's
 script reads); the token is an HMAC of the session id, so a cross-site page can neither read nor
-compute it. Requests are limited per client address with a token bucket.
+compute it. Requests are limited per client address with a token bucket; behind a local proxy
+(Tailscale Funnel) the address comes from X-Forwarded-For, trusted only from 127.0.0.1.
 """
 
 import hashlib
@@ -21,6 +22,20 @@ SESSION_COOKIE = "sentinel_session"
 CSRF_COOKIE = "sentinel_csrf"
 CSRF_HEADER = "X-CSRF-Token"
 UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+LOCAL_PROXY = "127.0.0.1"  # the only peer whose X-Forwarded-For is trusted (WP9c)
+
+
+def client_address(peer: str | None, forwarded: str | None, trust_proxy: bool) -> str:
+    """The address a request is counted under (WP9c): its TCP peer, or, with `trust_proxy` and
+    the local proxy as the peer, the last X-Forwarded-For hop that is not the proxy itself, the
+    address the proxy saw (a client's own header comes before it). A header from any other peer
+    is ignored, so a remote client cannot pick its address."""
+    address = peer or "?"
+    if not trust_proxy or address != LOCAL_PROXY or not forwarded:
+        return address
+    hops = [hop.strip() for hop in forwarded.split(",") if hop.strip()]
+    outside = [hop for hop in hops if hop != LOCAL_PROXY]
+    return outside[-1] if outside else address
 
 
 def load_key(path: Path) -> bytes:

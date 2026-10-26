@@ -1,0 +1,47 @@
+# Sentinel on a company server (WP9c, ADR-0026; docs/deploy.md and the user guide's section for
+# IT). The app has no accounts: publish it only inside the company network or behind a proxy
+# that signs people in.
+#
+#     docker compose up -d --build                  # the app on http://localhost:8000
+#     docker compose --profile ollama up -d         # the app and a local AI model server
+#     docker compose --profile ollama exec ollama ollama pull qwen2.5:7b
+#     docker compose run --rm sentinel python /app/scripts/fetch_psplib.py --sets j30 j60 --root /data/psplib
+#     docker compose down                           # stop; the data stay in the volume
+name: sentinel
+
+services:
+  sentinel:
+    build: .
+    image: sentinel:1.1.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"  # this host only; a reverse proxy publishes it
+    volumes:
+      - sentinel-data:/data
+    environment:
+      OLLAMA_HOST: http://ollama:11434  # used when the AI settings choose a local model
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, urllib.request; r = urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4); sys.exit(0 if r.status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:0.40.6  # the version of the studies (docs/infra/environment.md)
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    # With an NVIDIA GPU and the NVIDIA Container Toolkit, uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  sentinel-data:
+  ollama-models:
