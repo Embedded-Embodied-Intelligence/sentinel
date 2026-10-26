@@ -5,7 +5,8 @@ comparison; the isolation of two demo visitors; a check-in by keyboard only; and
 accessibility scan of the main screens with no serious or critical violation.
 
 The app is served by uvicorn in a thread with real background jobs. Run with
-`uv run pytest -q -m e2e` (Chromium as installed by `uv run playwright install chromium`).
+`uv run pytest -q -m e2e` (Chromium as installed by `uv run playwright install chromium`; its
+system libraries without root by `scripts/setup_e2e_libs.sh`, found through `e2e_env`).
 """
 
 import re
@@ -20,6 +21,7 @@ from typing import Any
 import pytest
 import uvicorn
 from app_cases import small
+from e2e_env import chromium_env
 
 from sentinel.app import showcase
 from sentinel.app.api import create_app
@@ -71,11 +73,12 @@ def _serve(config: AppConfig) -> Iterator[Server]:
 def browser() -> Iterator[Any]:
     with sync_api.sync_playwright() as playwright:
         try:
-            chromium = playwright.chromium.launch()
+            chromium = playwright.chromium.launch(env=chromium_env())
         except sync_api.Error:  # pragma: no cover - depends on the machine
             pytest.skip(
                 "Chromium for Playwright cannot start: run `uv run playwright install chromium` "
-                "(on Linux also `sudo apt-get install libnss3 libnspr4 libasound2t64`)"
+                "(on Linux also scripts/setup_e2e_libs.sh, or "
+                "`sudo apt-get install libnss3 libnspr4 libasound2t64`)"
             )
         yield chromium
         chromium.close()

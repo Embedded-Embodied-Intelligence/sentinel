@@ -11,6 +11,7 @@ run). The PNGs go to docs/ui/ (committed); their total size is printed and must 
 """
 
 import argparse
+import os
 import socket
 import sys
 import tempfile
@@ -31,6 +32,18 @@ from sentinel.app.store import LOCAL_SESSION
 WIDTH, HEIGHT = 1280, 800
 DRAFT = {"pl": "szkic", "en": "draft"}
 LIMIT_BYTES = 3 * 1024 * 1024
+
+
+def chromium_env() -> dict[str, str] | None:
+    """Chromium's libraries of scripts/setup_e2e_libs.sh on LD_LIBRARY_PATH (as tests/e2e_env.py),
+    or None for the process's own environment."""
+    default = Path.home() / ".local" / "share" / "sentinel-e2e-libs"
+    root = Path(os.environ.get("SENTINEL_E2E_LIBS", default)) / "usr" / "lib"
+    folders = sorted(str(p) for p in root.glob("*-linux-gnu") if p.is_dir())
+    if not folders:
+        return None
+    current = os.environ.get("LD_LIBRARY_PATH")
+    return {**os.environ, "LD_LIBRARY_PATH": ":".join([*folders, current] if current else folders)}
 
 
 def free_port() -> int:
@@ -94,7 +107,7 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     total = 0
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch()
+        browser = playwright.chromium.launch(env=chromium_env())
         context = browser.new_context(
             viewport={"width": WIDTH, "height": HEIGHT},
             locale="pl-PL" if args.lang == "pl" else "en-GB",
