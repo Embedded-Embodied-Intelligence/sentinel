@@ -1,0 +1,8 @@
+id,name,duration_days,predecessors,optional,crew:Programista,crew:Tester,crew:Projektant
+T1,Warsztat z klientem,2,,nie,1,0,1
+T2,Projekt ekranów,4,T1,nie,0,0,1
+T3,Baza danych i API,6,T1,nie,2,0,0
+T4,Aplikacja mobilna,6,T2 T3,nie,2,0,0
+T5,Powiadomienia SMS,3,T3,tak,1,0,0
+T6,Testy,4,T4,nie,1,1,0
+T7,Wdrożenie,1,T6,nie,1,0,0

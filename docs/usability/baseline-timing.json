@@ -1,0 +1,42 @@
+[
+  {
+    "number": 1,
+    "name": "Utwórz projekt z szablonu CSV",
+    "clicks": 9,
+    "fields": 4,
+    "seconds": 2.2,
+    "done": true
+  },
+  {
+    "number": 2,
+    "name": "Kiedy projekt najprawdopodobniej się skończy?",
+    "clicks": 0,
+    "fields": 0,
+    "seconds": 0.0,
+    "done": true
+  },
+  {
+    "number": 3,
+    "name": "Zgłoś nieobecność",
+    "clicks": 6,
+    "fields": 5,
+    "seconds": 0.4,
+    "done": true
+  },
+  {
+    "number": 4,
+    "name": "Zdecyduj o rekomendacji",
+    "clicks": 2,
+    "fields": 0,
+    "seconds": 1.6,
+    "done": true
+  },
+  {
+    "number": 5,
+    "name": "Symulator do końca: kto poradził sobie lepiej?",
+    "clicks": 3,
+    "fields": 0,
+    "seconds": 29.8,
+    "done": true
+  }
+]

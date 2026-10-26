@@ -10,21 +10,16 @@ system libraries without root by `scripts/setup_e2e_libs.sh`, found through `e2e
 """
 
 import re
-import socket
-import threading
 import time
 from collections.abc import Iterator
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pytest
-import uvicorn
 from app_cases import small
-from e2e_env import chromium_env
+from e2e_env import Server, chromium_env, serve
 
 from sentinel.app import showcase
-from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits
 from sentinel.app.services import Services
 from sentinel.app.store import LOCAL_SESSION
@@ -41,32 +36,6 @@ TASKS_CSV = (
     "T3,Test,3,T1 T2,no,1,1\n"
 )
 SLOW = 180_000  # ms: a simulator run to the end on a busy machine
-
-
-@dataclass
-class Server:
-    base: str
-    services: Services
-    config: AppConfig
-
-
-def _serve(config: AppConfig) -> Iterator[Server]:
-    services = Services(config)
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        port = probe.getsockname()[1]
-    server = uvicorn.Server(
-        uvicorn.Config(create_app(config, services), port=port, log_level="warning")
-    )
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    deadline = time.monotonic() + 30
-    while not server.started and time.monotonic() < deadline:
-        time.sleep(0.05)
-    assert server.started, "the server did not start"
-    yield Server(f"http://127.0.0.1:{port}", services, config)
-    server.should_exit = True
-    thread.join(timeout=10)
 
 
 @pytest.fixture(scope="module")
@@ -86,7 +55,7 @@ def browser() -> Iterator[Any]:
 
 @pytest.fixture(scope="module")
 def local(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Server]:
-    yield from _serve(AppConfig(data_dir=tmp_path_factory.mktemp("local"), workers=1))
+    yield from serve(AppConfig(data_dir=tmp_path_factory.mktemp("local"), workers=1))
 
 
 def _page(browser: Any, server: Server, language: str = "en", scheme: str = "light") -> Any:
@@ -197,7 +166,7 @@ def test_two_demo_visitors_see_only_their_own_projects(
         showcase=False,
         limits=Limits(projects_per_session=5, requests_per_minute=600),
     )
-    for server in _serve(config):
+    for server in serve(config):
         first, second = _page(browser, server), _page(browser, server)
         first.goto(server.base + "/new")
         first.get_by_label("Project name").fill("Secret plan")
