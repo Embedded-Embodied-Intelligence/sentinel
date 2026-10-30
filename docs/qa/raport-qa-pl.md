@@ -183,7 +183,7 @@ Wszystkie drobne. Pełny dziennik wszystkich problemów (po angielsku, z krokami
 - **Wydłużenia nie da się zgłosić dla zadania oznaczonego „W toku” w tym samym raporcie;** lista pokazuje tylko wcześniej rozpoczęte. Propozycja: aktualizować listę od razu.
 - **„Działania remisują we wszystkim”** brzmi dziwnie, gdy szansa rośnie z 46 do 55 %: zdanie dotyczy porównania z następną możliwością ([zrzut](shots/run1/039_c7_recommendation.png)). Propozycja: pisać „z następną w kolejności”.
 
-**Pytanie do specyfikacji:** lista „Co zagraża terminowi” pokazuje ostatnie zadania planu („Uruchomienie produkcyjne: 9 na 10”), gdy choć jedno wymagane zadanie nie ma następnika. Tu była to „Mapa procesów klienta”. Reguła „zadań strukturalnych” (§11.4) przestaje je wtedy odfiltrowywać, a kierownik nic z tym nie zrobi ([zrzut](shots/run1/061_overview_final.png)).
+**Pytanie do specyfikacji:** lista „Co zagraża terminowi” pokazuje ostatnie zadania planu („Uruchomienie produkcyjne: 9 na 10”), gdy choć jedno wymagane zadanie nie ma następnika. Tu była to „Mapa procesów klienta”. Reguła „zadań strukturalnych” (§11.4) przestaje je wtedy odfiltrowywać, a kierownik nic z tym nie zrobi ([zrzut](shots/run1/061_overview_final.png)). Trzy kolejne pytania dotyczą przebudowy, a nie testów; są w [raporcie WP10](../reports/WP10.md).
 
 ## Obserwacje UX, oczami kierownika projektu
 
