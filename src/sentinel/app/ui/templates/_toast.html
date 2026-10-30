@@ -1,0 +1,5 @@
+<div class="toast" data-toast{% if flash_link %} data-long{% endif %}>
+  {{ icon("check-circle", 20) }}
+  <p class="toast-body"><span id="toast-text">{{ flash }}</span>{% if flash_link %} <a href="{{ flash_link }}">{{ t("toast.see_history") }}</a>{% endif %}</p>
+  <button type="button" class="toast-close" data-toast-close aria-label="{{ t('toast.close') }}">{{ icon("x", 16) }}</button>
+</div>

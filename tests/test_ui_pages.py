@@ -274,7 +274,7 @@ def test_loading_and_error_states(site: Site, tmp_path: Path) -> None:
         assert "<progress" in progress and f"/jobs/{running.id}" in progress
         failed = services.store.create_job(LOCAL_SESSION, ids["open"], "recommend")
         services.store.update_job(failed.id, status="failed", error={"code": "no_deadline"})
-        assert "alert-error" in _get(site, f"/jobs/{failed.id}", language, htmx=True)
+        assert "callout-bad" in _get(site, f"/jobs/{failed.id}", language, htmx=True)
         services.store.update_job(running.id, status="done", result={"recommendation": 1})
     empty = AppConfig(data_dir=tmp_path / "empty", inline_jobs=True)
     with TestClient(create_app(empty), raise_server_exceptions=False) as client:

@@ -1,6 +1,7 @@
 """The start page, the "how it works" page, the app settings, the language switch and the
 progress of background jobs (WP9b; ADR-0025)."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -13,7 +14,7 @@ from sentinel.app.errors import AppError
 from sentinel.app.llm import LlmSettingsUpdate, Provider
 from sentinel.app.services import JobView
 from sentinel.app.simulator import SimulatorSpec
-from sentinel.app.ui.core import LANG_COOKIE, STATIC_DIR, Ui, local_path
+from sentinel.app.ui.core import LANG_COOKIE, STATIC_DIR, Ui, chance_level, local_path, nav_rank
 from sentinel.app.ui.forms import Form
 from sentinel.app.views import ForecastSummary
 
@@ -48,14 +49,16 @@ class Card:
     size: str = ""
     days: int = 0
     manager: str = ""
+    chance: float | None = None
+    step: int = 1  # the wizard's steps a draft has finished
 
 
-def chance_level(p: float | None) -> str:
-    """The badge of a chance of meeting the deadline: good from the target 80 % (spec section 8,
-    theta_D), at risk from 50 %, else bad."""
-    if p is None:
-        return "neutral"
-    return "good" if p >= 0.8 else "warn" if p >= 0.5 else "bad"
+def project_cards(cards: Sequence[Card]) -> list[Card]:
+    """The running projects in the order of the start page (docs/design/brief.md, section 4.1)."""
+    return sorted(
+        (c for c in cards if c.kind == "live" and c.planned),
+        key=lambda c: nav_rank("decision" if c.pending else "", c.chance),
+    )
 
 
 def trend(summary: ForecastSummary | None) -> int | None:
@@ -107,6 +110,8 @@ def router(ui: Ui) -> APIRouter:
                     deadline=project.definition.deadline,
                     pending=0 if state.open is None else 1,
                     as_of=project.checkins[-1][0] if project.checkins else None,
+                    chance=services.known_chance(summary.id, state),
+                    step=2 if project.definition.team else 1,
                 )
             )
         return ui.page(
@@ -114,7 +119,9 @@ def router(ui: Ui) -> APIRouter:
             "start.html",
             title=ui.texts(request)("start.title"),
             nav="projects",
-            cards=cards,
+            cards=project_cards(cards),
+            drafts=[c for c in cards if c.kind == "live" and not c.planned],
+            examples=[c for c in cards if c.kind == "simulator"],
         )
 
     @routes.get("/projects/{project_id}/chance")
@@ -137,6 +144,10 @@ def router(ui: Ui) -> APIRouter:
             level=chance_level(p),
             delta=trend(summary),
             failed=failed,
+            project_id=project_id,
+            nav_level="decision"
+            if services.state(ui.session(request), project_id).open is not None
+            else chance_level(p),
         )
 
     @routes.get("/how-it-works")

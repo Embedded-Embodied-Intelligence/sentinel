@@ -93,7 +93,7 @@ def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
         page.goto(server.base + "/")
 
         with recorder.task("Utwórz projekt z szablonu CSV") as task:
-            click(task, page.get_by_role("link", name="Nowy projekt").first)
+            click(task, page.get_by_role("link", name="Utwórz projekt").first)
             fill(task, page.get_by_label("Nazwa projektu"), "Aplikacja rezerwacji wizyt")
             fill(task, page.get_by_label("Data rozpoczęcia"), "2026-11-02")
             fill(task, page.get_by_label("Termin", exact=True), "2026-12-04")

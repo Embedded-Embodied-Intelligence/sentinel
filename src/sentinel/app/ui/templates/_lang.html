@@ -1,0 +1,4 @@
+<div class="segmented segmented-sm" role="group" aria-label="{{ t('nav.language') }}">
+  <a href="/lang/pl?next={{ here | urlencode }}" lang="pl" hreflang="pl"{% if t.lang == 'pl' %} aria-current="true"{% endif %}><span aria-hidden="true">PL</span><span class="vh">Polski</span></a>
+  <a href="/lang/en?next={{ here | urlencode }}" lang="en" hreflang="en"{% if t.lang == 'en' %} aria-current="true"{% endif %}><span aria-hidden="true">EN</span><span class="vh">English</span></a>
+</div>

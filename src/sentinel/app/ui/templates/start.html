@@ -1,49 +1,96 @@
 {% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
 {% block content %}
-<div class="page-head with-actions">
-  <div>
-    <h1>{{ t("start.title") }}</h1>
-    <p class="lead">{{ t("start.what") }}</p>
+<div class="page">
+  <div class="page-head with-actions">
+    <div>
+      <h1>{{ t("start.title") }}</h1>
+      <p class="lead">{{ t("start.what") }}</p>
+    </div>
+    {% if cards or drafts or examples %}
+    <div class="page-actions"><a class="btn{% if not cards | selectattr("pending") | list %} btn-primary{% endif %}" href="/new">{{ icon("plus", 16) }}{{ t("start.new") }}</a></div>
+    {% endif %}
   </div>
   {% if cards %}
-  <div class="actions">
-    <a class="btn" href="/simulator">{{ t("start.try_simulator") }}</a>
-    <a class="btn btn-primary" href="/new"><span aria-hidden="true">+ </span>{{ t("start.new") }}</a>
-  </div>
-  {% endif %}
-</div>
-{% if cards %}
-<ul class="cards" aria-label="{{ t('start.list') }}">
-  {% for card in cards %}
-  <li class="card">
-    <h2 class="card-title"><a href="{{ card.href }}">{{ card.name }}</a></h2>
-    {% if card.kind == "simulator" %}
-      <p class="card-meta"><span class="badge badge-info">{{ t("start.simulator_badge") }}</span> {{ t("sim.size." ~ card.size) }}</p>
-      <p class="card-meta">{{ t("start.sim_days", days=card.days) }} · {{ t("sim.manager." ~ card.manager) if card.manager in ("sentinel", "no_reaction") else card.manager }}</p>
-    {% elif not card.planned %}
-      <p class="card-meta"><span class="badge badge-neutral">{{ t("start.draft") }}</span></p>
-      <p class="card-meta">{{ t("start.draft_hint") }}</p>
-      <p><a class="btn btn-small" href="{{ card.href }}">{{ t("start.continue") }}</a></p>
-    {% else %}
-      <p class="card-meta">{% if card.deadline %}{{ t("start.deadline", date=t.date(card.deadline)) }}{% else %}{{ t("start.no_deadline") }}{% endif %}</p>
+  <ul class="project-grid" aria-label="{{ t('start.list') }}">
+    {% for card in cards %}
+    <li class="card project-card">
+      <h2><a href="{{ card.href }}">{{ card.name }}</a></h2>
       {% if card.finished %}
-      <p class="card-meta"><span class="badge badge-good">{{ t("start.finished") }}</span></p>
+      <p>{{ ui.badge("good", t("start.finished")) }}</p>
       {% elif card.deadline %}
       <div class="card-chance" hx-get="/projects/{{ card.id }}/chance" hx-trigger="load" hx-swap="innerHTML">
-        <p class="muted"><span class="spinner" aria-hidden="true"></span> {{ t("start.calculating") }}</p>
+        <p class="card-number skeleton" aria-hidden="true">— %</p>
+        <p class="loading-line"><span class="spinner" aria-hidden="true"></span>{{ t("start.calculating") }}</p>
       </div>
+      {% else %}
+      <p class="muted small">{{ t("start.no_chance") }}</p>
       {% endif %}
-      <p class="card-meta">{% if card.pending %}<span class="badge badge-warn"><span aria-hidden="true">● </span>{{ t.plural("start.pending", card.pending) }}</span>{% else %}{{ t("start.no_pending") }}{% endif %}</p>
-      {% if card.as_of %}<p class="card-meta small muted">{{ t("start.as_of", date=t.date(card.as_of)) }}</p>{% else %}<p class="card-meta small muted">{{ t("start.not_tracked") }}</p>{% endif %}
-    {% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<div class="empty-state">
-  <h2>{{ t("start.empty_title") }}</h2>
-  <p>{{ t("start.empty") }}</p>
-  <p class="actions"><a class="btn" href="/simulator">{{ t("start.try_simulator") }}</a><a class="btn btn-primary" href="/new">{{ t("start.new") }}</a></p>
+      <div class="card-foot">
+        <p>{% if card.deadline %}{{ t("start.deadline", date=t.date(card.deadline)) }}{% else %}{{ t("start.no_deadline") }}{% endif %}</p>
+        {% if card.pending %}
+        <p>{{ ui.badge("decision", t.plural("start.pending", card.pending)) }}</p>
+        {% elif card.as_of %}
+        <p class="muted">{{ t("start.as_of", when=t.ago(card.as_of)) }}</p>
+        {% else %}
+        <p class="muted">{{ t("start.not_tracked") }}</p>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+    <li><a class="new-tile" href="/new">{{ icon("plus", 20) }}{{ t("start.new") }}</a></li>
+  </ul>
+  {% elif not (drafts or examples) %}
+  <div class="empty-state">
+    {{ icon("folder", 40) }}
+    <h2>{{ t("start.empty_title") }}</h2>
+    <p class="lead">{{ t("start.empty") }}</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/new">{{ t("start.create") }}</a>
+      <a class="btn btn-tertiary" href="/simulator">{{ t("start.see_example") }}</a>
+    </div>
+  </div>
+  <ul class="example-cards">
+    <li><a class="card example-card" href="/new">{{ icon("document", 20) }}<span><span class="choice-title">{{ t("start.card.describe") }}</span><span class="choice-text">{{ t("start.card.describe_text") }}</span></span></a></li>
+    <li><a class="card example-card" href="/new">{{ icon("swap", 20) }}<span><span class="choice-title">{{ t("start.card.import") }}</span><span class="choice-text">{{ t("start.card.import_text") }}</span></span></a></li>
+    <li><a class="card example-card" href="/simulator">{{ icon("play", 20) }}<span><span class="choice-title">{{ t("start.card.simulator") }}</span><span class="choice-text">{{ t("start.card.simulator_text") }}</span></span></a></li>
+  </ul>
+  {% endif %}
+
+  {% if drafts %}
+  <section class="group" aria-labelledby="drafts-title">
+    <h2 class="overline group-title" id="drafts-title">{{ t("start.drafts") }}</h2>
+    <ul class="row-list">
+      {% for card in drafts %}
+      <li class="card row-card">
+        <span class="step-ring" aria-hidden="true">{{ card.step }}/3</span>
+        <div class="row-main">
+          <a class="row-title" id="draft-{{ card.id }}" href="{{ card.href }}">{{ card.name }}</a>
+          <p class="caption">{{ t("start.draft", n=card.step) }}</p>
+          <p class="small">{{ t("start.draft_hint_tasks" if card.step == 2 else "start.draft_hint") }}</p>
+        </div>
+        <a class="btn" href="{{ card.href }}" aria-describedby="draft-{{ card.id }}">{{ t("start.continue") }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if examples %}
+  <section class="group" aria-labelledby="examples-title">
+    <h2 class="overline group-title" id="examples-title">{{ t("start.examples") }}</h2>
+    <ul class="row-list">
+      {% for card in examples %}
+      <li class="card row-card">
+        <div class="row-main">
+          <a class="row-title" id="example-{{ card.id }}" href="{{ card.href }}">{{ card.name }}</a>
+          <p class="caption">{{ t("start.simulator_badge") }} · {{ t("sim.size." ~ card.size) }} · {{ t("start.sim_days", days=card.days) }} · {{ t("sim.manager." ~ card.manager) if card.manager in ("sentinel", "no_reaction") else card.manager }}</p>
+        </div>
+        <a class="btn" href="{{ card.href }}" aria-describedby="example-{{ card.id }}">{{ t("start.open") }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 </div>
-{% endif %}
 {% endblock %}

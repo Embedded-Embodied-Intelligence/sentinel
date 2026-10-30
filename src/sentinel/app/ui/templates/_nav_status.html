@@ -1,0 +1,1 @@
+<span id="nav-status-{{ id }}" class="nav-status {{ level }}"{% if oob | default(false) %} hx-swap-oob="true"{% endif %}>{{ icon({"good": "check-circle", "warn": "alert", "bad": "cross-circle", "decision": "clock"}.get(level, "dot"), 16) }}<span class="vh">{{ t("nav.status." ~ level) }}: </span></span>

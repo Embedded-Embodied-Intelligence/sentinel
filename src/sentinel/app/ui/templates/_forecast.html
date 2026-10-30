@@ -12,7 +12,7 @@
   <span>{{ t("overview.chance") }}</span>
   <strong class="headline-number">{{ t.pct(f.p_on_time) }}</strong>
   <span class="badge badge-{{ level }}">{{ t("chance.level." ~ level) }}</span>
-  {% if delta is not none %}{% include "_trend.html" %}{% endif %}
+  {% if delta is not none %}{% import "_ui.html" as ui with context %}{{ ui.delta(t, delta, "") }}{% endif %}
 </p>
 {% else %}
 <p class="headline">{{ t("overview.no_deadline") }} <a href="/projects/{{ view.id }}/settings">{{ t("overview.set_deadline") }}</a></p>

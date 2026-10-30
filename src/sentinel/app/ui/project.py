@@ -26,9 +26,9 @@ from sentinel.app.live import LiveProject
 from sentinel.app.models import CheckIn
 from sentinel.app.services import JobView
 from sentinel.app.ui.charts import gantt
-from sentinel.app.ui.core import Ui, is_htmx
+from sentinel.app.ui.core import Ui, chance_level, is_htmx
 from sentinel.app.ui.forms import Form, read_checkin, read_settings, team_roles
-from sentinel.app.ui.pages import chance_level, job_progress, trend
+from sentinel.app.ui.pages import job_progress, trend
 from sentinel.app.ui.text import Texts
 from sentinel.app.views import ProjectView, RecommendationView, TaskView
 

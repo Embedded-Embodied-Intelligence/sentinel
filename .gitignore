@@ -32,3 +32,7 @@ tmp/
 
 # --- Claude Code personal settings ---
 .claude/settings.local.json
+
+# --- TLS material of the local server (tailscale cert) ---
+*.ts.net.crt
+*.ts.net.key

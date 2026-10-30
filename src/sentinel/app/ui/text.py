@@ -40,6 +40,15 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "nav.how": ("How it works", "Jak to działa"),
     "nav.settings": ("Settings", "Ustawienia"),
     "nav.language": ("Language", "Język"),
+    "nav.menu": ("Menu", "Menu"),
+    "nav.your_projects": ("Your projects", "Twoje projekty"),
+    "nav.status.good": ("On track", "Na dobrej drodze"),
+    "nav.status.warn": ("Needs attention", "Wymaga uwagi"),
+    "nav.status.bad": ("Deadline at risk", "Termin zagrożony"),
+    "nav.status.decision": ("Waiting for your decision", "Czeka na Twoją decyzję"),
+    "nav.status.neutral": ("Status not known yet", "Stan jeszcze nieznany"),
+    "toast.close": ("Close", "Zamknij"),
+    "toast.see_history": ("See in the history", "Zobacz w historii"),
     "demo.note.one": (
         "Demo: your projects are visible only to you and are deleted {n} hour after your first "
         "visit.",
@@ -57,10 +66,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "visit.",
         "Wersja demonstracyjna: Twoje projekty widzisz tylko Ty; usuwamy je {n} godzin po "
         "Twojej pierwszej wizycie.",
-    ),
-    "footer.text": (
-        "Sentinel — a research prototype for project managers",
-        "Sentinel — prototyp badawczy dla kierowników projektów",
     ),
     "footer.version": ("version {version}", "wersja {version}"),
     "error.title": ("Something went wrong", "Coś poszło nie tak"),
@@ -113,82 +118,89 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     # ---- start page
     "start.title": ("Your projects", "Twoje projekty"),
     "start.what": (
-        "Sentinel watches your project's deadline and budget. After every check-in it plays the "
-        "rest of the project out hundreds of times, tells you how likely you are to finish on "
-        "time and, when the deadline is at risk, recommends what to do. You decide.",
-        "Sentinel pilnuje terminu i budżetu Twojego projektu. Po każdym raporcie statusu "
-        "rozgrywa resztę projektu setki razy, mówi, jak duża jest szansa na dotrzymanie terminu, "
-        "a gdy termin jest zagrożony — poleca, co zrobić. Decyzja należy do Ciebie.",
+        "Sentinel watches the deadline and the budget. The decisions are yours.",
+        "Sentinel pilnuje terminu i budżetu. Decyzje należą do Ciebie.",
     ),
     "start.new": ("New project", "Nowy projekt"),
-    "start.try_simulator": ("Try the simulator", "Wypróbuj symulator"),
+    "start.create": ("Create a project", "Utwórz projekt"),
+    "start.see_example": ("See an example", "Zobacz przykład"),
+    "start.drafts": ("Drafts", "Szkice"),
+    "start.examples": ("Examples", "Przykłady"),
+    "start.open": ("Open", "Otwórz"),
+    "start.card.describe": ("Describe the project in words", "Opisz projekt słowami"),
+    "start.card.describe_text": (
+        "The AI turns your description into a list of tasks, if one is connected.",
+        "AI zamieni opis na listę zadań, jeśli jest podłączone.",
+    ),
+    "start.card.import": ("Import a spreadsheet", "Zaimportuj arkusz"),
+    "start.card.import_text": (
+        "Download the template, fill it in and upload it.",
+        "Pobierz szablon, wypełnij go i wgraj.",
+    ),
+    "start.card.simulator": ("Try the simulator", "Wypróbuj symulator"),
+    "start.card.simulator_text": (
+        "Watch Sentinel manage an example project day by day.",
+        "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu.",
+    ),
+    "start.today": ("today", "dziś"),
+    "start.yesterday": ("yesterday", "wczoraj"),
+    "start.days_ago.one": ("{n} day ago", "{n} dzień temu"),
+    "start.days_ago.few": ("{n} days ago", "{n} dni temu"),
+    "start.days_ago.many": ("{n} days ago", "{n} dni temu"),
     "start.list": ("Projects", "Projekty"),
     "start.simulator_badge": ("Simulator", "Symulator"),
     "start.sim_days": ("Days simulated: {days}", "Zasymulowane dni: {days}"),
-    "start.draft": ("Setup not finished", "Konfiguracja niedokończona"),
+    "start.draft": ("Draft · step {n} of 3", "Szkic · krok {n} z 3"),
     "start.draft_hint": (
-        "Add the team and the tasks to get a plan.",
-        "Dodaj zespół i zadania, aby powstał plan.",
+        "Add the team and the tasks, and we will work out the chance of meeting the deadline.",
+        "Dodaj zespół i zadania, a policzymy szansę na termin.",
     ),
-    "start.continue": ("Continue the setup", "Dokończ konfigurację"),
-    "start.deadline": ("Deadline: {date}", "Termin: {date}"),
+    "start.draft_hint_tasks": (
+        "Add the tasks, and we will work out the chance of meeting the deadline.",
+        "Dodaj zadania, a policzymy szansę na termin.",
+    ),
+    "start.continue": ("Finish", "Dokończ"),
+    "start.deadline": ("Deadline {date}", "Termin {date}"),
     "start.no_deadline": ("No deadline set", "Bez terminu"),
     "start.finished": ("Finished", "Zakończony"),
     "start.calculating": ("Calculating the chance…", "Obliczam szansę…"),
     "start.pending.one": ("{n} decision waiting", "{n} decyzja czeka"),
     "start.pending.few": ("{n} decisions waiting", "{n} decyzje czekają"),
     "start.pending.many": ("{n} decisions waiting", "{n} decyzji czeka"),
-    "start.no_pending": ("No decisions waiting", "Brak decyzji do podjęcia"),
-    "start.as_of": ("Last check-in: {date}", "Ostatni raport: {date}"),
-    "start.not_tracked": ("No check-in yet", "Jeszcze bez raportu statusu"),
-    "start.empty_title": ("No projects yet", "Nie masz jeszcze projektów"),
+    "start.as_of": ("Check-in: {when}", "Raport: {when}"),
+    "start.not_tracked": ("No check-in yet", "Jeszcze bez raportu"),
+    "start.empty_title": ("Start with your first project", "Zacznij od pierwszego projektu"),
     "start.empty": (
-        "Create your first project in three short steps, or try the simulator to watch Sentinel "
-        "at work on an example project.",
-        "Utwórz pierwszy projekt w trzech krótkich krokach albo wypróbuj symulator, aby "
-        "zobaczyć Sentinela przy pracy na przykładowym projekcie.",
+        "Give the deadline, the team and the tasks, and Sentinel works out whether you will "
+        "make it.",
+        "Podaj termin, zespół i zadania — Sentinel policzy, czy zdążysz.",
     ),
     "start.chance_failed": (
         "The chance could not be calculated.",
         "Nie udało się obliczyć szansy.",
     ),
-    "start.chance": ("{p} chance of meeting the deadline", "{p} szansy na dotrzymanie terminu"),
+    "start.chance": ("chance of meeting the deadline", "szansa na termin"),
     "start.no_chance": (
         "Set a deadline to see the chance of meeting it.",
         "Ustaw termin, aby zobaczyć szansę na jego dotrzymanie.",
     ),
     "chance.level.good": ("On track", "Na dobrej drodze"),
-    "chance.level.warn": ("At risk", "Zagrożony"),
-    "chance.level.bad": ("Unlikely", "Mało prawdopodobny"),
+    "chance.level.warn": ("Needs attention", "Wymaga uwagi"),
+    "chance.level.bad": ("Deadline at risk", "Termin zagrożony"),
     "chance.level.neutral": ("Unknown", "Nieznana"),
-    "trend.up.one": (
-        "up {n} point since before the last check-in",
-        "o {n} punkt procentowy więcej niż przed ostatnim raportem",
+    "trend.up.one": ("up {n} percentage point", "wzrost o {n} punkt procentowy"),
+    "trend.up.few": ("up {n} percentage points", "wzrost o {n} punkty procentowe"),
+    "trend.up.many": ("up {n} percentage points", "wzrost o {n} punktów procentowych"),
+    "trend.down.one": ("down {n} percentage point", "spadek o {n} punkt procentowy"),
+    "trend.down.few": ("down {n} percentage points", "spadek o {n} punkty procentowe"),
+    "trend.down.many": ("down {n} percentage points", "spadek o {n} punktów procentowych"),
+    "trend.flat": ("no change", "bez zmian"),
+    "trend.points": (
+        '{n} <abbr title="percentage points">pts</abbr>',
+        'o {n} <abbr title="punkty procentowe">pkt proc.</abbr>',
     ),
-    "trend.up.few": (
-        "up {n} points since before the last check-in",
-        "o {n} punkty procentowe więcej niż przed ostatnim raportem",
-    ),
-    "trend.up.many": (
-        "up {n} points since before the last check-in",
-        "o {n} punktów procentowych więcej niż przed ostatnim raportem",
-    ),
-    "trend.down.one": (
-        "down {n} point since before the last check-in",
-        "o {n} punkt procentowy mniej niż przed ostatnim raportem",
-    ),
-    "trend.down.few": (
-        "down {n} points since before the last check-in",
-        "o {n} punkty procentowe mniej niż przed ostatnim raportem",
-    ),
-    "trend.down.many": (
-        "down {n} points since before the last check-in",
-        "o {n} punktów procentowych mniej niż przed ostatnim raportem",
-    ),
-    "trend.flat": (
-        "about the same as before the last check-in",
-        "mniej więcej tyle samo co przed ostatnim raportem",
-    ),
+    "trend.since_checkin": ("since the check-in of {date}", "od raportu z {date}"),
+    "trend.since_plan": ("since the original plan", "od planu początkowego"),
     # ---- how it works
     "how.title": ("How it works", "Jak to działa"),
     "how.lead": (
@@ -859,6 +871,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chip.finish": ("Expected finish", "Oczekiwany koniec"),
     "chip.cost": ("Cost", "Koszt"),
     "chip.moved": ("Dates moved", "Przesunięte terminy"),
+    "chip.better": ("better", "lepiej"),
+    "chip.worse": ("worse", "gorzej"),
     "chip.tasks.one": ("{n} task", "{n} zadanie"),
     "chip.tasks.few": ("{n} tasks", "{n} zadania"),
     "chip.tasks.many": ("{n} tasks", "{n} zadań"),
@@ -1329,6 +1343,31 @@ class Texts:
         text = f"{weekday} {value.day}{NBSP}{month}"
         return f"{text} {value.year}" if value.year != Day.today().year else text
 
+    def date_long(self, value: Day) -> str:
+        """A date with its year: "Fri 13 Nov 2026" ("pt. 13 lis 2026")."""
+        weekday = WEEKDAYS[self.lang][value.weekday()]
+        return f"{weekday} {value.day}{NBSP}{MONTHS[self.lang][value.month - 1]} {value.year}"
+
+    def ago(self, value: Day, today: Day | None = None) -> str:
+        """A past date in a list, relative to today: "2 days ago"; a future one in full."""
+        days = ((today or Day.today()) - value).days
+        if days < 0:
+            return self.date(value)
+        if days == 0:
+            return self("start.today")
+        if days == 1:
+            return self("start.yesterday")
+        return self.plural("start.days_ago", days)
+
+    @property
+    def weekdays(self) -> str:
+        """The weekdays' short names for the page's script, Monday first."""
+        return ",".join(WEEKDAYS[self.lang])
+
+    @property
+    def months(self) -> str:
+        return ",".join(MONTHS[self.lang])
+
     def day_month(self, value: Day) -> str:
         return f"{value.day}{NBSP}{MONTHS[self.lang][value.month - 1]}"
 
@@ -1372,6 +1411,13 @@ class Texts:
         """Spent of a budget: "27 of 84 cost units" ("27 z 84 jednostek kosztu")."""
         form = f"cost.of.{plural_form(self.lang, _whole(budget))}"
         return self(form, spent=self.money(spent), budget=self.money(budget))
+
+    def cost_of_parts(self, spent: float, budget: float) -> tuple[str, str]:
+        """`cost_of` in two parts for a tile: ("27 of 84", "cost units")."""
+        text = self.cost_of(spent, budget)
+        number = self.money(budget)
+        head, _, unit = text.partition(number)
+        return f"{head}{number}", unit.strip()
 
     def cost_short(self, value: float) -> str:
         """A cost in short: "92 units" ("92 jedn.")."""

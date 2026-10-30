@@ -1,11 +1,14 @@
+{% import "_ui.html" as ui with context %}
 {% if failed %}
-<p class="muted">{{ t("start.chance_failed") }}</p>
+<p class="muted small">{{ t("start.chance_failed") }}</p>
 {% elif summary and summary.forecast.p_on_time is not none %}
-<p class="chance">
-  <span class="badge badge-{{ level }}">{{ t("chance.level." ~ level) }}</span>
-  <span class="chance-number">{{ t("start.chance", p=t.pct(summary.forecast.p_on_time)) }}</span>
-  {% if delta is not none %}{% include "_trend.html" %}{% endif %}
-</p>
+<p>{{ ui.badge(level, t("chance.level." ~ level)) }}</p>
+<div class="chance-line">
+  <span class="card-number">{{ t.pct(summary.forecast.p_on_time) }}</span>
+  {% if delta is not none %}{{ ui.delta(t, delta, "") }}{% endif %}
+</div>
+<p class="caption">{{ t("start.chance") }}</p>
 {% else %}
-<p class="muted">{{ t("start.no_chance") }}</p>
+<p class="muted small">{{ t("start.no_chance") }}</p>
 {% endif %}
+{% with id=project_id, level=nav_level, oob=true %}{% include "_nav_status.html" %}{% endwith %}

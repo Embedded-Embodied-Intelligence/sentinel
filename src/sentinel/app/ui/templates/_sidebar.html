@@ -1,0 +1,26 @@
+{% set projects = nav_projects() %}
+<div class="sidebar" id="sidebar">
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>Sentinel</a>
+  <nav aria-label="{{ t('nav.label') }}">
+    <ul class="nav-list">
+      <li><a class="nav-item" href="/"{% if nav == 'projects' %} aria-current="page"{% endif %}>{{ icon("folder", 20) }}{{ t("nav.projects") }}</a></li>
+      <li><a class="nav-item" href="/simulator"{% if nav == 'simulator' %} aria-current="page"{% endif %}>{{ icon("play", 20) }}{{ t("nav.simulator") }}</a></li>
+      <li><a class="nav-item" href="/how-it-works"{% if nav == 'how' %} aria-current="page"{% endif %}>{{ icon("book", 20) }}{{ t("nav.how") }}</a></li>
+      <li><a class="nav-item" href="/settings"{% if nav == 'settings' %} aria-current="page"{% endif %}>{{ icon("sliders", 20) }}{{ t("nav.settings") }}</a></li>
+    </ul>
+  </nav>
+  {% if projects %}
+  <nav class="nav-group" aria-labelledby="nav-projects-title">
+    <p class="overline nav-group-title" id="nav-projects-title">{{ t("nav.your_projects") }}</p>
+    <ul class="nav-list">
+      {% for item in projects %}
+      <li><a class="nav-item nav-project" href="/projects/{{ item.id }}" title="{{ item.name }}">{% with id=item.id, level=item.level %}{% include "_nav_status.html" %}{% endwith %}<span class="nav-name">{{ item.name }}</span></a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  {% endif %}
+  <div class="sidebar-foot">
+    {% include "_lang.html" %}
+    <span class="version">{{ t("footer.version", version=version) }}</span>
+  </div>
+</div>

@@ -80,7 +80,7 @@ def test_a_project_from_a_spreadsheet_to_an_approved_recommendation(
 ) -> None:
     page = _page(browser, local)
     page.goto(local.base + "/")
-    page.get_by_role("link", name="New project").first.click()
+    page.get_by_role("link", name="Create a project").first.click()
     page.get_by_label("Project name").fill("Shop relaunch")
     page.get_by_label("Start date").fill("2026-11-02")
     page.get_by_label("Deadline").fill("2026-11-17")
@@ -177,7 +177,7 @@ def test_two_demo_visitors_see_only_their_own_projects(
         first.goto(server.base + "/")
         expect(first.get_by_role("link", name="Secret plan")).to_be_visible()
         second.goto(server.base + "/")
-        expect(second.get_by_role("heading", name="No projects yet")).to_be_visible()
+        expect(second.get_by_role("heading", name="Start with your first project")).to_be_visible()
         response = second.goto(f"{server.base}/projects/{project}/setup/team")
         assert response is not None and response.status == 404
         expect(second.get_by_text("There is no such project.")).to_be_visible()

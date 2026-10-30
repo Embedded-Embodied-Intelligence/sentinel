@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ t.lang }}">
+<html lang="{{ t.lang }}" data-weekdays="{{ t.weekdays }}" data-months="{{ t.months }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,36 +10,26 @@
 <script src="{{ static(htmx) }}" defer></script>
 <script src="{{ static('sentinel.js') }}" defer></script>
 </head>
-<body hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'{% block body_attrs %}{% endblock %}>
 <a class="skip" href="#main">{{ t("nav.skip") }}</a>
-<header class="top">
-  <div class="wrap top-row">
-    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>Sentinel</a>
-    <nav class="nav" aria-label="{{ t('nav.label') }}">
-      <ul>
-        <li><a href="/"{% if nav == 'projects' %} aria-current="page"{% endif %}>{{ t("nav.projects") }}</a></li>
-        <li><a href="/simulator"{% if nav == 'simulator' %} aria-current="page"{% endif %}>{{ t("nav.simulator") }}</a></li>
-        <li><a href="/how-it-works"{% if nav == 'how' %} aria-current="page"{% endif %}>{{ t("nav.how") }}</a></li>
-        <li><a href="/settings"{% if nav == 'settings' %} aria-current="page"{% endif %}>{{ t("nav.settings") }}</a></li>
-      </ul>
-    </nav>
-    <div class="lang" role="group" aria-label="{{ t('nav.language') }}">
-      <a href="/lang/pl?next={{ here | urlencode }}" lang="pl" hreflang="pl"{% if t.lang == 'pl' %} aria-current="true"{% endif %}><span aria-hidden="true">PL</span><span class="vh">Polski</span></a>
-      <a href="/lang/en?next={{ here | urlencode }}" lang="en" hreflang="en"{% if t.lang == 'en' %} aria-current="true"{% endif %}><span aria-hidden="true">EN</span><span class="vh">English</span></a>
-    </div>
+{% block shell %}
+<div class="shell">
+  {% include "_sidebar.html" %}
+  <div class="scrim" data-drawer-close hidden></div>
+  <div class="shell-main">
+    <header class="topbar">
+      <button type="button" class="btn btn-tertiary menu-button" data-drawer-open aria-expanded="false" aria-controls="sidebar">{{ icon("menu", 20) }}{{ t("nav.menu") }}</button>
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>Sentinel</a>
+      {% include "_lang.html" %}
+    </header>
+    {% if demo %}<p class="demo-note">{{ t.plural("demo.note", demo_hours) }}</p>{% endif %}
+    <main id="main" class="content" tabindex="-1">
+      <div id="alerts" class="alerts"></div>
+      {% block content %}{% endblock %}
+    </main>
   </div>
-</header>
-{% if demo %}
-<p class="demo-note"><span class="wrap">{{ t.plural("demo.note", demo_hours) }}</span></p>
-{% endif %}
-<main id="main" class="wrap" tabindex="-1">
-  <div id="flash" class="flash" role="status" aria-live="polite">
-    {% if flash %}<p class="alert alert-success">{{ flash }}</p>{% endif %}
-  </div>
-  {% block content %}{% endblock %}
-</main>
-<footer class="foot">
-  <div class="wrap">{{ t("footer.text") }} · <a href="/how-it-works">{{ t("nav.how") }}</a> · {{ t("footer.version", version=version) }}</div>
-</footer>
+</div>
+{% endblock %}
+<div id="flash" class="toast-region" role="status" aria-live="polite">{% if flash %}{% include "_toast.html" %}{% endif %}</div>
 </body>
 </html>

@@ -1,0 +1,25 @@
+{# The small components of the design system (WP10, ADR-0027, docs/design/brief.md, section 3). #}
+
+{% set BADGE_ICONS = {"good": "check", "warn": "alert", "bad": "cross-circle", "decision": "clock", "later": "clock-dashed", "draft": "dot", "auto": "gear", "neutral": "dot"} %}
+{% set BADGE_STYLES = {"later": "neutral", "draft": "neutral", "auto": "neutral"} %}
+
+{# A status badge: an icon and a word, never a bare colour. #}
+{% macro badge(kind, text) %}<span class="badge badge-{{ BADGE_STYLES.get(kind, kind) }}">{{ icon(BADGE_ICONS.get(kind, "dot"), 14) }}{{ text }}</span>{% endmacro %}
+
+{# An inline alert with an icon: info, warn, bad or good; the body is the caller's. #}
+{% macro callout(kind, title="", attrs="") %}<div class="callout callout-{{ kind }}"{{ attrs | safe }}>{{ icon({"info": "info", "warn": "alert", "bad": "cross-circle", "good": "check-circle"}[kind], 20) }}<div class="callout-body">{% if title %}<p class="callout-title">{{ title }}</p>{% endif %}{{ caller() }}</div></div>{% endmacro %}
+
+{# The change of a chance since the last time: an arrow, words and the reference point. #}
+{% macro delta(t, change, since) %}
+{% if change >= 2 %}<p class="delta delta-up">{{ icon("arrow-up", 14) }}<span class="vh">{{ t.plural("trend.up", change) }} {{ since }}</span><span aria-hidden="true">{{ t("trend.points", n=change) | safe }} {{ since }}</span></p>
+{% elif change <= -2 %}<p class="delta delta-down">{{ icon("arrow-down", 14) }}<span class="vh">{{ t.plural("trend.down", -change) }} {{ since }}</span><span aria-hidden="true">{{ t("trend.points", n=-change) | safe }} {{ since }}</span></p>
+{% else %}<p class="delta">{{ icon("minus", 14) }}{{ t("trend.flat") }} {{ since }}</p>{% endif %}
+{% endmacro %}
+
+{# An effect of a recommendation: its label and "before -> after" with a direction word for screen readers. #}
+{% macro chip_value(t, chip) %}<span class="chip-value"><span>{{ chip.text }}</span>{% if chip.tone == "good" %}<span class="good">{{ icon("arrow-up", 14) }}<span class="vh">{{ t("chip.better") }}</span></span>{% elif chip.tone == "bad" %}<span class="bad">{{ icon("arrow-down", 14) }}<span class="vh">{{ t("chip.worse") }}</span></span>{% endif %}</span>{% endmacro %}
+
+{# A date field's readable echo; sentinel.js fills it as the date changes. #}
+{% macro echo(t, id, value) %}<p class="date-echo" id="{{ id }}-echo" data-echo-for="{{ id }}">{% if value %}{{ t.date_long(value) }}{% endif %}</p>{% endmacro %}
+
+{% macro field_error(id, message) %}{% if message %}<p class="error-text" id="{{ id }}-error">{{ icon("cross-circle", 14) }}<span>{{ message }}</span></p>{% endif %}{% endmacro %}

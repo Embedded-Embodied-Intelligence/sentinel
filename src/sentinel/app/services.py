@@ -545,6 +545,13 @@ class Services:
                 previous = self._forecast(project_id, before).p_on_time
         return ForecastSummary(forecast=current, previous_p=previous)
 
+    def known_chance(self, project_id: str, state: LiveState) -> float | None:
+        """The chance of meeting the deadline if the forecast of `state` is cached, else None:
+        what a page can show without calculating anything."""
+        with self._guard:
+            found = self._forecasts.get((project_id, state.last_change))
+        return None if found is None else found.p_on_time
+
     def _forecast(self, project_id: str, state: LiveState) -> planning.ForecastResult:
         key = (project_id, state.last_change)
         with self._guard:
