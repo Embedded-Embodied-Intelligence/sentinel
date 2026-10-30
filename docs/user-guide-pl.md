@@ -178,9 +178,9 @@ plan. Rekomendacja pokazuje:
 ![Porównane możliwości](ui/pl_recommendation_options.png)
 
 Na tych samych liczbach opiera się decyzja i oba wyjaśnienia. Gdy szanse są podobne, decyduje
-kolejne kryterium i strona mówi to jednym zdaniem, np. „Podobna szansa (różnica w granicach
-niepewności); wybrano wariant, który zmienia mniej terminów”; inna możliwość może wtedy mieć o
-kilka punktów wyższą szansę.
+kolejne kryterium, np. to, ile terminów się zmienia. Jeśli inna możliwość w tabeli ma wtedy wyższą
+szansę (w pełnych procentach) niż polecana, strona wyjaśnia to jednym zdaniem, np. „Podobna szansa
+(różnica w granicach niepewności); wybrano wariant, który zmienia mniej terminów”.
 
 Decydujesz przyciskami **Zatwierdź**, **Zdecyduj później** albo **Odrzuć**. Zatwierdzona zmiana
 od razu trafia do planu (np. zastępca do zespołu zadania, osoba tymczasowa na wskazaną liczbę

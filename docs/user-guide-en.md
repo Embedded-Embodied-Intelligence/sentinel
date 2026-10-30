@@ -178,9 +178,10 @@ recommendation shows:
 ![The options compared](ui/en_recommendation_options.png)
 
 The decision and both explanations rest on these same figures. When chances are similar, the
-next criterion decides and the page says so in one sentence, e.g. "Similar chance (the difference
-is within the uncertainty); the option that changes fewer dates was chosen"; another option may
-then show a chance a few points higher.
+next criterion decides, e.g. how many dates change. If another option in the table then shows a
+higher chance (in whole per cent) than the recommended one, the page explains it in one sentence,
+e.g. "Similar chance (the difference is within the uncertainty); the option that changes fewer
+dates was chosen".
 
 You decide with **Approve**, **Decide later** or **Reject**. An approved change goes into the
 plan at once (e.g. the substitute joins the task, a temporary person is hired for the stated
