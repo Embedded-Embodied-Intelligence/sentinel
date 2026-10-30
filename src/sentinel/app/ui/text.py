@@ -1073,9 +1073,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "at least one temporary person per role can always be added, and each decision is taken "
         "on the same 200 simulated futures as its figures, so a run can differ from the studies' "
         "results.",
-        "Symulator używa ustawień aplikacji, a nie ustawień badań: na przykład zawsze można dodać "
-        "co najmniej jedną osobę tymczasową w każdej roli, więc przebieg może się różnić od "
-        "wyników badań.",
+        "Symulator używa ustawień aplikacji, a nie ustawień badań: zawsze można dodać co najmniej "
+        "jedną osobę tymczasową w każdej roli, a każda decyzja zapada na tych samych 200 "
+        "symulowanych scenariuszach co jej liczby, więc przebieg może się różnić od wyników badań.",
     ),
     "sim.unavailable": (
         "The example projects are not installed on this server.",
