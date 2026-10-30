@@ -68,7 +68,15 @@ def why_points(rec: RecommendationView, texts: Texts) -> list[str]:
     if rec.tie is None:
         chosen = f"{chosen} {texts('why.reason', reason=rec.reason_text)}"
     parts.append(chosen)
-    if after.tardiness >= 0.05:
+    if after.tardiness >= 0.05 and before is not None:
+        parts.append(
+            texts(
+                "why.delay_from",
+                days=texts.decimal(after.tardiness),
+                before=texts.decimal(before.tardiness),
+            )
+        )
+    elif after.tardiness >= 0.05:
         parts.append(texts("why.delay", days=texts.decimal(after.tardiness)))
     runner = next((a for a in rec.alternatives if a.runner_up), None)
     if runner is not None:
@@ -245,6 +253,24 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
     return chips
 
 
+def effect_rows(rec: RecommendationView, texts: Texts) -> list[Chip]:
+    """The rows of "what changes" on a recommendation: the chips without the chance, shown large
+    above them, and the expected delay, which often is what the action gains (QA-05: "3 % → 3 %"
+    alone gives no reason to act)."""
+    rows = impact_chips(rec, texts)[1:]
+    before, after = rec.without, rec.with_action
+    if rec.acts and before is not None and after is not None:
+        change = after.tardiness - before.tardiness
+        tone = "good" if change <= -0.05 else "bad" if change >= 0.05 else "neutral"
+        text = texts(
+            "chip.from_to",
+            before=texts.decimal(before.tardiness),
+            after=texts.decimal(after.tardiness),
+        )
+        rows.insert(min(1, len(rows)), Chip(texts("chip.delay"), text, tone))
+    return rows
+
+
 @dataclass(frozen=True)
 class Gap:
     """How far a forecast finish lies from the deadline, in words, with its status."""
@@ -294,6 +320,14 @@ def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Thr
             text = texts("overview.driver", task=driver.name, count=count)
         found.append(Threat(driver.task, text, round(100 * driver.share)))
     return found
+
+
+def checked_key(rec: RecommendationView) -> str:
+    """What the overview says when Sentinel keeps the plan (QA-04): "no change is needed" only
+    while the deadline is on track; otherwise no option was clearly better, another message."""
+    chance = None if rec.without is None else rec.without.p_on_time
+    on_track = rec.reason == "needs_met" or chance is None or chance_level(chance) == "good"
+    return "overview.checked" if on_track else "overview.checked_no_better"
 
 
 def split_pending(
@@ -618,6 +652,7 @@ def router(ui: Ui) -> APIRouter:
             job=None if job is None else services.job(session, job.id, ui.language(request)),
             chart=chart_html(request, state.project),
             chips=impact_chips,
+            checked_message="" if checked is None else checked_key(checked),
         )
 
     @routes.get("/projects/{project_id}/forecast")
@@ -810,6 +845,7 @@ def router(ui: Ui) -> APIRouter:
             tab="overview",
             rec=rec,
             chips=impact_chips(rec, texts),
+            rows=effect_rows(rec, texts),
             why=why_points(rec, texts),
             options=option_rows(rec, texts),
             approve_key=approve_label(rec.kind),

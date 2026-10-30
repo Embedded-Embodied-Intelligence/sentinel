@@ -750,9 +750,17 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         def answer(case: str, shot: str, *selectors: str) -> None:
             page.wait_for_load_state("networkidle")
             page.wait_for_timeout(400)
-            found = []
-            for selector in selectors or (".callout", ".error-text"):
-                found += [" ".join(t.split()) for t in page.locator(selector).all_inner_texts()]
+            found: list[str] = []
+            for _ in range(5):  # the page may still be navigating
+                try:
+                    found = [
+                        " ".join(t.split())
+                        for selector in selectors or (".callout", ".error-text")
+                        for t in page.locator(selector).all_inner_texts()
+                    ]
+                    break
+                except Exception:
+                    page.wait_for_timeout(1000)
             d.note(kind="case", case=case, url=page.url.replace(base, ""), shown=found)
             d.shot(shot, full=True)
 

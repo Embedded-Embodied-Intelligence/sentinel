@@ -25,6 +25,8 @@ from sentinel.app.ui.pages import Card, project_cards
 from sentinel.app.ui.project import (
     HistoryItem,
     approve_label,
+    checked_key,
+    effect_rows,
     finish_gap,
     option_rows,
     short_name,
@@ -184,8 +186,12 @@ def _rec(**values: Any) -> Any:
         "reason_text": "it is best",
         "options": 3,
         "compared": True,
-        "without": SimpleNamespace(p_on_time=0.39, tardiness=3.0, expected_cost=91.0),
-        "with_action": SimpleNamespace(p_on_time=0.55, tardiness=2.0, expected_cost=92.0),
+        "without": SimpleNamespace(
+            p_on_time=0.39, tardiness=3.0, expected_cost=91.0, expected_finish=None
+        ),
+        "with_action": SimpleNamespace(
+            p_on_time=0.55, tardiness=2.0, expected_cost=92.0, expected_finish=None
+        ),
         "alternatives": [],
         "changes": [],
         "budget": 84.0,
@@ -198,6 +204,25 @@ def test_what_can_wait_folds_unless_nothing_else_is_waiting() -> None:
     assert split_pending([later, urgent]) == ([urgent], [later])
     assert split_pending([later]) == ([later], [])
     assert split_pending([]) == ([], [])
+
+
+def test_keeping_the_plan_says_no_change_is_needed_only_if_the_goals_are_met() -> None:
+    """QA-04: a project at 9 % read "no change is needed: the plan is still the best"."""
+    assert checked_key(_rec(reason="needs_met")) == "overview.checked"
+    assert checked_key(_rec(reason="stability", without=None)) == "overview.checked"
+    high = SimpleNamespace(p_on_time=0.9)
+    assert checked_key(_rec(reason="idle_events", without=high)) == "overview.checked"
+    for reason in ("stability", "tardiness", "on_time"):
+        assert checked_key(_rec(reason=reason)) == "overview.checked_no_better"
+
+
+def test_a_recommendation_shows_what_it_gains_when_the_chance_does_not_move() -> None:
+    """QA-05: "3 % → 3 %" gave no reason to act; the delay it saves is on the table anyway."""
+    rows = effect_rows(_rec(), PL)
+    delay = next(row for row in rows if row.label == PL("chip.delay"))
+    assert delay.text == "3 → 2" and delay.tone == "good"
+    assert any("bez zmian: 3" in point for point in why_points(_rec(), PL))
+    assert all(row.label != PL("chip.delay") for row in effect_rows(_rec(acts=False), PL))
 
 
 def test_the_comparison_has_the_choice_first_and_no_change_last() -> None:

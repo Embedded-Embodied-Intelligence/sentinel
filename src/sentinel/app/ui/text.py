@@ -810,6 +810,11 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "No change is needed: the plan is still the best.",
         "Zmiana nie jest potrzebna: plan wciąż jest najlepszy.",
     ),
+    "overview.checked_no_better": (
+        "No option checked is clearly better than the current plan, so the plan stays.",
+        "Żadna sprawdzona możliwość nie jest wyraźnie lepsza od obecnego planu, więc plan "
+        "pozostaje.",
+    ),
     "chart.title": ("Plan and progress of the tasks", "Plan i postęp zadań"),
     "chart.desc": (
         "{tasks} tasks: {done} done, {running} in progress, {planned} planned. Status at the "
@@ -1075,6 +1080,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chip.finish": ("Finish", "Koniec"),
     "chip.cost": ("Cost", "Koszt"),
     "chip.moved": ("Tasks moved", "Przesunięte zadania"),
+    "chip.delay": ("Expected delay (working days)", "Oczekiwane opóźnienie (dni robocze)"),
     "chip.better": ("better", "lepiej"),
     "chip.worse": ("worse", "gorzej"),
     "chip.tasks.one": ("{n} task", "{n} zadanie"),
@@ -1109,6 +1115,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "why.delay": (
         "The expected delay is {days} working days.",
         "Oczekiwane opóźnienie w dniach roboczych: {days}.",
+    ),
+    "why.delay_from": (
+        "The expected delay is {days} working days (no change: {before}).",
+        "Oczekiwane opóźnienie w dniach roboczych: {days} (bez zmian: {before}).",
     ),
     "why.reason": ("It was chosen because {reason}.", "Wybrano ją, ponieważ {reason}."),
     "why.runner": ("Next best: {title} ({p}).", "Następna w kolejności: {title} ({p})."),
