@@ -209,6 +209,7 @@ def test_the_comparison_has_the_choice_first_and_no_change_last() -> None:
             tardiness=1.0,
             expected_cost=90.0,
             runner_up=False,
+            dropped=False,
         )
 
     long = "Substitute: somebody with a rather long name takes over a part in a task"

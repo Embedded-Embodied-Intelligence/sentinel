@@ -104,6 +104,7 @@
               {% if option.short %}{{ option.short }}{% else %}{{ option.title }}{% endif %}
               {% if option.chosen %} {{ ui.badge("good", t("rec.chosen")) }}{% endif %}
               {% if option.base %}<span class="option-note">{{ t("rec.baseline_note") }}</span>{% endif %}
+              {% if option.note %}<span class="option-note">{{ option.note }}</span>{% endif %}
               {% if option.short %}<details class="details option-more"><summary>{{ t("rec.more") }}</summary><p class="option-note">{{ option.title }}</p></details>{% endif %}
             </th>
             <td class="num" data-label="{{ t('rec.col.chance') }}"><span><span class="mini-bar" aria-hidden="true"><span style="width: {{ option.percent }}%"></span></span>{{ option.chance }}{% if option.diff %}<span class="diff">{{ option.diff }}</span>{% endif %}</span></td>

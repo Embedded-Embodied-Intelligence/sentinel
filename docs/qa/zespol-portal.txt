@@ -1,0 +1,11 @@
+Alicja Nowak, Analityk
+Karolina Wrona, Analityk
+Grażyna Dąbrowska, Projektant UX
+Bartosz Zieliński, Programista backend
+Cezary Wójcik, Programista backend
+Dorota Mazur, Programista backend
+Emil Krawczyk, Programista frontend
+Filip Lis, Programista frontend
+Hanna Pawlak, Tester
+Igor Sikora, Tester
+Jan Kaczmarek, DevOps

@@ -417,8 +417,10 @@
 
   // ---- after a page or a fragment arrives
   function arrive(scope) {
-    const alert = scope.querySelector && scope.querySelector("[data-focus]");
-    if (alert) alert.focus();
+    if (scope !== document) {
+      const alert = scope.querySelector && scope.querySelector("[data-focus]");
+      if (alert) alert.focus();
+    }
     if (scope.querySelectorAll) {
       scope.querySelectorAll("[data-toast]").forEach(startToast);
       scrollGantt(scope);

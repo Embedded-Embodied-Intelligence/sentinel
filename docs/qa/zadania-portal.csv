@@ -1,0 +1,31 @@
+id,name,duration_days,predecessors,optional,crew:Analityk,crew:Projektant UX,crew:Programista backend,crew:Programista frontend,crew:Tester,crew:DevOps
+T1,Warsztaty z interesariuszami,3,,no,1,1,0,0,0,0
+T2,Specyfikacja wymagań,4,T1,no,2,0,0,0,0,0
+T3,Mapa procesów klienta,3,T1,no,1,0,0,0,0,0
+T4,Makiety ekranów,5,T2,no,0,1,0,0,0,0
+T5,System wizualny,3,T4,no,0,1,0,0,0,0
+T6,Architektura systemu,4,T2,no,0,0,2,0,0,0
+T7,Środowiska i repozytorium,3,T6,no,0,0,0,0,0,1
+T8,Potok CI/CD,4,T7,no,0,0,0,0,0,1
+T9,Model danych,4,T6,no,0,0,1,0,0,0
+T10,Logowanie i konta,5,T7 T9,no,0,0,2,0,0,0
+T11,API profilu klienta,5,T9,no,0,0,1,0,0,0
+T12,API umów,6,T9,no,0,0,1,0,0,0
+T13,API faktur,5,T12,no,0,0,1,0,0,0
+T14,Integracja z systemem CRM,6,T11,no,0,0,2,0,0,0
+T15,Integracja płatności,5,T13,no,0,0,1,0,0,0
+T16,Szkielet aplikacji,3,T5 T7,no,0,0,0,2,0,0
+T17,Ekran logowania,3,T10 T16,no,0,0,0,1,0,0
+T18,Ekran profilu,4,T11 T16,no,0,0,0,1,0,0
+T19,Ekran umów,5,T12 T16,no,0,0,0,1,0,0
+T20,Ekran faktur,4,T13 T16,no,0,0,0,1,0,0
+T21,Płatności w portalu,4,T15 T20,no,0,0,0,1,0,0
+T22,Powiadomienia e-mail,3,T10,yes,0,0,1,0,0,0
+T23,Panel analityczny,4,T19,yes,0,0,0,1,0,0
+T24,Plan testów,3,T2,no,0,0,0,0,1,0
+T25,Testy API,5,T14 T15 T24,no,0,0,0,0,1,0
+T26,Testy interfejsu,5,T17 T18 T19 T21,no,0,0,0,0,1,0
+T27,Testy wydajności,3,T25 T8,no,0,0,1,0,0,1
+T28,Testy akceptacyjne,4,T26 T27,no,1,0,0,0,1,0
+T29,Szkolenie użytkowników,2,T28,no,1,0,0,0,0,0
+T30,Uruchomienie produkcyjne,2,T29,no,0,0,1,0,0,1

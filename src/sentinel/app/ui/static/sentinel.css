@@ -966,7 +966,7 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
 /* ---- simulator */
 .sim-hero { display: grid; gap: var(--space-3); }
 .sim-numbers { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3) var(--space-6); }
-.sim-day { font: var(--fs-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.sim-day { font: 600 2rem/2.5rem var(--font); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .sim-chance-value { font: var(--fs-kpi); font-variant-numeric: tabular-nums; }
 .progress { display: block; width: 100%; height: 8px; border-radius: 4px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
 .progress span { display: block; height: 100%; background: var(--chart-running); }
@@ -975,8 +975,10 @@ progress { display: block; width: 100%; height: 8px; accent-color: var(--primary
 .sim-steps .btn { flex: 1 1 auto; }
 .sim-grid { display: grid; gap: var(--gap); margin-top: var(--gap); }
 .sim-grid > * { min-width: 0; }
+.sim-timeline { max-height: 40rem; overflow-y: auto; }
 @media (min-width: 480px) { .sim-steps .btn { flex: none; } }
-@media (min-width: 1024px) { .sim-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; } .sim-timeline { max-height: 40rem; overflow-y: auto; } }
+@media (min-width: 768px) { .sim-day { font: var(--fs-display); letter-spacing: -0.02em; } }
+@media (min-width: 1024px) { .sim-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; } }
 .sim-timeline .tl-title { font: 500 0.875rem/1.25rem var(--font); }
 .verdict { font: var(--fs-h2); max-width: 44rem; }
 .diff-cell { display: inline-flex; gap: var(--space-1); align-items: center; font-weight: 600; }

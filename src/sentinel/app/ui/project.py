@@ -97,6 +97,7 @@ class OptionRow:
     chosen: bool = False
     base: bool = False
     diff: str = ""
+    note: str = ""  # a recommendation stored before v2.0.2: racing set this option aside early
 
 
 LONG_OPTION = 60  # characters of an option's name before the rest folds behind "More"
@@ -154,6 +155,7 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
                 texts.decimal(alt.tardiness),
                 texts.cost_short(alt.expected_cost),
                 diff=diff(alt.p_on_time),
+                note=texts("rec.dropped") if alt.dropped and not rec.compared else "",
             )
         )
     if base is not None:

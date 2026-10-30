@@ -174,13 +174,19 @@ def save(page: Any, target: Path, full: bool = False) -> int:
 
 
 def capture(
-    browser: Any, base: str, shots: list[Shot], language: str, out: Path, full: bool = False
+    browser: Any,
+    base: str,
+    shots: list[Shot],
+    language: str,
+    out: Path,
+    full: bool = False,
+    scheme: str = "light",
 ) -> None:
     for suffix, (width, height) in SIZES.items():
         context = browser.new_context(
             viewport={"width": width, "height": height},
             locale=LOCALES[language],
-            color_scheme="light",
+            color_scheme=scheme,
             reduced_motion="reduce",
         )
         context.add_cookies([{"name": "sentinel_lang", "value": language, "url": base}])
@@ -209,6 +215,7 @@ def main() -> int:
     parser.add_argument("--data", type=Path, default=None, help="keep the seeded data here")
     parser.add_argument("--only", nargs="*", default=None, help="only these screens")
     parser.add_argument("--full", action="store_true", help="whole pages, for a visual review")
+    parser.add_argument("--scheme", choices=("light", "dark"), default="light")
     args = parser.parse_args()
     from playwright.sync_api import sync_playwright
 
@@ -229,7 +236,7 @@ def main() -> int:
             if args.only:
                 shots = [s for s in shots if s.name in args.only]
             with serving(config, services) as base:
-                capture(browser, base, shots, language, args.out, args.full)
+                capture(browser, base, shots, language, args.out, args.full, args.scheme)
             if not args.only or "start_empty" in args.only:
                 empty = AppConfig(data_dir=Path(tempfile.mkdtemp(prefix="sentinel-ui-")))
                 with serving(empty, Services(empty)) as base:
