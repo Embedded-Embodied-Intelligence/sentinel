@@ -247,6 +247,7 @@ def runs_of_all_policies(
     }
 
 
+@pytest.mark.slow  # 7 s, kept out of the 90 s default run (WP9d)
 def test_policies_are_deterministic_and_share_the_exogenous_events(build: Builder) -> None:
     """Same seed, same result for each of the five policies; absence onsets and D3 arrivals
     (day and template) are identical across them up to the shortest run (CRN, spec 2.3)."""
