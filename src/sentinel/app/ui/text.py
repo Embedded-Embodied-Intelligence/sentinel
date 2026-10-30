@@ -1335,8 +1335,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "sim.diff.earlier": ("{days} earlier", "{days} wcześniej"),
     "sim.diff.later": ("{days} later", "{days} później"),
     "sim.diff.none": ("no difference", "bez różnicy"),
-    "sim.end_note.j30": ("This takes about half a minute.", "To potrwa ok. pół minuty."),
-    "sim.end_note.j60": ("This takes a minute or two.", "To potrwa minutę lub dwie."),
+    "sim.end_note.j30": ("This takes under a minute.", "To potrwa poniżej minuty."),
+    "sim.end_note.j60": ("This takes two or three minutes.", "To potrwa 2–3 minuty."),
     "sim.verdict.earlier": (
         "With Sentinel the project finished {days} earlier than with nobody reacting, but "
         "still {late} after the deadline.",
@@ -1371,12 +1371,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "sim.size.j30": ("Small example project (30 tasks)", "Mały przykładowy projekt (30 zadań)"),
     "sim.size.j60": ("Medium example project (60 tasks)", "Średni przykładowy projekt (60 zadań)"),
     "sim.example_hint.j30": (
-        "30 tasks and 4 roles. Running it to the end takes about half a minute.",
-        "30 zadań i 4 role. Symulacja do końca trwa około pół minuty.",
+        "30 tasks and 4 roles. Running it to the end takes under a minute.",
+        "30 zadań i 4 role. Symulacja do końca trwa poniżej minuty.",
     ),
     "sim.example_hint.j60": (
-        "60 tasks and 4 roles. Running it to the end takes a minute or two.",
-        "60 zadań i 4 role. Symulacja do końca trwa minutę lub dwie.",
+        "60 tasks and 4 roles. Running it to the end takes two or three minutes.",
+        "60 zadań i 4 role. Symulacja do końca trwa 2–3 minuty.",
     ),
     "sim.manager": ("Who manages the project?", "Kto zarządza projektem?"),
     "sim.manager.sentinel": ("Sentinel", "Sentinel"),

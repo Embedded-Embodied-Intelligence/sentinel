@@ -14,6 +14,7 @@ system libraries without root by `scripts/setup_e2e_libs.sh`, found through `e2e
 import re
 import time
 from collections.abc import Iterator
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ from ui_check import problems
 from sentinel.app import showcase
 from sentinel.app.config import AppConfig, Limits
 from sentinel.app.services import Services
+from sentinel.app.simulator import SimulatorSpec
 from sentinel.app.store import LOCAL_SESSION
 
 sync_api = pytest.importorskip("playwright.sync_api")
@@ -77,8 +79,8 @@ def _page(
     return context.new_page()
 
 
-def _wait_job(services: Services, session: str, job_id: str) -> None:
-    for _ in range(600):
+def _wait_job(services: Services, session: str, job_id: str, tries: int = 600) -> None:
+    for _ in range(tries):
         if services.job(session, job_id, "en").status in ("done", "failed"):
             return
         time.sleep(0.05)
@@ -180,13 +182,14 @@ def test_a_run_can_be_left_reopened_and_cancelled(browser: Any, local: Server) -
     page.wait_for_url(re.compile(r"/projects/[\w-]+$"), timeout=60_000)
     url = page.url
     page.get_by_role("button", name="To the end").click()
-    expect(page.get_by_text("This takes about half a minute")).to_be_visible(timeout=30_000)
+    expect(page.get_by_text("This takes under a minute")).to_be_visible(timeout=30_000)
     page.goto(local.base + "/simulator")
     began = time.perf_counter()
     page.goto(url)
     assert time.perf_counter() - began < 5  # the page does not wait for the run
     cancel = page.get_by_role("button", name="Cancel")
     expect(cancel).to_be_visible()
+    assert _axe(page) == []  # the waiting page, which the scan of all screens never meets
     cancel.click()
     expect(page.locator(".sim-day")).to_be_visible(timeout=60_000)
     expect(page.get_by_role("heading", name="How it ended")).to_have_count(0)
@@ -297,6 +300,31 @@ def _showcase(local: Server) -> tuple[str, int | None, str]:
     return pid, seq, draft
 
 
+def _simulation_pages(local: Server) -> list[str]:
+    """The pages of a simulation under way and of one run to the end, made once per server; none
+    without the data."""
+    services = local.services
+    if not services.instances("j30"):
+        return []
+    found = {p.name: p.id for p in services.projects(LOCAL_SESSION)}
+    for name, days in (("Under way", 5), ("Run to the end", 10_000)):
+        if name not in found:
+            spec = SimulatorSpec(
+                name=name, set_name="j30", instance="j3026_7", scenario=1, start=date(2026, 11, 2)
+            )
+            job = services.create_simulator(LOCAL_SESSION, spec, "en")
+            _wait_job(services, LOCAL_SESSION, job.id)
+            found[name] = str(job.project)
+            job = services.advance(LOCAL_SESSION, found[name], days, "en")
+            _wait_job(services, LOCAL_SESSION, job.id, tries=SLOW // 50)
+    finished = found["Run to the end"]
+    return [
+        f"/projects/{found['Under way']}",
+        f"/projects/{finished}",
+        f"/projects/{finished}/report.html",
+    ]
+
+
 @pytest.mark.parametrize("language", ["pl", "en"])
 @pytest.mark.parametrize("scheme", ["light", "dark"])
 def test_the_main_screens_have_no_accessibility_violations(
@@ -321,6 +349,7 @@ def test_the_main_screens_have_no_accessibility_violations(
         "/how-it-works",
         "/settings",
         "/projects/none",
+        *_simulation_pages(local),
     ]
     violations = {}
     for width in (1280, 390):
@@ -355,6 +384,7 @@ def test_only_the_chart_scrolls_sideways_on_a_small_screen(
         "/simulator",
         "/how-it-works",
         "/settings",
+        *_simulation_pages(local),
     ]
     wide = {}
     page = _page(browser, local, "pl", width=width, height=700)

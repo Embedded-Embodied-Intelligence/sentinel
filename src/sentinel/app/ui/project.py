@@ -167,6 +167,8 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
                 note=texts("rec.dropped") if alt.dropped and not rec.compared else "",
             )
         )
+    # SPEC-Q: item 6 lists the alternatives by their own figures; "no change" is pinned last, as the
+    # reference the differences are read against.
     if base is not None:
         rows.append(
             OptionRow(

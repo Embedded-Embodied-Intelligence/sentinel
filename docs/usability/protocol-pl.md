@@ -131,7 +131,7 @@ jest środa 4 listopada 2026.
 - **Częściowy sukces:** symulacja zakończona, ale wniosek niepełny albo oparty na jednej liczbie
   bez zrozumienia.
 - **Obserwuj:** czy czeka na koniec symulacji (ok. 30 s); jak czyta oś czasu.
-- **Punkt odniesienia:** 3 kliknięcia; czas zależy od symulacji (ok. 30 s).
+- **Punkt odniesienia:** 3 kliknięcia; czas zależy od symulacji (poniżej minuty).
 
 ## 6. Głośne myślenie i zasady moderatora
 

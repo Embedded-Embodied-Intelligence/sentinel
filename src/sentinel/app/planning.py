@@ -186,6 +186,8 @@ def structural(nodes: Mapping[str, Node], left_out: set[str]) -> set[str]:
     of the required tasks, without the tasks `left_out` (the optional ones and those dropped,
     which have no edges any more): a task is structural if no path reaches the sink without
     it."""
+    # SPEC-Q: a required task with no successor opens a path around the plan's last tasks, so they
+    # stop being structural and top the threats; the rule is kept as written.
     graph = {
         key: [s for s in node.successors if s not in left_out]
         for key, node in nodes.items()

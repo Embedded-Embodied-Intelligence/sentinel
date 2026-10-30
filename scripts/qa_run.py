@@ -4,8 +4,7 @@ Starts `sentinel ui` on a fresh data directory and drives it with Playwright as 
 every action goes through the page; the driver only reads the project's JSON from the same browser
 session to know what its simulated team has done. It saves a screenshot at every step and a log
 of what the pages showed. The team's real durations come from a seeded generator, so a run can be
-repeated. About 20 minutes for run 1 and 10 for run 2 on the server; run it in tmux or in the
-background.
+repeated. About 2 minutes for run 1, 5 for run 2 and 5 for the wrong-use cases on the server.
 
     uv run python scripts/qa_run.py run1 [--out docs/qa] [--limit 2]
     uv run python scripts/qa_run.py run2 [--out docs/qa] [--limit 1]

@@ -74,7 +74,7 @@ Wszystkie kroki są w [shots/run1](shots/run1/001_start_empty.png) (numerowane z
 
 ## Przebieg 2: symulator
 
-**Mały przykład.** Start 2 s, +1 dzień 2 s, +5 dni 6 s, +10 dni 10 s, do końca 40 s (strona zapowiada około pół minuty).
+**Mały przykład.** Start 2 s, +1 dzień 2 s, +5 dni 6 s, +10 dni 10 s, do końca 40 s (strona zapowiadała około pół minuty, teraz „poniżej minuty”).
 
 Wynik: „Z Sentinelem projekt skończył się 10 dni roboczych wcześniej niż bez reakcji, ale wciąż 8 dni roboczych po terminie.” Koszt prawie ten sam: +10 jednostek przy około 3 590.
 
@@ -82,7 +82,7 @@ Wynik: „Z Sentinelem projekt skończył się 10 dni roboczych wcześniej niż 
 
 <img src="shots/phone/run2_small_result.png" width="300" alt="Wynik małego przykładu">
 
-**Średni przykład.** Start 2 s, +5 dni 20 s, +10 dni 30 s, do końca 2 min 12 s (strona zapowiada „minutę lub dwie”).
+**Średni przykład.** Start 2 s, +5 dni 20 s, +10 dni 30 s, do końca 2 min 12 s (strona zapowiadała „minutę lub dwie”, teraz „2–3 minuty”).
 
 Wynik: „Sentinel dotrzymał terminu; bez reakcji te same zdarzenia opóźniły projekt o 4 dni robocze.” Koszt nawet niższy o 46 jednostek.
 
@@ -164,6 +164,7 @@ Wszystkie poważne. Każdy ma test regresyjny i osobny commit `WP10 fix`.
 - typowanie „150 %” pokazuje od razu 99, czyli to, co się zapisze;
 - import bez pliku mówi „Najpierw wybierz plik”, a nie „Plik jest pusty”;
 - oczekiwany koszt ponad budżet ma ostrzeżenie w kafelku Budżet;
+- strona zapowiada realny czas symulacji;
 - wykres na przeglądzie nie przewija się już wewnątrz karty, która chowała zagrożone zadania.
 
 **Zachowało się dobrze:** puste pola, termin przed startem, cykle (w CSV i ręcznie, z nazwami zadań), błędny CSV z numerem wiersza, podwójne kliknięcia (jeden raport, jedna decyzja), Enter w polu, starszy raport w drugiej karcie, kod HTML w nazwie projektu, brak przewijania w bok na telefonie. Wszystkie przypadki: [wrong-log.json](wrong-log.json).
@@ -172,17 +173,17 @@ Wszystkie poważne. Każdy ma test regresyjny i osobny commit `WP10 fix`.
 
 ## Problemy pozostawione, z propozycją
 
-Wszystkie drobne.
+Wszystkie drobne. Pełny dziennik wszystkich problemów (po angielsku, z krokami i zrzutami): [problems.md](problems.md).
 
 - **Raport sprzed startu projektu zapisuje się bez słowa** (specyfikacja na to pozwala, [zrzut](shots/wrong/034_check-in_before_the_project_starts.png)). Propozycja: łagodna informacja.
 - **Błędy CSV używają surowych nazw kolumn i identyfikatorów** („duration_days”, „T9”, [zrzut](shots/wrong/009_csv_unknown_predecessor_and_role.png)). Propozycja: nazwy po polsku i numer wiersza.
 - **Dwie karty w ustawieniach: wygrywa ostatni zapis, bez ostrzeżenia.** Propozycja: wykrycie zmiany i pytanie.
-- **Rekomendacja ma datę następnego dnia roboczego** (raport z 30 września, „od czw. 1 paź”). Propozycja: pokazywać datę raportu.
-- **Wpis „Bez zmian” po każdym raporcie zaśmieca historię.** Propozycja: zwijać takie wpisy albo dołączać do raportu.
+- **Rekomendacja ma datę następnego dnia roboczego** (raport z 30 września, „od czw. 1 paź”, [zrzut](shots/run1/030_c5_recommendation.png)). Propozycja: pokazywać datę raportu.
+- **Wpis „Bez zmian” po każdym raporcie zaśmieca historię** ([zrzut](shots/run1/057_history.png)). Propozycja: zwijać takie wpisy albo dołączać do raportu.
 - **Wydłużenia nie da się zgłosić dla zadania oznaczonego „W toku” w tym samym raporcie;** lista pokazuje tylko wcześniej rozpoczęte. Propozycja: aktualizować listę od razu.
-- **„Działania remisują we wszystkim”** brzmi dziwnie, gdy szansa rośnie z 46 do 55 %: zdanie dotyczy porównania z następną możliwością. Propozycja: pisać „z następną w kolejności”.
+- **„Działania remisują we wszystkim”** brzmi dziwnie, gdy szansa rośnie z 46 do 55 %: zdanie dotyczy porównania z następną możliwością ([zrzut](shots/run1/039_c7_recommendation.png)). Propozycja: pisać „z następną w kolejności”.
 
-**Pytanie do specyfikacji:** lista „Co zagraża terminowi” pokazuje ostatnie zadania planu („Uruchomienie produkcyjne: 9 na 10”), gdy choć jedno wymagane zadanie nie ma następnika. Tu była to „Mapa procesów klienta”. Reguła „zadań strukturalnych” (§11.4) przestaje je wtedy odfiltrowywać, a kierownik nic z tym nie zrobi.
+**Pytanie do specyfikacji:** lista „Co zagraża terminowi” pokazuje ostatnie zadania planu („Uruchomienie produkcyjne: 9 na 10”), gdy choć jedno wymagane zadanie nie ma następnika. Tu była to „Mapa procesów klienta”. Reguła „zadań strukturalnych” (§11.4) przestaje je wtedy odfiltrowywać, a kierownik nic z tym nie zrobi ([zrzut](shots/run1/061_overview_final.png)).
 
 ## Obserwacje UX, oczami kierownika projektu
 

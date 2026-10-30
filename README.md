@@ -70,7 +70,8 @@ Intervals are 95 % cluster-bootstrap intervals over instances; pp = percentage p
 - [`docs/dashboard/`](docs/dashboard/README.md) — example cockpits (open in a browser);
   [`docs/ui/`](docs/ui/) — screenshots of the application's pages; user guides
   ([Polish](docs/user-guide-pl.md), [English](docs/user-guide-en.md)),
-  [deployment](docs/deploy.md), [usability test](docs/usability/protocol-pl.md)
+  [deployment](docs/deploy.md), [usability test](docs/usability/protocol-pl.md),
+  [design brief](docs/design/brief.md), [QA report](docs/qa/raport-qa-pl.md) (Polish)
 - [`results/`](results/) — committed runs; [`paper/generated/`](paper/generated/) — macros,
   tables and figures of the papers
 - `src/sentinel/` — Python package; `tests/` — pytest suite; `scripts/` — utilities; `configs/`
