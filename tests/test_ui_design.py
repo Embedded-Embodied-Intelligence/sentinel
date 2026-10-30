@@ -28,6 +28,7 @@ from sentinel.app.ui.project import (
     checked_key,
     effect_rows,
     finish_gap,
+    needs_date_confirmation,
     option_rows,
     short_name,
     split_pending,
@@ -306,6 +307,14 @@ def test_the_toast_adds_the_new_chance_when_it_is_known() -> None:
         toast_text("approved", summary, EN)
     )
     assert toast_text("rejected", summary, EN) is None and toast_text("approved", None, EN) is None
+
+
+def test_only_a_date_far_ahead_needs_a_confirmation() -> None:
+    today = date(2026, 11, 2)
+    assert not needs_date_confirmation(date(2026, 10, 1), False, today)  # in the past
+    assert not needs_date_confirmation(date(2026, 11, 9), False, today)  # a week ahead
+    assert needs_date_confirmation(date(2026, 11, 10), False, today)
+    assert not needs_date_confirmation(date(2030, 1, 7), True, today)
 
 
 def test_history_groups_by_week_in_the_order_given() -> None:

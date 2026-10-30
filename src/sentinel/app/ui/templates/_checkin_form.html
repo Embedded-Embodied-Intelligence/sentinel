@@ -5,6 +5,12 @@
     <ul>{% for issue in issues %}<li>{{ issue }}</li>{% endfor %}{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul>
   {% endcall %}
   {% endif %}
+  {% if confirm_date %}
+  {% call ui.callout("warn", t("checkin.future_title", date=t.date_long(confirm_date)), ' role="alert" tabindex="-1" data-focus') %}
+    <p>{{ t("checkin.future_text") }}</p>
+    <label class="check"><input type="checkbox" name="confirm_date"><span>{{ t("checkin.future_confirm") }}</span></label>
+  {% endcall %}
+  {% endif %}
   <div class="checkin-when">
     <p class="lead">{% if last %}{{ t("checkin.since", date=t.date(last)) }}{% else %}{{ t("checkin.since_start") }}{% endif %}</p>
     <div class="field field-date">

@@ -873,6 +873,17 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "checkin.since": ("What has changed since {date}?", "Co się zmieniło od {date}?"),
     "checkin.since_start": ("What has changed since the start?", "Co się zmieniło od startu?"),
+    "checkin.future_title": (
+        "This check-in is dated {date}, more than a week from today.",
+        "Ten raport ma datę {date}, ponad tydzień od dziś.",
+    ),
+    "checkin.future_text": (
+        "Check-ins follow each other in time, so every later one would have to be dated after "
+        "it, and it cannot be undone. Correct the date, or confirm it.",
+        "Raporty następują po sobie w czasie, więc każdy kolejny musiałby mieć późniejszą "
+        "datę, a tego nie da się cofnąć. Popraw datę albo ją potwierdź.",
+    ),
+    "checkin.future_confirm": ("Yes, this date is right", "Tak, ta data jest prawidłowa"),
     "checkin.help": ("How to fill in a check-in", "Jak wypełnić raport"),
     "checkin.share_hint": (
         "The share done is the part of the task's own work that is finished; mark a finished "

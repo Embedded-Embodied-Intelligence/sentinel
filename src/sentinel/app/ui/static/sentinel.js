@@ -423,6 +423,7 @@
     }
     if (scope.querySelectorAll) {
       scope.querySelectorAll("[data-toast]").forEach(startToast);
+      scope.querySelectorAll("input[type=date]").forEach(echoDate);
       scrollGantt(scope);
     }
     checkRule();

@@ -43,6 +43,7 @@ from sentinel.app.views import (
 HISTORY_FILTERS = ("all", "checkins", "recommendations", "changes")
 HISTORY_SHOWN = 20  # entries before "show older"
 NEXT_DAYS = 10  # unstarted tasks planned within this many working days are shown at check-in
+FUTURE_CHECKIN_DAYS = 7  # a check-in dated further ahead asks for a confirmation
 FLASHES_WITH_CHANCE = ("checkin_saved", "approved")  # toasts that add the new chance when known
 
 
@@ -328,6 +329,14 @@ def checked_key(rec: RecommendationView) -> str:
     chance = None if rec.without is None else rec.without.p_on_time
     on_track = rec.reason == "needs_met" or chance is None or chance_level(chance) == "good"
     return "overview.checked" if on_track else "overview.checked_no_better"
+
+
+def needs_date_confirmation(day: date, confirmed: bool, today: date | None = None) -> bool:
+    """Whether a check-in's date is too far ahead to save without asking (QA-06): the log is
+    append-only and check-ins follow in date order, so a mistyped year would block every later
+    check-in. A check-in reports what is true at the end of its day, so a date ahead of today is
+    unusual, and more than a week ahead most likely a typing mistake."""
+    return not confirmed and (day - (today or date.today())).days > FUTURE_CHECKIN_DAYS
 
 
 def split_pending(
@@ -769,6 +778,7 @@ def router(ui: Ui) -> APIRouter:
             "form": form,
             "errors": {},
             "issues": [],
+            "confirm_date": None,
         }
 
     @routes.get("/projects/{project_id}/checkin")
@@ -791,6 +801,10 @@ def router(ui: Ui) -> APIRouter:
         if read.checkin is None:
             values = checkin_values(request, project_id, form)
             values["errors"] = {e.name: texts(e.key, **e.values) for e in read.errors}
+            return checkin_form(request, values, 422)
+        if needs_date_confirmation(read.checkin.date, form.flag("confirm_date")):
+            values = checkin_values(request, project_id, form)
+            values["confirm_date"] = read.checkin.date
             return checkin_form(request, values, 422)
         try:
             result = services.checkin(

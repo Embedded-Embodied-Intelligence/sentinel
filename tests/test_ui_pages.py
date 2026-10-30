@@ -359,6 +359,25 @@ def test_the_toast_of_a_check_in_survives_the_analysis_that_follows(site: Site) 
         site.services.store.update_job(running.id, status="done")
 
 
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_a_check_in_far_in_the_future_asks_first(site: Site, language: str) -> None:
+    """QA-06: a mistyped year was saved at once, and every later check-in had to be dated after
+    it. It now asks, keeps what was entered and saves only when confirmed."""
+    client, headers = site.client, site.headers
+    pid = _create(client, headers, small(deadline=None))
+    assert client.post(f"/api/projects/{pid}/plan", headers=headers).status_code == 202
+    form = {"date": "2030-01-07", "shown": ["T1"], "status_T1": "in_progress", "percent_T1": "30"}
+    url = f"/projects/{pid}/checkin"
+    asked = client.post(url, params={"lang": language}, data=form, headers=headers)
+    assert asked.status_code == 422 and "callout-warn" in asked.text
+    assert 'name="confirm_date"' in asked.text and 'value="2030-01-07"' in asked.text
+    assert 'value="30"' in asked.text and problems(asked.text) == []
+    assert client.get(f"/api/projects/{pid}").json()["checkins"] == []
+    saved = client.post(url, data={**form, "confirm_date": "on"}, headers=headers)
+    assert saved.headers["HX-Redirect"].endswith("flash=checkin_saved")
+    assert client.get(f"/api/projects/{pid}").json()["checkins"][0]["date"] == "2030-01-07"
+
+
 def test_the_history_shows_the_chance_over_time(site: Site) -> None:
     pid = site.ids["open"]
     page = _get(site, f"/projects/{pid}/history", "pl")
