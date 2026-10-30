@@ -683,7 +683,7 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
 .sw-deadline { width: 0; height: 14px; border-left: 2px dashed var(--text); border-radius: 0; }
 .gantt { position: relative; }
 .gantt-scroll { overflow-x: auto; }
-.gantt-tall .gantt-scroll { max-height: 34rem; overflow-y: auto; }
+.sim-grid .gantt-scroll { max-height: 34rem; overflow-y: auto; }
 .gantt-body { display: flex; align-items: flex-start; min-width: 100%; width: max-content; }
 .gantt-names { list-style: none; position: sticky; left: 0; z-index: 2; flex: none; width: 130px; background: var(--surface); box-shadow: 1px 0 0 var(--border); }
 .gantt-names li { display: flex; align-items: center; gap: var(--space-1); height: 32px; padding: 0 var(--space-2) 0 2px; font: 400 0.8125rem/1.125rem var(--font); color: var(--text-2); }

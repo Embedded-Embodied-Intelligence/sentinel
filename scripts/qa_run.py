@@ -130,19 +130,42 @@ class Task:
     grown: int = 0  # days reported as growth
     started: date | None = None
     finished: date | None = None
-    worked: int = 0
+    worked: float = 0.0
 
 
 class Driver:
-    """A browser page with numbered screenshots and the run's log."""
+    """A browser page with numbered screenshots, a phone beside it and the run's log."""
 
-    def __init__(self, page: Any, base: str, out: Path, run: str) -> None:
+    def __init__(self, page: Any, base: str, out: Path, run: str, phone: Any = None) -> None:
         self.page = page
         self.base = base
+        self.run = run
         self.out = out / "shots" / run
         self.out.mkdir(parents=True, exist_ok=True)
+        self.phones = out / "shots" / "phone"
+        self.phones.mkdir(parents=True, exist_ok=True)
+        for old in self.out.glob("*.png"):
+            old.unlink()  # the driver's own screenshots of an earlier run
+        for old in self.phones.glob(f"{run}_*.png"):
+            old.unlink()
+        self.phone_page = phone
         self.count = 0
         self.log: list[dict[str, Any]] = []
+
+    def phone(self, name: str, path: str, scroll: str | None = None, full: bool = False) -> None:
+        """The same screen on a phone (390 x 844), for the report read on one."""
+        page = self.phone_page
+        page.goto(self.base + path)
+        self.settle(page)
+        if scroll is not None:
+            page.locator(scroll).first.evaluate("e => e.scrollIntoView({block: 'start'})")
+            page.evaluate("window.scrollBy(0, -64)")
+            page.wait_for_timeout(100)
+        target = self.phones / f"{self.run}_{name}.png"
+        page.screenshot(path=str(target), full_page=full)
+        with Image.open(target) as image:
+            reduced = image.convert("RGB").quantize(COLOURS, dither=Image.Dither.NONE)
+        reduced.save(target, optimize=True)
 
     def shot(self, name: str, full: bool = False, page: Any = None) -> str:
         """A numbered screenshot with a reduced palette; its file name."""
@@ -284,10 +307,10 @@ def move_team(
             task = tasks[book.key]
             for role, count in task["crew"].items():
                 free[role] = free.get(role, 0) - count
-            if any(is_away(name, day) for name in task["crew_names"]):
-                continue  # paused while someone in its crew is away
-            book.worked += 1
-            if book.worked >= max(1, task["duration"] + book.extra + book.grown):
+            crew = task["crew_names"]
+            present = sum(not is_away(name, day) for name in crew)
+            book.worked += present / len(crew) if crew else 1  # the crew's present share works
+            if book.worked >= max(1, task["duration"] + book.extra + book.grown) - 1e-9:
                 book.finished = day
         order = sorted(
             (t for t in tasks.values() if t["state"] == "not_started"),
@@ -412,6 +435,20 @@ def decide(d: Driver, project: str, verdict: str, label: str) -> dict[str, Any]:
     return record
 
 
+def phone_page(browser: Any, base: str) -> Any:
+    """A page in a phone-size window on the same (local) projects."""
+    phone = browser.new_context(
+        viewport={"width": 390, "height": 844},
+        locale="pl-PL",
+        reduced_motion="reduce",
+        has_touch=True,
+        is_mobile=True,
+    )
+    phone.set_default_timeout(60_000)
+    phone.add_cookies([{"name": "sentinel_lang", "value": "pl", "url": base}])
+    return phone.new_page()
+
+
 def run1(args: argparse.Namespace, browser: Any) -> None:
     out: Path = args.out
     data = Path(tempfile.mkdtemp(prefix="sentinel-qa1-"))
@@ -424,8 +461,11 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
         )
         context.set_default_timeout(60_000)
         context.add_cookies([{"name": "sentinel_lang", "value": "pl", "url": base}])
-        d = Driver(context.new_page(), base, out, "run1")
+        d = Driver(context.new_page(), base, out, "run1", phone_page(browser, base))
+        d.phone("start_empty", "/")
+        d.phone("wizard_basics", "/new")
         project = create_project(d)
+        d.phone("overview_plan", f"/projects/{project}")
         rng = np.random.default_rng(SEED)
         team: dict[str, Task] = {}
         keys = [t["key"] for t in books(d, project)["tasks"]]
@@ -525,10 +565,24 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
                 toast=toast,
             )
             d.shot(f"{label}_overview", full=True)
+            crews = {
+                t["name"]: t["crew_names"]
+                for t in books(d, project)["tasks"]
+                if t["state"] in ("in_progress", "paused")
+            }
+            d.note(kind="crews", date=str(when), crews=crews)
+            if events:
+                d.phone(f"{label}_overview", f"/projects/{project}")
             if moment.pending:
                 verdict = next(decisions, "approve")
+                seq = page.get_by_role("link", name="Przejrzyj i zdecyduj").first.get_attribute(
+                    "href"
+                )
+                d.phone(f"{label}_recommendation", str(seq))
+                d.phone(f"{label}_card", f"/projects/{project}", scroll="#pending-title")
                 decide(d, project, verdict, label)
                 d.moment(f"{label} po decyzji: {verdict}")
+                d.phone(f"{label}_after_{verdict}", f"/projects/{project}")
             undo = page.get_by_role("button", name="Cofnij")
             if undo.count() and not undone:
                 d.shot(f"{label}_auto_before_undo", full=True)
@@ -548,7 +602,14 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
             page.get_by_role("link", name="Pobierz").first.click()
         path = out / "shots" / "run1" / "plan.csv"
         plan.value.save_as(path)
-        d.note(kind="export", file=plan.value.suggested_filename, bytes=path.stat().st_size)
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+        d.note(
+            kind="export",
+            file=plan.value.suggested_filename,
+            bytes=path.stat().st_size,
+            rows=len(lines) - 1,
+            header=lines[0],
+        )
         page.get_by_role("button", name="Przygotuj").click()
         report = page.get_by_role("link", name="Otwórz raport")
         report.wait_for(timeout=WAIT)
@@ -563,8 +624,23 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
         page.wait_for_selector("#chance-history svg", timeout=WAIT)
         page.wait_for_load_state("networkidle")
         d.shot("history", full=True)
+        older = page.locator("details.tl-more > summary")
+        if older.count():
+            older.click()
         entries = [" ".join(t.split()) for t in page.locator(".tl-item").all_inner_texts()]
-        d.note(kind="history", entries=entries)
+        text = " ".join(entries)
+        wanted = {
+            "9 raportów": text.count("Raport statusu za") == limit,
+            "zatwierdzenia": "Zatwierdzono:" in text,
+            "odrzucenie": "Odrzucono:" in text or limit < 5,
+            "odłożenie": "Odłożono:" in text or limit < 6,
+            "cofnięcie": "Cofnięto automatyczną zmianę" in text,
+            "nieobecności": ("Cezary Wójcik" in text and "Hanna Pawlak" in text) or limit < 7,
+            "wydłużenie": "dodatkowe dni robocze" in text or limit < 4,
+            "nowe zadanie": "Audyt bezpieczeństwa" in text or limit < 5,
+        }
+        d.note(kind="history", count=len(entries), found=wanted, entries=entries)
+        d.phone("history", f"/projects/{project}/history")
         for name in ("checkins", "recommendations", "changes"):
             page.goto(f"{base}/projects/{project}/history?show={name}")
             page.wait_for_load_state("networkidle")
@@ -573,6 +649,8 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
         d.settle()
         d.moment("koniec przebiegu 1")
         d.shot("overview_final", full=True)
+        d.phone("overview_final", f"/projects/{project}")
+        d.phone("gantt", f"/projects/{project}", scroll="#plan-title")
         (out / "run1-log.json").write_text(
             json.dumps(d.log, ensure_ascii=False, indent=1, default=str) + "\n", "utf-8"
         )
@@ -625,8 +703,9 @@ def run2(args: argparse.Namespace, browser: Any) -> None:
         )
         context.set_default_timeout(60_000)
         context.add_cookies([{"name": "sentinel_lang", "value": "pl", "url": base}])
-        d = Driver(context.new_page(), base, out, "run2")
+        d = Driver(context.new_page(), base, out, "run2", phone_page(browser, base))
         page = d.page
+        d.phone("setup", "/simulator")
         for word, name in examples[: args.limit or 2]:
             page.goto(base + "/simulator")
             page.wait_for_load_state("networkidle")
@@ -650,7 +729,11 @@ def run2(args: argparse.Namespace, browser: Any) -> None:
                 else:
                     day = page.locator(".sim-day").inner_text()
                     page.wait_for_function(
-                        "text => document.querySelector('.sim-day')?.textContent !== text",
+                        """text => {
+                            const shown = document.querySelector('.sim-day');
+                            return shown && shown.textContent !== text
+                                && !document.querySelector('.job');
+                        }""",
                         arg=day,
                         timeout=WAIT,
                     )
@@ -661,6 +744,9 @@ def run2(args: argparse.Namespace, browser: Any) -> None:
                     seconds=round(time.perf_counter() - began, 1),
                 )
                 simulator_read(d, f"{name}_after_{label}")
+                if label == "10":
+                    d.phone(f"{name}_running", page.url.replace(base, ""))
+            d.phone(f"{name}_result", page.url.replace(base, ""))
             d.note(
                 kind="result",
                 example=name,
@@ -744,7 +830,14 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         )
         context.set_default_timeout(30_000)
         context.add_cookies([{"name": "sentinel_lang", "value": "pl", "url": base}])
-        d = Driver(context.new_page(), base, out, "wrong")
+        asked: list[str] = []
+
+        def on_dialog(dialog: Any) -> None:
+            asked.append(dialog.type)
+            dialog.accept()
+
+        context.on("dialog", on_dialog)
+        d = Driver(context.new_page(), base, out, "wrong", phone_page(browser, base))
         page = d.page
 
         def answer(case: str, shot: str, *selectors: str) -> None:
@@ -967,7 +1060,7 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         page.wait_for_load_state("networkidle")
         kept = page.locator("#date").input_value()
         answer("language switch on a half-filled check-in", "language_checkin", "h1")
-        d.note(kind="case", case="check-in date after the switch", shown=kept)
+        d.note(kind="case", case="check-in after the switch", shown=kept, browser_asked=asked[-1:])
         page.locator('a[hreflang="pl"]:visible').first.click()
         d.note(kind="case", case="draft kept", shown=project4)
 
@@ -1018,7 +1111,7 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         for case, day, fill in (
             ("check-in without a date", "", None),
             ("check-in before the project starts", "2026-10-01", None),
-            ("check-in far in the future", "2030-01-01", None),
+            ("check-in far in the future", "2030-01-07", None),
             ("finished after the check-in", "2026-11-04", ("Gotowe", "2026-12-24")),
             ("percent above 99", "2026-11-04", ("W toku", "150")),
         ):
@@ -1078,6 +1171,7 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         )
         phone.set_default_timeout(30_000)
         phone.add_cookies([{"name": "sentinel_lang", "value": "pl", "url": base}])
+        phone.on("dialog", on_dialog)
         mobile = Driver(phone.new_page(), base, out, "wrong_phone")
         tab = mobile.page
         widths = {}

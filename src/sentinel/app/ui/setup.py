@@ -471,9 +471,9 @@ def router(ui: Ui) -> APIRouter:
         form = await request.form()
         upload = form.get("file")
         limit = ui.config.limits.upload_kb * 1024
-        data = b""
-        if upload is not None and not isinstance(upload, str):
-            data = await upload.read(limit + 1)
+        if upload is None or isinstance(upload, str) or not upload.filename:
+            raise AppError("csv_no_file")
+        data = await upload.read(limit + 1)
         if len(data) > limit:
             raise AppError("too_large", "too_large", limit=ui.config.limits.upload_kb)
         if not data:

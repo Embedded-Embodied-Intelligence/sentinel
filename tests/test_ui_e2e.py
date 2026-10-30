@@ -413,6 +413,10 @@ def test_the_check_in_counts_its_changes_and_its_button_says_so(
     expect(page.locator("#away-count")).to_have_text("(1)")
     page.locator("#percent-T1-num").fill("40")
     assert page.locator("#percent-T1").input_value() == "40"
+    page.locator("#percent-T1-num").fill("150")
+    page.locator("#percent-T1-num").blur()
+    expect(page.locator("#percent-T1-num")).to_have_value("99")  # as the slider will save it
+    assert page.locator("#percent-T1").input_value() == "99"
     page.get_by_role("button", name="Remove").first.click()
     expect(page.locator("#away-count")).to_have_text("(0)")
     page.context.close()

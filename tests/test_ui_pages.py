@@ -359,6 +359,19 @@ def test_the_toast_of_a_check_in_survives_the_analysis_that_follows(site: Site) 
         site.services.store.update_job(running.id, status="done")
 
 
+def test_an_import_without_a_file_asks_for_one(site: Site) -> None:
+    draft = _create(
+        site.client, site.headers, ProjectDefinition(name="Import", start=date(2026, 11, 2))
+    )
+    answer = site.client.post(
+        f"/projects/{draft}/setup/import",
+        params={"lang": "en"},
+        data={"other": "x"},
+        headers=site.headers,
+    )
+    assert "Choose a file first." in answer.text and problems(answer.text) == []
+
+
 @pytest.mark.parametrize("language", LANGUAGES)
 def test_a_check_in_far_in_the_future_asks_first(site: Site, language: str) -> None:
     """QA-06: a mistyped year was saved at once, and every later check-in had to be dated after

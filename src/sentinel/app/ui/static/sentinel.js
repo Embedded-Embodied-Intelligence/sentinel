@@ -163,6 +163,11 @@
 
   document.addEventListener("change", function (event) {
     if (event.target.matches && event.target.matches("[data-after-box]")) applyAfter(event.target);
+    if (event.target.matches && event.target.matches("input[data-range-for]")) {
+      // What the slider took is what will be saved: "150" reads 99 at once.
+      const range = document.getElementById(event.target.dataset.rangeFor);
+      if (range) event.target.value = range.value;
+    }
     countChanges();
     markUnsaved();
   });

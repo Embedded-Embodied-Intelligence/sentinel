@@ -1,6 +1,6 @@
 {# The chart's geometry comes from `charts.layout`; the names beside the plot stay in view on a small
    screen and take the focus, which shows the row's facts (sentinel.js). #}
-<div class="gantt{% if g.rows | length > 16 %} gantt-tall{% endif %}" style="--gantt-top: {{ g.top }}px; --gantt-min: {{ g.min_width }}px">
+<div class="gantt" style="--gantt-top: {{ g.top }}px; --gantt-min: {{ g.min_width }}px">
   <div class="gantt-scroll" data-open-at="{{ g.open_at }}">
     <div class="gantt-body">
       <ol class="gantt-names">
@@ -31,9 +31,9 @@
         {% for item in g.rows %}
         <g data-row="{{ loop.index0 }}">{% for bar in item.bars %}<rect class="{{ bar.cls }}" x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" rx="{{ 2 if bar.height < 10 else 4 }}"/>{% endfor %}</g>
         {% endfor %}
+        {% for line in g.lines %}<line class="{{ line.cls }}" x1="{{ line.x }}%" x2="{{ line.x }}%" y1="{{ line.tier * 22 + 20 }}" y2="{{ g.bottom }}"/>{% endfor %}
         {% for line in g.lines %}
         {% set flag_y = line.tier * 22 + 2 %}
-        <line class="{{ line.cls }}" x1="{{ line.x }}%" x2="{{ line.x }}%" y1="{{ flag_y + 18 }}" y2="{{ g.bottom }}"/>
         <svg x="{{ line.x }}%" y="{{ flag_y }}" overflow="visible"><rect class="flag-bg" x="{{ -line.width if line.flip else 0 }}" y="0" width="{{ line.width }}" height="18" rx="4"/><text class="flag-text" x="{{ -line.width + 8 if line.flip else 8 }}" y="13">{{ line.label }}</text></svg>
         {% endfor %}
       </svg>

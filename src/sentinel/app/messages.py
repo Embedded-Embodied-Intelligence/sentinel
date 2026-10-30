@@ -217,6 +217,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "the same log gives the same page.",
         # import and export
         "csv_empty": "The file is empty.",
+        "csv_no_file": "Choose a file first.",
         "csv_encoding": "The file is not UTF-8 text.",
         "csv_missing_column": "The file has no column “{column}”.",
         "csv_number": "Row {row}: {column} must be a whole number (it is “{value}”).",
@@ -444,6 +445,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "cockpit_p_note_text": "Każda liczba pochodzi z dziennika zdarzeń projektu i jego "
         "ziarna losowego; ten sam dziennik daje tę samą stronę.",
         "csv_empty": "Plik jest pusty.",
+        "csv_no_file": "Najpierw wybierz plik.",
         "csv_encoding": "Plik nie jest tekstem w kodowaniu UTF-8.",
         "csv_missing_column": "W pliku brakuje kolumny „{column}”.",
         "csv_number": "Wiersz {row}: {column} musi być liczbą całkowitą (jest „{value}”).",
