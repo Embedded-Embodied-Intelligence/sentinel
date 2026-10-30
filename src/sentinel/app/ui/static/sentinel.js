@@ -68,6 +68,20 @@
       }
       return;
     }
+    const exit = event.target.closest("[data-exit-form]");
+    if (exit) {
+      // "Save and exit" sits outside the form, so that Enter in a field never means it.
+      const form = document.getElementById(exit.getAttribute("data-exit-form"));
+      if (form) {
+        const action = document.createElement("input");
+        action.type = "hidden";
+        action.name = "action";
+        action.value = "exit";
+        form.prepend(action);
+        form.requestSubmit();
+      }
+      return;
+    }
     const closeToast = event.target.closest("[data-toast-close]");
     if (closeToast) {
       dismissToast(closeToast.closest("[data-toast]"));
@@ -196,7 +210,7 @@
       const n = parseInt(input.value, 10);
       if (n > 0) parts.push(n + " × " + input.dataset.role);
     });
-    details.querySelector("summary span").textContent = parts.join(", ") || details.dataset.empty;
+    details.querySelector(".pop-value").textContent = parts.join(", ") || details.dataset.empty;
   }
 
   function buildAfter(details) {
@@ -228,7 +242,7 @@
     const names = Array.from(boxes).map(function (b) {
       return document.querySelectorAll("input[name=task_name]")[Number(b.value) - 1].value || b.value;
     });
-    details.querySelector("summary span").textContent = names.join(", ") || details.dataset.empty;
+    details.querySelector(".pop-value").textContent = names.join(", ") || details.dataset.empty;
   }
 
   document.addEventListener("toggle", function (event) {

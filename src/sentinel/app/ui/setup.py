@@ -9,7 +9,8 @@ the definition are shown in plain language as the manager types (spec section 11
 
 import json
 from collections.abc import Sequence
-from datetime import date
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -28,6 +29,7 @@ from sentinel.app.ui.forms import (
     next_key,
     pasted_people,
     read_basics,
+    read_role_costs,
     read_tasks,
     read_team,
     team_roles,
@@ -60,6 +62,53 @@ ROLE_SUGGESTIONS = {
         "Redaktor",
     ),
 }
+
+
+@dataclass(frozen=True)
+class RoleRow:
+    """A role in the wizard's team step: its name, its people and the daily cost of one."""
+
+    name: str
+    count: int
+    cost: float
+
+
+def role_rows(definition: ProjectDefinition | None, team: Sequence[Person]) -> list[RoleRow]:
+    """The roles of a team with their people (spec section 11.2), in the order of their first
+    person."""
+    from sentinel.app.live import role_key
+
+    costs = {} if definition is None else {role_key(c.role): c.daily_cost for c in definition.roles}
+    rows = []
+    for role in team_roles(team):
+        key = role_key(role)
+        count = sum(1 for p in team if role_key(p.role) == key)
+        rows.append(RoleRow(role, count, costs.get(key, 1.0)))
+    return rows
+
+
+def more_of_role(team: Sequence[Person], role: str, count: int = 1) -> list[Person]:
+    """The team with `count` more people of `role`, named after it until the manager names them:
+    "Tester 1", "Tester 2" (spec section 11.2: every person has a unique display name)."""
+    people = list(team)
+    names = {p.name for p in people}
+    number = 1
+    for _ in range(count):
+        while f"{role} {number}" in names:
+            number += 1
+        name = f"{role} {number}"
+        names.add(name)
+        people.append(Person(key=next_key("P", [p.key for p in people]), name=name, role=role))
+    return people
+
+
+def fewer_of_role(team: Sequence[Person], role: str) -> list[Person]:
+    """The team without the last person of `role`."""
+    from sentinel.app.live import role_key
+
+    key = role_key(role)
+    index = max((i for i, p in enumerate(team) if role_key(p.role) == key), default=None)
+    return [p for i, p in enumerate(team) if i != index]
 
 
 def field_errors(errors: Sequence[FieldError], texts: Texts) -> dict[str, str]:
@@ -143,10 +192,10 @@ def router(ui: Ui) -> APIRouter:
             return ", ".join(str(numbers[p]) for p in task.predecessors if p in numbers)
 
         def after_names(task: Task) -> str:
-            return ", ".join(names.get(p, p) for p in task.predecessors) or "—"
+            return ", ".join(names.get(p, p) for p in task.predecessors) or "–"
 
         def crew_text(task: Task) -> str:
-            return ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or "—"
+            return ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or "–"
 
         result: dict[str, Any] = {
             "title": texts("setup.title") if definition is None else definition.name,
@@ -159,6 +208,15 @@ def router(ui: Ui) -> APIRouter:
             "team": team,
             "tasks": tasks,
             "roles": roles,
+            "role_rows": role_rows(definition, team),
+            "people_open": False,
+            "review": {
+                "deadline": definition.deadline if definition else None,
+                "roles": len(roles),
+                "people": len(team),
+                "tasks": len(tasks),
+                "days": sum(task.duration for task in tasks),
+            },
             "suggestions": _suggestions(roles, language),
             "crew_of": crew_of,
             "after_numbers": after_numbers,
@@ -218,6 +276,8 @@ def router(ui: Ui) -> APIRouter:
             }
         )
         view = services.create(ui.session(request), definition, ui.language(request))
+        if form.get("action") == "exit":
+            return ui.redirect(request, "/")
         return ui.redirect(request, f"/projects/{view.id}/setup/team")
 
     @routes.get("/projects/{project_id}/setup/{step}")
@@ -241,6 +301,8 @@ def router(ui: Ui) -> APIRouter:
                 request, "basics", definition, project_id, 422, basics=basics, errors=errors
             )
         save(request, project_id, apply_basics(definition, basics))
+        if form.get("action") == "exit":
+            return ui.redirect(request, "/")
         return ui.redirect(request, f"/projects/{project_id}/setup/team")
 
     @routes.post("/projects/{project_id}/setup/team")
@@ -249,17 +311,30 @@ def router(ui: Ui) -> APIRouter:
         form = await Form.read(request)
         action = form.get("action", "autosave")
         team = read_team(form)
+        roles = team_roles(team)
+        costs = read_role_costs(form, roles, definition.roles)
         focus = None
         if action == "paste":
             team = pasted_people(form.get("paste"), team)
         elif action.startswith("remove:"):
             team = [p for p in team if p.key != action.split(":", 1)[1]]
-        changed = definition.model_copy(update={"team": tuple(team)})
+        elif action.startswith(("more:", "less:")):
+            kind, _, index = action.partition(":")
+            if index.isdigit() and int(index) < len(roles):
+                role = roles[int(index)]
+                team = more_of_role(team, role) if kind == "more" else fewer_of_role(team, role)
+        elif action == "add_role":
+            role = " ".join(form.get("new_role").split())[:120]
+            if role:
+                team = more_of_role(team, role, _people_count(form.get("new_role_count")))
+        changed = definition.model_copy(update={"team": tuple(team), "roles": costs})
         save(request, project_id, changed)
         if action == "autosave":
             return autosave_status(request, changed, "team")
         if action == "back":
             return ui.redirect(request, f"/projects/{project_id}/setup/basics")
+        if action == "exit":
+            return ui.redirect(request, "/")
         if action == "next":
             issues = [i for i in services.validate(changed, ui.language(request))]
             shown, _ = step_issues(issues, "team", ui.texts(request))
@@ -274,7 +349,15 @@ def router(ui: Ui) -> APIRouter:
             key = next_key("P", [p.key for p in team])
             shown_team.append(Person(key=key, name="", role=""))
             focus = key
-        return render_step(request, "team", changed, project_id, team=shown_team, focus=focus)
+        return render_step(
+            request,
+            "team",
+            changed,
+            project_id,
+            team=shown_team,
+            focus=focus,
+            people_open=action in ("paste", "add"),
+        )
 
     @routes.post("/projects/{project_id}/setup/tasks")
     async def save_tasks(request: Request, project_id: str) -> Response:
@@ -301,6 +384,8 @@ def router(ui: Ui) -> APIRouter:
             return autosave_status(request, changed, "tasks", cell_errors)
         if action == "back":
             return ui.redirect(request, f"/projects/{project_id}/setup/team")
+        if action == "exit":
+            return ui.redirect(request, "/")
         if action == "finish":
             issues = services.validate(changed, ui.language(request))
             errors = [i for i in issues if i.severity == "error"]
@@ -354,6 +439,7 @@ def router(ui: Ui) -> APIRouter:
             "_save_status.html",
             saved=True,
             unsaved=False,
+            saved_at=datetime.now().astimezone().strftime("%H:%M"),
             issues=[*extra, *shown],
             oob=True,
         )
@@ -407,6 +493,11 @@ def router(ui: Ui) -> APIRouter:
         return issue_views(found, ui.language(request))
 
     return routes
+
+
+def _people_count(text: str) -> int:
+    """The people of a new role as typed: at least one, at most a team's size."""
+    return max(1, min(50, int(text))) if text.strip().isdigit() else 1
 
 
 def _team_needed(texts: Texts) -> IssueView:

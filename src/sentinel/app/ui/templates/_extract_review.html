@@ -1,6 +1,9 @@
-<div class="panel review">
-  <h3>{{ t("setup.describe.found", count=tasks | length) }}</h3>
-  {% if issues %}<p class="alert alert-warn">{{ t("setup.describe.issues", count=issues) }}</p>{% endif %}
+{% import "_ui.html" as ui with context %}
+<div class="form-stack section-sub">
+  {% call ui.callout("info", t("setup.describe.found", count=tasks | length)) %}
+    <p>{{ t("setup.describe.check") }}</p>
+    {% if issues %}<p>{{ t("setup.describe.issues", count=issues) }}</p>{% endif %}
+  {% endcall %}
   <div class="table-wrap">
   <table class="table">
     <caption class="vh">{{ t("setup.describe.caption") }}</caption>
@@ -12,9 +15,9 @@
     </tbody>
   </table>
   </div>
-  {% if team %}<p>{{ t("setup.describe.team", people=team | join(", ")) }}</p>{% endif %}
+  {% if team %}<p class="small">{{ t("setup.describe.team", people=team | join(", ")) }}</p>{% endif %}
   <form hx-post="/projects/{{ project_id }}/setup/use-extraction" hx-target="#step">
     <input type="hidden" name="draft" value="{{ draft }}">
-    <div class="actions"><button class="btn btn-primary">{{ t("setup.describe.use") }}</button></div>
+    <button class="btn btn-primary">{{ t("setup.describe.use") }}</button>
   </form>
 </div>

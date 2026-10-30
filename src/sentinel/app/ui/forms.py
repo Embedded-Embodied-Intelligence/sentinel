@@ -210,6 +210,23 @@ def pasted_people(text: str, team: Sequence[Person]) -> list[Person]:
     return people
 
 
+def read_role_costs(
+    form: Form, roles: Sequence[str], current: Sequence[RoleCost]
+) -> tuple[RoleCost, ...]:
+    """The daily costs of the team step, by role in the order shown: a cost left empty or not a
+    number stays as it was; the default 1 is not stored (spec section 11.2)."""
+    from sentinel.app.live import role_key
+
+    known = {role_key(c.role): c.daily_cost for c in current}
+    costs = []
+    for k, role in enumerate(roles):
+        value = parse_number(form.get(f"cost_{k}"))
+        cost = value if value is not None and value >= 0 else known.get(role_key(role), 1.0)
+        if cost != 1.0:
+            costs.append(RoleCost(role=role, daily_cost=cost))
+    return tuple(costs)
+
+
 # --------------------------------------------------------------------------- tasks (step 3)
 
 

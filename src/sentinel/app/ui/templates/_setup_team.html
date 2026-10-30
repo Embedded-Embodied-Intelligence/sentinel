@@ -1,41 +1,82 @@
-<form id="team-form" class="form" hx-post="/projects/{{ project_id }}/setup/team" hx-target="#step" novalidate>
-  <p class="lead">{{ t("setup.team.lead") }}</p>
-  <div hx-post="/projects/{{ project_id }}/setup/team" hx-trigger="change delay:500ms from:#team-form" hx-include="#team-form" hx-vals='{"action": "autosave"}' hx-target="#save-status"></div>
-  {% with oob=false %}{% include "_issues.html" %}{% endwith %}
-  {% if team %}
-  <div class="table-wrap">
-  <table class="table table-form">
-    <caption class="vh">{{ t("setup.team.caption") }}</caption>
-    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t("setup.team.name") }}</th><th scope="col">{{ t("setup.team.role") }}</th><th scope="col"><span class="vh">{{ t("setup.remove") }}</span></th></tr></thead>
-    <tbody>
-    {% for p in team %}
-    <tr{% if loop.index0 in marked %} class="has-issue"{% endif %}>
-      <td class="num">{{ loop.index }}<input type="hidden" name="person_key" value="{{ p.key }}"></td>
-      <td><label class="vh" for="pn-{{ p.key }}">{{ t("setup.team.name_of", n=loop.index) }}</label><input id="pn-{{ p.key }}" name="person_name" value="{{ p.name }}" maxlength="120" autocomplete="off"{% if focus == p.key %} autofocus{% endif %}></td>
-      <td><label class="vh" for="pr-{{ p.key }}">{{ t("setup.team.role_of", n=loop.index) }}</label><input id="pr-{{ p.key }}" name="person_role" value="{{ p.role }}" maxlength="120" list="role-suggestions" autocomplete="off"></td>
-      <td><button class="btn btn-quiet btn-small" name="action" value="remove:{{ p.key }}">{{ t("setup.remove") }}<span class="vh"> {{ p.name or loop.index }}</span></button></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+{% import "_ui.html" as ui with context %}
+<form id="team-form" class="focus-column form-stack" hx-post="/projects/{{ project_id }}/setup/team" hx-target="#step" novalidate>
+  <button class="vh" name="action" value="stay" tabindex="-1" aria-hidden="true"></button>
+  <div>
+    <h1 class="focus-question">{{ t("setup.team.question") }}</h1>
+    <p class="focus-helper">{{ t("setup.team.helper") }}</p>
   </div>
+  <div class="autosave" hx-post="/projects/{{ project_id }}/setup/team" hx-trigger="change delay:500ms from:#team-form" hx-include="#team-form" hx-vals='{"action": "autosave"}' hx-target="#save-status"></div>
+  {% with oob=false %}{% include "_issues.html" %}{% endwith %}
+  {% if role_rows %}
+  <ul class="role-rows" aria-label="{{ t('setup.team.roles') }}">
+    {% for role in role_rows %}
+    <li class="card role-row">
+      <span class="role-name">{{ role.name }}</span>
+      <span class="stepper-input">
+        <button class="btn" name="action" value="less:{{ loop.index0 }}" aria-label="{{ t('setup.team.less', role=role.name) }}">{{ icon("minus", 16) }}</button>
+        <output aria-label="{{ t('setup.team.count', role=role.name) }}">{{ role.count }}</output>
+        <button class="btn" name="action" value="more:{{ loop.index0 }}" aria-label="{{ t('setup.team.more', role=role.name) }}">{{ icon("plus", 16) }}</button>
+      </span>
+      <details class="details">
+        <summary class="caption">{{ t("setup.team.cost", cost=t.decimal(role.cost)) }}</summary>
+        <div class="details-body field">
+          <label for="cost-{{ loop.index0 }}">{{ t("psettings.cost_of", role=role.name) }}</label>
+          <input id="cost-{{ loop.index0 }}" class="input-short" name="cost_{{ loop.index0 }}" inputmode="decimal" value="{{ t.decimal(role.cost) }}">
+        </div>
+      </details>
+    </li>
+    {% endfor %}
+  </ul>
   {% else %}
-  <p class="empty">{{ t("setup.team.empty") }}</p>
+  <p class="row-list-empty">{{ t("setup.team.empty") }}</p>
   {% endif %}
-  <datalist id="role-suggestions">{% for role in suggestions %}<option value="{{ role }}"></option>{% endfor %}</datalist>
-  <p><button class="btn" name="action" value="add"><span aria-hidden="true">+ </span>{{ t("setup.team.add") }}</button></p>
-  <details class="paste"{% if paste_open %} open{% endif %}>
-    <summary>{{ t("setup.team.paste") }}</summary>
+  <div class="card add-role">
     <div class="field">
-      <label for="paste">{{ t("setup.team.paste_label") }}</label>
-      <textarea id="paste" name="paste" rows="5" aria-describedby="paste-hint"></textarea>
-      <p class="hint" id="paste-hint">{{ t("setup.team.paste_hint") }}</p>
+      <label for="new_role">{{ t("setup.team.new_role") }}</label>
+      <input id="new_role" name="new_role" maxlength="120" list="role-suggestions" autocomplete="off" placeholder="{{ t('setup.team.role_example') }}">
     </div>
-    <button class="btn" name="action" value="paste">{{ t("setup.team.paste_add") }}</button>
+    <div class="field">
+      <label for="new_role_count">{{ t("setup.team.new_count") }}</label>
+      <input id="new_role_count" name="new_role_count" inputmode="numeric" value="1">
+    </div>
+    <button class="btn" name="action" value="add_role">{{ icon("plus", 16) }}{{ t("setup.team.add_role") }}</button>
+  </div>
+  <datalist id="role-suggestions">{% for role in suggestions %}<option value="{{ role }}"></option>{% endfor %}</datalist>
+  <details class="details"{% if people_open or marked or focus %} open{% endif %}>
+    <summary>{{ t("setup.team.names") }} <span class="optional">{{ t("common.optional") }}</span></summary>
+    <div class="details-body">
+      <p class="hint">{{ t("setup.team.names_hint") }}</p>
+      {% if team %}
+      <ul class="person-rows" aria-label="{{ t('setup.team.caption') }}">
+        {% for p in team %}
+        <li class="person-row{% if loop.index0 in marked %} has-issue{% endif %}">
+          <input type="hidden" name="person_key" value="{{ p.key }}">
+          <span class="person-fields">
+            <span class="field"><label class="vh" for="pn-{{ p.key }}">{{ t("setup.team.name_of", n=loop.index) }}</label><input id="pn-{{ p.key }}" name="person_name" value="{{ p.name }}" maxlength="120" autocomplete="off" placeholder="{{ t('setup.team.name') }}"{% if focus == p.key %} autofocus{% endif %}></span>
+            <span class="field"><label class="vh" for="pr-{{ p.key }}">{{ t("setup.team.role_of", n=loop.index) }}</label><input id="pr-{{ p.key }}" name="person_role" value="{{ p.role }}" maxlength="120" list="role-suggestions" autocomplete="off" placeholder="{{ t('setup.team.role') }}"></span>
+          </span>
+          <button class="btn btn-tertiary" name="action" value="remove:{{ p.key }}">{{ t("setup.remove") }}<span class="vh"> {{ p.name or loop.index }}</span></button>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="section-sub-sm"><button class="btn" name="action" value="add">{{ icon("plus", 16) }}{{ t("setup.team.add") }}</button></p>
+    </div>
   </details>
-  <div class="actions">
-    <span id="save-status" aria-live="polite"></span>
-    <button class="btn" name="action" value="back">{{ t("setup.back") }}</button>
-    <button class="btn btn-primary" name="action" value="next">{{ t("setup.next") }}</button>
+  <details class="details"{% if paste_open %} open{% endif %}>
+    <summary>{{ t("setup.team.paste") }}</summary>
+    <div class="details-body form-stack">
+      <div class="field">
+        <label for="paste">{{ t("setup.team.paste_label") }}</label>
+        <textarea id="paste" name="paste" rows="5" aria-describedby="paste-hint"></textarea>
+        <p class="hint" id="paste-hint">{{ t("setup.team.paste_hint") }}</p>
+      </div>
+      <p><button class="btn" name="action" value="paste">{{ t("setup.team.paste_add") }}</button></p>
+    </div>
+  </details>
+  <div class="focus-foot">
+    <button class="btn btn-lg" name="action" value="back">{{ icon("arrow-left", 16) }}{{ t("setup.back") }}</button>
+    <span id="save-status" class="grow" aria-live="polite"></span>
+    <button class="btn btn-primary btn-lg" name="action" value="next">{{ t("setup.next_to", step=t("setup.step.tasks")) }}{{ icon("arrow-right", 16) }}</button>
   </div>
 </form>

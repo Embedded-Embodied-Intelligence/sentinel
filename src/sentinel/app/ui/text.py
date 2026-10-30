@@ -105,7 +105,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "flash.undone": ("The automatic change was undone.", "Automatyczna zmiana została cofnięta."),
     "flash.deleted": ("The project was deleted.", "Projekt został usunięty."),
     "flash.settings_saved": ("Settings saved.", "Ustawienia zapisane."),
-    "flash.plan_ready": ("The plan is ready.", "Plan jest gotowy."),
+    "flash.plan_ready": ("Project created.", "Projekt utworzony."),
     "flash.discarded": (
         "The action is no longer possible; Sentinel is preparing a new recommendation.",
         "To działanie nie jest już możliwe; Sentinel przygotowuje nową rekomendację.",
@@ -115,7 +115,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "The tasks were imported — please check them below.",
         "Zadania zostały zaimportowane — sprawdź je poniżej.",
     ),
-    "job.plan": ("Building the plan…", "Układam plan…"),
+    "job.plan": (
+        "Calculating the chance of meeting the deadline… usually a few seconds.",
+        "Liczę szansę na dotrzymanie terminu… zwykle kilka sekund.",
+    ),
     "job.recommend": ("Sentinel is analysing the project…", "Sentinel analizuje projekt…"),
     "job.advance": ("Simulating the next days…", "Symuluję kolejne dni…"),
     "job.simulator": ("Preparing the example project…", "Przygotowuję przykładowy projekt…"),
@@ -345,8 +348,88 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "report.ready": ("The report is ready.", "Raport jest gotowy."),
     "report.open": ("Open the report (new tab)", "Otwórz raport (nowa karta)"),
     # ---- new-project wizard
-    "setup.eyebrow": ("New project", "Nowy projekt"),
     "setup.title": ("New project", "Nowy projekt"),
+    "setup.exit": ("Save and exit", "Zapisz i wyjdź"),
+    "setup.next_to": ("Next: {step}", "Dalej: {step}"),
+    "setup.more": (
+        "More settings (how sure the estimates are, absences)",
+        "Więcej ustawień (pewność szacunków, nieobecności)",
+    ),
+    "setup.name_example": (
+        "for example Online shop relaunch",
+        "np. Nowa odsłona sklepu internetowego",
+    ),
+    "setup.budget_unit": ("cost units (person-days)", "jednostek kosztu (osobodni)"),
+    "setup.basics.question": (
+        "What is the project called and when must it finish?",
+        "Jak nazywa się projekt i kiedy ma się skończyć?",
+    ),
+    "setup.basics.helper": (
+        "The deadline is the day by which everything must be ready. You can change it later.",
+        "Termin to dzień, do którego wszystko ma być gotowe. Możesz go później zmienić.",
+    ),
+    "setup.rule.ok": (
+        "The deadline is after the start ({weeks}).",
+        "Termin jest po dacie startu ({weeks}).",
+    ),
+    "setup.rule.weeks.one": ("{n} week", "{n} tydzień"),
+    "setup.rule.weeks.few": ("{n} weeks", "{n} tygodnie"),
+    "setup.rule.weeks.many": ("{n} weeks", "{n} tygodni"),
+    "setup.team.question": ("Who works on the project?", "Kto pracuje nad projektem?"),
+    "setup.team.helper": (
+        "Roles decide who can do which task. You can add names later.",
+        "Role decydują o tym, kto może wykonać które zadanie. Imiona możesz dopisać później.",
+    ),
+    "setup.team.roles": ("Roles in the team", "Role w zespole"),
+    "setup.team.less": ("One person fewer: {role}", "O jedną osobę mniej: {role}"),
+    "setup.team.more": ("One person more: {role}", "O jedną osobę więcej: {role}"),
+    "setup.team.count": ("People: {role}", "Liczba osób: {role}"),
+    "setup.team.cost": ("Daily cost: {cost}", "Koszt dnia pracy: {cost}"),
+    "setup.team.new_role": ("Role", "Rola"),
+    "setup.team.new_count": ("People", "Osoby"),
+    "setup.team.add_role": ("Add a role", "Dodaj rolę"),
+    "setup.team.role_example": ("for example Tester", "np. Tester"),
+    "setup.team.names": ("Names of people", "Imiona i nazwiska"),
+    "setup.team.names_hint": (
+        "Without names we call people after their role, for example “Tester 1”.",
+        "Bez imion nazwiemy osoby od roli, np. „Tester 1”.",
+    ),
+    "setup.tasks.question": ("What tasks have to be done?", "Jakie zadania trzeba wykonać?"),
+    "setup.tasks.helper": (
+        "Give each task its length in working days, the people it needs and what it waits for. "
+        "You can change everything until the first check-in.",
+        "Podaj czas trwania zadań w dniach roboczych, potrzebne osoby i to, na co czekają. "
+        "Wszystko możesz zmienić do pierwszego raportu.",
+    ),
+    "setup.tab.describe.text": (
+        "The AI turns a description into a list of tasks.",
+        "AI zamieni opis na listę zadań.",
+    ),
+    "setup.tab.import.text": (
+        "A template to fill in, then upload it.",
+        "Szablon do wypełnienia, potem wgraj plik.",
+    ),
+    "setup.tab.manual.text": (
+        "Add the tasks one by one in a table.",
+        "Dodaj zadania po kolei w tabeli.",
+    ),
+    "setup.tasks.people_row": ("People in task {n}", "Osoby w zadaniu {n}"),
+    "setup.tasks.menu": ("More for task {n}", "Więcej: zadanie {n}"),
+    "setup.review.title": ("Check before creating", "Sprawdź przed utworzeniem"),
+    "setup.review.change": ("Change", "Zmień"),
+    "setup.review.roles.one": ("{n} role", "{n} rola"),
+    "setup.review.roles.few": ("{n} roles", "{n} role"),
+    "setup.review.roles.many": ("{n} roles", "{n} ról"),
+    "setup.review.people.one": ("{n} person", "{n} osoba"),
+    "setup.review.people.few": ("{n} people", "{n} osoby"),
+    "setup.review.people.many": ("{n} people", "{n} osób"),
+    "setup.review.days.one": ("{n} working day in total", "łącznie {n} dzień roboczy"),
+    "setup.review.days.few": ("{n} working days in total", "łącznie {n} dni robocze"),
+    "setup.review.days.many": ("{n} working days in total", "łącznie {n} dni roboczych"),
+    "setup.describe.check": (
+        "Check that everything is right; you can correct it in the table.",
+        "Sprawdź, czy wszystko się zgadza; poprawisz to w tabeli.",
+    ),
     "setup.progress": ("Setup steps", "Kroki konfiguracji"),
     "setup.step.basics": ("Basics", "Podstawy"),
     "setup.step.team": ("Team", "Zespół"),
@@ -359,16 +442,15 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "setup.start": ("Start date", "Data rozpoczęcia"),
     "setup.deadline": ("Deadline", "Termin"),
     "setup.deadline_hint": (
-        "The last day by which all work should be done. Needed to see the chance of meeting it.",
-        "Ostatni dzień, do którego cała praca powinna być gotowa. Potrzebny, aby zobaczyć "
-        "szansę na jego dotrzymanie.",
+        "Needed to see the chance of meeting it.",
+        "Potrzebny, aby zobaczyć szansę na jego dotrzymanie.",
     ),
-    "setup.budget": ("Budget (optional)", "Budżet (opcjonalnie)"),
+    "setup.budget": ("Budget", "Budżet"),
     "setup.budget_hint": (
-        "In cost units: by default one cost unit is one person-day (one person working for a "
-        "day). Leave it empty and Sentinel estimates it from the tasks.",
-        "W jednostkach kosztu: domyślnie jedna jednostka to jeden osobodzień (dzień pracy jednej "
-        "osoby). Pozostaw puste, a Sentinel oszacuje go na podstawie zadań.",
+        "Empty = we estimate it from the tasks. One cost unit is one person-day (one person "
+        "working for a day).",
+        "Puste = oszacujemy z zadań. Jedna jednostka kosztu to jeden osobodzień (dzień pracy "
+        "jednej osoby).",
     ),
     "setup.estimation": ("How sure are the time estimates?", "Jak pewne są szacunki czasu?"),
     "setup.disruptions": (
@@ -408,25 +490,19 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "setup.next": ("Next", "Dalej"),
     "setup.back": ("Back", "Wstecz"),
-    "setup.finish": ("Create the plan", "Utwórz plan"),
+    "setup.finish": ("Create the plan and calculate the chance", "Utwórz plan i policz szansę"),
     "setup.remove": ("Remove", "Usuń"),
-    "setup.saved": ("Saved", "Zapisano"),
+    "setup.saved": ("Draft saved · {time}", "Szkic zapisany · {time}"),
     "setup.unsaved": ("Not saved yet", "Jeszcze nie zapisano"),
     "setup.issues_title": ("Please check:", "Sprawdź proszę:"),
-    "setup.team.lead": (
-        "Who works on the project? Give each person a role, e.g. “Developer” or “Tester”. The "
-        "roles decide who can do which task.",
-        "Kto pracuje nad projektem? Nadaj każdej osobie rolę, np. „Programista” lub „Tester”. "
-        "Role decydują o tym, kto może wykonać które zadanie.",
-    ),
     "setup.team.caption": ("Team", "Zespół"),
     "setup.team.name": ("Name", "Imię i nazwisko"),
     "setup.team.role": ("Role", "Rola"),
     "setup.team.name_of": ("Name of person {n}", "Imię i nazwisko osoby {n}"),
     "setup.team.role_of": ("Role of person {n}", "Rola osoby {n}"),
     "setup.team.empty": (
-        "No one yet. Add people one by one or paste a list.",
-        "Nikogo jeszcze nie ma. Dodaj osoby pojedynczo albo wklej listę.",
+        "No one yet. Add a role below or paste a list of people.",
+        "Nikogo jeszcze nie ma. Dodaj rolę poniżej albo wklej listę osób.",
     ),
     "setup.team.add": ("Add a person", "Dodaj osobę"),
     "setup.team.paste": ("Paste a list of people", "Wklej listę osób"),
@@ -442,9 +518,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "setup.team.paste_add": ("Add these people", "Dodaj te osoby"),
     "setup.tasks.ways": ("Ways to add tasks", "Sposoby dodawania zadań"),
-    "setup.tab.describe": ("Describe the project", "Opisz projekt"),
-    "setup.tab.import": ("Import a spreadsheet", "Importuj arkusz"),
-    "setup.tab.manual": ("Add manually", "Dodaj ręcznie"),
+    "setup.tab.describe": ("Describe in words", "Opisz słowami"),
+    "setup.tab.import": ("Import a spreadsheet", "Zaimportuj arkusz"),
+    "setup.tab.manual": ("Enter by hand", "Wpisz ręcznie"),
     "setup.describe.label": (
         "Describe the project in your own words",
         "Opisz projekt własnymi słowami",
@@ -482,42 +558,29 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "setup.import.file": ("Spreadsheet file (CSV)", "Plik arkusza (CSV)"),
     "setup.import.button": ("Import the tasks", "Importuj zadania"),
     "setup.import.failed": ("The file could not be imported:", "Nie udało się zaimportować pliku:"),
-    "setup.tasks.lead": (
-        "List the tasks with their length in working days, the people of each role they need and "
-        "the tasks they wait for.",
-        "Wypisz zadania z czasem trwania w dniach roboczych, liczbą osób z każdej roli i "
-        "zadaniami, na które czekają.",
-    ),
     "setup.tasks.caption": ("Tasks", "Zadania"),
     "setup.tasks.name": ("Task", "Zadanie"),
     "setup.tasks.days": ("Days", "Dni"),
     "setup.tasks.people": ("{role} (people)", "{role} (osoby)"),
-    "setup.tasks.after": ("After tasks (no.)", "Po zadaniach (nr)"),
+    "setup.tasks.after": ("After tasks", "Po zadaniach"),
     "setup.tasks.optional": ("Optional", "Opcjonalne"),
     "setup.tasks.name_of": ("Name of task {n}", "Nazwa zadania {n}"),
     "setup.tasks.days_of": ("Working days of task {n}", "Dni robocze zadania {n}"),
     "setup.tasks.people_of": ("{role}: people in task {n}", "{role}: liczba osób w zadaniu {n}"),
-    "setup.tasks.after_of": (
-        "Task {n} comes after the tasks numbered",
-        "Zadanie {n} następuje po zadaniach o numerach",
-    ),
+    "setup.tasks.after_of": ("Task {n} comes after", "Zadanie {n} następuje po"),
     "setup.tasks.optional_of": ("Task {n} is optional", "Zadanie {n} jest opcjonalne"),
     "setup.tasks.after_hint": (
-        "“After tasks”: the numbers of the tasks that must be finished first, e.g. “1, 3”. An "
-        "optional task can be dropped if time runs short; no task may wait for it.",
-        "„Po zadaniach”: numery zadań, które muszą się najpierw zakończyć, np. „1, 3”. Z zadania "
-        "opcjonalnego można zrezygnować, gdy brakuje czasu; żadne zadanie nie może na nie "
-        "czekać.",
+        "“After tasks”: the tasks that must finish first. An optional task can be dropped if "
+        "time runs short; no task may wait for it.",
+        "„Po zadaniach”: zadania, które muszą się najpierw zakończyć. Z zadania opcjonalnego "
+        "można zrezygnować, gdy brakuje czasu; żadne zadanie nie może na nie czekać.",
     ),
     "setup.tasks.empty": (
         "No tasks yet. Add them here, import a spreadsheet or describe the project.",
         "Nie ma jeszcze zadań. Dodaj je tutaj, zaimportuj arkusz albo opisz projekt.",
     ),
     "setup.tasks.add": ("Add a task", "Dodaj zadanie"),
-    "form.fix_below": (
-        "Please correct the fields marked below.",
-        "Popraw zaznaczone poniżej pola.",
-    ),
+    "form.fix_below": ("Please correct the fields marked below.", "Popraw pola oznaczone poniżej."),
     "form.name_required": ("Give the project a name.", "Podaj nazwę projektu."),
     "form.start_required": ("Give the start date.", "Podaj datę rozpoczęcia."),
     "form.date_invalid": ("This is not a valid date.", "To nie jest poprawna data."),

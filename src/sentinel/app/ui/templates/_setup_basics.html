@@ -1,51 +1,71 @@
-<form class="form" hx-post="{{ action }}" hx-target="#step" novalidate>
+{% import "_ui.html" as ui with context %}
+<form id="basics-form" class="focus-column form-stack" hx-post="{{ action }}" hx-target="#step" novalidate>
+  <div>
+    <h1 class="focus-question">{{ t("setup.basics.question") }}</h1>
+    <p class="focus-helper">{{ t("setup.basics.helper") }}</p>
+  </div>
   {% if errors %}
-  <div class="alert alert-error" role="alert"><p>{{ t("form.fix_below") }}</p></div>
+  {% call ui.callout("bad", t("form.fix_below"), ' role="alert" tabindex="-1" data-focus') %}
+    <ul>{% for name, message in errors.items() %}<li><a href="#{{ name }}">{{ message }}</a></li>{% endfor %}</ul>
+  {% endcall %}
   {% endif %}
   <div class="field">
     <label for="name">{{ t("setup.name") }}</label>
-    <input id="name" name="name" value="{{ basics.name }}" maxlength="120" autocomplete="off" required{% if errors.get('name') %} aria-invalid="true" aria-describedby="name-error"{% endif %}>
-    {% with name="name" %}{% include "_field_error.html" %}{% endwith %}
+    <input id="name" name="name" value="{{ basics.name }}" maxlength="120" autocomplete="off" required placeholder="{{ t('setup.name_example') }}"{% if errors.get('name') %} aria-invalid="true" aria-describedby="name-error"{% endif %}>
+    {{ ui.field_error("name", errors.get("name")) }}
   </div>
-  <div class="grid-2">
-    <div class="field">
-      <label for="start">{{ t("setup.start") }}</label>
-      <input id="start" name="start" type="date" value="{{ basics.start or '' }}" required{% if errors.get('start') %} aria-invalid="true" aria-describedby="start-error"{% endif %}>
-      {% with name="start" %}{% include "_field_error.html" %}{% endwith %}
+  <div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="start">{{ t("setup.start") }}</label>
+        <input id="start" name="start" type="date" lang="{{ t.lang }}" value="{{ basics.start or '' }}" required{% if errors.get('start') %} aria-invalid="true" aria-describedby="start-error"{% endif %}>
+        {{ ui.echo(t, "start", basics.start) }}
+        {{ ui.field_error("start", errors.get("start")) }}
+      </div>
+      <div class="field">
+        <label for="deadline">{{ t("setup.deadline") }}</label>
+        <input id="deadline" name="deadline" type="date" lang="{{ t.lang }}" value="{{ basics.deadline or '' }}" aria-describedby="deadline-hint{% if errors.get('deadline') %} deadline-error{% endif %}"{% if errors.get('deadline') %} aria-invalid="true"{% endif %}>
+        {{ ui.echo(t, "deadline", basics.deadline) }}
+        <p class="hint" id="deadline-hint">{{ t("setup.deadline_hint") }}</p>
+        {{ ui.field_error("deadline", errors.get("deadline")) }}
+      </div>
     </div>
-    <div class="field">
-      <label for="deadline">{{ t("setup.deadline") }}</label>
-      <input id="deadline" name="deadline" type="date" value="{{ basics.deadline or '' }}" aria-describedby="deadline-hint{% if errors.get('deadline') %} deadline-error{% endif %}"{% if errors.get('deadline') %} aria-invalid="true"{% endif %}>
-      <p class="hint" id="deadline-hint">{{ t("setup.deadline_hint") }}</p>
-      {% with name="deadline" %}{% include "_field_error.html" %}{% endwith %}
-    </div>
+    <p class="rule-check section-sub-sm" aria-live="polite" data-deadline-rule data-start="start" data-deadline="deadline" data-ok="{{ t('setup.rule.ok', weeks='{weeks}') }}" data-bad="{{ t('form.deadline_before_start') }}" data-one="{{ t('setup.rule.weeks.one', n='{n}') }}" data-few="{{ t('setup.rule.weeks.few', n='{n}') }}" data-many="{{ t('setup.rule.weeks.many', n='{n}') }}"></p>
   </div>
   <div class="field">
-    <label for="budget">{{ t("setup.budget") }}</label>
-    <input id="budget" name="budget" inputmode="decimal" value="{{ basics.budget if basics.budget is not none else '' }}" aria-describedby="budget-hint{% if errors.get('budget') %} budget-error{% endif %}"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
+    <label for="budget">{{ t("setup.budget") }} <span class="optional">{{ t("common.optional") }}</span></label>
+    <div class="input-suffix">
+      <input id="budget" name="budget" inputmode="decimal" value="{{ basics.budget if basics.budget is not none else '' }}" aria-describedby="budget-hint{% if errors.get('budget') %} budget-error{% endif %}"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
+      <span class="small">{{ t("setup.budget_unit") }}</span>
+    </div>
     <p class="hint" id="budget-hint">{{ t("setup.budget_hint") }}</p>
-    {% with name="budget" %}{% include "_field_error.html" %}{% endwith %}
+    {{ ui.field_error("budget", errors.get("budget")) }}
   </div>
-  <fieldset class="choices">
-    <legend>{{ t("setup.estimation") }}</legend>
-    {% for value in ("confident", "typical", "uncertain") %}
-    <label class="choice">
-      <input type="radio" name="estimation" value="{{ value }}"{% if basics.estimation == value %} checked{% endif %}>
-      <span><strong>{{ t("preset.estimation." ~ value) }}</strong><span class="hint">{{ t("preset.estimation." ~ value ~ ".hint") }}</span></span>
-    </label>
-    {% endfor %}
-  </fieldset>
-  <fieldset class="choices">
-    <legend>{{ t("setup.disruptions") }}</legend>
-    {% for value in ("calm", "typical", "turbulent") %}
-    <label class="choice">
-      <input type="radio" name="disruptions" value="{{ value }}"{% if basics.disruptions == value %} checked{% endif %}>
-      <span><strong>{{ t("preset.disruptions." ~ value) }}</strong><span class="hint">{{ t("preset.disruptions." ~ value ~ ".hint") }}</span></span>
-    </label>
-    {% endfor %}
-  </fieldset>
-  <div class="actions">
-    <a class="btn" href="{{ '/projects/' ~ project_id if project_id else '/' }}">{{ t("common.cancel") }}</a>
-    <button class="btn btn-primary" name="action" value="next">{{ t("setup.next") }}</button>
+  <details class="details">
+    <summary>{{ t("setup.more") }}</summary>
+    <div class="details-body form-stack">
+      <fieldset class="choices">
+        <legend>{{ t("setup.estimation") }}</legend>
+        {% for value in ("confident", "typical", "uncertain") %}
+        <label class="choice">
+          <input type="radio" name="estimation" value="{{ value }}"{% if basics.estimation == value %} checked{% endif %}>
+          <span><span class="choice-title">{{ t("preset.estimation." ~ value) }}</span><span class="choice-text">{{ t("preset.estimation." ~ value ~ ".hint") }}</span></span>
+        </label>
+        {% endfor %}
+      </fieldset>
+      <fieldset class="choices">
+        <legend>{{ t("setup.disruptions") }}</legend>
+        {% for value in ("calm", "typical", "turbulent") %}
+        <label class="choice">
+          <input type="radio" name="disruptions" value="{{ value }}"{% if basics.disruptions == value %} checked{% endif %}>
+          <span><span class="choice-title">{{ t("preset.disruptions." ~ value) }}</span><span class="choice-text">{{ t("preset.disruptions." ~ value ~ ".hint") }}</span></span>
+        </label>
+        {% endfor %}
+      </fieldset>
+    </div>
+  </details>
+  <div class="focus-foot">
+    <span class="grow"></span>
+    <button class="btn btn-primary btn-lg" name="action" value="next">{{ t("setup.next_to", step=t("setup.step.team")) }}{{ icon("arrow-right", 16) }}</button>
   </div>
 </form>

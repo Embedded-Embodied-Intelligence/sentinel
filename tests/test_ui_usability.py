@@ -105,7 +105,7 @@ def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
             expect(page.get_by_label("Imię i nazwisko osoby 5")).to_have_value("Ewa Zielińska")
             click(task, page.get_by_role("button", name="Dalej"))
             page.wait_for_url(re.compile(r"/setup/tasks$"))
-            click(task, page.get_by_role("link", name="Importuj arkusz"))
+            click(task, page.get_by_role("link", name="Zaimportuj arkusz"))
             page.get_by_label("Plik arkusza (CSV)").set_input_files(str(CSV))
             task.clicks += 1  # choosing the file
             click(task, page.get_by_role("button", name="Importuj zadania"))
