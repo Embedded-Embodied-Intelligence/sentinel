@@ -479,6 +479,7 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
         limit = args.limit or len(CHECKINS)
         away: dict[str, tuple[date, date | None]] = {}
         last = add_workdays(START, -1)
+        grown = False
         for number, when in enumerate(CHECKINS[:limit], start=1):
             label = f"c{number}"
             page = d.page
@@ -507,15 +508,16 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
                 )
                 away["Cezary Wójcik"] = (first_away, date(2026, 10, 2))
                 events.append("nieobecność: Cezary Wójcik do 2 paź")
-            if number == 4:  # a task grows
-                running = [
-                    t
-                    for t in view["tasks"]
-                    if team[t["key"]].started is not None and team[t["key"]].finished is None
-                ]
+            running = [
+                t
+                for t in view["tasks"]
+                if t["state"] in ("in_progress", "paused") and team[t["key"]].finished is None
+            ]
+            if number >= 4 and not grown and running:  # a task grows, the first time one can
                 grower = max(running, key=lambda t: t["duration"])
                 add_growth(page, grower["name"], 4)
                 team[grower["key"]].grown = 4
+                grown = True
                 events.append(f"zadanie urosło: {grower['name']} +4 dni")
             if number == 5:  # new work comes up
                 add_new_task(
@@ -593,6 +595,16 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
                 undone = True
                 d.moment(f"{label} po cofnięciu")
                 d.shot(f"{label}_after_undo", full=True)
+                # After the undo the manager wants to decide everything from now on.
+                page.goto(f"{base}/projects/{project}/settings")
+                page.wait_for_load_state("networkidle")
+                page.get_by_label(re.compile("Tylko doradzaj")).check()
+                d.shot(f"{label}_settings_unsaved", full=True)
+                page.get_by_role("button", name="Zapisz zmiany").click()
+                page.wait_for_url(re.compile(r"flash=settings_saved"), timeout=WAIT)
+                page.wait_for_load_state("networkidle")
+                toast = " ".join(page.locator("#flash").inner_text().split())
+                d.note(kind="settings", autonomy="Tylko doradzaj", toast=toast)
         # the exports and the history
         page = d.page
         page.goto(f"{base}/projects/{project}/settings")
@@ -610,14 +622,11 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
             rows=len(lines) - 1,
             header=lines[0],
         )
-        page.get_by_role("button", name="Przygotuj").click()
-        report = page.get_by_role("link", name="Otwórz raport")
-        report.wait_for(timeout=WAIT)
-        d.shot("report_ready")
         with context.expect_page() as popup:
-            report.click()
+            page.get_by_role("link", name="Otwórz").first.click()
         popup.value.wait_for_load_state("load")
         d.shot("report", full=True, page=popup.value)
+        d.phone("report", popup.value.url.replace(base, ""))
         d.note(kind="report", title=popup.value.title(), url=popup.value.url.split("/api")[-1])
         popup.value.close()
         page.goto(f"{base}/projects/{project}/history")
@@ -710,7 +719,7 @@ def run2(args: argparse.Namespace, browser: Any) -> None:
             page.goto(base + "/simulator")
             page.wait_for_load_state("networkidle")
             d.shot(f"{name}_setup")
-            page.get_by_label(re.compile(f"^{word} przykładowy projekt")).check()
+            page.get_by_label(re.compile(f"{word} przykładowy projekt")).check()
             began = time.perf_counter()
             page.get_by_role("button", name="Rozpocznij symulację").click()
             page.wait_for_url(re.compile(r"/projects/[\w-]+$"), timeout=WAIT)
@@ -756,14 +765,11 @@ def run2(args: argparse.Namespace, browser: Any) -> None:
                     for r in page.locator("table.compare tr").all_inner_texts()
                 ],
             )
-            page.get_by_role("button", name="Pokaż raport").click()
-            report = page.get_by_role("link", name="Otwórz raport")
-            report.wait_for(timeout=WAIT)
-            d.shot(f"{name}_report_ready")
             with context.expect_page() as popup:
-                report.click()
+                page.get_by_role("link", name="Pokaż raport").click()
             popup.value.wait_for_load_state("load")
             d.shot(f"{name}_report", full=True, page=popup.value)
+            d.phone(f"{name}_report", popup.value.url.replace(base, ""))
             d.note(kind="report", example=name, title=popup.value.title())
             popup.value.close()
         (out / "run2-log.json").write_text(

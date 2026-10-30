@@ -20,7 +20,7 @@ from sentinel.app.messages import render
 from sentinel.app.services import JobView
 from sentinel.app.simulator import PolicyRun, SimSide, Simulation, SimulatorSpec
 from sentinel.app.ui.charts import Gantt, sim_gantt
-from sentinel.app.ui.core import Ui, chance_level
+from sentinel.app.ui.core import STATIC_DIR, Ui, chance_level
 from sentinel.app.ui.forms import Form
 from sentinel.app.ui.pages import job_progress
 from sentinel.app.ui.text import Texts
@@ -439,6 +439,41 @@ def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
         verdict=verdict(sides, texts) if view.finished else "",
         compare_rows=compare_rows(sides, texts) if view.finished else [],
         continue_run=request.query_params.get("run") == "end",
+    )
+
+
+def simulation_report(ui: Ui, request: Request, project_id: str) -> Response:
+    """A finished simulation's report for people (QA-08): self-contained, to print or send."""
+    services = ui.services
+    session = ui.session(request)
+    texts = ui.texts(request)
+    target = f"/projects/{project_id}"
+    if services.store.project_jobs(session, project_id) or not services.simulation_ready(
+        session, project_id
+    ):
+        return ui.redirect(request, target)  # the page shows the progress
+    view = services.simulator(session, project_id, texts.lang)
+    if not view.finished:
+        return ui.redirect(request, target)
+
+    def read(simulation: Simulation) -> tuple[list[Entry], Gantt]:
+        run = simulation.main
+        tasks = names.task_names(run.state.observe(), simulation.world.spec.names_seed, texts.lang)
+        return timeline(run, texts), sim_gantt(run, tasks, texts)
+
+    entries, chart = services.with_simulation(session, project_id, read)
+    sides = [view.main] + ([view.compare] if view.compare is not None else [])
+    return ui.page(
+        request,
+        "sim_report.html",
+        sim=view,
+        sides=sides,
+        today=date.today(),
+        css=(STATIC_DIR / "sentinel.css").read_text(encoding="utf-8"),
+        verdict=verdict(sides, texts),
+        compare_rows=compare_rows(sides, texts),
+        chart=ui.render(request, "_gantt.html", {"g": chart}),
+        timeline=entries,
     )
 
 

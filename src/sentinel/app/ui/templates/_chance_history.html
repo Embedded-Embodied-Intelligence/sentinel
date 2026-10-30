@@ -7,17 +7,7 @@
   </div>
 </div>
 <div class="view-chart">
-  <svg class="chance-chart" width="100%" height="140" role="img" aria-label="{{ t('history.chance_desc', first=points[0].value, last=points[-1].value) }}">
-    {% for mark in (0, 50, 100) %}<line class="grid" x1="0" x2="100%" y1="{{ (6 + (100 - mark) * 0.74) | round(2) }}%" y2="{{ (6 + (100 - mark) * 0.74) | round(2) }}%"/>{% endfor %}
-    <line class="target" x1="0" x2="100%" y1="{{ (6 + 20 * 0.74) | round(2) }}%" y2="{{ (6 + 20 * 0.74) | round(2) }}%"/>
-    {% for point in points %}
-    {% if not loop.first %}<line class="line" x1="{{ loop.previtem.x }}%" y1="{{ loop.previtem.y }}%" x2="{{ point.x }}%" y2="{{ point.y }}%"/>{% endif %}
-    {% endfor %}
-    {% for point in points %}<circle class="point" cx="{{ point.x }}%" cy="{{ point.y }}%" r="5"><title>{{ point.label }}: {{ point.value }}</title></circle>{% endfor %}
-    <text class="value" x="{{ points[-1].x }}%" y="{{ [points[-1].y - 6, 9] | max }}%" text-anchor="end">{{ points[-1].value }}</text>
-    <text class="tick" x="{{ points[0].x }}%" y="98%">{{ points[0].label }}</text>
-    {% if points | length > 1 %}<text class="tick" x="{{ points[-1].x }}%" y="98%" text-anchor="end">{{ points[-1].label }}</text>{% endif %}
-  </svg>
+  {% include "_chance_chart.html" %}
 </div>
 <div class="view-table">
   <div class="table-wrap">

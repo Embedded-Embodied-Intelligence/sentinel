@@ -112,7 +112,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "job.recommend": ("Sentinel is analysing the project…", "Sentinel analizuje projekt…"),
     "job.advance": ("Simulating the next days…", "Symuluję kolejne dni…"),
     "job.simulator": ("Preparing the example project…", "Przygotowuję przykładowy projekt…"),
-    "job.cockpit": ("Writing the report…", "Przygotowuję raport…"),
     "job.extract": ("The AI is reading the description…", "AI czyta opis…"),
     "job.message": ("The AI is reading the message…", "AI czyta wiadomość…"),
     "job.llm_test": ("Testing the connection…", "Sprawdzam połączenie…"),
@@ -392,8 +391,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "The model {model} answered. The connection works.",
         "Model {model} odpowiedział. Połączenie działa.",
     ),
-    "report.ready": ("The report is ready.", "Raport jest gotowy."),
-    "report.open": ("Open the report (new tab)", "Otwórz raport (nowa karta)"),
+    "report.open": ("Open", "Otwórz"),
+    "report.title": ("Project report", "Raport projektu"),
+    "report.made": ("prepared {date}", "przygotowano {date}"),
+    "report.file": ("report.html", "raport.html"),
     # ---- new-project wizard
     "setup.title": ("New project", "Nowy projekt"),
     "setup.exit": ("Save and exit", "Zapisz i wyjdź"),
@@ -766,10 +767,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Szansa na zmieszczenie się w budżecie: {p}",
     ),
     "overview.forecast_note": (
-        "Calculated on {futures} simulated futures from today's status. The chance is the "
-        "share of them that finish by the deadline.",
-        "Policzone na {futures} symulowanych scenariuszach od dzisiejszego stanu. Szansa to "
-        "odsetek scenariuszy, które kończą się przed terminem.",
+        "Calculated on {futures} simulated futures from today's status, if the plan stays as "
+        "it is. The chance is the share of them that finish by the deadline.",
+        "Policzone na {futures} symulowanych scenariuszach od dzisiejszego stanu, gdyby plan "
+        "się już nie zmieniał. Szansa to odsetek scenariuszy, które kończą się przed terminem.",
     ),
     "overview.driver": (
         "The task “{task}” decides the deadline in {count} of 10 late scenarios.",
@@ -1249,7 +1250,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "psettings.reset": ("Undo the changes", "Cofnij zmiany"),
     "psettings.save": ("Save the changes", "Zapisz zmiany"),
     "psettings.download": ("Download", "Pobierz"),
-    "psettings.report_row": ("Report for the team (HTML)", "Raport dla zespołu (HTML)"),
+    "psettings.report_row": (
+        "Report for the team (HTML, one page to print or send)",
+        "Raport dla zespołu (HTML, jedna strona do druku lub wysłania)",
+    ),
     "autonomy.0.alone": ("nothing.", "nic."),
     "autonomy.0.asks": ("every change.", "każdą zmianę."),
     "autonomy.1.alone": ("task dates.", "daty zadań."),
@@ -1287,7 +1291,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "The whole project (JSON, to import later)",
         "Cały projekt (JSON, do późniejszego importu)",
     ),
-    "psettings.report": ("Prepare", "Przygotuj"),
     "psettings.delete": ("Delete the project", "Usuń projekt"),
     "psettings.delete_text": (
         "This removes the plan, the check-ins and the history. It cannot be undone.",
@@ -1313,7 +1316,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Odtworzenie przebiegu po restarcie serwera trwa tyle co jego symulacja.",
     ),
     "sim.day_of": ("Day {day} of about {total}", "Dzień {day} z ok. {total}"),
-    "sim.chance_from": ("from Sentinel's analysis of {date}", "z analizy Sentinela z {date}"),
+    "sim.chance_from": (
+        "from Sentinel's analysis of {date}, if the plan stayed as it was",
+        "z analizy Sentinela z {date}, gdyby plan się już nie zmieniał",
+    ),
     "sim.chance_none": (
         "Sentinel has not analysed this project yet.",
         "Sentinel jeszcze nie analizował tego projektu.",

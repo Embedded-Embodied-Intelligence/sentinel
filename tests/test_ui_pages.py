@@ -359,6 +359,33 @@ def test_the_toast_of_a_check_in_survives_the_analysis_that_follows(site: Site) 
         site.services.store.update_job(running.id, status="done")
 
 
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_report_is_for_people_and_travels_alone(site: Site, language: str) -> None:
+    """QA-08: the report used to be the research cockpit, with ISO dates, 0.09 for 9 % and
+    internal labels. It now obeys the wording rules (`_get` checks them), needs nothing from the
+    server once saved, and tells what the pages tell."""
+    for name in ("planned", "open", "approved", "auto", "calm", "undated"):
+        page = _get(site, f"/projects/{site.ids[name]}/report.html", language)
+        assert page.startswith("<!doctype html>") and "--primary" in page  # its own styles
+        for outside in ("<script", "<link", "hx-", 'src="', 'href="/'):
+            assert outside not in page, (name, outside)
+        assert "gantt-plot" in page and "timeline" in page
+    open_ = _get(site, f"/projects/{site.ids['open']}/report.html", language)
+    assert "Cleo" in open_ and "→" in open_ and "headline-number" in open_
+    settings = _get(site, f"/projects/{site.ids['open']}/settings", language)
+    assert f"/projects/{site.ids['open']}/report.html" in settings
+    assert "cockpit" not in settings
+    draft = site.client.get(f"/projects/{site.ids['draft']}/report.html", follow_redirects=False)
+    assert draft.status_code == 303
+    assert site.client.get("/projects/none/report.html").status_code == 404
+
+
+def test_the_forecast_says_it_assumes_the_plan_stays_as_it_is(site: Site) -> None:
+    """QA-09: 0 % for weeks and then on time, with no word that a forecast keeps the plan."""
+    page = _get(site, f"/projects/{site.ids['open']}/forecast", "pl", htmx=True)
+    assert "gdyby plan się już nie zmieniał" in page
+
+
 def test_an_import_without_a_file_asks_for_one(site: Site) -> None:
     draft = _create(
         site.client, site.headers, ProjectDefinition(name="Import", start=date(2026, 11, 2))
@@ -554,12 +581,6 @@ def test_language_switch_ask_settings_report_and_delete(site: Site) -> None:
     definition = client.get(f"/api/projects/{pid}").json()["definition"]
     assert definition["name"] == "Calm project" and definition["settings"]["autonomy"] == 1
     assert definition["roles"] == [{"role": "Developer", "daily_cost": 2.0}]
-    report = client.post(f"/projects/{pid}/report", headers=headers)
-    job = re.search(r'hx-get="(/jobs/[^"]+)"', report.text)
-    assert job is not None
-    ready = client.get(job.group(1).replace("&amp;", "&"), headers=headers)
-    link = re.search(r'href="(/api/jobs/[^"]+/cockpit.html)"', ready.text)
-    assert link is not None and "<svg" in client.get(link.group(1)).text
     gone = client.post(f"/projects/{ids['draft']}/delete", headers=headers)
     assert gone.headers["HX-Redirect"] == "/?flash=deleted"
     assert client.get(f"/projects/{ids['draft']}/setup/team").status_code == 404

@@ -1,0 +1,11 @@
+<ol class="timeline">
+  {% for entry in timeline %}
+  <li class="tl-item tl-{{ entry.kind }}">
+    <span class="tl-node">{{ icon(entry.icon, 14) }}</span>
+    <div>
+      <p class="tl-meta">{{ entry.when }} · {{ t("sim.kind." ~ entry.kind) }}</p>
+      <p class="tl-title">{{ entry.text }}</p>
+    </div>
+  </li>
+  {% endfor %}
+</ol>

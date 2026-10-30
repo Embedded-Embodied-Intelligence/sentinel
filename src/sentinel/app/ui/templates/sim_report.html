@@ -1,0 +1,27 @@
+{% with name=sim.name %}{% include "_report_head.html" %}{% endwith %}
+<body class="report">
+<main class="report-page">
+  <header class="page-head">
+    <p class="overline">{{ t("report.title") }} · {{ t("report.made", date=t.date_long(today)) }}</p>
+    <h1>{{ sim.name }}</h1>
+    <p class="meta">{{ t("sim.size." ~ sim.spec.set_name) }} · {{ t("preset.disruptions." ~ sim.spec.disruptions) }} · {{ t("sim.managed_by", manager=t("sim.manager." ~ sim.spec.policy) if sim.spec.policy in ("sentinel", "no_reaction") else sim.spec.policy) }}</p>
+  </header>
+  <section aria-labelledby="compare-title">
+    <h2 id="compare-title" class="overline group-title">{{ t("sim.compare_title") }}</h2>
+    {% include "_sim_compare.html" %}
+    <p class="caption section-sub-sm">{{ t("sim.settings_note") }} {{ t("cost.note.person_days") }}</p>
+  </section>
+  <section class="section" aria-labelledby="plan-title">
+    <h2 id="plan-title" class="group-title">{{ t("overview.plan_title") }}</h2>
+    <div class="card">
+      {% with with_away=false, with_window=false %}{% include "_gantt_legend.html" %}{% endwith %}
+      {{ chart | safe }}
+    </div>
+  </section>
+  <section class="section" aria-labelledby="timeline-title">
+    <h2 id="timeline-title" class="group-title">{{ t("sim.timeline_title") }}</h2>
+    {% include "_sim_timeline.html" %}
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{# How a finished simulation ended, against nobody reacting on the same events. #}
+<p class="verdict">{{ verdict }}</p>
+<div class="compare-card section-sub">
+  <table class="compare">
+    <caption class="vh">{{ t("sim.compare_title") }}</caption>
+    <thead><tr><th scope="col">{{ t("sim.col.measure") }}</th>{% for side in sides %}<th scope="col" class="num">{{ t("sim.manager." ~ side.policy) if side.policy in ("sentinel", "no_reaction") else side.policy }}</th>{% endfor %}{% if sides | length > 1 %}<th scope="col" class="num">{{ t("sim.col.difference") }}</th>{% endif %}</tr></thead>
+    <tbody>
+      {% for row in compare_rows %}
+      <tr>
+        <th scope="row">{{ row.label }}</th>
+        {% for value in row.values %}<td class="num" data-label="{{ t('sim.manager.' ~ sides[loop.index0].policy) if sides[loop.index0].policy in ('sentinel', 'no_reaction') else sides[loop.index0].policy }}">{{ value }}</td>{% endfor %}
+        {% if sides | length > 1 %}<td class="num" data-label="{{ t('sim.col.difference') }}">{% if row.tone %}<span class="diff-cell {{ row.tone }}">{{ icon("arrow-up" if row.tone == "good" else "arrow-down", 14) }}<span class="vh">{{ t("chip.better" if row.tone == "good" else "chip.worse") }}: </span>{{ row.difference }}</span>{% else %}{{ row.difference }}{% endif %}</td>{% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

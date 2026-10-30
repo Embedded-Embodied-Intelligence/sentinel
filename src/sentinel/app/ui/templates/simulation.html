@@ -11,24 +11,9 @@
 {% if sim.finished %}
 <section aria-labelledby="compare-title">
   <h2 id="compare-title" class="overline group-title">{{ t("sim.compare_title") }}</h2>
-  <p class="verdict">{{ verdict }}</p>
-  <div class="compare-card section-sub">
-    <table class="compare">
-      <caption class="vh">{{ t("sim.compare_title") }}</caption>
-      <thead><tr><th scope="col">{{ t("sim.col.measure") }}</th>{% for side in sides %}<th scope="col" class="num">{{ t("sim.manager." ~ side.policy) if side.policy in ("sentinel", "no_reaction") else side.policy }}</th>{% endfor %}{% if sides | length > 1 %}<th scope="col" class="num">{{ t("sim.col.difference") }}</th>{% endif %}</tr></thead>
-      <tbody>
-        {% for row in compare_rows %}
-        <tr>
-          <th scope="row">{{ row.label }}</th>
-          {% for value in row.values %}<td class="num" data-label="{{ t('sim.manager.' ~ sides[loop.index0].policy) if sides[loop.index0].policy in ('sentinel', 'no_reaction') else sides[loop.index0].policy }}">{{ value }}</td>{% endfor %}
-          {% if sides | length > 1 %}<td class="num" data-label="{{ t('sim.col.difference') }}">{% if row.tone %}<span class="diff-cell {{ row.tone }}">{{ icon("arrow-up" if row.tone == "good" else "arrow-down", 14) }}<span class="vh">{{ t("chip.better" if row.tone == "good" else "chip.worse") }}: </span>{{ row.difference }}</span>{% else %}{{ row.difference }}{% endif %}</td>{% endif %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% include "_sim_compare.html" %}
   <div class="btn-row section-sub">
-    <form hx-post="/projects/{{ sim.id }}/report" hx-target="#report-area"><button class="btn">{{ t("sim.report") }}</button></form>
+    <a class="btn" href="/projects/{{ sim.id }}/report.html" target="_blank" rel="noopener">{{ t("sim.report") }}</a>
     <form hx-post="/simulator" hx-target="#report-area">
       <input type="hidden" name="example" value="{{ example_key }}">
       <input type="hidden" name="disruptions" value="{{ sim.spec.disruptions }}">
@@ -86,17 +71,7 @@
   <section class="card sim-timeline" aria-labelledby="timeline-title" tabindex="0">
     <h2 id="timeline-title" class="section-title-sm group-title">{{ t("sim.timeline_title") }}</h2>
     {% if timeline %}
-    <ol class="timeline">
-      {% for entry in timeline %}
-      <li class="tl-item tl-{{ entry.kind }}">
-        <span class="tl-node">{{ icon(entry.icon, 14) }}</span>
-        <div>
-          <p class="tl-meta">{{ entry.when }} · {{ t("sim.kind." ~ entry.kind) }}</p>
-          <p class="tl-title">{{ entry.text }}</p>
-        </div>
-      </li>
-      {% endfor %}
-    </ol>
+    {% include "_sim_timeline.html" %}
     {% else %}<p class="row-list-empty">{{ t("sim.timeline_empty") }}</p>{% endif %}
   </section>
 </div>

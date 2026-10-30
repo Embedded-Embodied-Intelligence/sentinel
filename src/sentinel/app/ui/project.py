@@ -26,9 +26,9 @@ from sentinel.app.events import (
 from sentinel.app.live import LiveProject
 from sentinel.app.models import CheckIn
 from sentinel.app.planning import half_up
-from sentinel.app.services import JobView
+from sentinel.app.services import ChanceStep, JobView
 from sentinel.app.ui.charts import chance_points, forecast_strip, live_gantt
-from sentinel.app.ui.core import Ui, chance_level, is_htmx
+from sentinel.app.ui.core import STATIC_DIR, Ui, chance_level, is_htmx
 from sentinel.app.ui.forms import Form, read_checkin, read_settings, team_roles
 from sentinel.app.ui.pages import job_progress, trend
 from sentinel.app.ui.text import Texts
@@ -323,6 +323,11 @@ def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Thr
     return found
 
 
+def level_of(summary: ForecastSummary | None) -> str:
+    """The status word of a forecast."""
+    return chance_level(None if summary is None else summary.forecast.p_on_time)
+
+
 def checked_key(rec: RecommendationView) -> str:
     """What the overview says when Sentinel keeps the plan (QA-04): "no change is needed" only
     while the deadline is on track; otherwise no option was clearly better, another message."""
@@ -521,6 +526,30 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
     return items
 
 
+def chance_values(
+    view: ProjectView, steps: list[ChanceStep], current: float | None
+) -> list[tuple[date, float]]:
+    """The points of the chance over time: the plan, every check-in, and now if it differs."""
+    values: list[tuple[date, float]] = []
+    if steps:
+        first = steps[0].before
+        if first is not None:
+            values.append((view.definition.start, first))
+        values += [(step.date, step.after) for step in steps]
+        if current is not None and current != steps[-1].after:
+            values.append((view.as_of, current))
+    return values
+
+
+def chance_chips(steps: list[ChanceStep], texts: Texts) -> dict[int, str]:
+    """Each check-in's change of the chance, by its event."""
+    return {
+        step.seq: texts("history.chip", before=texts.pct(step.before), after=texts.pct(step.after))
+        for step in steps
+        if step.before is not None
+    }
+
+
 def checkin_item(
     checkin: CheckIn,
     project: LiveProject,
@@ -615,6 +644,51 @@ def router(ui: Ui) -> APIRouter:
         model = live_gantt(project, texts, date.today(), window, threats)
         return ui.render(request, "_gantt.html", {"g": model})
 
+    def forecast_values(
+        request: Request,
+        view: ProjectView,
+        project: LiveProject,
+        summary: ForecastSummary | None,
+    ) -> dict[str, Any]:
+        """What the overview and the report show of a forecast."""
+        texts = ui.texts(request)
+        calendar = project.calendar
+        f = None if summary is None else summary.forecast
+        values: dict[str, Any] = {}
+        if f is not None:
+            dated = [
+                (view.as_of, texts("strip.today")),
+                (f.p50, texts("strip.likely", date=texts.day_month(f.p50))),
+            ]
+            if f.deadline is not None:
+                dated.append(
+                    (f.deadline, texts("strip.deadline", date=texts.day_month(f.deadline)))
+                )
+            dated.append((f.p90, texts("strip.bad", date=texts.day_month(f.p90))))
+            values = {
+                "strip": forecast_strip(view.as_of, f.p50, f.p90, f.deadline, calendar),
+                "strip_labels": [label for _, label in sorted(dated, key=lambda item: item[0])],
+                "likely_gap": finish_gap(f.p50, f.deadline, calendar, texts),
+                "bad_gap": finish_gap(f.p90, f.deadline, calendar, texts, worst=True),
+                "threats": threats_of(f, texts) if f.late else [],
+                "chart": chart_html(request, project, f),
+            }
+        checkins = view.checkins
+        since = (
+            texts("trend.since_checkin", date=texts.date(checkins[-2].date))
+            if len(checkins) > 1
+            else texts("trend.since_plan")
+        )
+        return {
+            "summary": summary,
+            "view": view,
+            "failed": None,
+            "level": level_of(summary),
+            "delta": trend(summary),
+            "since": since,
+            **values,
+        }
+
     @routes.get("/projects/{project_id}")
     def overview(request: Request, project_id: str) -> Response:
         session = ui.session(request)
@@ -683,49 +757,14 @@ def router(ui: Ui) -> APIRouter:
                 level="neutral",
                 delta=None,
             )
-        texts = ui.texts(request)
         state = services.state(ui.session(request), project_id)
-        calendar = state.project.calendar
-        f = None if summary is None else summary.forecast
-        p = None if f is None else f.p_on_time
-        values: dict[str, Any] = {}
-        if f is not None:
-            dated = [
-                (view.as_of, texts("strip.today")),
-                (f.p50, texts("strip.likely", date=texts.day_month(f.p50))),
-            ]
-            if f.deadline is not None:
-                dated.append(
-                    (f.deadline, texts("strip.deadline", date=texts.day_month(f.deadline)))
-                )
-            dated.append((f.p90, texts("strip.bad", date=texts.day_month(f.p90))))
-            values = {
-                "strip": forecast_strip(view.as_of, f.p50, f.p90, f.deadline, calendar),
-                "strip_labels": [label for _, label in sorted(dated, key=lambda item: item[0])],
-                "likely_gap": finish_gap(f.p50, f.deadline, calendar, texts),
-                "bad_gap": finish_gap(f.p90, f.deadline, calendar, texts, worst=True),
-                "threats": threats_of(f, texts),
-                "chart": chart_html(request, state.project, f),
-            }
-        checkins = view.checkins
-        since = (
-            texts("trend.since_checkin", date=texts.date(checkins[-2].date))
-            if len(checkins) > 1
-            else texts("trend.since_plan")
-        )
         toast = request.query_params.get("toast", "")
         return ui.page(
             request,
             "_forecast.html",
-            summary=summary,
-            view=view,
-            failed=None,
-            level=chance_level(p),
-            delta=trend(summary),
-            since=since,
-            nav_level="decision" if state.open is not None else chance_level(p),
-            toast=toast_text(toast, summary, texts),
-            **values,
+            **forecast_values(request, view, state.project, summary),
+            nav_level="decision" if state.open is not None else level_of(summary),
+            toast=toast_text(toast, summary, ui.texts(request)),
         )
 
     @routes.post("/projects/{project_id}/ask")
@@ -932,31 +971,11 @@ def router(ui: Ui) -> APIRouter:
         texts = ui.texts(request)
         view = live(request, project_id)
         steps, current = services.chance_history(ui.session(request), project_id)
-        values: list[tuple[date, float]] = []
-        if steps:
-            first = steps[0].before
-            if first is not None:
-                values.append((view.definition.start, first))
-            values += [(step.date, step.after) for step in steps]
-            if current is not None and current != steps[-1].after:
-                values.append((view.as_of, current))
-        chips = [
-            (
-                step.seq,
-                texts(
-                    "history.chip",
-                    before=texts.pct(step.before),
-                    after=texts.pct(step.after),
-                ),
-            )
-            for step in steps
-            if step.before is not None
-        ]
         return ui.page(
             request,
             "_chance_history.html",
-            points=chance_points(values, texts),
-            chips=chips,
+            points=chance_points(chance_values(view, steps, current), texts),
+            chips=list(chance_chips(steps, texts).items()),
         )
 
     # ---- settings, exports, deletion
@@ -996,13 +1015,47 @@ def router(ui: Ui) -> APIRouter:
         )
         return ui.redirect(request, f"/projects/{project_id}/settings", flash="settings_saved")
 
-    @routes.post("/projects/{project_id}/report")
+    @routes.get("/projects/{project_id}/report.html")
     def report(request: Request, project_id: str) -> Response:
-        job = services.cockpit(ui.session(request), project_id, ui.language(request))
-        return _job(request, job, "job.cockpit")
+        """The project's report for people (QA-08): one self-contained page to read, print, save
+        or send, with what the pages show. The research cockpit stays at the API (WP8)."""
+        session = ui.session(request)
+        row = services.store.project(session, project_id)
+        if row is None:
+            raise AppError("project_not_found", "not_found")
+        if row.kind == "simulator":
+            from sentinel.app.ui.sim import simulation_report
 
-    def _job(request: Request, job: JobView, label: str) -> Response:
-        return job_progress(ui, request, job, label)
+            return simulation_report(ui, request, project_id)
+        view = live(request, project_id)
+        if not view.has_plan:
+            return ui.redirect(request, f"/projects/{project_id}")
+        texts = ui.texts(request)
+        state = services.state(session, project_id)
+        summary = services.forecast_summary(session, project_id, ui.language(request))
+        values = forecast_values(request, view, state.project, summary)
+        if summary is None:
+            values["chart"] = chart_html(request, state.project)
+            values["threats"] = []
+        steps, current = services.chance_history(session, project_id)
+        items = history(ui, request, project_id, view)
+        chips = chance_chips(steps, texts)
+        for item in items:
+            item.href = None  # no links back into the application from a page that travels
+            if item.seq in chips:
+                item.chip = chips[int(item.seq or 0)]
+        return ui.page(
+            request,
+            "report.html",
+            **values,
+            today=date.today(),
+            css=(STATIC_DIR / "sentinel.css").read_text(encoding="utf-8"),
+            pending=[r for r in view.recommendations if r.status in ("open", "later")],
+            chips=impact_chips,
+            away=[p for p in view.people if p.absent],
+            points=chance_points(chance_values(view, steps, current), texts),
+            groups=week_groups(items, texts),
+        )
 
     @routes.get("/projects/{project_id}/delete")
     def delete_page(request: Request, project_id: str) -> Response:

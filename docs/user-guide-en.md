@@ -45,8 +45,9 @@ waiting for you.*
 
 ## 2. Your first project
 
-Click **New project**. The wizard has three steps; everything is saved as you go, so you can
-stop and come back with **Continue the setup** on the start page.
+Click **New project** (**Create a project** for your first). The wizard has three steps and hides
+the menu meanwhile; the team and the tasks are saved as you go, so you can stop with **Save and
+exit** and come back with **Finish** under *Drafts* on the start page.
 
 ### Step 1: Basics
 
@@ -58,26 +59,32 @@ stop and come back with **Continue the setup** on the start page.
 - **Budget (optional)** in cost units: by default one cost unit is one person-day (one person
   working for a day). Leave it empty and Sentinel estimates it from the tasks (with a 10 %
   reserve).
-- **How sure are the time estimates?** *Quite sure*, *Usual* or *Rough*: the less sure, the more
-  the task durations vary in the futures.
-- **How turbulent is the team?** *Calm*, *Usual* or *Turbulent*: how often absences and
-  surprises happen.
+- Under **More settings** (usually fine as they are):
+  - **How sure are the time estimates?** *Quite sure*, *Usual* or *Rough*: the less sure, the more
+    the task durations vary in the futures.
+  - **How turbulent is the team?** *Calm*, *Usual* or *Turbulent*: how often absences and
+    surprises happen.
+
+Below the dates you see at once whether the deadline is after the start, and by how many weeks.
 
 ### Step 2: Team
 
-Enter people with their roles (e.g. "Backend developer", "Tester"), or click **Paste a list of
-people** and paste, e.g. from a spreadsheet, one person per line: `Ada Turner, Backend
-developer`. Roles are free text; case, spacing and a final plural *s* do not matter ("Tester"
-and "testers" are the same role). The order matters: when work is assigned, Sentinel picks the
-people higher up the list first.
+![Wizard step 2: roles and how many people](ui/en_wizard_team.png)
+
+Add roles with their number of people (**Add a role**, then **−** and **+** beside the role). Names
+can come later: without them Sentinel calls people after their role, e.g. "Tester 1". Have a list?
+Click **Paste a list of people** and paste, e.g. from a spreadsheet, one person per line:
+`Ada Turner, Backend developer`. Correct names and roles under **Names of people**. Roles are free
+text; case, spacing and a final plural *s* do not matter ("Tester" and "testers" are the same role).
+The order matters: when work is assigned, Sentinel picks the people higher up the list first.
 
 ### Step 3: Tasks
 
-You can enter the tasks in three ways (tabs at the top):
+You can enter the tasks in three ways (three cards at the top):
 
 ![Wizard step 3: the task table](ui/en_wizard_tasks.png)
 
-1. **Describe the project**: write in your own words what has to be done, by whom and for how
+1. **Describe in words**: write in your own words what has to be done, by whom and for how
    long; the AI reads the tasks and the team, and you check them before using them (needs an
    AI to be set up).
 2. **Import a spreadsheet**: download the **tasks template (CSV)**, fill it in with Excel,
@@ -93,26 +100,32 @@ You can enter the tasks in three ways (tabs at the top):
    (several separated by spaces or commas), `optional` = `yes` for a task that may be dropped,
    and the `crew:` columns say how many people of a role are needed (role names as in step 2).
    Problems are listed with their row numbers; save the file as CSV (UTF-8).
-3. **Add manually**: a table of name, working days, people per role, after which tasks, and
-   whether it is optional. Problems (a loop of dependencies, too few people in a role, a
-   deadline before the shortest possible duration) are listed at once, in plain words.
+3. **Enter by hand**: a table of name, working days, **People** (click to give the number per
+   role), **After tasks** (click and tick tasks by name), and whether it is optional; removing is
+   in the **⋯** menu at the end of a row. Problems (a loop of dependencies, too few people in a
+   role, a deadline before the shortest possible duration) are listed at once, in plain words.
 
-Click **Create the plan**. Sentinel lays out a plan that finishes early for your team and opens
-the project's overview.
+Below the table is a summary to check, with **Change** links. Click **Create the plan and calculate
+the chance**. Sentinel lays out a plan that finishes early for your team and opens the project's
+overview.
 
 ## 3. Reading the overview
 
 ![The project overview: chance, dates and costs](ui/en_overview.png)
 
-- **Chance of meeting the deadline** with a rating: *On track* (80 % or more), *At risk*
-  (50–79 %), *Unlikely* (below 50 %). The arrow below shows the change since the previous
-  check-in.
+- **Chance of meeting the deadline** with a rating: *On track* (80 % or more), *Needs attention*
+  (50–79 %), *Deadline at risk* (below 50 %). The arrow below shows the change since the previous
+  check-in, and the strip shows today, the most likely finish, the deadline and the bad case on
+  one line. **How do we calculate this?** explains the number.
 - **Deadline**, **Most likely finish** (half of the futures end earlier, half later) and **Bad
-  case (1 in 10 later)**.
-- **Spent so far**, e.g. "27 of 84 cost units (person-days)", and the **Expected total cost**
-  with the chance of staying within the budget. A cost unit is a person-day by default; if you
-  enter daily rates in the project settings (e.g. in euros), costs are in your unit.
-- **Waiting for your decision**: recommendations that need your approval (section 5).
+  case (1 in 10 later)**, each with its distance from the deadline in working days.
+- **Budget**, e.g. "27 of 84 cost units (person-days)", how much is spent and the expected cost as a
+  share of the budget. Under **Details**: the expected total cost and the chance of staying within
+  the budget. A cost unit is a person-day by default; if you enter daily rates in the project
+  settings (e.g. in euros), costs are in your unit.
+- **Waiting for your decision**: recommendations that need your approval (section 5), with **Review
+  and decide**. That is then the only highlighted button on the page; with nothing waiting, **New
+  check-in** is.
 
 Further down:
 
@@ -124,9 +137,11 @@ Further down:
   and tasks already done are not listed. If no task stands out, Sentinel says that the risk is
   spread across the plan. Below the list: who is away and which tasks have not started as
   planned.
-- **Plan and progress**: the original plan (grey), work done (green), in progress (blue, with
-  an outline of the work left), planned (light blue) and absences (stripes), with today and the
-  deadline. The same chart is also available as a table.
+- **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
+  with a dashed outline of the work left), planned (light teal) and absences (hatched), with the
+  status, today, the deadline and the forecast window. Hover over or tap a task's name for its dates
+  and people. **Chart | Table** shows the same as a table; on a phone the chart scrolls sideways and
+  the names stay in place.
 
 **Ask Sentinel** starts a new analysis at any time (e.g. after you changed the deadline in the
 settings).
@@ -134,25 +149,30 @@ settings).
 ## 4. Check-ins
 
 A check-in tells Sentinel what happened. Once a week is enough (e.g. on Friday), and at once
-when something important changes. Click **Check-in**.
+when something important changes. Click **New check-in**.
 
 ![The check-in](ui/en_checkin.png)
 
-1. **Status at the end of**: the day the check-in describes (usually today).
-2. **Tasks in progress and next**: for each, *Not started*, *In progress* with the share done
-   (a slider, in per cent) or *Done* with its finish date. Optionally, when the task started and
-   who works on it (by default Sentinel assumes the plan and free people). Tasks you say nothing
-   about stay as they are.
-3. **Someone is away**: the person, from when and (if known) until when. **Only when, never
+1. **Status at the end of**: the day the check-in describes (usually today), echoed in words below
+   the field. A date more than a week from today needs a confirmation: check-ins follow each other,
+   so a mistyped year would block the next ones.
+2. With the AI on: **Write in your own words** ("Ada is ill until Wednesday, the API needs 3 more
+   days") and click **Process the message**. Under **This is how I read it:** the AI lists what it
+   found and you untick what is wrong. Only the ticked items are saved.
+3. **Tasks in progress and next**: for each, *Not started*, *In progress* with the share done
+   (a slider or a number, in per cent) or *Done* with its finish date. Optionally, when the task
+   started and who works on it (by default Sentinel assumes the plan and free people). Tasks you say
+   nothing about stay as they are.
+4. **Absences** (**Add**): the person, from when and (if known) until when. **Only when, never
    why**: there is no place for the reason of an absence.
-4. **A task grows**: how many more working days a task in progress needs.
-5. **New task**: its name, working days, what it comes after and what it must be done before.
-6. Or **write a message** in plain words ("Ada is ill until Wednesday, the API needs 3 more
-   days") and click **Read the message**: the AI lists what it found and you untick what is
-   wrong. Only the ticked items are saved.
+5. **Tasks that grew** (**Add**): how many more working days a task in progress needs.
+6. **New task** (**Add**): its name, working days, what it comes after and what it must be done
+   before.
 
-Click **Save the check-in**. After a few seconds the overview shows the new chance and, if a
-change is needed, a recommendation.
+The bar at the bottom counts the changes. Click **Save the check-in** (with no change the button says
+**Save the check-in (no changes)**, which is a useful report too). After a few seconds the overview
+shows the new chance and, if a change is needed, a recommendation. If you leave an unfinished
+check-in (a tab, the menu, the language), the browser asks first.
 
 > **Tip:** when a substitute takes over a task, part of their time goes into getting up to
 > speed. Sentinel counts that time cautiously while the task runs, so the estimate of the work
@@ -168,12 +188,14 @@ recommendation shows:
 
 - the **action** in plain words, e.g. "Substitute: Cyrus Hill takes over Ben Carter's part in
   “Product catalogue API”",
-- its **effect** compared with no change: the chance ("39 % → 55 %"), the expected finish, the
-  cost ("+2 units, +2 % of the budget") and how many tasks have their dates moved,
-- **why** it needs your approval (*affects people*, *costs money*, *changes scope* or *changes
-  the plan more than your setting allows*) and **why** this change was chosen,
-- the **options compared**, each tried on the same 200 futures as the forecast on the overview,
-  so "No change (keep the plan)" has exactly the overview's chance:
+- its **effect** compared with no change: the chance ("39 % → 55 %") and, under **What changes**, the
+  finish, the expected delay, the cost ("+2 units, +2 % of the budget") and how many tasks have
+  their dates moved,
+- **whether it needs your approval** (*affects people*, *costs money*, *changes scope* or *changes
+  the plan more than your setting allows*) and **why this proposal**,
+- under **Compare all the options**: a table with the recommended one first and "No change" last as
+  the reference point. Each is tried on the same 200 futures as the forecast on the overview, so "No
+  change" has exactly the overview's chance:
 
 ![The options compared](ui/en_recommendation_options.png)
 
@@ -183,40 +205,49 @@ higher chance (in whole per cent) than the recommended one, the page explains it
 e.g. "Similar chance (the difference is within the uncertainty); the option that changes fewer
 dates was chosen".
 
-You decide with **Approve**, **Decide later** or **Reject**. An approved change goes into the
-plan at once (e.g. the substitute joins the task, a temporary person is hired for the stated
-number of days). **Can wait** means there are still a few days before the risk becomes real.
-"No change — the plan is still the best" is good news: no change helps more than the current
-plan.
+A recommendation opens on its own page without the menu: the page is the review before the decision.
+You decide at the bottom: the approve button names the change (e.g. **Approve the substitute**),
+**Reject** asks once more, and **Decide later** leaves the proposal until the next check-in. An
+approved change goes into the plan at once (e.g. the substitute joins the task, a temporary person is
+hired for the stated number of days). **Can wait** means there are still a few days before the risk
+becomes real. "No change — the plan is still the best" means no change checked helps clearly more
+than the current plan; the overview says whether no change is needed or just none is clearly better.
 
-**Autonomy.** In the project's **Settings** you choose what Sentinel may do without asking:
+**Autonomy.** In the project's **Settings** you choose **what Sentinel may do on its own**:
 
 ![Project settings: autonomy](ui/en_settings.png)
 
-| Setting | Automatic | Waits for you |
+| Setting | On its own | Asks about |
 | --- | --- | --- |
 | Only advise me | nothing | every change |
 | May shift dates | moving dates without changing the order | the rest |
-| May re-plan the order (recommended) | also a new order of tasks | substitutes, temporary people, dropping a task |
+| May re-plan the order (recommended) | also a new order of tasks | people, budget, scope |
 | May also add people and substitutes | also substitutes and temporary people | dropping a task |
 
 A change applied automatically is shown on the overview; new dates or a new order have an
-**Undo** button while nothing has happened after them. The **History** lists every check-in,
-recommendation and decision.
+**Undo** button while nothing has happened after them.
+
+**History.** The **History** tab shows the chart **Chance over time** (one point per check-in) and a
+timeline of every check-in, recommendation, decision and change, with the change of the chance and a
+filter at the top.
+
+![History: the chance over time and the timeline](ui/en_history.png)
 
 ## 6. The simulator
 
 The simulator shows Sentinel at work without a real project: choose an example project (small:
 30 tasks, medium: 60 tasks), how turbulent the team is and who manages the project,
-**Sentinel** or **Nobody reacts**. Click **Start the simulation**, then simulate 1, 5 or 10 days
-at a time, or **To the end**.
+**Sentinel** or **Nobody reacts**. Click **Start the simulation**, then move on by **+1 day**, **+5
+days**, **+10 days** or **To the end** (that run can be stopped with **Cancel**, and you can leave the
+page while it goes on).
 
 ![The simulator](ui/en_simulator.png)
 
-At the end, **How it ended** compares the same project with the same events (absences, growing
-tasks, new tasks) run by Sentinel and with nobody reacting: the finish date, the delay, the
-cost, plan changes, temporary people and substitutions. The timeline below shows what happened
-and what Sentinel did.
+At the end, **How it ended** says in one sentence how Sentinel did, and a table compares the same
+project with the same events (absences, growing tasks, new tasks) run by Sentinel and with nobody
+reacting: the finish date, the delay, the cost, plan changes, temporary people and substitutions,
+with a **Difference** column. Beside the chart, **What happened** shows what happened and what
+Sentinel did.
 
 ![The comparison in the simulator](ui/en_simulator_comparison.png)
 
@@ -250,14 +281,15 @@ Sentinel changes nothing about people, money or scope without your approval.
 
 **What is a person-day?** One person working for one day. It is the default cost unit; a
 temporary person costs one and a half person-days a day. Set your own rates in the project
-settings (**Daily cost of one person**).
+settings (**Cost of a working day**).
 
 **Can I change the team or the tasks after the first check-in?** Names, the deadline, the budget
 and the settings, always. After the first check-in the plan's structure changes through
 check-ins (new tasks, longer tasks, absences) and approved recommendations.
 
 **How do I get my data out?** In the project settings: the plan as CSV, the whole project as
-JSON and a detailed report with charts.
+JSON and a report for the team: one page with the forecast, the plan and the history, to print or
+send.
 
 **Can the AI change anything by itself?** No. The AI only reads text (which you check anyway)
 and explains a decision; the explanation is marked with whether it agrees with the data.

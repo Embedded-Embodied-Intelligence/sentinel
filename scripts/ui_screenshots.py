@@ -155,6 +155,7 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
         ),
         Shot("history", f"{live}/history", "#chance-history svg, #chance-history p"),
         Shot("settings", f"{live}/settings", None, "#autonomy-title"),
+        Shot("report", f"{live}/report.html"),
         Shot("simulator", "/simulator"),
         Shot("simulator_running", f"/projects/{ids['running']}"),
         Shot("simulator_comparison", f"/projects/{ids['simulator']}", None, "#compare-title"),

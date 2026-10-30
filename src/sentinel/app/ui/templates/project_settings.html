@@ -100,9 +100,8 @@
   <ul class="download-rows">
     <li><span>{{ t("psettings.export_plan") }}</span><a class="btn btn-sm" href="/api/projects/{{ view.id }}/plan.csv" download>{{ t("psettings.download") }}</a></li>
     <li><span>{{ t("psettings.export_project") }}</span><a class="btn btn-sm" href="/api/projects/{{ view.id }}/export.json" download>{{ t("psettings.download") }}</a></li>
-    <li><span>{{ t("psettings.report_row") }}</span><form hx-post="/projects/{{ view.id }}/report" hx-target="#report-area"><button class="btn btn-sm">{{ t("psettings.report") }}</button></form></li>
+    <li><span>{{ t("psettings.report_row") }}</span><span class="btn-row"><a class="btn btn-tertiary btn-sm" href="/projects/{{ view.id }}/report.html" target="_blank" rel="noopener">{{ t("report.open") }}<span class="vh"> {{ t("psettings.report_row") }}</span></a><a class="btn btn-sm" href="/projects/{{ view.id }}/report.html" download="{{ t('report.file') }}">{{ t("psettings.download") }}</a></span></li>
   </ul>
-  <div id="report-area" aria-live="polite"></div>
 </section>
 <section class="card danger-zone" aria-labelledby="delete-title">
   <h2 id="delete-title" class="section-title-sm">{{ t("psettings.delete") }}</h2>

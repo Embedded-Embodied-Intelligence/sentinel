@@ -1,0 +1,94 @@
+{% import "_ui.html" as ui with context %}
+{% import "_timeline.html" as tl with context %}
+{% with name=view.name %}{% include "_report_head.html" %}{% endwith %}
+<body class="report">
+<main class="report-page">
+  <header class="page-head">
+    <p class="overline">{{ t("report.title") }} · {{ t("report.made", date=t.date_long(today)) }}</p>
+    <h1>{{ view.name }}</h1>
+    <p class="meta">{% if view.tracking %}{{ t("project.as_of", date=t.date(view.checkins[-1].date)) }}{% else %}{{ t("project.not_started", date=t.date(view.definition.start)) }}{% endif %}{% if view.deadline %} · {{ t("start.deadline", date=t.date(view.deadline)) }}{% endif %}</p>
+  </header>
+  {% if summary %}
+  {% set f = summary.forecast %}
+  <section class="card hero" aria-labelledby="chance-title">
+    <div class="headline">
+      <h2 class="hero-label" id="chance-title">{{ t("overview.chance_title") }}</h2>
+      {% if f.p_on_time is not none %}
+      <div class="headline-line"><strong class="headline-number">{{ t.pct(f.p_on_time) }}</strong>{{ ui.badge(level, t("chance.level." ~ level)) }}</div>
+      {% if delta is not none %}{{ ui.delta(t, delta, since) }}{% endif %}
+      {% else %}<p class="lead">{{ t("overview.no_deadline") }}</p>{% endif %}
+    </div>
+    <dl class="kpis">
+      <div><dt>{{ t("overview.deadline") }}</dt><dd><span class="kpi-value">{% if f.deadline %}{{ t.date(f.deadline) }}{% else %}–{% endif %}</span></dd></div>
+      <div><dt>{{ t("overview.likely") }}</dt><dd><span class="kpi-value">{{ t.date(f.p50) }}</span>{% if likely_gap %}<span class="kpi-sub {{ likely_gap.tone }}">{{ icon(likely_gap.icon, 14) }}{{ likely_gap.text }}</span>{% endif %}</dd></div>
+      <div><dt>{{ t("overview.bad_case") }}</dt><dd><span class="kpi-value">{{ t.date(f.p90) }}</span>{% if bad_gap %}<span class="kpi-sub {{ bad_gap.tone }}">{{ icon(bad_gap.icon, 14) }}{{ bad_gap.text }}</span>{% endif %}</dd></div>
+      <div><dt>{{ t("overview.budget") }}</dt><dd>
+        {% if f.budget %}
+        {% set parts = t.cost_of_parts(view.cost_so_far or 0, f.budget) %}
+        <span class="kpi-value">{{ parts[0] }}</span> <span class="kpi-unit">{{ parts[1] }}{% if view.person_days %} {{ t("cost.person_days") }}{% endif %}</span>
+        <span class="kpi-sub">{{ t("overview.expected_cost") }}: {{ t.cost(f.expected_cost) }}</span>
+        {% if f.p_within_budget is not none %}<span class="kpi-sub">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}
+        {% else %}<span class="kpi-value">–</span>{% endif %}
+      </dd></div>
+    </dl>
+    <p class="caption">{{ t("overview.forecast_note", futures=f.rollouts) }}</p>
+  </section>
+  {% elif view.finished %}
+  <section class="card hero"><p>{{ ui.badge("good", t("start.finished")) }}</p><p class="lead">{{ t("overview.finished") }}</p></section>
+  {% endif %}
+
+  {% if pending %}
+  <section class="section" aria-labelledby="pending-title">
+    <h2 id="pending-title" class="group-title">{{ t("overview.pending_title") }}</h2>
+    <div class="stacked">
+      {% for rec in pending %}
+      <article class="card rec-card">
+        <h3>{{ rec.title }}</h3>
+        <ul class="delta-chips">{% for chip in chips(rec, t) %}<li class="delta-chip"><span class="chip-label">{{ chip.label }}</span>{{ ui.chip_value(t, chip) }}</li>{% endfor %}</ul>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if threats or away %}
+  <section class="section" aria-labelledby="threats-title">
+    <h2 id="threats-title" class="group-title">{{ t("overview.threats_title") }}</h2>
+    <div class="card">
+      <ul class="threats">
+        {% for threat in threats %}<li><span class="threat-mark">{{ icon("alert", 16) }}</span><span>{{ threat.text }}</span></li>{% endfor %}
+        {% for person in away %}
+        {% set absence = person.absences[-1] if person.absences else none %}
+        <li><span class="threat-mark neutral">{{ icon("person-off", 16) }}</span><span>{% if absence and absence.return_date %}{{ t("overview.away_back", person=person.name, date=t.date(absence.return_date)) }}{% else %}{{ t("overview.away_open", person=person.name) }}{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="section" aria-labelledby="plan-title">
+    <h2 id="plan-title" class="group-title">{{ t("overview.plan_title") }}</h2>
+    <div class="card">
+      {% with with_away=true, with_window=true %}{% include "_gantt_legend.html" %}{% endwith %}
+      {{ chart | safe }}
+    </div>
+    <div class="card section-sub">{% include "_task_table.html" %}</div>
+  </section>
+
+  {% if points %}
+  <section class="section" aria-labelledby="chance-chart-title">
+    <h2 id="chance-chart-title" class="group-title">{{ t("history.chance_title") }}</h2>
+    <div class="card">
+      <p class="caption">{{ t("history.chance_note") }}</p>
+      {% include "_chance_chart.html" %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="section" aria-labelledby="history-title">
+    <h2 id="history-title" class="group-title">{{ t("history.title") }}</h2>
+    {{ tl.entries(groups) }}
+  </section>
+</main>
+</body>
+</html>

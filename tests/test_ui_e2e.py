@@ -16,8 +16,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from app_cases import small
+from app_cases import ABSENCE_CHECKIN, small
 from e2e_env import Server, chromium_env, serve
+from ui_check import problems
 
 from sentinel.app import showcase
 from sentinel.app.config import AppConfig, Limits
@@ -156,10 +157,14 @@ def test_the_simulator_runs_to_the_end_and_compares(browser: Any, local: Server)
     expect(table).to_contain_text("Nobody reacts")
     expect(table).to_contain_text("Sentinel")
     expect(page.locator(".timeline")).to_contain_text("Finished on")
-    page.get_by_role("button", name="Show the report").click()
-    report = page.get_by_role("link", name="Open the report (new tab)")
-    expect(report).to_be_visible(timeout=60_000)
-    assert "/cockpit.html" in (report.get_attribute("href") or "")
+    with page.context.expect_page() as popup:
+        page.get_by_role("link", name="Show the report").click()
+    report = popup.value
+    report.wait_for_load_state("load")
+    assert "/report.html" in report.url
+    expect(report.locator("table.compare")).to_contain_text("Nobody reacts")
+    assert problems(report.content()) == []  # the wording rules hold in the report too
+    assert _axe(report) == [] and _axe(page) == []  # the report and the finished simulation
     page.context.close()
 
 
@@ -312,6 +317,7 @@ def test_the_main_screens_have_no_serious_accessibility_violations(
         f"/projects/{pid}/recommendations/{seq}",
         f"/projects/{pid}/history",
         f"/projects/{pid}/settings",
+        f"/projects/{pid}/report.html",
         f"/projects/{pid}/delete",
         "/simulator",
         "/how-it-works",
@@ -331,11 +337,12 @@ def test_the_main_screens_have_no_serious_accessibility_violations(
     assert violations == {}
 
 
-@pytest.mark.parametrize("width", [320, 390, 768])
+@pytest.mark.parametrize("width", [320, 390, 640, 768])
 def test_only_the_chart_scrolls_sideways_on_a_small_screen(
     browser: Any, local: Server, width: int
 ) -> None:
-    """docs/design/brief.md, section 7: no horizontal page scroll down to 320 px."""
+    """docs/design/brief.md, section 7: no horizontal page scroll down to 320 px; 640 px is a
+    1280 px window at 200 % zoom. Nothing is loaded from outside the application either."""
     pid, seq, draft = _showcase(local)
     paths = [
         "/",
@@ -353,6 +360,13 @@ def test_only_the_chart_scrolls_sideways_on_a_small_screen(
     ]
     wide = {}
     page = _page(browser, local, "pl", width=width, height=700)
+    outside: list[str] = []
+    page.on(
+        "request",
+        lambda request: (
+            None if request.url.startswith((local.base, "data:")) else outside.append(request.url)
+        ),
+    )
     for path in paths:
         page.goto(local.base + path)
         page.wait_for_load_state("networkidle")
@@ -361,7 +375,74 @@ def test_only_the_chart_scrolls_sideways_on_a_small_screen(
         )
         if overflow > 0:
             wide[path] = overflow
-    assert wide == {}
+    assert wide == {} and outside == []
+    page.context.close()
+
+
+def test_reduced_motion_removes_every_transition(browser: Any, local: Server) -> None:
+    context = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
+    context.add_cookies([{"name": "sentinel_lang", "value": "en", "url": local.base}])
+    page = context.new_page()
+    page.goto(local.base + "/how-it-works")
+    moving = page.evaluate(
+        """() => [...document.querySelectorAll('*')].filter(e => {
+            const style = getComputedStyle(e);
+            return parseFloat(style.transitionDuration) > 0 || style.animationName !== 'none';
+        }).length"""
+    )
+    assert moving == 0
+    context.close()
+
+
+def test_a_new_project_and_a_decision_by_keyboard_alone(browser: Any, local: Server) -> None:
+    """docs/design/brief.md, section 7: the flow works without a mouse, with a visible focus at
+    every step (the check-in has its own test above)."""
+    page = _page(browser, local)
+    page.goto(local.base + "/new")
+    _tab_to(page, "#name")
+    page.keyboard.type("By keyboard")
+    page.keyboard.press("Enter")  # Enter in a field is "next", not "save and exit"
+    page.wait_for_url(re.compile(r"/setup/team$"))
+    _tab_to(page, "#new_role")
+    page.keyboard.type("Developer")
+    page.keyboard.press("Tab")
+    page.keyboard.press("Control+a")
+    page.keyboard.type("2")
+    _tab_to(page, 'button[value="add_role"]')
+    page.keyboard.press("Enter")
+    expect(page.locator(".role-name")).to_have_text("Developer")
+    expect(page.locator(".role-row output")).to_have_text("2")
+    _tab_to(page, 'button[value="next"]')
+    page.keyboard.press("Enter")
+    page.wait_for_url(re.compile(r"/setup/tasks$"))
+    _tab_to(page, 'button[value="add"]')
+    page.keyboard.press("Enter")
+    expect(page.get_by_label("Name of task 1")).to_be_focused()
+    page.keyboard.type("Build")
+    page.keyboard.press("Tab")
+    page.keyboard.type("3")
+    page.keyboard.press("Tab")  # the people of the task: a popover by keyboard
+    page.keyboard.press("Enter")
+    page.keyboard.press("Tab")
+    page.keyboard.type("1")
+    page.keyboard.press("Escape")
+    expect(page.locator("details.pop[open]")).to_have_count(0)
+    _tab_to(page, 'button[value="finish"]')
+    page.keyboard.press("Enter")
+    page.wait_for_url(re.compile(r"flash=plan_ready"), timeout=60_000)
+    # A decision: the review page and the approve button, Tab and Enter only.
+    services = local.services
+    pid = services.create(LOCAL_SESSION, small(), "en").id
+    _wait_job(services, LOCAL_SESSION, services.plan(LOCAL_SESSION, pid, "en").id)
+    services.checkin(LOCAL_SESSION, pid, ABSENCE_CHECKIN, "en")
+    page.goto(f"{local.base}/projects/{pid}")
+    expect(page.get_by_role("link", name="Review and decide")).to_be_visible(timeout=60_000)
+    _tab_to(page, 'a.btn-primary[href*="/recommendations/"]')
+    page.keyboard.press("Enter")
+    page.wait_for_url(re.compile(r"/recommendations/\d+$"))
+    _tab_to(page, 'button[value="approve"]')
+    page.keyboard.press("Enter")
+    page.wait_for_url(re.compile(r"flash=approved"))
     page.context.close()
 
 

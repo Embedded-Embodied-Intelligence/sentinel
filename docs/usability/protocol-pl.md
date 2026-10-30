@@ -76,8 +76,8 @@ jest środa 4 listopada 2026.
   zadań.
 - **Częściowy sukces:** projekt powstał, ale z pomocą moderatora albo z błędem poprawionym po
   podpowiedzi (np. inna data, brak osoby).
-- **Obserwuj:** czy uczestnik znajduje *Wklej listę osób* i zakładkę *Importuj arkusz*; czy
-  rozumie, co oznacza budżet i pewność szacunków; reakcję na wypisane problemy.
+- **Obserwuj:** czy uczestnik znajduje *Wklej listę osób* i kartę *Zaimportuj arkusz*; czy
+  rozumie, co oznacza budżet i czy zagląda do *Więcej ustawień*; reakcję na wypisane problemy.
 - **Punkt odniesienia (skrypt):** 9 kliknięć, 4 pola.
 
 ### Zadanie 2. Kiedy projekt najprawdopodobniej się skończy? (limit 1 minuta)
@@ -102,7 +102,7 @@ jest środa 4 listopada 2026.
 - **Częściowy sukces:** zapisany z jednym błędem (np. data powrotu jako ostatni dzień
   nieobecności, brak postępu API).
 - **Obserwuj:** czy szuka miejsca na powód nieobecności (nie ma go — to celowe); jak rozumie
-  „Stan na koniec dnia” i „Powrót (jeśli wiadomo)”.
+  „Stan na koniec dnia” i „Powrót (jeśli wiadomo)”; czy zauważa licznik zmian na dole.
 - **Punkt odniesienia:** 6 kliknięć, 5 pól.
 
 ### Zadanie 4. Zdecyduj o rekomendacji (limit 3 minuty)
@@ -115,8 +115,8 @@ jest środa 4 listopada 2026.
   odrzuca z uzasadnieniem. Obie decyzje są sukcesem, jeśli uzasadnienie opiera się na tym, co
   pokazuje ekran.
 - **Częściowy sukces:** decyzja bez zrozumienia efektu albo efekt bez decyzji.
-- **Obserwuj:** czy rozumie „wymaga Twojej zgody, ponieważ dotyczy ludzi”, tabelę porównanych
-  możliwości i to, że „bez zmian” ma tę samą szansę co przegląd.
+- **Obserwuj:** czy rozumie „Wymaga Twojej zgody: dotyczy ludzi”, czy otwiera *Porównaj wszystkie
+  możliwości* i czy widzi, że „Bez zmian” ma tę samą szansę co przegląd.
 - **Punkt odniesienia:** 2 kliknięcia.
 
 ### Zadanie 5. Symulator: kto poradził sobie lepiej? (limit 4 minuty)

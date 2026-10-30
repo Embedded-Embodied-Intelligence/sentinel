@@ -25,7 +25,6 @@ JOB_LABELS = (
     "job.recommend",
     "job.advance",
     "job.simulator",
-    "job.cockpit",
     "job.extract",
     "job.message",
     "job.llm_test",
@@ -245,10 +244,6 @@ def router(ui: Ui) -> APIRouter:
         result = view.result or {}
         project = view.project or ""
         match view.kind:
-            case "cockpit":
-                return ui.page(
-                    request, "_report_ready.html", href=f"/api/jobs/{view.id}/cockpit.html"
-                )
             case "llm_test":
                 return ui.page(request, "_test_ok.html", model=str(result.get("model", "?")))
             case "extract":

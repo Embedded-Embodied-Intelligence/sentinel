@@ -1,0 +1,20 @@
+{# The history's entries, newest first, under their week (docs/design/brief.md, section 3.14). #}
+{% import "_ui.html" as ui with context %}
+{% macro entries(groups) %}
+<ol class="timeline">
+  {% for group in groups %}
+  <li class="tl-week overline">{{ group.title }}</li>
+  {% for item in group.items %}
+  <li class="tl-item tl-{{ item.kind }}">
+    <span class="tl-node">{{ icon(item.icon, 14) }}</span>
+    <div>
+      <p class="tl-meta"><span><time datetime="{{ item.day }}">{{ item.when }}</time> · {{ t("history.kind." ~ item.kind) }}</span>{% if item.auto %} {{ ui.badge("auto", t("overview.auto_title")) }}{% endif %}</p>
+      <p class="tl-title">{% if item.href %}<a href="{{ item.href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</p>
+      {% if item.lines %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+      {% if item.chip %}<p class="tl-chip">{{ item.chip }}</p>{% elif item.seq %}<p class="tl-chip" id="tl-chip-{{ item.seq }}"></p>{% endif %}
+    </div>
+  </li>
+  {% endfor %}
+  {% endfor %}
+</ol>
+{% endmacro %}

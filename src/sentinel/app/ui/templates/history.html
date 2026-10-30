@@ -1,23 +1,6 @@
 {% extends "base.html" %}
 {% import "_ui.html" as ui with context %}
-{% macro entries(groups) %}
-<ol class="timeline">
-  {% for group in groups %}
-  <li class="tl-week overline">{{ group.title }}</li>
-  {% for item in group.items %}
-  <li class="tl-item tl-{{ item.kind }}">
-    <span class="tl-node">{{ icon(item.icon, 14) }}</span>
-    <div>
-      <p class="tl-meta"><span><time datetime="{{ item.day }}">{{ item.when }}</time> · {{ t("history.kind." ~ item.kind) }}</span>{% if item.auto %} {{ ui.badge("auto", t("overview.auto_title")) }}{% endif %}</p>
-      <p class="tl-title">{% if item.href %}<a href="{{ item.href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</p>
-      {% if item.lines %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
-      {% if item.chip %}<p class="tl-chip">{{ item.chip }}</p>{% elif item.seq %}<p class="tl-chip" id="tl-chip-{{ item.seq }}"></p>{% endif %}
-    </div>
-  </li>
-  {% endfor %}
-  {% endfor %}
-</ol>
-{% endmacro %}
+{% import "_timeline.html" as tl with context %}
 {% block content %}
 <div class="page">
 {% include "_project_head.html" %}
@@ -36,11 +19,11 @@
   </nav>
 </div>
 {% if shown %}
-{{ entries(shown) }}
+{{ tl.entries(shown) }}
 {% if older %}
 <details class="details tl-more">
   <summary>{{ t("history.older", n=older_count) }}</summary>
-  <div class="details-body">{{ entries(older) }}</div>
+  <div class="details-body">{{ tl.entries(older) }}</div>
 </details>
 {% endif %}
 {% elif show == "all" %}
