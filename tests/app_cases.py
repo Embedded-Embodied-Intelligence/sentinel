@@ -1,8 +1,11 @@
 """Shared live projects of the application tests (WP9a)."""
 
+import json
 from datetime import date
 from functools import cache
+from typing import Any
 
+from sentinel.agent.decide import DecisionRecord
 from sentinel.app import planning
 from sentinel.app.live import LiveProject, build_model
 from sentinel.app.models import (
@@ -74,3 +77,26 @@ ABSENCE_CHECKIN = CheckIn(
 def absence_recommendation() -> planning.Recommendation:
     """The recommendation after ABSENCE_CHECKIN (SUBST(1) escalated), computed once."""
     return planning.recommend(checked_in(planned(small()), ABSENCE_CHECKIN))
+
+
+def answer_from(record: DecisionRecord, extra: str = "") -> str:
+    """A scripted model's answer (spec section 10.4): the choice with the figures of `record`,
+    the record as the page shows it, and `extra`."""
+    rows = {c.label: c for c in record.candidates}
+    assert record.needs is not None
+    found = rows.get(record.chosen)
+    p = record.needs.p_on_time if found is None else found.p_on_time
+    summary = f"{record.chosen} gives a {p * 100:.0f} % chance of meeting the deadline. {extra}"
+    facts: list[dict[str, Any]] = [
+        {"kind": "chosen_action", "value": record.chosen},
+        {"kind": "p_on_time", "value": f"{p:.2f}"},
+        {"kind": "deciding_component", "value": record.reason},
+    ]
+    if found is not None and record.runner_up is not None:
+        runner = rows[record.runner_up]
+        summary += f" The next option, {runner.label}, reaches {runner.p_on_time * 100:.0f} %."
+        facts += [
+            {"kind": "alternative", "value": runner.label},
+            {"kind": "alternative_p_on_time", "value": f"{runner.p_on_time:.2f}"},
+        ]
+    return json.dumps({"summary": summary.strip(), "cited_facts": facts})

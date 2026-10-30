@@ -24,6 +24,8 @@ def test_no_change_on_a_recommendation_is_the_overview_forecast() -> None:
     assert comparison.rollouts == forecast.rollouts == 200
     noop = recommendation.impact("NOOP")
     assert noop is not None and noop.p_on_time == forecast.p_on_time
+    assert recommendation.record.needs is not None  # the decision reads the same chance (v2.0.3)
+    assert recommendation.record.needs.p_on_time == forecast.p_on_time
     assert noop.mean_makespan == forecast.mean
     labels = [impact.label for impact in comparison.impacts]
     assert labels[0] == recommendation.record.chosen == "SUBST(1)"

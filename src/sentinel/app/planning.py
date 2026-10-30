@@ -1,20 +1,36 @@
 """The computations of a live project (spec sections 11.3-11.5): the baseline plan, the forecast
-with the tasks that threaten the deadline, the recommendation (a Sentinel deliberation, then the
-comparison shown with it on the forecast's sampled worlds) and the approval of a recommended
-action. All are deterministic for the project's seed; none is called inside a rollout.
+with the tasks that threaten the deadline, the recommendation (a deliberation whose decision,
+display and explanation come from one comparison on the forecast's sampled worlds, `AppSentinel`)
+and the approval of a recommended action. All are deterministic for the project's seed; none is
+called inside a rollout.
 """
 
 import math
 import time
 from collections import Counter, defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from typing import Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
-from sentinel.agent.candidates import Candidate, approve, noop
-from sentinel.agent.decide import CandidateRecord, DecisionRecord
-from sentinel.agent.evaluate import Evaluator
+from sentinel.agent.candidates import Candidate, approve, descopes, generate, noop
+from sentinel.agent.decide import (
+    CandidateRecord,
+    Choice,
+    DecisionRecord,
+    Reason,
+    assess_needs,
+    choose,
+)
+from sentinel.agent.evaluate import (
+    CandidateStats,
+    Evaluator,
+    Outcomes,
+    PairedErrors,
+    dominated,
+    instability,
+)
 from sentinel.agent.params import SentinelParams
 from sentinel.app.live import Baseline, LiveError, LiveProject, Model, Node, issue
 from sentinel.experiments.runs import derive_seed
@@ -35,6 +51,9 @@ CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
 FORECAST_ROLLOUTS = 200  # N of the forecast and of the comparison shown (spec 5.2, 11.4, 11.5)
 DRIVERS = 5  # tasks that threaten the deadline, at most
 SHOWN = 5  # alternatives shown with a recommendation besides its action, at most (11.5)
+# The deciding components after min(p, theta_D), and the candidate order: the chances tie (11.5).
+LATER_COMPONENTS = frozenset(("tardiness", "scope", "budget", "stability", "level", "order"))
+Tie = Literal["similar", "target"]
 
 
 class _Frozen(BaseModel):
@@ -274,21 +293,39 @@ class PlanChange(_Frozen):
 
 
 class Comparison(_Frozen):
-    """The figures shown with a recommendation (spec section 11.5, v2.0.2): NOOP, the chosen
-    action and the alternatives shown, evaluated after the deliberation on the `rollouts`
-    sampled worlds of the forecast of the same day (its `seed`, section 11.4), so that NOOP has
-    the forecast's chance; `impacts` in the order shown: the choice, the runner-up, then the
-    other alternatives by their chance and expected delay."""
+    """The figures shown with a recommendation (spec section 11.5): NOOP, the chosen action and
+    the alternatives shown on the `rollouts` sampled worlds of the forecast of the same day (its
+    `seed`, section 11.4), so that NOOP has the forecast's chance; `impacts` in the order shown:
+    the choice, the runner-up, then the other alternatives by their chance and expected delay.
+    `decides`: the decision was taken on these figures (v2.0.3), so the record holds them; before
+    it they were computed after a decision on other worlds (v2.0.2)."""
 
     seed: int
     rollouts: int
     impacts: tuple[Impact, ...]
+    decides: bool = False
+
+
+def half_up(value: float, digits: int = 0) -> float:
+    """`value` rounded half up to `digits` decimals, the rounding of every figure shown with a
+    recommendation (spec section 11.5); a share of 200 worlds often ends in a 5, so the noise of
+    its binary fraction goes first (0.575 is stored just below it and is shown as 58 %)."""
+    scale = 10.0**digits
+    return math.floor(round(value * scale, 6) + 0.5) / scale
+
+
+def shown_chance(p: float) -> float:
+    """A chance as a page shows it, as a fraction: whole per cent, half up, and 0 % or 100 % only
+    when exact (`Texts.pct` writes the others as "<1 %" and ">99 %")."""
+    percent = half_up(100 * p)
+    return (percent if p in (0.0, 1.0) else min(max(percent, 1.0), 99.0)) / 100
 
 
 class Recommendation(_Frozen):
     """A recommendation as stored (spec section 11.5): the decision record of the deliberation,
-    the comparison shown with it, the urgency tau_t, the seed of the epoch's rollouts and the
-    planned starts the chosen action moves (deviation set, spec 7). `impacts` are the figures
+    the comparison shown with it, the urgency tau_t, the seed of racing stage 1 (before v2.0.3,
+    of all the deliberation's rollouts) and the planned starts the chosen action moves (deviation
+    set, spec 7). `impacts` are the figures
     of recommendations stored before v2.0.2 (NOOP, the choice and the runner-up on their own
     rollouts of the deliberation), shown when there is no comparison."""
 
@@ -317,6 +354,30 @@ class Recommendation(_Frozen):
     def impact(self, label: str) -> Impact | None:
         return next((i for i in self.shown if i.label == label), None)
 
+    @property
+    def as_shown(self) -> DecisionRecord:
+        """The record the explanations use (spec section 11.5, v2.0.3): the rows of the comparison
+        only, with chances and delays as the page shows them, so that every number they can cite
+        is on the page. A recommendation stored before v2.0.3 keeps its record."""
+        record, comparison = self.record, self.comparison
+        if comparison is None or not comparison.decides:
+            return record
+        rows = {impact.label for impact in comparison.impacts}
+        needs = record.needs
+        if needs is not None:
+            needs = needs.model_copy(update={"p_on_time": shown_chance(needs.p_on_time)})
+        candidates = tuple(
+            c.model_copy(
+                update={
+                    "p_on_time": shown_chance(c.p_on_time),
+                    "tardiness": half_up(c.tardiness, 1),
+                }
+            )
+            for c in record.candidates
+            if c.label in rows
+        )
+        return record.model_copy(update={"needs": needs, "candidates": candidates})
+
 
 def sentinel_params(project: LiveProject) -> SentinelParams:
     """Sentinel's parameters for the project: spec section 8, the project's autonomy Lambda and
@@ -331,10 +392,204 @@ def sentinel_params(project: LiveProject) -> SentinelParams:
     )
 
 
+def stage_one(
+    evaluator: Evaluator, candidates: Sequence[Candidate], deviations: Sequence[float]
+) -> list[CandidateStats]:
+    """Racing stage 1 of spec section 6, as in `race`: every candidate on N_1 rollouts, the
+    statistics with `dropped` set for those not tied with the stage's leader in min(p, theta_D)
+    and not tied with it in T."""
+    params = evaluator.params
+    n1 = params.n_stage1
+    outcomes = [evaluator.extend(c, n1) for c in candidates]
+    stage = [evaluator.stats(c, n1, deviations[a]) for a, c in enumerate(candidates)]
+    paired = PairedErrors(outcomes, n1, evaluator.budget)
+    leader = min(range(len(stage)), key=lambda a: (-stage[a].capped, stage[a].tardiness, a))
+    return [
+        s.model_copy(
+            update={"dropped": a != leader and dominated(stage, paired, params, leader, a)}
+        )
+        for a, s in enumerate(stage)
+    ]
+
+
+def comparison_set(stage: Sequence[CandidateStats], limit: int = SHOWN) -> set[int]:
+    """The candidates of the comparison (spec section 11.5, v2.0.3): the survivors of stage 1,
+    NOOP, and while fewer than the rows of a page (the action and `limit` alternatives) are in,
+    the best of those dropped, by min(p, theta_D), T and candidate order on stage 1."""
+    # SPEC-Q: "every candidate shown": a page shows what the comparison holds, so the dropped ones
+    # that fill its rows join the comparison before the choice is known, and may win it.
+    compared = {a for a, s in enumerate(stage) if not s.dropped or s.label == "NOOP"}
+    rest = sorted(
+        set(range(len(stage))) - compared, key=lambda a: (-stage[a].capped, stage[a].tardiness, a)
+    )
+    return compared | set(rest[: max(0, limit + 1 - len(compared))])
+
+
+def contest(
+    racing: Evaluator, comparing: Evaluator, candidates: Sequence[Candidate]
+) -> tuple[list[CandidateStats], Choice]:
+    """Racing stage 1 on the deliberation's worlds, then rule (spec section 6) on the comparison:
+    the candidates of `comparison_set` on the forecast's worlds, so every one of them competes;
+    the statistics of those outside it stay those of stage 1, dropped."""
+    params = comparing.params
+    deviations = [instability(comparing.observation, c, params.kappa_h) for c in candidates]
+    first = stage_one(racing, candidates, deviations)
+    compared = comparison_set(first)
+    stats = [
+        comparing.stats(c, FORECAST_ROLLOUTS, deviations[a]) if a in compared else first[a]
+        for a, c in enumerate(candidates)
+    ]
+    outcomes = [comparing.outcomes.get(c.label, Outcomes()) for c in candidates]
+    paired = PairedErrors(outcomes, FORECAST_ROLLOUTS, comparing.budget)
+    return stats, choose(stats, params, paired)
+
+
+def _candidate_records(
+    stats: Sequence[CandidateStats], candidates: Sequence[Candidate], choice: Choice
+) -> list[CandidateRecord]:
+    return [
+        CandidateRecord(**s.model_dump(), decision=c.decision, eliminated=out)
+        for s, c, out in zip(stats, candidates, choice.eliminated, strict=True)
+    ]
+
+
+class AppSentinel(Sentinel):
+    """Sentinel in the application (spec section 11.5, v2.0.3): a deliberation decides on one
+    comparison, the rest (epochs, approvals, the permission gate) is that of `Sentinel`, whose own
+    deliberation, racing's stage 2 included, stays that of the research runs (spec section 6). The
+    needs of NOOP are read on the N = 200 sampled worlds of the forecast of the day, racing stage
+    1 runs with the deliberation's seed as in spec section 6, and the survivors and the candidates
+    a page can show are evaluated on those 200 worlds, where rule (spec section 6) chooses. Each
+    deliberation leaves its `Comparison` in `comparisons`, by day."""
+
+    def __init__(
+        self,
+        params: SentinelParams | None = None,
+        *,
+        seed: int = 0,
+        keep_records: bool = True,
+        proposer: Proposer | None = None,
+    ) -> None:
+        super().__init__(params, seed=seed, keep_records=keep_records, proposer=proposer)
+        self.comparisons: dict[int, Comparison] = {}
+
+    def deliberate(self, observation: Observation, discarded: str | None = None) -> DecisionRecord:
+        """Needs gate, candidates, stage 1, the comparison, the rule and the permission gate at
+        one epoch; `discarded` names an approved action no longer valid."""
+        began = time.perf_counter()
+        params, stats = self.params, self.stats
+        t = observation.day
+        stats.deliberations += 1
+        comparing = Evaluator(observation, derive_seed(self.seed, "forecast", str(t)), params)
+        # SPEC-Q: "stage 1 stays as in section 6": also its worlds, the deliberation's seed.
+        racing = Evaluator(observation, derive_seed(self.seed, "sentinel", str(t)), params)
+        racing.plans = comparing.plans  # a plan part depends on its objective and view only
+        base = noop(observation)
+        # SPEC-Q: the needs gate is part of the decision, so it reads the same 200 worlds.
+        needs = assess_needs(comparing, base, stage1=FORECAST_ROLLOUTS, rollouts=FORECAST_ROLLOUTS)
+        if needs.met:
+            stats.gate_exits += 1
+            stats.rollouts += comparing.rollouts
+            done = time.perf_counter()
+            stats.deliberation_s.append(done - began)
+            record = DecisionRecord(
+                day=t,
+                deliberated=True,
+                rule=params.rule,
+                reason="needs_met",
+                chosen=base.label,
+                decision=base.decision,
+                discarded=discarded,
+                needs=needs,
+                rollouts=comparing.rollouts,
+                evaluation_s=done - began,
+                wall_time_s=done - began,
+            )
+            self.comparisons[t] = compare(record, comparing)
+            return record
+        generation = generate(observation, params=params)
+        candidates: list[Candidate] = list(generation.candidates)
+        stats.reseqs += generation.solves
+        stats.fallbacks += generation.fallbacks
+        stats.solve_time_s += generation.solve_time_s
+        evaluated = time.perf_counter()
+        reason: Reason = "only_candidate"
+        index = 0
+        runner: int | None = None
+        tied: tuple[int, ...] = (0,)
+        records: list[CandidateRecord] = []
+        if params.descope and len(candidates) == 1 and needs.p_on_time < params.theta_d:
+            candidates += descopes(observation, params)
+        if len(candidates) > 1:
+            table, choice = contest(racing, comparing, candidates)
+            if params.descope and not any(c.kind == "descope" for c in candidates):
+                best_p = max(s.p_on_time for s in table if not s.dropped)
+                extra = descopes(observation, params) if best_p < params.theta_d else []
+                if extra:
+                    candidates += extra
+                    table, choice = contest(racing, comparing, candidates)
+            index, reason, runner, tied = choice.index, choice.reason, choice.runner_up, choice.ties
+            records = _candidate_records(table, candidates, choice)
+        if self.proposer is not None:
+            rule = DecisionRecord(
+                day=t,
+                deliberated=True,
+                rule=params.rule,
+                reason=reason,
+                chosen=candidates[index].label,
+                decision=candidates[index].decision,
+                runner_up=None if runner is None else candidates[runner].label,
+                needs=needs,
+                candidates=tuple(records),
+                tied=tuple(candidates[a].label for a in tied),
+                rollouts=racing.rollouts + comparing.rollouts,
+            )
+            proposed = list(self.proposer(observation, rule, tuple(candidates)))
+            stats.proposed += len(proposed)
+            if proposed:
+                candidates += proposed
+                table, choice = contest(racing, comparing, candidates)
+                index, reason = choice.index, choice.reason
+                runner, tied = choice.runner_up, choice.ties
+                records = _candidate_records(table, candidates, choice)
+        stats.candidates += len(candidates)
+        chosen = candidates[index]
+        stats.chosen[chosen.kind] = stats.chosen.get(chosen.kind, 0) + 1
+        gate, decision = self.gate(observation, chosen)
+        rollouts = racing.rollouts + comparing.rollouts
+        stats.rollouts += rollouts
+        stats.replan_solves += racing.replan_solves + comparing.replan_solves
+        stats.replans_reused += racing.replans_reused + comparing.replans_reused
+        done = time.perf_counter()
+        stats.deliberation_s.append(done - began)
+        record = DecisionRecord(
+            day=t,
+            deliberated=True,
+            rule=params.rule,
+            reason=reason,
+            chosen=chosen.label,
+            decision=decision,
+            runner_up=None if runner is None else candidates[runner].label,
+            gate=gate,
+            approval_day=None if self.pending is None else self.pending.day,
+            discarded=discarded,
+            needs=needs,
+            candidates=tuple(records),
+            tied=tuple(candidates[a].label for a in tied),
+            rollouts=rollouts,
+            cp_solves=generation.solves,
+            cp_fallbacks=generation.fallbacks,
+            generation_s=generation.wall_time_s,
+            evaluation_s=done - evaluated,
+            wall_time_s=done - began,
+        )
+        self.comparisons[t] = compare(record, comparing)
+        return record
+
+
 def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Recommendation:
-    """A Sentinel deliberation on the current observation (spec sections 6 and 11.5), then the
-    comparison shown with it: NOOP, the chosen candidate and the alternatives shown on the
-    sampled worlds of the forecast of the day (`compare`)."""
+    """A deliberation on the current observation with its comparison (spec sections 6 and 11.5,
+    `AppSentinel`)."""
     observation = project.observation()
     if observation.deadline is None:
         raise LiveError([issue("no_deadline")])
@@ -342,7 +597,7 @@ def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Reco
         raise LiveError([issue("project_finished")])
     params = sentinel_params(project)
     seed = project.definition.settings.seed
-    sentinel = Sentinel(params, seed=seed, keep_records=False, proposer=proposer)
+    sentinel = AppSentinel(params, seed=seed, keep_records=False, proposer=proposer)
     record = sentinel.deliberate(observation)
     chosen = next((c for c in record.candidates if c.label == record.chosen), None)
     return Recommendation(
@@ -351,59 +606,66 @@ def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Reco
         record=record,
         urgency=_finite(Sentinel.urgency(observation)),
         changes=() if chosen is None else plan_changes(project, observation, chosen.decision),
-        comparison=compare(observation, record, params, seed),
+        comparison=sentinel.comparisons[observation.day],
     )
 
 
 def shown_labels(record: DecisionRecord, limit: int = SHOWN) -> list[str]:
-    """The candidates a recommendation shows (spec section 11.5), in order: the chosen one,
-    then at most `limit` alternatives (the runner-up first, then those racing kept, then the
-    rest by min(p, theta_D) and T), and NOOP last if it is not among them."""
+    """The candidates a recommendation shows (spec section 11.5), in order: the chosen one, then
+    at most `limit` alternatives of the comparison (the runner-up first, then the others by
+    min(p, theta_D) and T), NOOP always among them."""
     others = sorted(
-        (c for c in record.candidates if c.label != record.chosen),
-        key=lambda c: (c.label != record.runner_up, c.dropped, -c.capped, c.tardiness),
+        (c for c in record.candidates if c.label != record.chosen and not c.dropped),
+        key=lambda c: (c.label != record.runner_up, -c.capped, c.tardiness),
     )
-    labels = [record.chosen, *(c.label for c in others[:limit])]
-    return labels if "NOOP" in labels else [*labels, "NOOP"]
+    labels = [c.label for c in others[:limit]]
+    if record.chosen != "NOOP" and "NOOP" not in labels:
+        labels = [*labels[: limit - 1], "NOOP"]
+    return [record.chosen, *labels]
 
 
-def compare(
-    observation: Observation,
-    record: DecisionRecord,
-    params: SentinelParams,
-    project_seed: int,
-    rollouts: int = FORECAST_ROLLOUTS,
-) -> Comparison:
-    """The comparison shown with a recommendation (spec section 11.5, v2.0.2): the candidates
-    of `shown_labels` on the sampled worlds of the forecast of the observed day, its seed
-    derive_seed(project seed, "forecast", t) and `rollouts` (N = 200), so that NOOP's rollouts
-    are the forecast's (common random numbers, spec 2.3). The decision is not revisited."""
-    seed = derive_seed(project_seed, "forecast", str(observation.day))
-    evaluator = Evaluator(observation, seed, params)
-    records = {c.label: c for c in record.candidates}
+def compare(record: DecisionRecord, evaluator: Evaluator) -> Comparison:
+    """The rows of `shown_labels` from the rollouts the decision was taken on, those of
+    `evaluator` on the forecast's worlds (spec section 11.5, v2.0.3); NOOP's are the forecast's
+    (common random numbers, spec 2.3) and every figure equals the record's."""
+    rollouts = FORECAST_ROLLOUTS
+    rows = {c.label: c for c in record.candidates}
     impacts: list[Impact] = []
     for label in shown_labels(record):
-        stats = records.get(label)
-        if stats is None and label != "NOOP":
-            continue
-        candidate = noop(observation) if stats is None else candidate_of(stats, observation)
-        outcomes = evaluator.extend(candidate, rollouts)
-        mean_cost = math.fsum(outcomes.cost) / rollouts
+        row = rows.get(label)
+        outcomes = evaluator.outcomes[label]
+        mean_cost = math.fsum(outcomes.cost[:rollouts]) / rollouts
         impacts.append(
             Impact(
                 label=label,
-                kind=candidate.kind,
-                p_on_time=sum(outcomes.on_time) / rollouts,
-                tardiness=sum(outcomes.tardiness) / rollouts,
+                kind="noop" if row is None else row.kind,
+                p_on_time=sum(outcomes.on_time[:rollouts]) / rollouts,
+                tardiness=sum(outcomes.tardiness[:rollouts]) / rollouts,
                 mean_cost=mean_cost,
                 overrun=evaluator.overrun(mean_cost),
                 rollouts=rollouts,
-                mean_makespan=float(np.mean(outcomes.makespan)),
+                mean_makespan=float(np.mean(outcomes.makespan[:rollouts])),
             )
         )
     chosen, *others = impacts
     others.sort(key=lambda i: (i.label != record.runner_up, -i.p_on_time, i.tardiness))
-    return Comparison(seed=seed, rollouts=rollouts, impacts=(chosen, *others))
+    return Comparison(
+        seed=evaluator.seed, rollouts=rollouts, impacts=(chosen, *others), decides=True
+    )
+
+
+def tie_kind(record: DecisionRecord, params: SentinelParams) -> Tie | None:
+    """Which sentence the page adds when a component after min(p, theta_D) decides (spec sections
+    11.5 and 11.7), None otherwise: "target" where the chosen action and the runner-up are both
+    within epsilon_D of theta_D (the cap of the rule makes them tie), else "similar"."""
+    if record.reason not in LATER_COMPONENTS:
+        return None
+    rows = {c.label: c for c in record.candidates}
+    chosen, runner = rows.get(record.chosen), rows.get(record.runner_up or "")
+    enough = params.theta_d - params.eps_d
+    if chosen and runner and min(chosen.p_on_time, runner.p_on_time) >= enough:
+        return "target"
+    return "similar"
 
 
 def plan_changes(

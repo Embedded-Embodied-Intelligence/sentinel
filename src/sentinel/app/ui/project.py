@@ -47,7 +47,8 @@ def why_text(rec: RecommendationView, texts: Texts) -> str:
             return texts("why.keep_plain")
         if rec.reason == "needs_met":
             return texts("why.on_track", p=texts.pct(before.p_on_time))
-        return texts("why.keep", options=options, p=texts.pct(before.p_on_time))
+        kept = texts("why.keep", options=options, p=texts.pct(before.p_on_time))
+        return kept if rec.tie is None else f"{kept} {texts.tie(rec.tie, rec.reason)}"
     parts = []
     if before is not None:
         parts.append(texts("why.without", p=texts.pct(before.p_on_time)))
@@ -61,11 +62,14 @@ def why_text(rec: RecommendationView, texts: Texts) -> str:
     )
     if after.tardiness >= 0.05:
         parts.append(texts("why.delay", days=texts.decimal(after.tardiness)))
-    parts.append(texts("why.reason", reason=rec.reason_text))
+    if rec.tie is None:
+        parts.append(texts("why.reason", reason=rec.reason_text))
     runner = next((a for a in rec.alternatives if a.runner_up), None)
     if runner is not None:
         title = texts("rec.alt_noop") if runner.label == "NOOP" else runner.title
         parts.append(texts("why.runner", title=title, p=texts.pct(runner.p_on_time)))
+    if rec.tie is not None:
+        parts.append(texts.tie(rec.tie, rec.reason))
     return " ".join(parts)
 
 

@@ -4,7 +4,9 @@ by day under a chosen policy next to NoReaction on the same seed (common random 
 
 `Simulation` builds the engine state and the day loop exactly as `simulate` does and executes
 the days through the loop's own `open_day`/`close_day`, so a run advanced to its end equals
-`simulate` with the same plan, policy and seed. The world seed of scenario r is that of
+`simulate` with the same plan, policy and seed. Sentinel decides as everywhere in the
+application, on one comparison (`AppSentinel`, spec section 11.5 v2.0.3), with the world seed as
+the project's. The world seed of scenario r is that of
 replication r in the studies, derive_seed(2026, set, instance, str(r)); the baseline plan is the
 studies' cached `cpsat_det` plan, the deadline D = ceil((1 + delta_D) C*) with C* the reference
 makespan of the instance (the plan's if there is none), and the budget that of spec section 1.2.
@@ -30,6 +32,7 @@ from sentinel.app.models import (
     Language,
     Settings,
 )
+from sentinel.app.planning import AppSentinel
 from sentinel.dashboard.world import Observed
 from sentinel.data.psplib_loader import instance_path, list_instances, load_psplib
 from sentinel.data.reference import ReferenceKind, load_reference, reference_path
@@ -169,11 +172,12 @@ def build_world(spec: SimulatorSpec, root: Path, cache: Path) -> World:
 
 
 def policy_of(spec: SimulatorSpec, name: str) -> Policy:
-    """A fresh policy: Sentinel (full variant, autonomy Lambda, spec section 8) or a baseline of
-    the registry (spec section 7), with the CP-SAT settings of the policies."""
+    """A fresh policy: Sentinel (full variant, autonomy Lambda, spec section 8) deciding on one
+    comparison (spec section 11.5) or a baseline of the registry (spec section 7), with the CP-SAT
+    settings of the policies."""
     if name == "sentinel":
         params = SentinelParams(autonomy=spec.autonomy, deterministic_time_limit=T_CP)
-        return Observed(Sentinel(params, seed=spec.seed))
+        return Observed(AppSentinel(params, seed=spec.seed))
     return make_policy(name, deterministic_time_limit=T_CP, seed=0, run_seed=spec.seed)
 
 

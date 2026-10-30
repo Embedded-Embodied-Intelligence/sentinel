@@ -291,10 +291,12 @@ class Forecast:
     gate: str | None = None
 
 
-def forecasts(world: World, policy_run: PolicyRun) -> list[Forecast]:
+def forecasts(world: World, policy_run: PolicyRun, stream: str = "sentinel") -> list[Forecast]:
     """Sentinel: NOOP's rollouts of every deliberation, repeated on the agent's worlds with its
     rollout count, so P(C <= D) equals the record's (else RuntimeError). Other policies: NOOP
-    every T_r days from the observation after the decision, on N rollouts of the same seeds."""
+    every T_r days from the observation after the decision, on N rollouts of the same seeds.
+    `stream` names the worlds: derive_seed(world seed, stream, str(t)); the application's Sentinel
+    reads NOOP on those of the forecast (spec section 11.5)."""
     found: list[Forecast] = []
     if policy_run.is_sentinel:
         for record in policy_run.records:
@@ -304,7 +306,7 @@ def forecasts(world: World, policy_run: PolicyRun) -> list[Forecast]:
             n = record.needs.rollouts if noop_record is None else noop_record.rollouts
             expected = record.needs.p_on_time if noop_record is None else noop_record.p_on_time
             chosen = next((c for c in record.candidates if c.label == record.chosen), None)
-            forecast = _noop_forecast(world, policy_run, record.day, n)
+            forecast = _noop_forecast(world, policy_run, record.day, n, stream)
             if abs(forecast.p_on_time - expected) > 1e-12:
                 raise RuntimeError(
                     f"the forecast of day {record.day} gives P(on time) {forecast.p_on_time}, "
@@ -318,13 +320,15 @@ def forecasts(world: World, policy_run: PolicyRun) -> list[Forecast]:
             found.append(forecast)
         return found
     for day in sorted(policy_run.observations):
-        found.append(_noop_forecast(world, policy_run, day, policy_run.params.n_rollouts))
+        found.append(_noop_forecast(world, policy_run, day, policy_run.params.n_rollouts, stream))
     return found
 
 
-def _noop_forecast(world: World, policy_run: PolicyRun, day: int, n: int) -> Forecast:
+def _noop_forecast(
+    world: World, policy_run: PolicyRun, day: int, n: int, stream: str = "sentinel"
+) -> Forecast:
     observation = policy_run.observations[day]
-    seed = derive_seed(world.seed, "sentinel", str(day))
+    seed = derive_seed(world.seed, stream, str(day))
     evaluator = Evaluator(observation, seed, policy_run.params)
     makespans = evaluator.extend(noop(observation), n).makespan[:n]
     # A rollout cut at max_days has C = max_days = ceil(5 D') > D, so C <= D decides on time.

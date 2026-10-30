@@ -32,9 +32,9 @@ from sentinel.app.models import (
     TaskReport,
     WorkIncreaseReport,
 )
+from sentinel.app.planning import AppSentinel
 from sentinel.app.store import EventRow, now
 from sentinel.model import Activity, ProjectInstance, Role, Worker
-from sentinel.policies.sentinel import Sentinel
 from sentinel.simulation.events import DisruptionParams
 from sentinel.simulation.state import Observation, nominal_world, state_from_observation
 from sentinel.simulation.uncertainty import PertParams, derive_budget
@@ -345,13 +345,13 @@ def _hand_made_observation() -> Observation:
     )
 
 
-def test_recommendation_is_the_sentinel_decision_on_the_equivalent_observation() -> None:
+def test_recommendation_is_the_app_decision_on_the_equivalent_observation() -> None:
     project = checked_in(planned(small()), ABSENCE_CHECKIN)
     hand = _hand_made_observation()
     assert project.observation() == hand
     state_from_observation(hand, nominal_world(hand))
     recommendation = absence_recommendation()
-    direct = Sentinel(SentinelParams(autonomy=2), seed=2026, keep_records=False).deliberate(hand)
+    direct = AppSentinel(SentinelParams(autonomy=2), seed=2026, keep_records=False).deliberate(hand)
     timing = {"generation_s", "evaluation_s", "wall_time_s"}
     assert recommendation.record.model_dump(exclude=timing) == direct.model_dump(exclude=timing)
     assert recommendation.record.chosen == "SUBST(1)" and recommendation.record.gate == "escalated"

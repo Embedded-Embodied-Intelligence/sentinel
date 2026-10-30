@@ -609,7 +609,7 @@ class Services:
                 observation = replay(before).project.observation()
                 project = current.project
                 roles = project.require_model().role_names
-                record = found.recommendation.record
+                record = found.recommendation.as_shown  # the page's rows and figures (11.5)
                 key = derive_seed(project.definition.settings.seed, "llm", "explain", str(seq))
                 explanation = self.llm.explain(
                     record, observation, planning.sentinel_params(project), roles, key

@@ -16,7 +16,7 @@ from sentinel.app.events import LiveState, LlmExplanation, RecommendationEntry, 
 from sentinel.app.live import AppliedAction, Issue, LiveProject, Tracked, validate_definition
 from sentinel.app.messages import render
 from sentinel.app.models import Language, ProjectDefinition
-from sentinel.app.planning import ForecastResult, Impact, sentinel_params
+from sentinel.app.planning import ForecastResult, Impact, Tie, sentinel_params, tie_kind
 from sentinel.dashboard.explain import template_explanation
 from sentinel.policies.base import LEVELS, Decision, Descope, Overtime, Reseq, Shift, Subst
 from sentinel.simulation.state import PAUSED, RUNNING, Observation
@@ -144,7 +144,8 @@ class RecommendationView(View):
     why it needs approval ("people", "money", "scope", "plan"), the alternatives and whether its
     automatic plan change can be undone. `compared`: its figures come from the comparison on
     the forecast's simulated futures (v2.0.2), not from the deliberation's own; `options`: the
-    number of candidates Sentinel weighed."""
+    number of candidates Sentinel weighed; `tie`: a later component than the chance decided, so
+    the page says so in one sentence (v2.0.3)."""
 
     seq: int
     day: int
@@ -170,6 +171,7 @@ class RecommendationView(View):
     compared: bool = False
     options: int = 0
     budget: float | None = None
+    tie: Tie | None = None
     explanation: ExplanationView
     llm_explanation: ExplanationView | None
     discarded: str | None
@@ -618,6 +620,7 @@ def recommendation_view(
         ]
     reason = record.reason
     needs_approval = recommendation.acts and params.needs_approval(decision)
+    comparison = recommendation.comparison
     return RecommendationView(
         seq=entry.seq,
         day=recommendation.day,
@@ -651,8 +654,9 @@ def recommendation_view(
         compared=recommendation.comparison is not None,
         options=len(record.candidates),
         budget=project.require_model().budget,
+        tie=tie_kind(record, params) if comparison is not None and comparison.decides else None,
         explanation=ExplanationView(
-            text=template_explanation(record, language).summary, source="template"
+            text=template_explanation(recommendation.as_shown, language).summary, source="template"
         ),
         llm_explanation=None if entry.explanation is None else llm_view(entry.explanation),
         discarded=entry.discarded,

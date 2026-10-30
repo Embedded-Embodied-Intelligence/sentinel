@@ -28,7 +28,7 @@ from sentinel.app.events import LiveState, RecommendationEntry, replay
 from sentinel.app.live import LiveProject
 from sentinel.app.messages import render
 from sentinel.app.models import Language
-from sentinel.app.planning import sentinel_params
+from sentinel.app.planning import sentinel_params, shown_chance
 from sentinel.app.simulator import PolicyRun as SimRun
 from sentinel.app.simulator import Simulation
 from sentinel.app.store import EventRow
@@ -91,7 +91,7 @@ def simulator_page(simulation: Simulation, language: Language) -> str:
         world=world,
         first=first,
         second=second,
-        forecasts=tuple(forecasts(world, first.run)),
+        forecasts=tuple(forecasts(world, first.run, stream="forecast")),  # spec 11.5, v2.0.3
         log=tuple(decision_log(world, first.run)) if first.run.is_sentinel else (),
         explanations=(),
         explain_source="template",
@@ -527,7 +527,7 @@ def _live_kpis(state: LiveState, cost: float, language: Language) -> str:
     if noop_impact is not None and noop_impact.mean_makespan is not None:
         finish = calendar.finish_date(int(noop_impact.mean_makespan + 0.5)).isoformat()
         rows.append(("cockpit_kpi_forecast", finish))
-        rows.append(("cockpit_kpi_p", f"{noop_impact.p_on_time:.2f}"))
+        rows.append(("cockpit_kpi_p", f"{shown_chance(noop_impact.p_on_time):.2f}"))
     actions = [e for e in state.recommendations if e.status in ("auto", "approved")]
     rows.append(("cockpit_kpi_actions", str(len(actions))))
     rows.append(("cockpit_kpi_temps", str(len(project.temps))))
@@ -545,13 +545,13 @@ def _log_row(project: LiveProject, entry: RecommendationEntry, language: Languag
     kind = chosen.kind if chosen is not None else "noop"
     title = describe(decision, kind, project, recommendation.day, language, entry.applied)
     impact = recommendation.impact(record.chosen) or recommendation.impact("NOOP")
-    p = "—" if impact is None else f"{impact.p_on_time:.2f}"
+    p = "—" if impact is None else f"{shown_chance(impact.p_on_time):.2f}"
     if entry.explanation is not None:
         shown = llm_view(entry.explanation)
         text = shown.text or render("cockpit_llm_invalid", language)
         badge = render(f"cockpit_badge_{shown.badge}", language, {"model": shown.model or "?"})
     else:
-        text = template_explanation(record, language).summary
+        text = template_explanation(recommendation.as_shown, language).summary
         badge = render("cockpit_badge_template", language)
     date = project.calendar.date_of(recommendation.day).isoformat()
     return (

@@ -14,6 +14,7 @@ from datetime import date, datetime
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
 from sentinel.app.models import Language
+from sentinel.app.planning import half_up
 from sentinel.app.views import issue_views
 
 Day = date  # the type, for the methods of `Texts` (one of them is called `date`)
@@ -869,10 +870,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "{p}, więc Sentinel zaleca zachowanie planu.",
     ),
     "why.keep": (
-        "Sentinel compared {options} options on simulated futures; none does better than keeping "
-        "the plan, with a {p} chance of meeting the deadline.",
-        "Sentinel porównał możliwości ({options}) na symulowanych scenariuszach; żadna nie "
-        "wypada lepiej niż zachowanie planu, przy którym szansa na dotrzymanie terminu wynosi "
+        "Sentinel compared {options} options on simulated futures; none is clearly better than "
+        "keeping the plan, with a {p} chance of meeting the deadline.",
+        "Sentinel porównał możliwości ({options}) na symulowanych scenariuszach; żadna nie jest "
+        "wyraźnie lepsza niż zachowanie planu, przy którym szansa na dotrzymanie terminu wynosi "
         "{p}.",
     ),
     "why.without": (
@@ -900,6 +901,38 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "why.runner": (
         "The next best option reaches {p}: {title}.",
         "Następna w kolejności możliwość osiąga {p}: {title}.",
+    ),
+    "why.tie.similar": (
+        "Similar chance (the difference is within the uncertainty); {part}.",
+        "Podobna szansa (różnica w granicach niepewności); {part}.",
+    ),
+    "why.tie.target": (
+        "Both options reach the target chance; {part}.",
+        "Oba warianty osiągają docelową szansę; {part}.",
+    ),
+    "why.tie.by.tardiness": (
+        "the option with the smaller expected delay was chosen",
+        "wybrano wariant z mniejszym oczekiwanym opóźnieniem",
+    ),
+    "why.tie.by.scope": (
+        "the option that gives up less scope was chosen",
+        "wybrano wariant, który mniej ogranicza zakres",
+    ),
+    "why.tie.by.budget": (
+        "the option with the smaller expected budget overrun was chosen",
+        "wybrano wariant z mniejszym oczekiwanym przekroczeniem budżetu",
+    ),
+    "why.tie.by.stability": (
+        "the option that changes fewer dates was chosen",
+        "wybrano wariant, który zmienia mniej terminów",
+    ),
+    "why.tie.by.level": (
+        "the option that needs less approval was chosen",
+        "wybrano wariant, który wymaga mniej zatwierdzeń",
+    ),
+    "why.tie.by.order": (
+        "the options are equal on the rest, so the simplest was chosen",
+        "warianty są równorzędne także pod innymi względami, więc wybrano najprostszy",
     ),
     # ---- history
     "history.title": ("History", "Historia"),
@@ -1037,8 +1070,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "sim.settings_note": (
         "The simulator uses the application's settings, not the setup of the research studies: "
-        "for example, at least one temporary person per role can always be added, so a run can "
-        "differ from the studies' results.",
+        "at least one temporary person per role can always be added, and each decision is taken "
+        "on the same 200 simulated futures as its figures, so a run can differ from the studies' "
+        "results.",
         "Symulator używa ustawień aplikacji, a nie ustawień badań: na przykład zawsze można dodać "
         "co najmniej jedną osobę tymczasową w każdej roli, więc przebieg może się różnić od "
         "wyników badań.",
@@ -1307,7 +1341,7 @@ class Texts:
         """A probability as a whole percentage; never "0 %" or "100 %" unless it is exact."""
         if value is None or math.isnan(value):
             return "—"
-        percent = math.floor(100 * value + 0.5)
+        percent = int(half_up(100 * value))
         if value > 0 and percent == 0:
             return f"<{NBSP}1{NBSP}%"
         if value < 1 and percent == 100:
@@ -1315,8 +1349,8 @@ class Texts:
         return f"{percent}{NBSP}%"
 
     def decimal(self, value: float) -> str:
-        """A number with at most one decimal (a decimal comma in Polish)."""
-        text = f"{value:.1f}"
+        """A number with at most one decimal, half up (a decimal comma in Polish)."""
+        text = f"{half_up(value, 1):.1f}"
         if text.endswith(".0"):
             text = text[:-2]
         if text == "-0":
@@ -1357,6 +1391,10 @@ class Texts:
             return self("cost.change_small", units=units)
         share = f"{'+' if value > 0 else MINUS}{percent}{NBSP}%"
         return self("cost.change", units=units, share=share)
+
+    def tie(self, kind: str, reason: str) -> str:
+        """The sentence shown when a later component than the chance decides (spec 11.5, 11.7)."""
+        return self(f"why.tie.{kind}", part=self(f"why.tie.by.{reason}"))
 
     def tenths(self, share: float) -> int:
         """A share in tenths, rounded half up: 0.74 -> 7 ("7 of 10")."""

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from app_cases import ABSENCE_CHECKIN, small
+from app_cases import ABSENCE_CHECKIN, absence_recommendation, answer_from, small
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -291,7 +291,7 @@ def test_extraction_and_explanations_use_the_configured_model(
         "summary": "Replace Ada on Build API to raise the chance to finish on time.",
         "cited_facts": [
             {"kind": "chosen_action", "value": "SUBST(1)"},
-            {"kind": "deciding_component", "value": "stability"},
+            {"kind": "deciding_component", "value": "on_time"},
         ],
     }
     seen: list[str] = []
@@ -328,6 +328,36 @@ def test_extraction_and_explanations_use_the_configured_model(
     assert shown["llm_explanation"]["source"] == "llm"
     assert shown["llm_explanation"]["badge"] == "faithful"
     assert shown["explanation"]["source"] == "template"
+
+
+@pytest.mark.slow  # under 2 s, out of the default run
+def test_the_ai_explanation_is_checked_against_the_page(tmp_path: Path, client: Visitor) -> None:
+    record = absence_recommendation().as_shown
+    for answer, badge in (
+        (answer_from(record), "faithful"),
+        (answer_from(record, "Another option reaches 777 %."), "unfaithful"),
+    ):
+        config = local(tmp_path / badge)
+        services = Services(config, llm_factory=_fake(json.loads(answer), []))
+        test, csrf = client(config, services)
+        test.put("/api/settings/llm", json={"provider": "ollama"}, headers=csrf)
+        made = test.post("/api/projects", json=small().model_dump(mode="json"), headers=csrf)
+        pid = made.json()["id"]
+        test.post(f"/api/projects/{pid}/plan", headers=csrf)
+        test.post(
+            f"/api/projects/{pid}/checkins",
+            content=ABSENCE_CHECKIN.model_dump_json(),
+            headers={**csrf, "content-type": "application/json"},
+        )
+        seq = test.get(f"/api/projects/{pid}").json()["open_recommendation"]
+        explained = test.post(
+            f"/api/projects/{pid}/recommendations/{seq}/explanation", headers=csrf
+        )
+        assert explained.json()["status"] == "done"
+        shown = next(
+            r for r in test.get(f"/api/projects/{pid}").json()["recommendations"] if r["seq"] == seq
+        )
+        assert shown["llm_explanation"]["badge"] == badge
 
 
 def test_demo_sessions_are_isolated(tmp_path: Path, client: Visitor) -> None:
