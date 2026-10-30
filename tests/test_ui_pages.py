@@ -340,6 +340,25 @@ def test_the_wizard_saves_and_exits_and_adds_people_by_role(site: Site) -> None:
     assert created.headers["HX-Redirect"] == "/"
 
 
+def test_the_toast_of_a_check_in_survives_the_analysis_that_follows(site: Site) -> None:
+    """QA-01: the analysis ends in a page load; the toast with the new chance must come after it,
+    not disappear with the page it was on."""
+    pid = site.ids["calm"]
+    running = site.services.store.create_job(LOCAL_SESSION, pid, "recommend")
+    try:
+        page = site.client.get(
+            f"/projects/{pid}", params={"lang": "en", "flash": "checkin_saved"}
+        ).text
+        assert "flash%3Dcheckin_saved" in page and "toast=checkin_saved" in page
+        site.services.store.update_job(running.id, status="done", result={"recommendation": 1})
+        url = re.search(rf'hx-get="(/jobs/{running.id}[^"]+)"', page)
+        assert url is not None
+        done = site.client.get(url.group(1).replace("&amp;", "&"), headers=site.headers)
+        assert done.headers["HX-Redirect"] == f"/projects/{pid}?flash=checkin_saved"
+    finally:
+        site.services.store.update_job(running.id, status="done")
+
+
 def test_the_history_shows_the_chance_over_time(site: Site) -> None:
     pid = site.ids["open"]
     page = _get(site, f"/projects/{pid}/history", "pl")

@@ -39,11 +39,11 @@
   </div>
   {% else %}
   <h2 id="pending-title" class="vh">{{ t("overview.pending_title") }}</h2>
-  {% if job %}
-  {% with label=t("job.recommend"), query="label=job.recommend&next=/projects/" ~ view.id %}{% include "_job.html" %}{% endwith %}
-  {% else %}
-  <p class="none-line">{{ icon("check", 16) }}{{ t("overview.nothing_pending") }}</p>
+  {% if not job %}<p class="none-line">{{ icon("check", 16) }}{{ t("overview.nothing_pending") }}</p>{% endif %}
   {% endif %}
+  {% if job %}
+  {% set after_job = "/projects/" ~ view.id ~ ("?flash=" ~ flash_key if flash_key else "") %}
+  {% with label=t("job.recommend"), query="label=job.recommend&next=" ~ (after_job | urlencode) %}{% include "_job.html" %}{% endwith %}
   {% endif %}
   {% if checked %}
   <p class="none-line section-sub">{{ icon("check-circle", 16) }}<span>{{ t("overview.checked_title") }}. {{ t("overview.checked") }} <a href="/projects/{{ view.id }}/recommendations/{{ checked.seq }}">{{ t("overview.details") }}</a></span></p>
