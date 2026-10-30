@@ -29,6 +29,8 @@ AXIS = 20  # the row of date labels
 TIER = 22  # a row of flags above the date labels
 PX_PER_DAY = 9  # the plot's least width per working day: it scrolls in its card below that
 MIN_PLOT = 480
+SIM_PX_PER_DAY = 5  # the simulator's chart shares its row with the timeline
+SIM_MIN_PLOT = 360
 FLAG_CHAR = 6.8  # the estimated width of a flag's character at 12 px, in px
 FLAG_PAD = 8
 WEEK = 5
@@ -140,6 +142,8 @@ def layout(
     desc: str,
     texts: Texts,
     ends: Sequence[int] = (),
+    px_per_day: int = PX_PER_DAY,
+    min_plot: int = MIN_PLOT,
 ) -> Gantt:
     """The chart's geometry: the range runs from the project's start to a week after the latest
     thing it shows (the bad case, when there is a forecast)."""
@@ -152,7 +156,7 @@ def layout(
                 reach.append(span[1])
         reach += [end for _, end, _ in row.absences]
     horizon = max(10, max(reach) + 2)
-    min_width = max(MIN_PLOT, horizon * PX_PER_DAY)
+    min_width = max(min_plot, horizon * px_per_day)
 
     def x(day: float) -> float:
         return round(max(0.0, min(day, horizon)) / horizon * 100, 3)
@@ -470,7 +474,19 @@ def sim_gantt(run: PolicyRun, names: Mapping[int, str], texts: Texts) -> Gantt:
         status=texts.date(status_day),
     )
     ends = [world.plan.makespan, state.plan[state.sink]]
-    return layout(plotted, calendar, t, lines, None, texts("chart.title"), desc, texts, ends)
+    return layout(
+        plotted,
+        calendar,
+        t,
+        lines,
+        None,
+        texts("chart.title"),
+        desc,
+        texts,
+        ends,
+        px_per_day=SIM_PX_PER_DAY,
+        min_plot=SIM_MIN_PLOT,
+    )
 
 
 @dataclass(frozen=True)
@@ -500,7 +516,7 @@ def forecast_strip(
 
 @dataclass(frozen=True)
 class ChancePoint:
-    """A point of the chart of the chance over time."""
+    """A point of the chart of the chance over time, in per cent of its width and height."""
 
     x: float
     y: float
@@ -509,11 +525,11 @@ class ChancePoint:
 
 
 def chance_points(values: Sequence[tuple[date, float]], texts: Texts) -> list[ChancePoint]:
-    """The chance after every check-in on a 0-100 % chart, in per cent of its width and height,
-    evenly spaced, one point per report (brief, section 4.6)."""
+    """The chance after every check-in on a 0-100 % chart, evenly spaced, one point per report
+    (docs/design/brief.md, section 4.6); the top and bottom of the chart stay free for labels."""
     count = len(values)
     points = []
     for i, (day, p) in enumerate(values):
-        x = 50.0 if count == 1 else round(100 * i / (count - 1), 2)
-        points.append(ChancePoint(x, round(100 * (1 - p), 2), texts.date(day), texts.pct(p)))
+        x = 50.0 if count == 1 else round(3 + 94 * i / (count - 1), 2)
+        points.append(ChancePoint(x, round(6 + 74 * (1 - p), 2), texts.date(day), texts.pct(p)))
     return points

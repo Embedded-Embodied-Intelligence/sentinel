@@ -88,7 +88,7 @@
       <label><input class="view-table-radio" type="radio" name="plan-view" value="table">{{ t("chart.view.table") }}</label>
     </div>
   </div>
-  <div class="card plan-card">
+  <div class="card">
     <div class="view-chart">
       {% with with_away=true, with_window=true %}{% include "_gantt_legend.html" %}{% endwith %}
       <div id="gantt-area">{{ chart | safe }}</div>

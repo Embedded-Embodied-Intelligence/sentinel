@@ -15,6 +15,7 @@ import threading
 from collections import OrderedDict
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any, Literal
 
@@ -159,6 +160,16 @@ def job_view(job: JobRow, language: Language) -> JobView:
     )
 
 
+@dataclass(frozen=True)
+class ChanceStep:
+    """A check-in's effect on the chance of meeting the deadline (its event, its date)."""
+
+    seq: int
+    date: date
+    before: float | None
+    after: float
+
+
 class Services:
     """The services of one server."""
 
@@ -177,6 +188,7 @@ class Services:
             factory=llm_factory or make_client,
         )
         self._guard = threading.Lock()
+        self._cancelled: set[str] = set()  # simulator jobs to stop after their current day
         self._locks: dict[str, threading.RLock] = {}
         self._live: OrderedDict[str, tuple[int, LiveState]] = OrderedDict()
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
@@ -545,6 +557,36 @@ class Services:
                 previous = self._forecast(project_id, before).p_on_time
         return ForecastSummary(forecast=current, previous_p=previous)
 
+    def chance_history(
+        self, session: str, project_id: str
+    ) -> tuple[list[ChanceStep], float | None]:
+        """The chance of meeting the deadline before and after every check-in (spec section 11.4,
+        on the states of the log) and now; every forecast is deterministic and cached."""
+        rows = self.store.events(session, project_id)
+        steps = []
+        for row in rows:
+            if row.type != "checkin":
+                continue
+            before = replay([r for r in rows if r.seq < row.seq])
+            after = replay([r for r in rows if r.seq <= row.seq])
+            p_after = self._deadline_chance(project_id, after)
+            if p_after is None:
+                continue
+            steps.append(
+                ChanceStep(
+                    seq=row.seq,
+                    date=after.project.checkins[-1][0],
+                    before=self._deadline_chance(project_id, before),
+                    after=p_after,
+                )
+            )
+        return steps, self._deadline_chance(project_id, replay(rows))
+
+    def _deadline_chance(self, project_id: str, state: LiveState) -> float | None:
+        if not _forecastable(state.project) or state.project.definition.deadline is None:
+            return None
+        return self._forecast(project_id, state).p_on_time
+
     def known_chance(self, project_id: str, state: LiveState) -> float | None:
         """The chance of meeting the deadline if the forecast of `state` is cached, else None:
         what a page can show without calculating anything."""
@@ -808,16 +850,29 @@ class Services:
                 row, simulation = self._simulation(session, project_id)
                 if simulation.finished:
                     raise AppError("simulation_finished", "conflict")
-                moved = simulation.advance(days, lambda f: progress(f, "simulating"))
-                seq = self.store.append(
-                    session, project_id, "advance", {"days": moved}, expected=row.seq
+                moved = simulation.advance(
+                    days,
+                    lambda f: progress(f, "simulating"),
+                    stop=lambda: progress.job_id in self._cancelled,
                 )
+                self._cancelled.discard(progress.job_id)
+                seq = row.seq
+                if moved:
+                    seq = self.store.append(
+                        session, project_id, "advance", {"days": moved}, expected=row.seq
+                    )
                 with self._guard:
                     self._sims[project_id] = (seq, simulation)
                 view = simulator.simulator_view(project_id, seq, simulation, language)
                 return view.model_dump(mode="json")
 
         return self._submit(session, project_id, "advance", work, language)
+
+    def cancel_advance(self, session: str, job_id: str) -> None:
+        """Stop a simulator job after the day it is on; the days done so far count."""
+        job = self.job_row(session, job_id)
+        if job.kind == "advance" and job.status in ("queued", "running"):
+            self._cancelled.add(job_id)
 
     # ---- cockpit
 

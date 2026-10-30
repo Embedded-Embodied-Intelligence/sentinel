@@ -1,1 +1,2 @@
-<p class="alert alert-success" role="status"><span aria-hidden="true">✓ </span>{{ t("report.ready") }} <a href="{{ href }}" target="_blank" rel="noopener">{{ t("report.open") }}</a></p>
+{% import "_ui.html" as ui with context %}
+{% call ui.callout("good", attrs=' role="status"') %}<p>{{ t("report.ready") }} <a href="{{ href }}" target="_blank" rel="noopener">{{ t("report.open") }}</a></p>{% endcall %}

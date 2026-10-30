@@ -1,20 +1,56 @@
 {% extends "base.html" %}
-{% block content %}
-{% include "_project_head.html" %}
-<nav class="filters" aria-label="{{ t('history.filter') }}">
-  {% for name in filters %}<a class="btn btn-small{% if show == name %} active{% endif %}" href="/projects/{{ view.id }}/history?show={{ name }}"{% if show == name %} aria-current="true"{% endif %}>{{ t("history.show." ~ name) }}</a>{% endfor %}
-</nav>
-{% if items %}
+{% import "_ui.html" as ui with context %}
+{% macro entries(groups) %}
 <ol class="timeline">
-  {% for item in items %}
+  {% for group in groups %}
+  <li class="tl-week overline">{{ group.title }}</li>
+  {% for item in group.items %}
   <li class="tl-item tl-{{ item.kind }}">
-    <p class="tl-when">{{ item.when }} · <span class="tl-kind">{{ t("history.kind." ~ item.kind) }}</span></p>
-    <p class="tl-title">{% if item.href %}<a href="{{ item.href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</p>
-    {% if item.lines %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+    <span class="tl-node">{{ icon(item.icon, 14) }}</span>
+    <div>
+      <p class="tl-meta"><span><time datetime="{{ item.day }}">{{ item.when }}</time> · {{ t("history.kind." ~ item.kind) }}</span>{% if item.auto %} {{ ui.badge("auto", t("overview.auto_title")) }}{% endif %}</p>
+      <p class="tl-title">{% if item.href %}<a href="{{ item.href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</p>
+      {% if item.lines %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+      {% if item.chip %}<p class="tl-chip">{{ item.chip }}</p>{% elif item.seq %}<p class="tl-chip" id="tl-chip-{{ item.seq }}"></p>{% endif %}
+    </div>
   </li>
   {% endfor %}
+  {% endfor %}
 </ol>
-{% else %}
-<p class="empty">{{ t("history.empty") }}</p>
+{% endmacro %}
+{% block content %}
+<div class="page">
+{% include "_project_head.html" %}
+{% if view.checkins %}
+<section class="card section-chart" aria-labelledby="chance-chart-title">
+  <h2 id="chance-chart-title" class="section-title-sm">{{ t("history.chance_title") }}</h2>
+  <div id="chance-history" hx-get="/projects/{{ view.id }}/history/chance" hx-trigger="load" hx-swap="innerHTML">
+    <p class="loading-line"><span class="spinner" aria-hidden="true"></span>{{ t("overview.calculating") }}</p>
+  </div>
+</section>
 {% endif %}
+<div class="section-head history-filter">
+  <h2 class="vh">{{ t("history.title") }}</h2>
+  <nav class="segmented" aria-label="{{ t('history.filter') }}">
+    {% for name in filters %}<a href="/projects/{{ view.id }}/history?show={{ name }}"{% if show == name %} aria-current="true"{% endif %}>{{ t("history.show." ~ name) }}</a>{% endfor %}
+  </nav>
+</div>
+{% if shown %}
+{{ entries(shown) }}
+{% if older %}
+<details class="details tl-more">
+  <summary>{{ t("history.older", n=older_count) }}</summary>
+  <div class="details-body">{{ entries(older) }}</div>
+</details>
+{% endif %}
+{% elif show == "all" %}
+<div class="empty-state">
+  {{ icon("document", 40) }}
+  <h2>{{ t("history.empty_title") }}</h2>
+  {% if not view.finished %}<a class="btn btn-primary" href="/projects/{{ view.id }}/checkin">{{ t("history.first") }}</a>{% endif %}
+</div>
+{% else %}
+<p class="row-list-empty">{{ t("history.empty") }}</p>
+{% endif %}
+</div>
 {% endblock %}

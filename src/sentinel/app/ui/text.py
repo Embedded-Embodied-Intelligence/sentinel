@@ -9,7 +9,7 @@ with the same placeholders and that no page shows an internal term. A missing ke
 
 import math
 from collections.abc import Mapping, Sequence
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
@@ -216,10 +216,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     # ---- how it works
     "how.title": ("How it works", "Jak to działa"),
     "how.lead": (
-        "Sentinel is a project assistant that thinks before it acts: it tries every option on "
-        "simulated futures and recommends the one that best protects your goals.",
-        "Sentinel to asystent projektu, który myśli, zanim zadziała: sprawdza każdą możliwość na "
-        "symulowanych scenariuszach i poleca tę, która najlepiej chroni Twoje cele.",
+        "Sentinel does not run the project for you. It works out whether you will make it and "
+        "suggests what to change.",
+        "Sentinel nie zarządza projektem za Ciebie. Liczy, czy zdążysz, i podpowiada, co zmienić.",
     ),
     "how.simulate.title": ("It simulates before it acts", "Najpierw symuluje, potem działa"),
     "how.simulate.text": (
@@ -284,13 +283,71 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "The research paper behind Sentinel",
         "Artykuł naukowy, na którym opiera się Sentinel",
     ),
+    "how.toc.title": ("On this page", "Na tej stronie"),
+    "how.toc.steps": ("Three steps", "Trzy kroki"),
+    "how.toc.chance": ("Where does the chance come from?", "Skąd bierze się szansa?"),
+    "how.toc.alone": (
+        "What Sentinel does alone and what it asks",
+        "Co Sentinel robi sam, a o co pyta",
+    ),
+    "how.toc.not": ("What Sentinel does not do", "Czego Sentinel nie robi"),
+    "how.toc.faq": ("Frequent questions", "Najczęstsze pytania"),
+    "how.step.1.title": ("You report progress", "Zgłaszasz postęp"),
+    "how.step.1.text": (
+        "About once a week: what is done, who is away, what grew.",
+        "Mniej więcej raz w tygodniu: co gotowe, kto nieobecny, co urosło.",
+    ),
+    "how.step.2.title": ("Sentinel simulates", "Sentinel symuluje"),
+    "how.step.2.text": (
+        "200 simulated futures from today's status, for every option.",
+        "200 symulowanych scenariuszy od dzisiejszego stanu, dla każdej możliwości.",
+    ),
+    "how.step.3.title": ("You decide", "Ty decydujesz"),
+    "how.step.3.text": (
+        "Approve or reject the proposal; the plan changes only then.",
+        "Zatwierdzasz albo odrzucasz propozycję; dopiero wtedy plan się zmienia.",
+    ),
+    "how.strip.likely": ("most likely finish", "najbardziej prawdopodobny koniec"),
+    "how.strip.deadline": ("deadline", "termin"),
+    "how.strip.bad": ("bad case", "zły scenariusz"),
+    "how.levels.level": ("Setting", "Ustawienie"),
+    "how.not.1": (
+        "It does not drop a task on its own: that always waits for you.",
+        "Nie rezygnuje z zadania samodzielnie: to zawsze czeka na Ciebie.",
+    ),
+    "how.not.2": (
+        "It does not ask why someone is away and does not store it.",
+        "Nie pyta, dlaczego ktoś jest nieobecny, i tego nie zapisuje.",
+    ),
+    "how.not.3": (
+        "The AI does not decide: every recommendation comes from the simulations.",
+        "AI nie podejmuje decyzji: każda rekomendacja pochodzi z symulacji.",
+    ),
     # ---- app settings
     "settings.title": ("Settings", "Ustawienia"),
+    "settings.ai_title": ("AI assistant", "Asystent AI"),
+    "settings.save": ("Save the settings", "Zapisz ustawienia"),
+    "settings.key_show": ("Show", "Pokaż"),
+    "settings.key_hide": ("Hide", "Ukryj"),
+    "settings.lang_title": ("Language and format", "Język i format"),
+    "settings.format_preview": (
+        "Dates and numbers look like this: {date} · {number} · {chance}",
+        "Tak wyglądają daty i liczby: {date} · {number} · {chance}",
+    ),
+    "settings.about_title": ("About the application", "O aplikacji"),
+    "settings.about.version": ("Version", "Wersja"),
+    "settings.about.licence": ("Licence", "Licencja"),
+    "settings.about.code": ("Source code", "Kod źródłowy"),
+    "settings.about.repository": ("Repository", "Repozytorium"),
+    "settings.about.what": (
+        "Sentinel is a research prototype for project managers.",
+        "Sentinel to prototyp badawczy dla kierowników projektów.",
+    ),
     "settings.lead": (
-        "Sentinel works without AI. If you connect a model, it can read project descriptions and "
-        "messages and explain recommendations in its own words.",
-        "Sentinel działa bez AI. Jeśli podłączysz model, będzie on mógł czytać opisy projektów i "
-        "wiadomości oraz wyjaśniać rekomendacje własnymi słowami.",
+        "Without AI Sentinel works as usual; only reading texts in your own words and AI "
+        "explanations are off.",
+        "Bez AI Sentinel działa normalnie; wyłączone są tylko wiadomości pisane własnymi "
+        "słowami i wyjaśnienia AI.",
     ),
     "settings.demo": (
         "In the demo the settings are fixed by the owner of the server.",
@@ -1103,11 +1160,28 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     # ---- history
     "history.title": ("History", "Historia"),
+    "history.chance_title": ("Chance over time", "Szansa w czasie"),
+    "history.chance_note": (
+        "One point per check-in; the dashed line is the target of 80 %.",
+        "Jeden punkt na raport; linia przerywana to cel 80 %.",
+    ),
+    "history.chance_desc": (
+        "Chance of meeting the deadline: from {first} to {last}.",
+        "Szansa na dotrzymanie terminu: od {first} do {last}.",
+    ),
+    "history.older": ("Show older ({n})", "Pokaż starsze ({n})"),
+    "history.empty_title": (
+        "Your check-ins and decisions will appear here.",
+        "Tu zobaczysz raporty i decyzje.",
+    ),
+    "history.first": ("Add the first check-in", "Dodaj pierwszy raport"),
+    "history.week.this": ("This week", "Ten tydzień"),
+    "history.chip": ("{before} → {after}", "{before} → {after}"),
     "history.filter": ("Show", "Pokaż"),
     "history.show.all": ("Everything", "Wszystko"),
-    "history.show.checkins": ("Check-ins", "Raporty statusu"),
-    "history.show.recommendations": ("Recommendations and decisions", "Rekomendacje i decyzje"),
-    "history.show.changes": ("Project changes", "Zmiany projektu"),
+    "history.show.checkins": ("Check-ins", "Raporty"),
+    "history.show.recommendations": ("Decisions", "Decyzje"),
+    "history.show.changes": ("Plan changes", "Zmiany planu"),
     "history.kind.checkin": ("Check-in", "Raport statusu"),
     "history.kind.recommendation": ("Recommendation", "Rekomendacja"),
     "history.kind.decision": ("Decision", "Decyzja"),
@@ -1158,38 +1232,34 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Leave empty to use the estimate from the tasks ({budget}).",
         "Pozostaw puste, aby użyć szacunku na podstawie zadań ({budget}).",
     ),
-    "psettings.autonomy": (
-        "What may Sentinel do without asking you?",
-        "Co Sentinel może zrobić bez pytania Cię o zgodę?",
+    "psettings.autonomy": ("What may Sentinel do on its own?", "Co Sentinel może robić sam?"),
+    "psettings.recommended": ("Recommended", "Zalecane"),
+    "psettings.alone": ("On its own:", "Sam:"),
+    "psettings.asks": ("Asks about:", "Pyta o:"),
+    "psettings.cost_unit": ("cost units (person-days)", "jednostek kosztu (osobodni)"),
+    "psettings.costs_how": ("How to count the cost", "Jak liczyć koszt"),
+    "psettings.unsaved": ("You have unsaved changes", "Masz niezapisane zmiany"),
+    "psettings.reset": ("Undo the changes", "Cofnij zmiany"),
+    "psettings.save": ("Save the changes", "Zapisz zmiany"),
+    "psettings.download": ("Download", "Pobierz"),
+    "psettings.report_row": ("Report for the team (HTML)", "Raport dla zespołu (HTML)"),
+    "autonomy.0.alone": ("nothing.", "nic."),
+    "autonomy.0.asks": ("every change.", "każdą zmianę."),
+    "autonomy.1.alone": ("task dates.", "daty zadań."),
+    "autonomy.1.asks": ("everything else.", "wszystko inne."),
+    "autonomy.2.alone": ("task dates and order.", "daty i kolejność zadań."),
+    "autonomy.2.asks": ("people, budget, scope.", "ludzi, budżet, zakres."),
+    "autonomy.3.alone": (
+        "also substitutes and temporary people.",
+        "także zastępstwa i osoby tymczasowe.",
     ),
+    "autonomy.3.asks": ("dropping tasks.", "rezygnacje z zadań."),
     "autonomy.0": ("Only advise me", "Tylko doradzaj"),
-    "autonomy.0.hint": (
-        "Every change waits for your approval.",
-        "Każda zmiana czeka na Twoją zgodę.",
-    ),
     "autonomy.1": ("May shift dates", "Może przesuwać terminy"),
-    "autonomy.1.hint": (
-        "Moving task dates without changing their order happens automatically; every other "
-        "change waits for you.",
-        "Przesunięcie terminów zadań bez zmiany kolejności dzieje się automatycznie; każda inna "
-        "zmiana czeka na Ciebie.",
-    ),
     "autonomy.2": ("May re-plan the order", "Może zmieniać kolejność zadań"),
-    "autonomy.2.hint": (
-        "Changing the order of tasks also happens automatically; changes that affect people, "
-        "money or scope wait for you (recommended).",
-        "Także zmiana kolejności zadań dzieje się automatycznie; zmiany dotyczące ludzi, "
-        "pieniędzy lub zakresu czekają na Ciebie (zalecane).",
-    ),
     "autonomy.3": ("May also add people and substitutes", "Może też dodawać osoby i zastępstwa"),
-    "autonomy.3.hint": (
-        "Substitutes and temporary people are also added automatically; dropping a task always "
-        "waits for you.",
-        "Także zastępstwa i osoby tymczasowe są dodawane automatycznie; rezygnacja z zadania "
-        "zawsze czeka na Ciebie.",
-    ),
-    "psettings.presets": ("Estimates and turbulence", "Szacunki i burzliwość"),
-    "psettings.costs": ("Daily cost of one person", "Dzienny koszt jednej osoby"),
+    "psettings.presets": ("Estimates and absences", "Szacunki i nieobecności"),
+    "psettings.costs": ("Cost of a working day", "Koszt dnia pracy"),
     "psettings.costs_hint": (
         "One person's working day in cost units: 1 by default, so a cost unit is a person-day; "
         "you may use your own unit, e.g. a currency. A temporary person costs one and a half "
@@ -1204,36 +1274,63 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Let the AI suggest extra options for Sentinel to test",
         "Pozwól AI proponować dodatkowe możliwości do sprawdzenia przez Sentinela",
     ),
-    "psettings.export": ("Download", "Pobierz"),
-    "psettings.export_plan": (
-        "The plan with progress (CSV, for spreadsheets)",
-        "Plan z postępem (CSV, do arkusza)",
-    ),
+    "psettings.export": ("Export", "Eksport"),
+    "psettings.export_plan": ("Task plan (CSV)", "Plan zadań (CSV)"),
     "psettings.export_project": (
-        "The whole project (JSON file, to import later)",
-        "Cały projekt (plik JSON do późniejszego importu)",
+        "The whole project (JSON, to import later)",
+        "Cały projekt (JSON, do późniejszego importu)",
     ),
-    "psettings.report": ("Prepare the detailed report", "Przygotuj szczegółowy raport"),
+    "psettings.report": ("Prepare", "Przygotuj"),
     "psettings.delete": ("Delete the project", "Usuń projekt"),
     "psettings.delete_text": (
-        "Deleting removes the project and its whole history for good.",
-        "Usunięcie trwale kasuje projekt i całą jego historię.",
+        "This removes the plan, the check-ins and the history. It cannot be undone.",
+        "Usuwa plan, raporty i historię. Nie da się tego cofnąć.",
     ),
     "psettings.delete_button": ("Delete the project…", "Usuń projekt…"),
     "delete.title": ("Delete the project?", "Usunąć projekt?"),
     "delete.text": (
-        "“{name}” and its whole history will be deleted for good. This cannot be undone.",
-        "„{name}” i cała jego historia zostaną trwale usunięte. Tego nie można cofnąć.",
+        "Delete “{name}”? The plan, the check-ins and the history will be gone. This cannot be "
+        "undone.",
+        "Usunąć „{name}”? Plan, raporty i historia znikną. Tego nie da się cofnąć.",
     ),
-    "delete.confirm": ("Delete for good", "Usuń trwale"),
+    "delete.confirm": ("Delete for good", "Usuń projekt na zawsze"),
     # ---- simulator
     "sim.title": ("Simulator", "Symulator"),
+    "sim.day_of": ("Day {day} of about {total}", "Dzień {day} z ok. {total}"),
+    "sim.chance_from": ("from Sentinel's analysis of {date}", "z analizy Sentinela z {date}"),
+    "sim.chance_none": (
+        "Sentinel has not analysed this project yet.",
+        "Sentinel jeszcze nie analizował tego projektu.",
+    ),
+    "sim.tasks_short": ("{done} of {total} tasks", "{done} z {total} zadań"),
+    "sim.differs": (
+        "How does this differ from the research results?",
+        "Czym to się różni od wyników badań?",
+    ),
+    "sim.restart": ("Run it again", "Uruchom ponownie"),
+    "sim.col.difference": ("Difference", "Różnica"),
+    "sim.col.late": ("After the deadline", "Po terminie"),
+    "sim.diff.earlier": ("{days} earlier", "{days} wcześniej"),
+    "sim.diff.later": ("{days} later", "{days} później"),
+    "sim.diff.none": ("no difference", "bez różnicy"),
+    "sim.end_note.j30": ("This takes about half a minute.", "To potrwa ok. pół minuty."),
+    "sim.end_note.j60": ("This takes a minute or two.", "To potrwa minutę lub dwie."),
+    "sim.verdict.earlier": (
+        "With Sentinel the project finished {days} earlier than with nobody reacting, but "
+        "still {late} after the deadline.",
+        "Z Sentinelem projekt skończył się {days} wcześniej niż bez reakcji, ale wciąż {late} "
+        "po terminie.",
+    ),
+    "sim.verdict.later": (
+        "With Sentinel the project finished {days} later than with nobody reacting; chance "
+        "plays a part.",
+        "Z Sentinelem projekt skończył się {days} później niż bez reakcji; przypadek też ma "
+        "znaczenie.",
+    ),
     "sim.lead": (
-        "Watch Sentinel manage an example project day by day — absences, growing tasks and new "
-        "work included — and compare it with nobody reacting to the same events.",
-        "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu — z nieobecnościami, "
-        "wydłużającymi się zadaniami i nową pracą — i porównaj to z brakiem reakcji na te same "
-        "zdarzenia.",
+        "See how Sentinel runs an example project day by day, and compare it with nobody reacting.",
+        "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu, i porównaj z "
+        "sytuacją, w której nikt nie reaguje.",
     ),
     "sim.settings_note": (
         "The simulator uses the application's settings, not the setup of the research studies: "
@@ -1281,20 +1378,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "sim.days_done": ("Days simulated", "Zasymulowane dni"),
     "sim.budget": ("Budget", "Budżet"),
     "sim.tasks_done": ("{done} of {total} tasks done", "Gotowe zadania: {done} z {total}"),
-    "sim.cost_so_far": (
-        "Cost so far: {cost} ({share} of the budget)",
-        "Koszt do tej pory: {cost} ({share} budżetu)",
-    ),
-    "sim.advance_by": ("Simulate the next:", "Zasymuluj kolejne:"),
-    "sim.days.1": ("1 day", "1 dzień"),
-    "sim.days.5": ("5 days", "5 dni"),
-    "sim.days.10": ("10 days", "10 dni"),
+    "sim.cost_so_far": ("Cost: {cost} ({share} of the budget)", "Koszt: {cost} ({share} budżetu)"),
+    "sim.advance_by": ("Move on:", "Przewiń:"),
+    "sim.days.1": ("+1 day", "+1 dzień"),
+    "sim.days.5": ("+5 days", "+5 dni"),
+    "sim.days.10": ("+10 days", "+10 dni"),
     "sim.days.end": ("To the end", "Do końca"),
     "sim.compare_title": ("How it ended", "Jak się skończyło"),
     "sim.col.measure": ("Measure", "Miara"),
     "sim.col.finish": ("Finish", "Zakończenie"),
-    "sim.col.on_time": ("Deadline", "Termin"),
-    "sim.col.cost": ("Cost (share of the budget)", "Koszt (część budżetu)"),
+    "sim.col.cost": ("Cost", "Koszt"),
     "sim.col.changes": ("Plan changes", "Zmiany planu"),
     "sim.col.hired": ("Temporary people", "Osoby tymczasowe"),
     "sim.col.substituted": ("Substitutions", "Zastępstwa"),
@@ -1409,10 +1502,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "zmieścił się w terminie; przypadek też ma znaczenie.",
     ),
     "sim.verdict.both_late": (
-        "Both finished late (working days of delay: with Sentinel {main}, with nobody reacting "
-        "{other}).",
-        "Oba przebiegi zakończyły się po terminie (dni robocze opóźnienia: z Sentinelem {main}, "
-        "bez reakcji {other}).",
+        "Both finished late: with Sentinel {main}, with nobody reacting {other} after the "
+        "deadline.",
+        "Oba przebiegi skończyły się po terminie: z Sentinelem {main}, bez reakcji {other}.",
     ),
     "sim.delete": ("Delete this simulation", "Usuń tę symulację"),
     # ---- cost units (spec section 11.2): values, values of a budget, short forms, changes
@@ -1523,6 +1615,13 @@ class Texts:
 
     def day_month(self, value: Day) -> str:
         return f"{value.day}{NBSP}{MONTHS[self.lang][value.month - 1]}"
+
+    def week_range(self, monday: Day) -> str:
+        """A working week from its Monday: "6–10 Nov", "30 Nov – 4 Dec" ("6–10 lis")."""
+        friday = monday + timedelta(days=4)
+        if monday.month == friday.month:
+            return f"{monday.day}\u2013{self.day_month(friday)}"
+        return f"{self.day_month(monday)} \u2013 {self.day_month(friday)}"
 
     def moment(self, value: datetime) -> str:
         """A point in time in the server's time zone: "Mon 14 Mar, 14:05"."""

@@ -31,6 +31,7 @@ JOB_LABELS = (
     "job.llm_test",
     "job.explain",
 )
+JOB_NOTES = ("sim.end_note.j30", "sim.end_note.j60")
 
 
 @dataclass(frozen=True)
@@ -177,6 +178,8 @@ def router(ui: Ui) -> APIRouter:
             view=view,
             providers=PROVIDERS,
             issues=issues or [],
+            repository=REPOSITORY,
+            today=date.today(),
             **values,
         )
 
@@ -231,7 +234,8 @@ def router(ui: Ui) -> APIRouter:
         label = label if label in JOB_LABELS else "job.plan"
         target = local_path(request.query_params.get("next"), "")
         if view.status in ("queued", "running"):
-            passed = {k: v for k, v in request.query_params.items() if k in ("next", "project")}
+            kept = ("next", "project", "note", "cancel")
+            passed = {k: v for k, v in request.query_params.items() if k in kept}
             return job_progress(ui, request, view, label, **passed)
         if view.status == "failed":
             error = view.error
@@ -264,11 +268,29 @@ def router(ui: Ui) -> APIRouter:
                 return ui.redirect(request, f"/projects/{project}")
         return ui.redirect(request, target or f"/projects/{project}")
 
+    @routes.post("/jobs/{job_id}/cancel")
+    def cancel_job(request: Request, job_id: str) -> Response:
+        """Stop a simulator run after the current day and show what it reached."""
+        session = ui.session(request)
+        services.cancel_advance(session, job_id)
+        job = services.job(session, job_id, ui.language(request))
+        return ui.redirect(request, f"/projects/{job.project}" if job.project else "/")
+
     return routes
 
 
 def job_progress(ui: Ui, request: Request, job: JobView, label: str, **query: str) -> Response:
-    """The fragment of a running job, which polls `/jobs/{id}` until it is done."""
+    """The fragment of a running job, which polls `/jobs/{id}` until it is done; a run to the end
+    says how long it takes and can be cancelled."""
     texts = ui.texts(request)
     values = {"label": label} | query
-    return ui.page(request, "_job.html", job=job, label=texts(label), query=urlencode(values))
+    note = query.get("note", "")
+    return ui.page(
+        request,
+        "_job.html",
+        job=job,
+        label=texts(label),
+        query=urlencode(values),
+        note=texts(note) if note in JOB_NOTES else "",
+        cancel=f"/jobs/{job.id}/cancel" if query.get("cancel") else "",
+    )

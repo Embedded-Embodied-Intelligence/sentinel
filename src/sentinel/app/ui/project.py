@@ -7,7 +7,7 @@ simulated futures, and the event log for the history.
 """
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -27,7 +27,7 @@ from sentinel.app.live import LiveProject
 from sentinel.app.models import CheckIn
 from sentinel.app.planning import half_up
 from sentinel.app.services import JobView
-from sentinel.app.ui.charts import forecast_strip, live_gantt
+from sentinel.app.ui.charts import chance_points, forecast_strip, live_gantt
 from sentinel.app.ui.core import Ui, chance_level, is_htmx
 from sentinel.app.ui.forms import Form, read_checkin, read_settings, team_roles
 from sentinel.app.ui.pages import job_progress, trend
@@ -41,6 +41,7 @@ from sentinel.app.views import (
 )
 
 HISTORY_FILTERS = ("all", "checkins", "recommendations", "changes")
+HISTORY_SHOWN = 20  # entries before "show older"
 NEXT_DAYS = 10  # unstarted tasks planned within this many working days are shown at check-in
 FLASHES_WITH_CHANCE = ("checkin_saved", "approved")  # toasts that add the new chance when known
 
@@ -324,9 +325,50 @@ class HistoryItem:
     kind: str  # checkin, recommendation, decision, change
     when: str
     title: str
+    day: date
+    icon: str = "swap"
     lines: list[str] = field(default_factory=list)
     href: str | None = None
     status: str | None = None
+    chip: str | None = None  # the chance before and after, when it is known with the entry
+    seq: int | None = None  # a check-in's event: its chip arrives with the chart of the chance
+    auto: bool = False
+
+
+@dataclass(frozen=True)
+class WeekGroup:
+    """The entries of one week in the history (docs/design/brief.md, section 3.14)."""
+
+    title: str
+    items: list[HistoryItem]
+
+
+def week_groups(
+    items: list[HistoryItem], texts: Texts, today: date | None = None
+) -> list[WeekGroup]:
+    """Entries under their week's header, in their given order: "This week" or "6–10 Nov"."""
+    this_week = (today or date.today()) - timedelta(days=(today or date.today()).weekday())
+    groups: list[WeekGroup] = []
+    current = None
+    for item in items:
+        monday = item.day - timedelta(days=item.day.weekday())
+        if monday != current:
+            title = texts("history.week.this") if monday == this_week else texts.week_range(monday)
+            groups.append(WeekGroup(title, []))
+            current = monday
+        groups[-1].items.append(item)
+    return groups
+
+
+def chance_chip(rec: RecommendationView | None, texts: Texts) -> str | None:
+    """A recommendation's effect on the chance as the history shows it."""
+    if rec is None or not rec.acts or rec.without is None or rec.with_action is None:
+        return None
+    return texts(
+        "history.chip",
+        before=texts.pct(rec.without.p_on_time),
+        after=texts.pct(rec.with_action.p_on_time),
+    )
 
 
 def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> list[HistoryItem]:
@@ -343,27 +385,35 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
     previous = ""
     for row in services.store.events(session, project_id):
         stamp = texts.moment(row.created)
+        day = row.created.astimezone().date()
         event = parse(row)
         if row.type == "definition" and previous == "definition":
             continue  # consecutive edits (autosave) are one change
         previous = row.type
         match event:
             case CheckinDone():
-                items.append(checkin_item(event.checkin, project, names, people, texts))
+                item = checkin_item(event.checkin, project, names, people, texts)
+                item.seq = row.seq
+                items.append(item)
             case Recommended():
                 rec = titles.get(row.seq)
                 if rec is None:
                     continue
                 title = rec.title
                 status = rec.status_text
+                auto = rec.status in ("auto", "undone")
                 items.append(
                     HistoryItem(
                         "recommendation",
                         texts.date(rec.date),
                         texts("history.recommendation", title=title),
+                        rec.date,
+                        "swap" if auto else "clock",
                         [texts("history.status", status=status)],
                         f"/projects/{project_id}/recommendations/{rec.seq}",
                         rec.status,
+                        chip=chance_chip(rec, texts),
+                        auto=auto,
                     )
                 )
             case Decided():
@@ -375,24 +425,53 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
                     else f"history.verdict.{event.verdict}"
                 )
                 when = texts.date(rec.date) if rec else stamp
-                items.append(HistoryItem("decision", when, texts(key, title=title)))
+                icons = {"approve": "check", "reject": "x", "later": "clock-dashed"}
+                items.append(
+                    HistoryItem(
+                        "decision",
+                        when,
+                        texts(key, title=title),
+                        rec.date if rec else day,
+                        icons[event.verdict],
+                        href=f"/projects/{project_id}/recommendations/{event.recommendation}",
+                        chip=chance_chip(rec, texts) if event.verdict == "approve" else None,
+                    )
+                )
             case Undone():
                 rec = titles.get(event.recommendation)
                 when = texts.date(rec.date) if rec else stamp
                 title = rec.title if rec else "?"
-                items.append(HistoryItem("change", when, texts("history.undone", title=title)))
+                items.append(
+                    HistoryItem(
+                        "change",
+                        when,
+                        texts("history.undone", title=title),
+                        rec.date if rec else day,
+                        "arrow-left",
+                    )
+                )
             case BaselineSet():
                 finish = project.calendar.finish_date(event.baseline.makespan)
                 items.append(
-                    HistoryItem("change", stamp, texts("history.plan", date=texts.date(finish)))
+                    HistoryItem(
+                        "change", stamp, texts("history.plan", date=texts.date(finish)), day, "flag"
+                    )
                 )
             case _:
                 if row.type == "created":
-                    items.append(HistoryItem("change", stamp, texts("history.created")))
+                    items.append(
+                        HistoryItem("change", stamp, texts("history.created"), day, "plus")
+                    )
                 elif row.type == "definition":
-                    items.append(HistoryItem("change", stamp, texts("history.definition")))
+                    items.append(
+                        HistoryItem("change", stamp, texts("history.definition"), day, "sliders")
+                    )
                 elif row.type == "explanation":
-                    items.append(HistoryItem("recommendation", stamp, texts("history.explanation")))
+                    items.append(
+                        HistoryItem(
+                            "recommendation", stamp, texts("history.explanation"), day, "document"
+                        )
+                    )
     items.reverse()
     return items
 
@@ -444,6 +523,8 @@ def checkin_item(
         "checkin",
         texts.date(checkin.date),
         texts("history.checkin", date=texts.date(checkin.date)),
+        checkin.date,
+        "document",
         lines,
     )
 
@@ -777,16 +858,53 @@ def router(ui: Ui) -> APIRouter:
         }
         if show != "all":
             items = [i for i in items if i.kind in kinds[show]]
+        texts = ui.texts(request)
         return ui.page(
             request,
             "history.html",
-            title=ui.texts(request)("history.title"),
+            title=texts("history.title"),
             nav="projects",
             view=view,
             tab="history",
-            items=items,
+            shown=week_groups(items[:HISTORY_SHOWN], texts),
+            older=week_groups(items[HISTORY_SHOWN:], texts),
+            older_count=len(items[HISTORY_SHOWN:]),
             show=show,
             filters=HISTORY_FILTERS,
+        )
+
+    @routes.get("/projects/{project_id}/history/chance")
+    def history_chance(request: Request, project_id: str) -> Response:
+        """The chart of the chance over time and each check-in's change (loaded after the page,
+        a forecast per check-in the first time)."""
+        texts = ui.texts(request)
+        view = live(request, project_id)
+        steps, current = services.chance_history(ui.session(request), project_id)
+        values: list[tuple[date, float]] = []
+        if steps:
+            first = steps[0].before
+            if first is not None:
+                values.append((view.definition.start, first))
+            values += [(step.date, step.after) for step in steps]
+            if current is not None and current != steps[-1].after:
+                values.append((view.as_of, current))
+        chips = [
+            (
+                step.seq,
+                texts(
+                    "history.chip",
+                    before=texts.pct(step.before),
+                    after=texts.pct(step.after),
+                ),
+            )
+            for step in steps
+            if step.before is not None
+        ]
+        return ui.page(
+            request,
+            "_chance_history.html",
+            points=chance_points(values, texts),
+            chips=chips,
         )
 
     # ---- settings, exports, deletion

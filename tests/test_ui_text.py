@@ -35,9 +35,11 @@ FAMILIES = {
     "sim.example_hint.": ("j30", "j60"),
     "sim.manager.": ("sentinel", "no_reaction"),
     "sim.kind.": ("absence", "grows", "new", "sentinel", "finish"),
+    "sim.end_note.": ("j30", "j60"),
+    "nav.status.": ("good", "warn", "bad", "decision", "neutral"),
     "sim.days.": ("1", "5", "10", "end"),
 }
-HINTED = ("preset.estimation.", "preset.disruptions.", "settings.provider.", "autonomy.")
+HINTED = ("preset.estimation.", "preset.disruptions.", "settings.provider.")
 
 
 def _fields(text: str) -> set[str]:
@@ -63,6 +65,9 @@ def test_every_key_the_pages_use_exists() -> None:
         used |= {prefix + value for value in values}
         if prefix in HINTED:
             used |= {f"{prefix}{value}.hint" for value in values}
+    used |= {f"autonomy.{level}.{part}" for level in "0123" for part in ("alone", "asks")}
+    used |= {f"setup.tab.{name}.text" for name in FAMILIES["setup.tab."]}
+    used |= {f"how.step.{n}.{part}" for n in "123" for part in ("title", "text")}
     plural = {k.rsplit(".", 1)[0] for k in CATALOGUE if k.endswith(".one")}
     missing = sorted(k for k in used if k not in CATALOGUE and k not in plural)
     dynamic = {k for k in missing if k.endswith(".")}

@@ -184,6 +184,7 @@ def capture(
             reduced_motion="reduce",
         )
         context.add_cookies([{"name": "sentinel_lang", "value": language, "url": base}])
+        context.set_default_navigation_timeout(240_000)  # a simulator run replayed after a restart
         page = context.new_page()
         for shot in shots:
             page.goto(base + shot.path)

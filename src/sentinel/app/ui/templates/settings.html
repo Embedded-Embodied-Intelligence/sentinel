@@ -1,48 +1,73 @@
 {% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
 {% block content %}
-<div class="page-head"><h1>{{ t("settings.title") }}</h1><p class="lead">{{ t("settings.lead") }}</p></div>
+<div class="page">
+<div class="page-head"><h1>{{ t("settings.title") }}</h1></div>
+<div class="form-column stacked">
 {% if demo %}
-<div class="panel">
-  <p class="alert alert-info">{{ t("settings.demo") }}</p>
-  <dl class="facts">
-    <dt>{{ t("settings.provider") }}</dt><dd>{{ t("settings.provider." ~ view.provider) }}</dd>
-    <dt>{{ t("settings.status") }}</dt><dd>{{ t("settings.available") if view.available else t("settings.unavailable") }}</dd>
+<section class="card form-stack" aria-labelledby="ai-title">
+  <h2 id="ai-title" class="section-title-sm">{{ t("settings.ai_title") }}</h2>
+  {% call ui.callout("info") %}<p>{{ t("settings.demo") }}</p>{% endcall %}
+  <dl class="summary-rows">
+    <div><dt>{{ t("settings.provider") }}</dt><dd>{{ t("settings.provider." ~ view.provider) }}</dd></div>
+    <div><dt>{{ t("settings.status") }}</dt><dd>{{ t("settings.available") if view.available else t("settings.unavailable") }}</dd></div>
   </dl>
-</div>
+</section>
 {% else %}
-<form class="form panel" hx-post="/settings" novalidate>
+<form class="card form-stack settings-form" hx-post="/settings" novalidate aria-labelledby="ai-title">
+  <div>
+    <h2 id="ai-title" class="section-title-sm">{{ t("settings.ai_title") }}</h2>
+    <p class="small section-sub-sm">{{ t("settings.lead") }}</p>
+  </div>
   <fieldset class="choices">
     <legend>{{ t("settings.provider") }}</legend>
     {% for provider in providers %}
     <label class="choice">
       <input type="radio" name="provider" value="{{ provider }}"{% if view.provider == provider %} checked{% endif %}>
-      <span><strong>{{ t("settings.provider." ~ provider) }}</strong><span class="hint">{{ t("settings.provider." ~ provider ~ ".hint") }}</span></span>
+      <span><span class="choice-title">{{ t("settings.provider." ~ provider) }}</span><span class="choice-text">{{ t("settings.provider." ~ provider ~ ".hint") }}</span></span>
     </label>
     {% endfor %}
   </fieldset>
-  <div class="grid-2">
-    <div class="field">
-      <label for="model">{{ t("settings.model") }}</label>
-      <input id="model" name="model" value="{{ view.model or '' }}" maxlength="200" autocomplete="off" aria-describedby="model-hint">
-      <p class="hint" id="model-hint">{{ t("settings.model_hint") }}</p>
-    </div>
-    <div class="field">
-      <label for="host">{{ t("settings.host") }}</label>
-      <input id="host" name="host" value="{{ view.host or '' }}" maxlength="300" autocomplete="off" placeholder="http://127.0.0.1:11434" aria-describedby="host-hint">
-      <p class="hint" id="host-hint">{{ t("settings.host_hint") }}</p>
-    </div>
+  <div class="field needs-model">
+    <label for="model">{{ t("settings.model") }}</label>
+    <input id="model" name="model" value="{{ view.model or '' }}" maxlength="200" autocomplete="off" aria-describedby="model-hint">
+    <p class="hint" id="model-hint">{{ t("settings.model_hint") }}</p>
   </div>
-  <div class="field">
+  <div class="field needs-host">
+    <label for="host">{{ t("settings.host") }}</label>
+    <input id="host" name="host" value="{{ view.host or '' }}" maxlength="300" autocomplete="off" placeholder="http://127.0.0.1:11434" aria-describedby="host-hint">
+    <p class="hint" id="host-hint">{{ t("settings.host_hint") }}</p>
+  </div>
+  <div class="field needs-key">
     <label for="api_key">{{ t("settings.key") }}</label>
-    <input id="api_key" name="api_key" type="password" autocomplete="new-password" maxlength="500" placeholder="{{ '••••••••' if view.has_key else '' }}" aria-describedby="key-hint">
+    <div class="input-reveal">
+      <input id="api_key" name="api_key" type="password" autocomplete="new-password" maxlength="500" placeholder="{{ '••••••••' if view.has_key else '' }}" aria-describedby="key-hint">
+      <button type="button" class="btn" data-reveal-field="api_key" data-show="{{ t('settings.key_show') }}" data-hide="{{ t('settings.key_hide') }}">{{ t("settings.key_show") }}</button>
+    </div>
     <p class="hint" id="key-hint">{{ t("settings.key_saved") if view.has_key else t("settings.key_hint") }}</p>
-    {% if view.has_key %}<label class="check"><input type="checkbox" name="forget_key"> {{ t("settings.forget_key") }}</label>{% endif %}
+    {% if view.has_key %}<label class="check"><input type="checkbox" name="forget_key"><span>{{ t("settings.forget_key") }}</span></label>{% endif %}
   </div>
   <div id="test-result" aria-live="polite"></div>
-  <div class="actions">
-    <button class="btn" hx-post="/settings/test" hx-target="#test-result">{{ t("settings.test") }}</button>
-    <button class="btn btn-primary">{{ t("common.save") }}</button>
+  <div class="btn-row">
+    <button class="btn btn-primary">{{ t("settings.save") }}</button>
+    <button class="btn needs-model" hx-post="/settings/test" hx-target="#test-result">{{ t("settings.test") }}</button>
   </div>
 </form>
 {% endif %}
+<section class="card form-stack" aria-labelledby="lang-title">
+  <h2 id="lang-title" class="section-title-sm">{{ t("settings.lang_title") }}</h2>
+  {% include "_lang.html" %}
+  <p class="small">{{ t("settings.format_preview", date=t.date_long(today), number=t.decimal(2.5), chance=t.pct(0.39)) }}</p>
+</section>
+<section class="card form-stack" aria-labelledby="about-title">
+  <h2 id="about-title" class="section-title-sm">{{ t("settings.about_title") }}</h2>
+  <dl class="summary-rows">
+    <div><dt>{{ t("settings.about.version") }}</dt><dd>{{ version }}</dd></div>
+    <div><dt>{{ t("settings.about.licence") }}</dt><dd>MIT</dd></div>
+    <div><dt>{{ t("settings.about.code") }}</dt><dd><a href="{{ repository }}">{{ t("settings.about.repository") }}</a></dd></div>
+  </dl>
+  <p class="caption">{{ t("settings.about.what") }}</p>
+</section>
+</div>
+</div>
 {% endblock %}

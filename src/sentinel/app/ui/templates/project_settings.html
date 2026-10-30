@@ -1,11 +1,18 @@
 {% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
 {% block content %}
+<div class="page">
 {% include "_project_head.html" %}
 {% set d = view.definition %}
-<form class="form" hx-post="/projects/{{ view.id }}/settings" hx-target="main" hx-select="main" hx-swap="outerHTML" novalidate>
-  {% if errors %}<div class="alert alert-error" role="alert"><p>{{ t("form.fix_below") }}</p><ul class="issues">{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
-  <section class="panel" aria-labelledby="basics-title">
-    <h2 id="basics-title">{{ t("psettings.basics") }}</h2>
+<div class="form-column stacked">
+<form class="stacked" hx-post="/projects/{{ view.id }}/settings" hx-target="main" hx-select="main" hx-swap="outerHTML" novalidate>
+  {% if errors %}
+  {% call ui.callout("bad", t("form.fix_below"), ' role="alert" tabindex="-1" data-focus') %}
+    <ul>{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul>
+  {% endcall %}
+  {% endif %}
+  <section class="card form-stack" aria-labelledby="basics-title">
+    <h2 id="basics-title" class="section-title-sm">{{ t("psettings.basics") }}</h2>
     <div class="field">
       <label for="name">{{ t("setup.name") }}</label>
       <input id="name" name="name" value="{{ d.name }}" maxlength="120"{% if errors.get('name') %} aria-invalid="true"{% endif %}>
@@ -13,77 +20,104 @@
     <div class="grid-2">
       <div class="field">
         <label for="deadline">{{ t("setup.deadline") }}</label>
-        <input id="deadline" name="deadline" type="date" value="{{ d.deadline or '' }}"{% if errors.get('deadline') %} aria-invalid="true"{% endif %}>
+        <input id="deadline" name="deadline" type="date" lang="{{ t.lang }}" value="{{ d.deadline or '' }}"{% if errors.get('deadline') %} aria-invalid="true"{% endif %}>
+        {{ ui.echo(t, "deadline", d.deadline) }}
       </div>
       <div class="field">
-        <label for="budget">{{ t("setup.budget") }}</label>
+        <label for="budget">{{ t("setup.budget") }} <span class="optional">{{ t("common.optional") }}</span></label>
         <input id="budget" name="budget" inputmode="decimal" value="{{ d.budget if d.budget is not none else '' }}" aria-describedby="budget-hint"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
         <p class="hint" id="budget-hint">{{ t("psettings.budget_hint", budget=t.cost(view.budget or 0)) }}</p>
       </div>
     </div>
   </section>
-  <section class="panel" aria-labelledby="autonomy-title">
-    <h2 id="autonomy-title">{{ t("psettings.autonomy") }}</h2>
+  <section class="card" aria-labelledby="autonomy-title">
+    <h2 id="autonomy-title" class="section-title-sm group-title">{{ t("psettings.autonomy") }}</h2>
     <fieldset class="choices">
       <legend class="vh">{{ t("psettings.autonomy") }}</legend>
       {% for level in range(4) %}
       <label class="choice">
         <input type="radio" name="autonomy" value="{{ level }}"{% if d.settings.autonomy == level %} checked{% endif %}>
-        <span><strong>{{ t("autonomy." ~ level) }}</strong><span class="hint">{{ t("autonomy." ~ level ~ ".hint") }}</span></span>
+        <span>
+          <span class="choice-title">{{ level + 1 }}. {{ t("autonomy." ~ level) }}{% if level == 2 %} {{ ui.badge("neutral", t("psettings.recommended")) }}{% endif %}</span>
+          <span class="ladder-line"><b>{{ t("psettings.alone") }}</b> {{ t("autonomy." ~ level ~ ".alone") }}</span>
+          <span class="ladder-line"><b>{{ t("psettings.asks") }}</b> {{ t("autonomy." ~ level ~ ".asks") }}</span>
+        </span>
       </label>
       {% endfor %}
     </fieldset>
   </section>
-  <section class="panel" aria-labelledby="presets-title">
-    <h2 id="presets-title">{{ t("psettings.presets") }}</h2>
-    <div class="grid-2">
-      <div class="field">
-        <label for="estimation">{{ t("setup.estimation") }}</label>
-        <select id="estimation" name="estimation">{% for value in ("confident", "typical", "uncertain") %}<option value="{{ value }}"{% if d.settings.estimation == value %} selected{% endif %}>{{ t("preset.estimation." ~ value) }}</option>{% endfor %}</select>
+  <section class="card form-stack" aria-labelledby="presets-title">
+    <h2 id="presets-title" class="section-title-sm">{{ t("psettings.presets") }}</h2>
+    <fieldset class="field">
+      <legend>{{ t("setup.estimation") }}</legend>
+      <div class="segmented">
+        {% for value in ("confident", "typical", "uncertain") %}<label><input type="radio" name="estimation" value="{{ value }}"{% if d.settings.estimation == value %} checked{% endif %}>{{ t("preset.estimation." ~ value) }}</label>{% endfor %}
       </div>
-      <div class="field">
-        <label for="disruptions">{{ t("setup.disruptions") }}</label>
-        <select id="disruptions" name="disruptions">{% for value in ("calm", "typical", "turbulent") %}<option value="{{ value }}"{% if d.settings.disruptions == value %} selected{% endif %}>{{ t("preset.disruptions." ~ value) }}</option>{% endfor %}</select>
+      {% for value in ("confident", "typical", "uncertain") %}<p class="hint hint-option hint-{{ value }}">{{ t("preset.estimation." ~ value ~ ".hint") }}</p>{% endfor %}
+    </fieldset>
+    <fieldset class="field">
+      <legend>{{ t("setup.disruptions") }}</legend>
+      <div class="segmented">
+        {% for value in ("calm", "typical", "turbulent") %}<label><input type="radio" name="disruptions" value="{{ value }}"{% if d.settings.disruptions == value %} checked{% endif %}>{{ t("preset.disruptions." ~ value) }}</label>{% endfor %}
       </div>
-    </div>
+      {% for value in ("calm", "typical", "turbulent") %}<p class="hint hint-option hint-{{ value }}">{{ t("preset.disruptions." ~ value ~ ".hint") }}</p>{% endfor %}
+    </fieldset>
   </section>
   {% if roles %}
-  <section class="panel" aria-labelledby="costs-title">
-    <h2 id="costs-title">{{ t("psettings.costs") }}</h2>
-    <p class="hint">{{ t("psettings.costs_hint") }}</p>
-    <div class="grid-3">
+  <section class="card form-stack" aria-labelledby="costs-title">
+    <h2 id="costs-title" class="section-title-sm">{{ t("psettings.costs") }}</h2>
+    <div class="settings-rows">
       {% for role in roles %}
-      <div class="field">
-        <label for="cost-{{ loop.index0 }}">{{ t("psettings.cost_of", role=role) }}</label>
-        <input id="cost-{{ loop.index0 }}" name="cost_{{ loop.index0 }}" inputmode="decimal" class="mid" value="{{ t.decimal(cost_of(role)) }}">
+      <div class="setting-row">
+        <label class="small" for="cost-{{ loop.index0 }}">{{ role }}</label>
+        <div class="input-suffix"><input id="cost-{{ loop.index0 }}" class="input-short" name="cost_{{ loop.index0 }}" inputmode="decimal" value="{{ t.decimal(cost_of(role)) }}"><span class="small">{{ t("psettings.cost_unit") }}</span></div>
       </div>
       {% endfor %}
     </div>
+    <details class="details">
+      <summary>{{ t("psettings.costs_how") }}</summary>
+      <div class="details-body"><p>{{ t("psettings.costs_hint") }}</p></div>
+    </details>
   </section>
   {% endif %}
   {% if llm %}
-  <section class="panel" aria-labelledby="ai-title">
-    <h2 id="ai-title">{{ t("psettings.ai") }}</h2>
-    <label class="check"><input type="checkbox" name="llm_proposals"{% if d.settings.llm_proposals %} checked{% endif %}> {{ t("psettings.ai_proposals") }}</label>
+  <section class="card form-stack" aria-labelledby="ai-title">
+    <h2 id="ai-title" class="section-title-sm">{{ t("psettings.ai") }}</h2>
+    <label class="check"><input type="checkbox" name="llm_proposals"{% if d.settings.llm_proposals %} checked{% endif %}><span>{{ t("psettings.ai_proposals") }}</span></label>
   </section>
   {% else %}
   <input type="hidden" name="llm_proposals" value="{{ 'on' if d.settings.llm_proposals else '' }}">
   {% endif %}
   <input type="hidden" name="llm_explanations" value="{{ 'on' if d.settings.llm_explanations else '' }}">
-  <div class="actions"><button class="btn btn-primary">{{ t("common.save") }}</button></div>
+  <div class="savebar" data-unsaved-bar{% if not errors %} hidden{% endif %}>
+    <span class="grow">{{ t("psettings.unsaved") }}</span>
+    <button type="reset" class="btn btn-tertiary">{{ t("psettings.reset") }}</button>
+    <button class="btn btn-primary">{{ t("psettings.save") }}</button>
+  </div>
 </form>
-<section class="panel" aria-labelledby="export-title">
-  <h2 id="export-title">{{ t("psettings.export") }}</h2>
-  <ul class="links">
-    <li><a href="/api/projects/{{ view.id }}/plan.csv" download>{{ t("psettings.export_plan") }}</a></li>
-    <li><a href="/api/projects/{{ view.id }}/export.json" download>{{ t("psettings.export_project") }}</a></li>
+<section class="card" aria-labelledby="export-title">
+  <h2 id="export-title" class="section-title-sm group-title">{{ t("psettings.export") }}</h2>
+  <ul class="download-rows">
+    <li><span>{{ t("psettings.export_plan") }}</span><a class="btn btn-sm" href="/api/projects/{{ view.id }}/plan.csv" download>{{ t("psettings.download") }}</a></li>
+    <li><span>{{ t("psettings.export_project") }}</span><a class="btn btn-sm" href="/api/projects/{{ view.id }}/export.json" download>{{ t("psettings.download") }}</a></li>
+    <li><span>{{ t("psettings.report_row") }}</span><form hx-post="/projects/{{ view.id }}/report" hx-target="#report-area"><button class="btn btn-sm">{{ t("psettings.report") }}</button></form></li>
   </ul>
-  <form hx-post="/projects/{{ view.id }}/report" hx-target="#report-area"><button class="btn">{{ t("psettings.report") }}</button></form>
   <div id="report-area" aria-live="polite"></div>
 </section>
-<section class="panel danger-zone" aria-labelledby="delete-title">
-  <h2 id="delete-title">{{ t("psettings.delete") }}</h2>
-  <p>{{ t("psettings.delete_text") }}</p>
-  <a class="btn btn-danger" href="/projects/{{ view.id }}/delete">{{ t("psettings.delete_button") }}</a>
+<section class="card danger-zone" aria-labelledby="delete-title">
+  <h2 id="delete-title" class="section-title-sm">{{ t("psettings.delete") }}</h2>
+  <p class="small">{{ t("psettings.delete_text") }}</p>
+  <details class="danger-confirm">
+    <summary class="btn btn-danger-secondary">{{ t("psettings.delete_button") }}</summary>
+    <div class="danger-confirm-body">
+      <p>{{ t("delete.text", name=view.name) }}</p>
+      <form class="btn-row" hx-post="/projects/{{ view.id }}/delete">
+        <button class="btn btn-danger">{{ t("delete.confirm") }}</button>
+        <button type="button" class="btn btn-tertiary" data-close-details>{{ t("common.cancel") }}</button>
+      </form>
+    </div>
+  </details>
 </section>
+</div>
+</div>
 {% endblock %}

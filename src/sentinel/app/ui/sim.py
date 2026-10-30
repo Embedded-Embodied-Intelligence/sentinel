@@ -12,10 +12,12 @@ from fastapi.responses import Response
 
 from sentinel.agent.decide import DecisionRecord
 from sentinel.app import names
+from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
-from sentinel.app.simulator import PolicyRun, Simulation, SimulatorSpec
-from sentinel.app.ui.core import Ui
+from sentinel.app.simulator import PolicyRun, SimSide, Simulation, SimulatorSpec
+from sentinel.app.ui.charts import Gantt, sim_gantt
+from sentinel.app.ui.core import Ui, chance_level
 from sentinel.app.ui.forms import Form
 from sentinel.app.ui.pages import job_progress
 from sentinel.app.ui.text import Texts
@@ -51,6 +53,88 @@ class Entry:
     kind: str  # absence, grows, new, sentinel, finish
     when: str
     text: str
+
+    @property
+    def icon(self) -> str:
+        return ENTRY_ICONS.get(self.kind, "dot")
+
+
+ENTRY_ICONS = {
+    "absence": "person-off",
+    "grows": "arrow-up",
+    "new": "plus",
+    "sentinel": "swap",
+    "finish": "flag",
+}
+
+
+@dataclass(frozen=True)
+class CompareRow:
+    """A row of the comparison of a finished run: the values of each run and the difference."""
+
+    label: str
+    values: tuple[str, ...]
+    difference: str = "–"
+    tone: str = ""  # good, bad or none
+
+
+def compare_rows(sides: Sequence[SimSide], texts: Texts) -> list[CompareRow]:
+    """The comparison with nobody reacting (docs/design/brief.md, section 4.8): the difference is
+    from the chosen policy's side, an arrow up where it is better."""
+
+    def days(n: int) -> str:
+        return texts.plural("overview.days", abs(n))
+
+    def later(gap: int) -> tuple[str, str]:
+        if gap == 0:
+            return texts("sim.diff.none"), ""
+        if gap > 0:
+            return texts("sim.diff.earlier", days=days(gap)), "good"
+        return texts("sim.diff.later", days=days(gap)), "bad"
+
+    main = sides[0]
+    other = sides[1] if len(sides) > 1 else None
+    rows = []
+    finish_gap, late_gap = ("–", ""), ("–", "")
+    cost_diff, cost_tone = "–", ""
+    if other is not None:
+        if main.makespan is not None and other.makespan is not None:
+            finish_gap = later(other.makespan - main.makespan)
+        late_gap = later((other.late_days or 0) - (main.late_days or 0))
+        change = main.cost - other.cost
+        cost_diff = texts.cost_change(change, None)
+        cost_tone = "bad" if change > 0.5 else "good" if change < -0.5 else ""
+    rows.append(
+        CompareRow(
+            texts("sim.col.finish"),
+            tuple(texts.date(s.finish) if s.finish else "–" for s in sides),
+            *finish_gap,
+        )
+    )
+    rows.append(
+        CompareRow(
+            texts("sim.col.late"),
+            tuple(
+                texts("sim.on_time")
+                if s.on_time
+                else texts.plural("overview.days", s.late_days or 0)
+                for s in sides
+            ),
+            *late_gap,
+        )
+    )
+    rows.append(
+        CompareRow(
+            texts("sim.col.cost"),
+            tuple(f"{texts.cost_short(s.cost)} ({texts.pct(s.cost_ratio)})" for s in sides),
+            cost_diff,
+            cost_tone,
+        )
+    )
+    rows.append(CompareRow(texts("sim.col.changes"), tuple(str(s.plan_changes) for s in sides)))
+    rows.append(CompareRow(texts("sim.col.hired"), tuple(str(s.hired) for s in sides)))
+    rows.append(CompareRow(texts("sim.col.substituted"), tuple(str(s.substituted) for s in sides)))
+    return rows
 
 
 def describe(
@@ -232,24 +316,52 @@ def _decision_entry(
     return None
 
 
-def verdict(sides: Sequence[object], texts: Texts) -> str:
+def verdict(sides: Sequence[SimSide], texts: Texts) -> str:
     """The comparison of a finished run with nobody reacting, in one sentence."""
-    from sentinel.app.simulator import SimSide
-
-    runs = [s for s in sides if isinstance(s, SimSide)]
-    main = runs[0]
-    if len(runs) == 1 or main.finish is None:
+    main = sides[0]
+    if len(sides) == 1 or main.finish is None:
         if main.on_time:
             return texts("sim.verdict.single_on_time")
         return texts.plural("sim.verdict.single_late", main.late_days or 0)
-    other = runs[1]
+    other = sides[1]
     if main.on_time and other.on_time:
         return texts("sim.verdict.both_on_time")
     if main.on_time:
         return texts.plural("sim.verdict.saved", other.late_days or 0)
     if other.on_time:
         return texts.plural("sim.verdict.worse", main.late_days or 0)
-    return texts("sim.verdict.both_late", main=main.late_days or 0, other=other.late_days or 0)
+    late = main.late_days or 0
+    gap = (other.late_days or 0) - late
+    if gap > 0:
+        span = texts.plural("overview.days", gap)
+        return texts("sim.verdict.earlier", days=span, late=texts.plural("overview.days", late))
+    if gap < 0:
+        return texts("sim.verdict.later", days=texts.plural("overview.days", -gap))
+    both = texts.plural("overview.days", late)
+    return texts("sim.verdict.both_late", main=both, other=both)
+
+
+def latest_chance(run: PolicyRun) -> tuple[float, int] | None:
+    """The chance of meeting the deadline Sentinel last read in this run and the day it did
+    (spec section 11.5); None before its first analysis or without Sentinel."""
+    sentinel = run.sentinel
+    if sentinel is None:
+        return None
+    for record in reversed(sentinel.records):
+        if record.needs is not None:
+            return record.needs.p_on_time, record.day
+    return None
+
+
+@dataclass(frozen=True)
+class Reading:
+    """What the simulator's page reads from the runs while no job moves them."""
+
+    entries: list[Entry]
+    chart: Gantt
+    chance: tuple[float, int] | None
+    plan_days: int
+    example: str
 
 
 def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
@@ -258,12 +370,24 @@ def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
     texts = ui.texts(request)
     view = services.simulator(session, project_id, texts.lang)
 
-    def build(simulation: Simulation) -> list[Entry]:
-        return timeline(simulation.main, texts)
+    def read(simulation: Simulation) -> Reading:
+        run = simulation.main
+        world = simulation.world
+        tasks = names.task_names(run.state.observe(), world.spec.names_seed, texts.lang)
+        example = next((e.key for e in EXAMPLES if e.set_name == world.spec.set_name), "small")
+        return Reading(
+            timeline(run, texts),
+            sim_gantt(run, tasks, texts),
+            latest_chance(run),
+            world.plan.makespan,
+            example,
+        )
 
-    entries = services.with_simulation(session, project_id, build)
+    reading = services.with_simulation(session, project_id, read)
     sides = [view.main] + ([view.compare] if view.compare is not None else [])
     running = services.store.project_jobs(session, project_id)
+    calendar = WorkCalendar(view.spec.start)
+    chance = reading.chance
     return ui.page(
         request,
         "simulation.html",
@@ -271,8 +395,15 @@ def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
         nav="simulator",
         sim=view,
         sides=sides,
-        timeline=entries[:200],
+        timeline=reading.entries[:200],
+        chart=ui.render(request, "_gantt.html", {"g": reading.chart}),
+        total_days=max(reading.plan_days, view.days, 1),
+        chance=None if chance is None else chance[0],
+        chance_level=None if chance is None else chance_level(chance[0]),
+        chance_date=None if chance is None else calendar.date_of(chance[1]),
+        example_key=reading.example,
         verdict=verdict(sides, texts) if view.finished else "",
+        compare_rows=compare_rows(sides, texts) if view.finished else [],
         continue_run=request.query_params.get("run") == "end" and not running,
     )
 
@@ -331,6 +462,10 @@ def router(ui: Ui) -> APIRouter:
         else:
             raise AppError("invalid_request")
         job = services.advance(ui.session(request), project_id, days, ui.language(request))
-        return job_progress(ui, request, job, "job.advance", next=target)
+        if choice != "end":
+            return job_progress(ui, request, job, "job.advance", next=target)
+        spec = services.simulator(ui.session(request), project_id, ui.language(request)).spec
+        note = f"sim.end_note.{spec.set_name}"
+        return job_progress(ui, request, job, "job.advance", next=target, note=note, cancel="1")
 
     return routes

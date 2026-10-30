@@ -58,9 +58,9 @@
       }
       return;
     }
-    const show = event.target.closest("[data-show-password]");
+    const show = event.target.closest("[data-reveal-field]");
     if (show) {
-      const input = document.getElementById(show.getAttribute("data-show-password"));
+      const input = document.getElementById(show.getAttribute("data-reveal-field"));
       if (input) {
         const hidden = input.type === "password";
         input.type = hidden ? "text" : "password";
@@ -79,6 +79,15 @@
         action.value = "exit";
         form.prepend(action);
         form.requestSubmit();
+      }
+      return;
+    }
+    const closer = event.target.closest("[data-close-details]");
+    if (closer) {
+      const details = closer.closest("details");
+      if (details) {
+        details.open = false;
+        details.querySelector("summary").focus();
       }
       return;
     }
@@ -201,6 +210,10 @@
     });
     bar.hidden = !dirty;
   }
+
+  document.addEventListener("reset", function () {
+    setTimeout(markUnsaved);
+  });
 
   // ---- the task table: people of a task and the tasks it comes after
   function summariseCrew(details) {

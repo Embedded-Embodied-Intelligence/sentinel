@@ -1,1 +1,2 @@
-<p class="alert alert-success" role="status"><span aria-hidden="true">✓ </span>{{ t("settings.test_ok", model=model) }}</p>
+{% import "_ui.html" as ui with context %}
+{% call ui.callout("good", attrs=' role="status"') %}<p>{{ t("settings.test_ok", model=model) }}</p>{% endcall %}

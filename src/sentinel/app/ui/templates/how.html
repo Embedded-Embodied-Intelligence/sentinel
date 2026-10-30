@@ -1,19 +1,67 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-head"><h1>{{ t("how.title") }}</h1><p class="lead">{{ t("how.lead") }}</p></div>
-<div class="prose">
-  {% for section in ("simulate", "goals", "ai", "privacy", "numbers") %}
-  <section>
-    <h2>{{ t("how." ~ section ~ ".title") }}</h2>
-    <p>{{ t("how." ~ section ~ ".text") }}</p>
-  </section>
-  {% endfor %}
-  <section>
-    <h2>{{ t("how.more.title") }}</h2>
+<div class="how-layout">
+  <div>
+    <div class="page-head"><h1>{{ t("how.title") }}</h1><p class="lead">{{ t("how.lead") }}</p></div>
+    <ol class="steps-explained" id="steps" aria-label="{{ t('how.toc.steps') }}">
+      {% for n in ("1", "2", "3") %}
+      <li><span class="step-circle" aria-hidden="true">{{ n }}</span><span><span class="step-title">{{ t("how.step." ~ n ~ ".title") }}</span><br><span class="step-text">{{ t("how.step." ~ n ~ ".text") }}</span></span></li>
+      {% endfor %}
+    </ol>
+    <div class="reading">
+      <section id="chance" aria-labelledby="chance-title">
+        <h2 id="chance-title">{{ t("how.toc.chance") }}</h2>
+        <p>{{ t("how.numbers.text") }}</p>
+        <div class="strip" aria-hidden="true">
+          <div class="strip-track">
+            <span class="strip-window" style="left: 45%; width: 45%"></span>
+            <span class="strip-deadline" style="left: 60%"></span>
+            <span class="strip-dot" style="left: 45%"></span>
+          </div>
+          <ul class="strip-labels"><li>{{ t("strip.today") }}</li><li>{{ t("how.strip.likely") }}</li><li>{{ t("how.strip.deadline") }}</li><li>{{ t("how.strip.bad") }}</li></ul>
+        </div>
+      </section>
+      <section id="alone" aria-labelledby="alone-title">
+        <h2 id="alone-title">{{ t("how.toc.alone") }}</h2>
+        <p>{{ t("how.goals.text") }}</p>
+        <div class="table-wrap card how-table">
+          <table class="table">
+            <caption class="vh">{{ t("how.toc.alone") }}</caption>
+            <thead><tr><th scope="col">{{ t("how.levels.level") }}</th><th scope="col">{{ t("psettings.alone") }}</th><th scope="col">{{ t("psettings.asks") }}</th></tr></thead>
+            <tbody>
+              {% for level in range(4) %}<tr><th scope="row">{{ level + 1 }}. {{ t("autonomy." ~ level) }}</th><td>{{ t("autonomy." ~ level ~ ".alone") }}</td><td>{{ t("autonomy." ~ level ~ ".asks") }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="not" aria-labelledby="not-title">
+        <h2 id="not-title">{{ t("how.toc.not") }}</h2>
+        <ul class="bullets">
+          <li>{{ t("how.not.1") }}</li>
+          <li>{{ t("how.not.2") }}</li>
+          <li>{{ t("how.not.3") }}</li>
+        </ul>
+      </section>
+      <section id="faq" aria-labelledby="faq-title">
+        <h2 id="faq-title">{{ t("how.toc.faq") }}</h2>
+        <div class="faq">
+          {% for section in ("simulate", "ai", "privacy") %}
+          <details class="details"><summary>{{ t("how." ~ section ~ ".title") }}</summary><div class="details-body"><p>{{ t("how." ~ section ~ ".text") }}</p></div></details>
+          {% endfor %}
+          <details class="details"><summary>{{ t("how.more.title") }}</summary><div class="details-body"><ul class="bullets"><li><a href="{{ repository }}">{{ t("how.more.repository") }}</a></li><li><a href="{{ repository }}/tree/main/paper">{{ t("how.more.paper") }}</a></li></ul></div></details>
+        </div>
+      </section>
+    </div>
+  </div>
+  <nav class="toc" aria-labelledby="toc-title">
+    <p class="overline" id="toc-title">{{ t("how.toc.title") }}</p>
     <ul>
-      <li><a href="{{ repository }}">{{ t("how.more.repository") }}</a></li>
-      <li><a href="{{ repository }}/tree/main/paper">{{ t("how.more.paper") }}</a></li>
+      <li><a href="#steps">{{ t("how.toc.steps") }}</a></li>
+      <li><a href="#chance">{{ t("how.toc.chance") }}</a></li>
+      <li><a href="#alone">{{ t("how.toc.alone") }}</a></li>
+      <li><a href="#not">{{ t("how.toc.not") }}</a></li>
+      <li><a href="#faq">{{ t("how.toc.faq") }}</a></li>
     </ul>
-  </section>
+  </nav>
 </div>
 {% endblock %}

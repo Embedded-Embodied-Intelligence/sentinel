@@ -258,11 +258,17 @@ class Simulation:
     def finished(self) -> bool:
         return all(run.finished for run in self.runs)
 
-    def advance(self, days: int, progress: Callable[[float], None] | None = None) -> int:
-        """Advance both runs by `days` days, one day at a time; returns the days advanced."""
+    def advance(
+        self,
+        days: int,
+        progress: Callable[[float], None] | None = None,
+        stop: Callable[[], bool] | None = None,
+    ) -> int:
+        """Advance both runs by `days` days, one day at a time, until `stop` says so between two
+        days; returns the days advanced."""
         moved = 0
         for _ in range(days):
-            if self.finished:
+            if self.finished or (stop is not None and stop()):
                 break
             for run in self.runs:
                 run.advance(1)
