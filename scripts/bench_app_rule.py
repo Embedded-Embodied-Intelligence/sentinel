@@ -5,7 +5,8 @@ autonomy 2, twice on the same seed: Sentinel deciding as in the application (`Ap
 section 11.5) and as in the research runs (`Sentinel`, spec section 6). Prints per world the
 makespan C, the working days late, the deliberations and the wall time, then the totals, and
 for the application's rule how often each thing the spec's readings turn on happened: a later
-component deciding, an alternative shown with a higher chance, one of them significantly better
+component deciding, the sentence of spec section 11.5 item 7 being due (a row shown with a higher
+rounded chance), an alternative shown with a higher chance, one of them significantly better
 than the choice in a pair (the rule filters against the best of the set, so this can happen), and
 a candidate dropped in stage 1 winning. An informal check of what the rule changes, for the WP
 report; not a study, nothing is written.
@@ -68,6 +69,7 @@ class Outcome:
     rollouts: int
     seconds: float
     later: int = 0
+    sentence: int = 0
     higher: int = 0
     better_in_a_pair: int = 0
     revived: int = 0
@@ -88,17 +90,19 @@ def _watched(
     """The counts of the module docstring over the deliberations of an application run."""
     sentinel = run.sentinel
     assert sentinel is not None
-    counts = {"later": 0, "higher": 0, "better_in_a_pair": 0, "revived": 0}
+    counts = {"later": 0, "sentence": 0, "higher": 0, "better_in_a_pair": 0, "revived": 0}
     record: DecisionRecord
     for record in sentinel.records:
         if not record.deliberated or not record.candidates:
             continue
         counts["later"] += record.reason in planning.LATER_COMPONENTS
+        comparison = sentinel.comparisons[record.day]
+        counts["sentence"] += planning.tie_kind(record, comparison, sentinel.params) is not None
         counts["revived"] += record.chosen in dropped.get(record.day, set())
         rows = {c.label: c for c in record.candidates}
         chosen = rows[record.chosen]
         evaluator = evaluators[record.day]
-        for impact in sentinel.comparisons[record.day].impacts[1:]:
+        for impact in comparison.impacts[1:]:
             other = rows[impact.label]
             if other.p_on_time <= chosen.p_on_time:
                 continue
@@ -191,7 +195,8 @@ def main() -> None:
     apps = [outcomes[(world, "app")] for world in worlds]
     print(
         f"app, deliberations {sum(o.deliberations for o in apps)}: a later component decided "
-        f"{sum(o.later for o in apps)}, alternatives shown with a higher chance "
+        f"{sum(o.later for o in apps)}, the sentence due {sum(o.sentence for o in apps)}, "
+        f"alternatives shown with a higher chance "
         f"{sum(o.higher for o in apps)}, of them significantly better in a pair "
         f"{sum(o.better_in_a_pair for o in apps)}, a dropped candidate won "
         f"{sum(o.revived for o in apps)}"

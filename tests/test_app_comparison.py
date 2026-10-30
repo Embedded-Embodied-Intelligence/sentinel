@@ -1,6 +1,7 @@
-"""One comparison in the application (WP9d, spec v2.0.3 sections 11.5-11.7): the decision, the
+"""One comparison in the application (WP9d, spec v2.0.4 sections 11.5-11.7): the decision, the
 display and both explanations come from one record on the forecast's 200 sampled worlds, racing
-stage 1 stays that of spec section 6, and the page says so when a later component decides."""
+stage 1 stays that of spec section 6, and the page says why when an alternative shown has a higher
+rounded chance than the recommended action."""
 
 import re
 from datetime import date
@@ -31,10 +32,12 @@ from sentinel.app.config import AppConfig
 from sentinel.app.events import RecommendationEntry, Recommended, replay
 from sentinel.app.live import LiveProject
 from sentinel.app.llm import EXPLANATION
+from sentinel.app.messages import render
 from sentinel.app.models import Language
 from sentinel.app.planning import (
     LATER_COMPONENTS,
     Comparison,
+    Impact,
     Recommendation,
     half_up,
     shown_chance,
@@ -200,10 +203,21 @@ def check_explanations(
     assert faith.hallucinated == 1 and not faith.fully_faithful
 
 
+def said_tie(text: str) -> bool:
+    """Whether a text holds the sentence, in either opening and either language."""
+    return any(
+        opening in text
+        for language in LANGUAGES
+        for kind in ("similar", "target")
+        for opening in [Texts(language).tie(kind, "stability").split(";")[0]]
+    )
+
+
 def check_run(run: PolicyRun, evaluators: dict[int, Evaluator], seed: int) -> dict[str, int]:
     """Every deliberation of a simulator run: one comparison, explanations citing the record, NOOP
-    on the forecaster's rollouts, and on the timeline the sentence exactly when a later component
-    decides; the deliberations by their deciding component."""
+    on the forecaster's rollouts, the sentence's condition on the rows of the comparison, and no
+    sentence on the timeline, which shows no alternatives; the deliberations by their deciding
+    component, and under "sentence" those whose rows would get it."""
     sentinel = run.sentinel
     assert sentinel is not None
     params = sentinel.params
@@ -215,17 +229,18 @@ def check_run(run: PolicyRun, evaluators: dict[int, Evaluator], seed: int) -> di
         for record in records:
             entry = entries.get(record.day)
             assert (entry is not None) == (record.chosen != "NOOP")
-            kind = tie_kind(record, params)
-            assert (kind is not None) == (record.reason in LATER_COMPONENTS)
-            if entry is not None and kind is not None:
-                assert texts.tie(kind, record.reason) in entry.text
-            elif entry is not None:
-                assert " uncertainty)" not in entry.text and "niepewności)" not in entry.text
-                assert "target chance" not in entry.text and "docelową szansę" not in entry.text
+            if entry is not None:
+                assert not said_tie(entry.text)
+    reasons["sentence"] = 0
     for record in records:
         reasons[record.reason] = reasons.get(record.reason, 0) + 1
         comparison = sentinel.comparisons[record.day]
         check_one_comparison(record, comparison, evaluators[record.day], params, seed)
+        first, *others = comparison.impacts
+        due = any(shown_chance(i.p_on_time) > shown_chance(first.p_on_time) for i in others)
+        assert (tie_kind(record, comparison, params) is not None) == due
+        assert record.reason in LATER_COMPONENTS or not due
+        reasons["sentence"] += due
         observation = run.observations[record.day]
         recommendation = Recommendation(
             day=record.day,
@@ -317,46 +332,124 @@ def _view(recommendation: Recommendation, language: Language) -> Any:
     return recommendation_view(absence_project(), entry, language)
 
 
-@pytest.mark.parametrize("language", LANGUAGES)
-def test_the_tie_sentence_appears_exactly_when_a_later_component_decides(
-    language: Language,
-) -> None:
-    texts = Texts(language)
+def shown_as(reason: str, *chances: float) -> Recommendation:
+    """The absence recommendation decided by `reason`, its first rows shown with `chances` (the
+    choice first) and the rest far below them."""
     base = absence_recommendation()
-    params = SentinelParams()
-    sentences = {}
-    for reason in ("on_time", "only_candidate", "needs_met", *sorted(LATER_COMPONENTS)):
-        record = base.record.model_copy(update={"reason": reason})
-        view = _view(base.model_copy(update={"record": record}), language)
+    comparison = base.comparison
+    assert comparison is not None and len(comparison.impacts) >= len(chances)
+    rows = tuple(
+        impact.model_copy(update={"p_on_time": chances[a] if a < len(chances) else 0.01})
+        for a, impact in enumerate(comparison.impacts)
+    )
+    return base.model_copy(
+        update={
+            "record": base.record.model_copy(update={"reason": reason}),
+            "comparison": comparison.model_copy(update={"impacts": rows}),
+        }
+    )
+
+
+def kept_plan(chance: float, alternative: float) -> Recommendation:
+    """The plan kept on plan stability, with the absence recommendation's action as the only
+    alternative shown."""
+    base = absence_recommendation()
+    comparison = base.comparison
+    assert comparison is not None
+    rows = {c.label: c for c in base.record.candidates}
+    keep, other = base.impact("NOOP"), base.impact(base.record.chosen)
+    assert keep is not None and other is not None
+    impacts = (
+        keep.model_copy(update={"p_on_time": chance}),
+        other.model_copy(update={"p_on_time": alternative}),
+    )
+    return base.model_copy(
+        update={
+            "record": decided("stability", rows["NOOP"], rows[base.record.chosen]),
+            "comparison": comparison.model_copy(update={"impacts": impacts}),
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("chances", "due"),
+    [
+        ((0.545, 0.555), True),  # 55 % and 56 %
+        ((0.544, 0.545), True),  # 54 % and 55 %, half up
+        ((0.575, 0.585), True),  # 58 % and 59 %, whatever their binary fractions round to
+        ((0.545, 0.549), False),  # a higher chance, but both are shown as 55 %
+        ((0.55, 0.55), False),
+        ((0.55, 0.53), False),  # the showcase's case: the choice is shown higher
+        ((0.55, 0.53, 0.60), True),  # not only the runner-up counts
+    ],
+)
+def test_the_sentence_needs_an_alternative_shown_with_a_higher_rounded_chance(
+    chances: tuple[float, ...], due: bool
+) -> None:
+    for language in LANGUAGES:
+        texts = Texts(language)
+        view = _view(shown_as("stability", *chances), language)
         said = why_text(view, texts)
-        later = reason in LATER_COMPONENTS
-        assert (view.tie is not None) == later
-        assert (" uncertainty)" in said or "niepewności)" in said) == later
-        assert (texts("why.reason", reason=view.reason_text) in said) == (not later)
-        if later:
-            sentence = texts.tie("similar", reason)
-            assert sentence in said and tie_kind(record, params) == "similar"
-            sentences[reason] = sentence
+        assert (view.tie is not None) == due
+        assert (texts.tie("similar", "stability") in said) == due
+        assert said_tie(said) == due
+        # Without the sentence the page names the deciding component, as for any decision.
+        assert (texts("why.reason", reason=view.reason_text) in said) == (not due)
         assert problems(said) == []
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_sentence_names_the_component_that_decided(language: Language) -> None:
+    texts = Texts(language)
+    sentences = {}
+    for reason in sorted(LATER_COMPONENTS):
+        view = _view(shown_as(reason, 0.5, 0.6), language)
+        sentences[reason] = texts.tie("similar", reason)
+        assert view.tie == "similar" and sentences[reason] in why_text(view, texts)
     assert len(set(sentences.values())) == len(LATER_COMPONENTS)
     if language == "pl":
         assert sentences["stability"] == f"{THE_SENTENCE}mniej terminów."
-    # An action kept out on a later component: the plan is kept, and the page still says why.
-    noop = next(c for c in base.record.candidates if c.label == "NOOP")
-    other = next(c for c in base.record.candidates if c.label == base.record.chosen)
-    kept = decided("stability", noop, other)
-    view = _view(base.model_copy(update={"record": kept}), language)
+    # A later component is needed; these leave no room for a higher chance in real records.
+    for reason in ("on_time", "only_candidate", "needs_met"):
+        view = _view(shown_as(reason, 0.5, 0.6), language)
+        assert view.tie is None and not said_tie(why_text(view, texts))
+    # A kept plan follows the same condition, with its own text.
+    view = _view(kept_plan(0.5, 0.6), language)
     assert not view.acts and view.tie == "similar"
     assert texts.tie("similar", "stability") in why_text(view, texts)
+    view = _view(kept_plan(0.5, 0.5), language)
+    assert not view.acts and view.tie is None and not said_tie(why_text(view, texts))
 
 
 def test_above_the_target_the_sentence_says_so_instead_of_uncertainty() -> None:
     params = SentinelParams()  # theta_D 0.8, epsilon_D 0.02
     texts = Texts("pl")
-    assert tie_kind(decided("stability", row("A", 0.82), row("B", 0.95)), params) == "target"
-    assert tie_kind(decided("stability", row("A", 0.78), row("B", 0.79)), params) == "target"
-    assert tie_kind(decided("stability", row("A", 0.70), row("B", 0.72)), params) == "similar"
-    assert tie_kind(decided("on_time", row("A", 0.82), row("B", 0.60)), params) is None
+    record = decided("stability", row("A", 0.5))
+
+    def table(*chances: float) -> Comparison:
+        rows = tuple(
+            Impact(
+                label=f"A{a}",
+                kind="shift",
+                p_on_time=p,
+                tardiness=1.0,
+                mean_cost=100.0,
+                overrun=0.0,
+                rollouts=200,
+            )
+            for a, p in enumerate(chances)
+        )
+        return Comparison(seed=1, rollouts=200, impacts=rows, decides=True)
+
+    assert tie_kind(record, table(0.82, 0.95), params) == "target"
+    assert tie_kind(record, table(0.78, 0.79), params) == "target"
+    assert tie_kind(record, table(0.70, 0.72), params) == "similar"
+    assert tie_kind(record, table(0.82, 0.82), params) is None
+    assert tie_kind(record, table(0.95, 0.82), params) is None
+    assert tie_kind(decided("on_time", row("A", 0.5)), table(0.82, 0.95), params) is None
+    # Only the rows shown count: the record may hold a higher candidate that is not in the table.
+    other = decided("stability", row("A", 0.5), row("B", 0.9))
+    assert tie_kind(other, table(0.5, 0.4), params) is None
     assert texts.tie("target", "stability").startswith("Oba warianty osiągają docelową szansę;")
 
 
@@ -439,18 +532,34 @@ def test_the_showcase_shows_one_comparison(tmp_path: Path, language: Language) -
             )
             assert page.status_code == 200 and problems(page.text) == []
             shown = visible_text(page.text)
-            later = record.reason in LATER_COMPONENTS
-            kind = tie_kind(record, params)
-            assert (kind is not None) == later
-            assert (kind is not None and texts.tie(kind, record.reason) in shown) == later
-            later_seen += later
-            first = comparison.impacts[0]
-            assert texts.pct(first.p_on_time) in shown
+            # The choice has the highest chance shown at both recommendations: no sentence.
+            assert tie_kind(record, comparison, params) is None and not said_tie(shown)
+            if record.reason in LATER_COMPONENTS:
+                later_seen += 1
+                reason = render(f"reason_{record.reason}", language)
+                assert texts("why.reason", reason=reason) in shown
             for impact in comparison.impacts:
                 assert texts.pct(impact.p_on_time) in shown
-            if language == "pl" and later:
-                assert THE_SENTENCE in shown
         assert later_seen == 1  # the substitution beats the re-plan on plan stability
+        # The same recommendation with another option shown higher: now the page says why.
+        latest = state.recommendations[-1].recommendation
+        comparison = latest.comparison
+        assert comparison is not None
+        first, second, *rest = comparison.impacts
+        higher = second.model_copy(update={"p_on_time": first.p_on_time + 0.02})
+        impacts = (first, higher, *rest)
+        changed = latest.model_copy(
+            update={"comparison": comparison.model_copy(update={"impacts": impacts})}
+        )
+        event = Recommended(recommendation=changed).model_dump(mode="json")
+        seq = services.store.append(LOCAL_SESSION, pid, "recommendation", event)
+        page = client.get(f"/projects/{pid}/recommendations/{seq}", params={"lang": language})
+        shown = visible_text(page.text)
+        assert page.status_code == 200 and problems(page.text) == []
+        assert texts.tie("similar", "stability") in shown
+        assert texts.pct(higher.p_on_time) in shown
+        if language == "pl":
+            assert THE_SENTENCE in shown
 
 
 @pytest.mark.data
@@ -458,17 +567,19 @@ def test_the_showcase_shows_one_comparison(tmp_path: Path, language: Language) -
 def test_five_simulator_projects_decide_on_one_comparison(
     psplib_root: Path, evaluators: dict[int, Evaluator]
 ) -> None:
-    reasons: dict[str, int] = {}
+    counts: dict[str, int] = {}
     for instance, scenario in PROJECTS:
         evaluators.clear()
         spec = SimulatorSpec(instance=instance, scenario=scenario, start=START)
         simulation = Simulation(build_world(spec, psplib_root, Path("data/derived/baselines")))
         simulation.advance(DAYS)
-        for reason, count in check_run(simulation.main, evaluators, spec.seed).items():
-            reasons[reason] = reasons.get(reason, 0) + count
-    # The rule was exercised on both sides of the sentence.
-    assert reasons.get("on_time", 0) > 0
-    assert sum(reasons.get(reason, 0) for reason in LATER_COMPONENTS) > 0
+        for key, count in check_run(simulation.main, evaluators, spec.seed).items():
+            counts[key] = counts.get(key, 0) + count
+    # Every side of the sentence was exercised: the chance decided, a later component decided
+    # with no alternative shown higher, and with one.
+    later = sum(counts.get(reason, 0) for reason in LATER_COMPONENTS)
+    assert counts.get("on_time", 0) > 0
+    assert 0 < counts["sentence"] < later
 
 
 @pytest.mark.slow  # 0.5 s, kept out of the default run's budget

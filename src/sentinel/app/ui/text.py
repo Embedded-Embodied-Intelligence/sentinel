@@ -1393,7 +1393,7 @@ class Texts:
         return self("cost.change", units=units, share=share)
 
     def tie(self, kind: str, reason: str) -> str:
-        """The sentence shown when a later component than the chance decides (spec 11.5, 11.7)."""
+        """The sentence shown when an alternative has a higher chance (spec 11.5 item 7, 11.7)."""
         return self(f"why.tie.{kind}", part=self(f"why.tie.by.{reason}"))
 
     def tenths(self, share: float) -> int:

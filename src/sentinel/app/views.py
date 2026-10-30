@@ -144,8 +144,8 @@ class RecommendationView(View):
     why it needs approval ("people", "money", "scope", "plan"), the alternatives and whether its
     automatic plan change can be undone. `compared`: its figures come from the comparison on
     the forecast's simulated futures (v2.0.2), not from the deliberation's own; `options`: the
-    number of candidates Sentinel weighed; `tie`: a later component than the chance decided, so
-    the page says so in one sentence (v2.0.3)."""
+    number of candidates Sentinel weighed; `tie`: an alternative shown has a higher chance than
+    the action, so the page says why in one sentence (v2.0.4)."""
 
     seq: int
     day: int
@@ -654,7 +654,11 @@ def recommendation_view(
         compared=recommendation.comparison is not None,
         options=len(record.candidates),
         budget=project.require_model().budget,
-        tie=tie_kind(record, params) if comparison is not None and comparison.decides else None,
+        tie=(
+            tie_kind(record, comparison, params)
+            if comparison is not None and comparison.decides
+            else None
+        ),
         explanation=ExplanationView(
             text=template_explanation(recommendation.as_shown, language).summary, source="template"
         ),

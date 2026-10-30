@@ -11,11 +11,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
 from sentinel.agent.decide import DecisionRecord
-from sentinel.agent.params import SentinelParams
 from sentinel.app import names
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
-from sentinel.app.planning import tie_kind
 from sentinel.app.simulator import PolicyRun, Simulation, SimulatorSpec
 from sentinel.app.ui.core import Ui
 from sentinel.app.ui.forms import Form
@@ -185,7 +183,6 @@ def timeline(run: PolicyRun, texts: Texts) -> list[Entry]:
                 roles,
                 texts,
                 calendar.date_of(record.day),
-                sentinel.params,
             )
             if entry is not None:
                 entries.append(entry)
@@ -215,7 +212,6 @@ def _decision_entry(
     roles: Sequence[str],
     texts: Texts,
     day: date,
-    params: SentinelParams,
 ) -> Entry | None:
     when = texts.date(day)
     chosen = next((c for c in record.candidates if c.label == record.chosen), None)
@@ -227,15 +223,12 @@ def _decision_entry(
     if not record.deliberated or record.chosen == "NOOP" or chosen is None:
         return None
     text = describe(chosen.decision, chosen.kind, observation, tasks, people, roles, texts)
-    tie = tie_kind(record, params)
-    note = "" if tie is None else f". {texts.tie(tie, record.reason)}"
     if record.gate == "auto":
-        return Entry(record.day, 3, "sentinel", when, texts("sim.event.auto", action=text) + note)
+        return Entry(record.day, 3, "sentinel", when, texts("sim.event.auto", action=text))
     if record.gate == "escalated":
-        return Entry(record.day, 3, "sentinel", when, texts("sim.event.asked", action=text) + note)
+        return Entry(record.day, 3, "sentinel", when, texts("sim.event.asked", action=text))
     if record.gate == "deferred":
-        text = texts("sim.event.deferred", action=text) + note
-        return Entry(record.day, 3, "sentinel", when, text)
+        return Entry(record.day, 3, "sentinel", when, texts("sim.event.deferred", action=text))
     return None
 
 

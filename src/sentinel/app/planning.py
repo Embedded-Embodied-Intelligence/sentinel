@@ -654,18 +654,18 @@ def compare(record: DecisionRecord, evaluator: Evaluator) -> Comparison:
     )
 
 
-def tie_kind(record: DecisionRecord, params: SentinelParams) -> Tie | None:
-    """Which sentence the page adds when a component after min(p, theta_D) decides (spec sections
-    11.5 and 11.7), None otherwise: "target" where the chosen action and the runner-up are both
-    within epsilon_D of theta_D (the cap of the rule makes them tie), else "similar"."""
+def tie_kind(record: DecisionRecord, comparison: Comparison, params: SentinelParams) -> Tie | None:
+    """Which sentence a page adds (spec sections 11.5 item 7 and 11.7, v2.0.4), None if it adds
+    none: only when a row shown has a strictly higher chance than the chosen action's, both in
+    whole per cent as shown, which only a component after min(p, theta_D) can leave standing.
+    "target" where the chosen action is within epsilon_D of theta_D (the cap of the rule makes
+    them tie), else "similar"."""
     if record.reason not in LATER_COMPONENTS:
         return None
-    rows = {c.label: c for c in record.candidates}
-    chosen, runner = rows.get(record.chosen), rows.get(record.runner_up or "")
-    enough = params.theta_d - params.eps_d
-    if chosen and runner and min(chosen.p_on_time, runner.p_on_time) >= enough:
-        return "target"
-    return "similar"
+    chosen, *others = comparison.impacts
+    if all(shown_chance(i.p_on_time) <= shown_chance(chosen.p_on_time) for i in others):
+        return None
+    return "target" if chosen.p_on_time >= params.theta_d - params.eps_d else "similar"
 
 
 def plan_changes(
