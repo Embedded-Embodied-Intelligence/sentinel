@@ -177,6 +177,11 @@ recommendation shows:
 
 ![The options compared](ui/en_recommendation_options.png)
 
+The decision and both explanations rest on these same figures. When chances are similar, the
+next criterion decides and the page says so in one sentence, e.g. "Similar chance (the difference
+is within the uncertainty); the option that changes fewer dates was chosen"; another option may
+then show a chance a few points higher.
+
 You decide with **Approve**, **Decide later** or **Reject**. An approved change goes into the
 plan at once (e.g. the substitute joins the task, a temporary person is hired for the stated
 number of days). **Can wait** means there are still a few days before the risk becomes real.

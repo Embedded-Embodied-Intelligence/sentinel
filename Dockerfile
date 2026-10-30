@@ -2,7 +2,7 @@
 # The Sentinel application for a company server (WP9c, ADR-0026; docs/deploy.md).
 #
 #     docker compose up -d                       # http://localhost:8000
-#     docker build -t sentinel:1.1.0 .           # the image alone
+#     docker build -t sentinel:1.1.1 .           # the image alone
 #
 # Two stages: `build` resolves the locked dependencies with uv into /app/.venv and installs the
 # project into it (not editable); `runtime` copies that environment onto a clean Python 3.12

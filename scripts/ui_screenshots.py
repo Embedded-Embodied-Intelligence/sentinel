@@ -7,7 +7,9 @@ in-process and captures the start page, the wizard's steps 1 and 3, the overview
 threats, the check-in, the recommendation and the options it compared, the project settings,
 the simulator and its comparison at 1280x800 with Playwright's Chromium (light mode). About a
 minute (the simulator run). The PNGs go to docs/ui/ (committed, used by the user guides); the
-total of a language is printed and must stay <= 3 MB.
+total of a language is printed and must stay <= 3 MB. Take them after a version bump: the
+footer of the pages shows the installed package's version, and the first run after the bump
+installs it.
 
     uv run python scripts/ui_screenshots.py [--lang pl] [--out docs/ui]
 """

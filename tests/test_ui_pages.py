@@ -5,6 +5,7 @@ Polish and English without internal terms, missing texts, raw codes or ISO dates
 import html
 import json
 import re
+import tomllib
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
@@ -253,6 +254,14 @@ def _last(site: Site, name: str, language: str) -> int:
     pid = site.ids[name]
     history = _get(site, f"/projects/{pid}/history", language)
     return max(int(s) for s in re.findall(rf"/projects/{pid}/recommendations/(\d+)", history))
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_footer_shows_the_package_version(site: Site, language: str) -> None:
+    pyproject = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text("utf-8"))
+    word = "wersja" if language == "pl" else "version"
+    page = site.client.get("/", params={"lang": language})
+    assert f"{word} {pyproject['project']['version']}" in page.text
 
 
 def test_loading_and_error_states(site: Site, tmp_path: Path) -> None:
