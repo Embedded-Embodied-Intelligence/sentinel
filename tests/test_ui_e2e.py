@@ -418,6 +418,50 @@ def test_the_check_in_counts_its_changes_and_its_button_says_so(
     page.context.close()
 
 
+def test_leaving_a_half_filled_form_asks_first(browser: Any, local: Server) -> None:
+    """QA-07: a tab, the sidebar or the language switch used to drop a half-filled check-in."""
+    services = local.services
+    pid = services.create(LOCAL_SESSION, small(deadline=None), "en").id
+    _wait_job(services, LOCAL_SESSION, services.plan(LOCAL_SESSION, pid, "en").id)
+    page = _page(browser, local)
+    asked: list[str] = []
+    answer = {"leave": False}
+
+    def on_dialog(dialog: Any) -> None:
+        asked.append(dialog.type)
+        dialog.accept() if answer["leave"] else dialog.dismiss()
+
+    page.on("dialog", on_dialog)
+    url = f"{local.base}/projects/{pid}/checkin"
+    page.goto(url)
+    history = page.get_by_role("link", name="History", exact=True)
+    history.click()  # nothing entered: no question
+    page.wait_for_url(re.compile(r"/history$"))
+    assert asked == []
+    page.goto(url)
+    row = page.locator("fieldset.task-row", has_text="Build API")
+    row.get_by_label("In progress").check()
+    history.click()  # stay
+    page.wait_for_timeout(500)
+    assert asked == ["beforeunload"] and page.url == url
+    expect(row.get_by_label("In progress")).to_be_checked()
+    page.get_by_role("link", name="Cancel").click()  # the way out asks nothing
+    page.wait_for_url(re.compile(rf"/projects/{pid}$"))
+    assert asked == ["beforeunload"]
+    page.goto(url)
+    row.get_by_label("In progress").check()
+    page.locator("button.btn-primary").click()  # saving asks nothing
+    page.wait_for_url(re.compile(r"flash=checkin_saved"))
+    assert asked == ["beforeunload"]
+    page.goto(f"{local.base}/projects/{pid}/settings")
+    page.get_by_label("Project name").fill("Changed")
+    answer["leave"] = True
+    page.get_by_role("link", name="History", exact=True).click()
+    page.wait_for_url(re.compile(r"/history$"))
+    assert asked == ["beforeunload", "beforeunload"]
+    page.context.close()
+
+
 def test_the_task_pickers_and_the_wizards_live_hints(browser: Any, local: Server) -> None:
     services = local.services
     pid = services.create(LOCAL_SESSION, small(), "en").id

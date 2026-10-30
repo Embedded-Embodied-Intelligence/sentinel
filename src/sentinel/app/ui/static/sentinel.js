@@ -17,6 +17,7 @@
   }
 
   document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-leave]")) leaving = true;
     const add = event.target.closest("[data-add-row]");
     if (add) {
       const name = add.getAttribute("data-add-row");
@@ -167,9 +168,7 @@
   });
 
   // ---- the check-in's count of changes and the label of its button
-  function countChanges() {
-    const form = document.getElementById("checkin-form");
-    if (!form) return;
+  function changeCount(form) {
     let changes = form.querySelectorAll("#away-list [data-row], #grow-list [data-row], #new-list [data-row]").length;
     form.querySelectorAll("input[name^=msg_]:checked").forEach(function () {
       changes += 1;
@@ -184,6 +183,13 @@
         }
       }
     });
+    return changes;
+  }
+
+  function countChanges() {
+    const form = document.getElementById("checkin-form");
+    if (!form) return;
+    const changes = changeCount(form);
     const label = form.querySelector("[data-save-label]");
     const count = form.querySelector("[data-change-count]");
     if (!label) return;
@@ -195,6 +201,27 @@
       count.textContent = changes ? word.replace("{n}", changes) : count.dataset.zero;
     }
   }
+
+  // ---- leaving a half-filled form: the browser asks first
+  let leaving = false;
+
+  function hasUnsaved() {
+    const bar = document.querySelector("[data-unsaved-bar]");
+    if (bar && !bar.hidden) return true;
+    const form = document.getElementById("checkin-form");
+    if (!form) return false;
+    const message = form.querySelector("#message");
+    return changeCount(form) > 0 || Boolean(form.querySelector("[data-focus]")) || Boolean(message && message.value.trim());
+  }
+
+  window.addEventListener("beforeunload", function (event) {
+    if (leaving || !hasUnsaved()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+  window.addEventListener("pageshow", function () {
+    leaving = false;
+  });
 
   // ---- the bar of unsaved changes (project settings)
   function markUnsaved() {
@@ -404,11 +431,14 @@
       button.disabled = true;
       if (button === submitter) button.setAttribute("aria-busy", "true");
     });
-    form.dataset.busy = "1";
+    if (form.id === "checkin-form" || form.querySelector("[data-unsaved-bar]")) leaving = true;
   });
   document.addEventListener("htmx:afterRequest", function (event) {
     const form = event.detail.elt;
-    if (!form.matches || !form.matches("form") || !form.isConnected) return;
+    if (!form.matches || !form.matches("form")) return;
+    const xhr = event.detail.xhr;
+    if (!(xhr && xhr.getResponseHeader("HX-Redirect"))) leaving = false;
+    if (!form.isConnected) return;
     form.querySelectorAll("button[disabled], button[aria-busy]").forEach(function (button) {
       button.disabled = false;
       button.removeAttribute("aria-busy");

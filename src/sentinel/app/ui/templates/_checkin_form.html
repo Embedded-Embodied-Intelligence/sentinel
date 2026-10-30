@@ -89,7 +89,7 @@
 
   <div class="savebar">
     <span class="grow" aria-live="polite" data-change-count data-zero="{{ t('checkin.changes.zero') }}" data-one="{{ t('checkin.changes.one', n='{n}') }}" data-few="{{ t('checkin.changes.few', n='{n}') }}" data-many="{{ t('checkin.changes.many', n='{n}') }}">{{ t("checkin.changes.zero") }}</span>
-    <a class="btn btn-tertiary" href="/projects/{{ view.id }}">{{ t("common.cancel") }}</a>
+    <a class="btn btn-tertiary" href="/projects/{{ view.id }}" data-leave>{{ t("common.cancel") }}</a>
     <button class="btn btn-primary"><span data-save-label data-none="{{ t('checkin.save_none') }}" data-some="{{ t('checkin.save') }}">{{ t("checkin.save_none") }}</span></button>
   </div>
 </form>
