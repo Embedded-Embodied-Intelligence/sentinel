@@ -32,12 +32,16 @@ first (`Texts.pct`, `Texts.decimal`, `shown_chance`). Both explanations read
 and delays in tenths, so the faithfulness check of §10.4 treats any other figure, a stage 1 figure
 included, as made up.
 
-**The sentence (§11.5 item 7, §11.7).** It appears exactly when the deciding component comes
-after `min(p̂, θ_D)` or the candidate order decides. It has two openings: "Similar chance (the
-difference is within the uncertainty)" and, where the chosen action and the runner-up both reach
+**The sentence (§11.5 item 7, §11.7, v2.0.4).** It appears only when an alternative shown has a
+strictly higher chance than the chosen action, both in whole per cent as the page shows them,
+which only a deciding component after `min(p̂, θ_D)` or the candidate order leaves standing. In
+every other case the page names the deciding component, as for any decision. It has two openings:
+"Similar chance (the difference is within the uncertainty)" and, where the chosen action reaches
 `θ_D − ε_D`, "Both options reach the target chance", since there the cap of the rule, not
 uncertainty, makes them tie (95 % against 82 % is not "similar"). The second half names the
-component. On the simulator it follows the decision on the timeline.
+component. The simulator's timeline shows no alternatives, so it has no such sentence. Under v2.0.3
+the sentence appeared whenever a later component decided, 630 of the 704 deliberations below; under
+v2.0.4 it appears in 113.
 
 **What the rule changes in practice.** On 15 J30 worlds run to the end with the simulator's settings at
 autonomy 2 (`scripts/bench_app_rule.py`; informal, not a study), both rules finish on time in 2 of

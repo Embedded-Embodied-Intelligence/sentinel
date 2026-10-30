@@ -4,6 +4,8 @@
 - Commit(s): 9816a95 (spec v2.0.3), b286bf9 (one comparison), e735803 (version 1.1.1, footer
   test, guides), d38424d (screenshots), 6fbb9bb (bench, timing baseline, README, a test out of the
   default run); the report commit adds this report, the notes and the roadmap
+- Follow-up: spec v2.0.4 and release 1.1.2, in the last section; it changes when the sentence
+  appears, which the sections before it describe for 1.1.1
 
 ## Summary
 In project and simulator modes the decision, the display and both explanations now come from one
@@ -128,7 +130,8 @@ Readings written into v2.0.3 and marked `# SPEC-Q`; the prompt did not settle th
    alternatives shown with a higher chance in the bench, none was.
 6. **The sentence is the common case.** A later component decided in 630 of 704 deliberations, so
    under the rule's thresholds the best chances usually tie. Worth a look with the usability test:
-   does a sentence that nearly always appears still inform?
+   does a sentence that nearly always appears still inform? Answered in the Follow-up below: it now
+   appears in 113 of the 704.
 
 ## Numbers
 Environment: i5-6600K, WSL2, load about 1 unless noted. This machine is slower than during WP9c: the
@@ -187,3 +190,125 @@ uv run python scripts/bench_app_rule.py --workers 2 j60/j6010_7/1
 - The default run has about 8 s of margin; the machine's speed alone moved it by 4–6 s since WP9c.
 - From WP9c: the Docker image is not built, the usability test with people has not run, and the
   simulator's detailed report names tasks in English on Polish pages.
+
+## Follow-up
+The owner's answer to spec question 6 above: show the sentence only when a displayed alternative has
+a strictly higher rounded on-time percentage than the recommended action, otherwise omit it.
+
+- Date: 2026-10-30
+- Commit(s): 8086bf5 (spec v2.0.4), 40bfe12 (the rule), afcdcf5 (version 1.1.2, guides), b64cb83
+  (screenshots), e3621af (the rule in `CLAUDE.md`); the report commit adds this section, the notes
+  and the roadmap
+
+### Summary
+The sentence now appears only when an alternative shown has a strictly higher chance than the
+recommended action, both in whole per cent as the page shows them; otherwise it is omitted and the
+page names the deciding component, as for any other decision. In the bench it is due in 113 of 704
+deliberations, where the rule of 1.1.1 gave it in 630. Only text changes: the bench's 16 worlds run
+exactly as before, and the research results reproduce (117 of 117). On the showcase, 55 % against
+53 % no longer carries the sentence; the page reads "Wybrano ją, ponieważ najmniej zmienia plan."
+Version 1.1.2 is built and the screenshots show it.
+
+### Acceptance criteria
+| # | Criterion | Command | Result |
+| --- | --- | --- | --- |
+| 1 | Spec §11, v2.0.4 | `git show --stat 8086bf5` | PASS (`docs/spec/model.md` only: the versions paragraph, §11.5 item 7, §11.6, §11.7) |
+| 2 | Quality gate | `uv run ruff check .`; `uv run ruff format --check .`; `uv run mypy src`; `uv run pytest -q` | PASS (ruff clean, 352 files formatted, mypy: no issues in 134 source files; 509 passed, 37 deselected in 78.0 s at e3621af, budget 90 s) |
+| 2 | Data and slow tests | `uv run pytest -q -m "data or slow"` | PASS (44 passed, 502 deselected in 835.9 s at b64cb83; only `CLAUDE.md` and this report's files changed since) |
+| 2 | Browser tests | `uv run pytest -q -m e2e` | PASS (7 passed, 539 deselected in 158.8 s at b64cb83) |
+| 3 | Screenshots | `uv run python scripts/ui_screenshots.py --lang pl` (and `--lang en`); `ls docs/ui` | PASS (22 PNGs, 6 changed: the recommendation with and without its options, and the start page, in each language; viewed: no sentence on the showcase's recommendation, footer 1.1.2) |
+| 4 | User guides | `git show --stat afcdcf5` | PASS (the paragraph on the sentence in `docs/user-guide-pl.md` and `docs/user-guide-en.md`) |
+| 5 | Research results unchanged | `uv run sentinel reproduce --check`; `git diff 7dbeae9 HEAD -- src/sentinel/agent src/sentinel/policies src/sentinel/simulation` | PASS (117 of 117 files identical at e3621af; empty diff) |
+| 6 | 1.1.2 zip built | `uv run sentinel release --version 1.1.2` | PASS (20.0 MB, 630 files of commit e3621af, byte-identical on a second build, no top-level `data/`, no `.env` but `.env.example`; not tagged; rebuilt from the report commit afterwards, which `dist/` holds) |
+| 7 | Pushed, clean tree | `git push`; `git status --short` | PASS (the commits up to e3621af were pushed before this section was written; the report commit is pushed the same way; tree clean) |
+
+What the tests now check: the boundaries of the rounding in both languages (55 % and 56 %; 54.4 % and
+54.5 %, half up; 57.5 % and 58.5 %; 54.5 % and 54.9 %, both shown as 55 %, no sentence; equal; the
+choice higher), that any row shown counts and not only the runner-up, and that `why.reason` is on the
+page exactly when the sentence is not. On every deliberation of the five J30 simulator projects: the
+condition against the rows of the comparison, no sentence on the timeline, and both cases occurring
+(`0 < sentence < later`). On the showcase: no sentence at 55 % against 53 %, and the sentence in
+Polish once a row shows a higher chance.
+
+### Changes
+- `docs/spec/model.md` — v2.0.4: the versions paragraph, §11.5 item 7 (the condition), §11.6 (none on
+  the simulator's timeline), §11.7 (the rows' labels).
+- `src/sentinel/app/planning.py` — `tie_kind`: the new condition; nothing else in the file changes.
+  `views.py` — asks `tie_kind` with the comparison. `ui/text.py` — a docstring. `ui/sim.py` — back to
+  its form before WP9d.
+- `tests/test_app_comparison.py` — the new condition; `tests/test_app_api.py` — the version.
+- `scripts/bench_app_rule.py` — counts the deliberations where the sentence is due.
+- `pyproject.toml`, `uv.lock`, `Dockerfile`, `docker-compose.yml`, `docs/deploy.md`,
+  `docs/usability/results-template.md`, `README.md` — version 1.1.2.
+- `docs/user-guide-pl.md`, `docs/user-guide-en.md` — when the sentence appears. `docs/ui/` — 6 PNGs.
+- `CLAUDE.md` — the owner's rule on waiting for a process.
+- `docs/reports/WP9d.md` — this section, a pointer in the header, the answer under question 6.
+  `docs/notes/WP9d.md` — the sentence's paragraph. `docs/roadmap.md`.
+
+### Decisions
+Readings of the owner's wording, all written into v2.0.4.
+- **"Rounded" is what the page shows:** `shown_chance`, whole per cent half up, the one rounding of
+  WP9d. 58.0 % and 58.5 % read 58 and 59, so the sentence appears; 57.5 % and 58.0 % both read 58, so
+  it does not.
+- **Both openings follow the condition.** "Both options reach the target chance" is the same sentence
+  above the target; left unconditional, it would still appear where no alternative shows a higher
+  chance. Its test is now the chosen action alone, `p ≥ θ_D − ε_D`: an alternative with a higher
+  chance then reaches it too.
+- **Omitting the sentence leaves the usual line.** `why.reason` names the deciding component ("It was
+  chosen because it changes the plan the least"), as on a decision made on the chance, so the page
+  still says why; a kept plan shows `why.keep` alone.
+- **Read at display time.** `RecommendationView.tie` comes from the view and is not stored, so a
+  recommendation stored under 1.1.1 follows the new rule and one stored before v2.0.3 still has none.
+  There is nothing to migrate, and a simulator project created under 1.1.1 replays the same run.
+- ADRs created: none (the owner's decision, entered in the spec).
+
+### Deviations
+- **One count added to the bench**, not requested, to measure the effect; the bench stays informal
+  and writes nothing.
+- **A rule added to `CLAUDE.md`** at the owner's request, in its own commit. My wait for the bench was
+  a shell loop on `pgrep -f`, which matched its own command line and never ended; the owner killed it.
+  No result is affected: the bench had finished and its output was complete.
+- **The data-or-slow run overlapped the bench** (two workers), so its 835.9 s does not compare with
+  the 690.9 s above. It and the browser tests were not repeated for e3621af and the report commit,
+  which change no code.
+
+### Spec questions
+Both are written into v2.0.4 as read here; each is a small change if the owner reads it otherwise.
+1. **The simulator's timeline.** It shows no alternatives, so taken literally it never has the
+   sentence, and it loses the one it had under 1.1.1. Restoring it would be one call of `tie_kind` in
+   `ui/sim.py`, but it would refer to a row the reader cannot see.
+2. **Any row shown, not only the runner-up.** The sentence can therefore follow a runner-up with a
+   lower chance and explain a row further down the table. The bench does not count how often.
+
+### Numbers
+Environment as above.
+
+| Quantity | Value |
+| --- | --- |
+| the sentence due in the bench | 113 of 704 deliberations, 16 % (the rule of 1.1.1: 630, 89 %) |
+| the bench again, the same 16 worlds | finish, days late and deliberations identical in every world under both rules, compared with the saved output of the run above; 730,275 and 313,675 rollouts, as in that run; 704 deliberations, 270 alternatives shown with a higher chance, 0 significantly better in a pair, 0 dropped candidates won |
+| default `pytest -q` | 509 passed, 37 deselected in 78.0 s (81.7–82.4 s earlier in this follow-up; 1.1.1: 502 in 82.2 s) |
+| `pytest -q -m "data or slow"` | 44 passed, 502 deselected in 835.9 s, the bench alongside (1.1.1: 43 in 690.9 s without it) |
+| `pytest -q -m e2e` | 7 passed in 158.8 s (1.1.1: 165.4 s) |
+| `sentinel reproduce --check` | 117 of 117 files identical, 40.6 s |
+| screenshots `docs/ui/` | Polish 11 files, 1,325 kB; English 11 files, 1,192 kB (limit 3 MB per language) |
+| `dist/sentinel-1.1.2.zip` | 20.0 MB, 630 files of commit e3621af, the same file list as `dist/sentinel-1.1.1.zip`; byte-identical on a second build |
+
+### Commands for the owner
+```bash
+# The demo is not running at the moment (scripts/run_demo.sh status); started, it shows 1.1.2.
+# A server already running elsewhere keeps the version it started with: restart it.
+scripts/run_demo.sh start
+
+# The release (built, not tagged): dist/sentinel-1.1.2.zip; prints the tag command
+uv run sentinel release --version 1.1.2
+# git tag -a v1.1.2 -m "Sentinel 1.1.2" <commit> && git push origin v1.1.2
+
+# Docker (not installed on this server); docs/deploy.md uses the 1.1.2 tag
+docker build -t sentinel:1.1.2 .
+```
+
+### Open issues / next steps
+- Spec questions 1–5 above and 1–2 here.
+- Whether the shorter explanation is enough is for the usability test with people, which has not run.
+- The other open issues above stand; this follow-up does not change a simulator run's cost.
