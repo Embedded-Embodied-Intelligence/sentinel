@@ -1,72 +1,89 @@
-<form id="checkin-form" class="form checkin" hx-post="/projects/{{ view.id }}/checkin" hx-target="this" hx-swap="outerHTML" novalidate>
+{% import "_ui.html" as ui with context %}
+<form id="checkin-form" class="form-column checkin-grid" hx-post="/projects/{{ view.id }}/checkin" hx-target="this" hx-swap="outerHTML" novalidate>
   {% if issues or errors %}
-  <div class="alert alert-error" role="alert" tabindex="-1" data-focus>
-    <p><strong>{{ t("checkin.not_saved") }}</strong></p>
-    <ul class="issues">{% for issue in issues %}<li>{{ issue }}</li>{% endfor %}{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul>
-  </div>
+  {% call ui.callout("bad", t("checkin.not_saved"), ' role="alert" tabindex="-1" data-focus') %}
+    <ul>{% for issue in issues %}<li>{{ issue }}</li>{% endfor %}{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul>
+  {% endcall %}
   {% endif %}
-  <section class="panel" aria-labelledby="date-title">
-    <h2 id="date-title">{{ t("checkin.when") }}</h2>
-    <div class="field">
+  <div class="checkin-when">
+    <p class="lead">{% if last %}{{ t("checkin.since", date=t.date(last)) }}{% else %}{{ t("checkin.since_start") }}{% endif %}</p>
+    <div class="field field-date">
       <label for="date">{{ t("checkin.date") }}</label>
-      <input type="date" id="date" name="date" value="{{ fv('date', default_date) }}" aria-describedby="date-hint"{% if errors.get('date') %} aria-invalid="true"{% endif %}>
-      <p class="hint" id="date-hint">{{ t("checkin.date_hint") }}{% if last %} {{ t("checkin.last", date=t.date(last)) }}{% endif %}</p>
+      <input type="date" id="date" name="date" value="{{ fv('date', default_date) }}" lang="{{ t.lang }}"{% if errors.get('date') %} aria-invalid="true"{% endif %}>
+      {{ ui.echo(t, "date", default_date if not form else none) }}
     </div>
-  </section>
-
-  <section class="panel" aria-labelledby="tasks-title">
-    <h2 id="tasks-title">{{ t("checkin.tasks_title") }}</h2>
-    {% if first %}
-    {% for task in first %}{% include "_task_row.html" %}{% endfor %}
-    {% else %}<p class="muted">{{ t("checkin.no_active") }}</p>{% endif %}
-    {% if rest %}
-    <details class="more-tasks">
-      <summary>{{ t.plural("checkin.more_tasks", rest | length) }}</summary>
-      {% for task in rest %}{% include "_task_row.html" %}{% endfor %}
+    <details class="details">
+      <summary>{{ t("checkin.help") }}</summary>
+      <div class="details-body">
+        <p>{{ t("checkin.date_hint") }}</p>
+        <p>{{ t("checkin.share_hint") }}</p>
+      </div>
     </details>
-    {% endif %}
-  </section>
-
-  <section class="panel" aria-labelledby="away-title">
-    <h2 id="away-title">{{ t("checkin.away_title") }}</h2>
-    <p class="hint">{{ t("checkin.away_hint") }}</p>
-    <div id="away-list">{% for i in fl("away_rows") %}{% include "_away_row.html" %}{% endfor %}</div>
-    <template id="away-template">{% with i="__i__" %}{% include "_away_row.html" %}{% endwith %}</template>
-    <button type="button" class="btn" data-add-row="away"><span aria-hidden="true">+ </span>{{ t("checkin.away_add") }}</button>
-  </section>
-
-  <section class="panel" aria-labelledby="grow-title">
-    <h2 id="grow-title">{{ t("checkin.grow_title") }}</h2>
-    {% if running %}
-    <p class="hint">{{ t("checkin.grow_hint") }}</p>
-    <div id="grow-list">{% for i in fl("grow_rows") %}{% include "_grow_row.html" %}{% endfor %}</div>
-    <template id="grow-template">{% with i="__i__" %}{% include "_grow_row.html" %}{% endwith %}</template>
-    <button type="button" class="btn" data-add-row="grow"><span aria-hidden="true">+ </span>{{ t("checkin.grow_add") }}</button>
-    {% else %}<p class="muted">{{ t("checkin.grow_none") }}</p>{% endif %}
-  </section>
-
-  <section class="panel" aria-labelledby="new-title">
-    <h2 id="new-title">{{ t("checkin.new_title") }}</h2>
-    <div id="new-list">{% for i in fl("new_rows") %}{% include "_new_row.html" %}{% endfor %}</div>
-    <template id="new-template">{% with i="__i__" %}{% include "_new_row.html" %}{% endwith %}</template>
-    <button type="button" class="btn" data-add-row="new"><span aria-hidden="true">+ </span>{{ t("checkin.new_add") }}</button>
-  </section>
+  </div>
 
   {% if llm %}
-  <section class="panel" aria-labelledby="message-title">
-    <h2 id="message-title">{{ t("checkin.message_title") }}</h2>
+  <section class="card message-box" aria-labelledby="message-title">
+    <h2 id="message-title" class="section-title-sm">{{ t("checkin.message_title") }} <span class="optional">{{ t("common.optional") }}</span></h2>
     <div class="field">
-      <label for="message">{{ t("checkin.message_label") }}</label>
-      <textarea id="message" name="message" rows="4" maxlength="5000" aria-describedby="message-hint"></textarea>
+      <label class="vh" for="message">{{ t("checkin.message_label") }}</label>
+      <textarea id="message" name="message" rows="4" maxlength="5000" placeholder="{{ t('checkin.message_placeholder') }}" aria-describedby="message-hint"></textarea>
       <p class="hint" id="message-hint">{{ t("checkin.message_hint") }}</p>
     </div>
-    <button type="button" class="btn" hx-post="/projects/{{ view.id }}/checkin/message" hx-include="#message, #date" hx-target="#message-result">{{ t("checkin.message_read") }}</button>
+    <div><button type="button" class="btn" hx-post="/projects/{{ view.id }}/checkin/message" hx-include="#message, #date" hx-target="#message-result">{{ t("checkin.message_read") }}</button></div>
     <div id="message-result" aria-live="polite"></div>
   </section>
+  <p class="caption">{{ t("checkin.or_by_hand") }}</p>
   {% endif %}
 
-  <div class="actions sticky-actions">
-    <a class="btn" href="/projects/{{ view.id }}">{{ t("common.cancel") }}</a>
-    <button class="btn btn-primary">{{ t("checkin.save") }}</button>
+  <section class="card" aria-labelledby="tasks-title">
+    <details class="check-section" open>
+      <summary class="checkin-section-head"><h2 id="tasks-title"><span class="step-number" aria-hidden="true">1</span>{{ t("checkin.tasks_title") }} <span class="count">({{ first | length }})</span></h2></summary>
+      {% if first %}
+      {% for task in first %}{% include "_task_row.html" %}{% endfor %}
+      {% else %}<p class="row-list-empty section-sub">{{ t("checkin.no_active") }}</p>{% endif %}
+      {% if rest %}
+      <details class="details more-tasks">
+        <summary>{{ t.plural("checkin.more_tasks", rest | length) }}</summary>
+        {% for task in rest %}{% include "_task_row.html" %}{% endfor %}
+      </details>
+      {% endif %}
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="away-title">
+    <div class="checkin-section-head">
+      <h2 id="away-title"><span class="step-number" aria-hidden="true">2</span>{{ t("checkin.away_title") }} <span class="count" id="away-count">({{ fl("away_rows") | length }})</span></h2>
+      <button type="button" class="btn btn-sm" data-add-row="away">{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.away_add") }}</span></button>
+    </div>
+    <p class="hint section-hint">{{ t("checkin.away_hint") }}</p>
+    <div id="away-list">{% for i in fl("away_rows") %}{% include "_away_row.html" %}{% endfor %}</div>
+    <template id="away-template">{% with i="__i__" %}{% include "_away_row.html" %}{% endwith %}</template>
+  </section>
+
+  <section class="card" aria-labelledby="grow-title">
+    <div class="checkin-section-head">
+      <h2 id="grow-title"><span class="step-number" aria-hidden="true">3</span>{{ t("checkin.grow_title") }} <span class="count" id="grow-count">({{ fl("grow_rows") | length }})</span></h2>
+      {% if running %}<button type="button" class="btn btn-sm" data-add-row="grow">{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.grow_add") }}</span></button>{% endif %}
+    </div>
+    {% if running %}
+    <p class="hint section-hint">{{ t("checkin.grow_hint") }}</p>
+    <div id="grow-list">{% for i in fl("grow_rows") %}{% include "_grow_row.html" %}{% endfor %}</div>
+    <template id="grow-template">{% with i="__i__" %}{% include "_grow_row.html" %}{% endwith %}</template>
+    {% else %}<p class="hint section-hint">{{ t("checkin.grow_none") }}</p>{% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="new-title">
+    <div class="checkin-section-head">
+      <h2 id="new-title"><span class="step-number" aria-hidden="true">4</span>{{ t("checkin.new_title") }} <span class="count" id="new-count">({{ fl("new_rows") | length }})</span></h2>
+      <button type="button" class="btn btn-sm" data-add-row="new">{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.new_add") }}</span></button>
+    </div>
+    <div id="new-list">{% for i in fl("new_rows") %}{% include "_new_row.html" %}{% endfor %}</div>
+    <template id="new-template">{% with i="__i__" %}{% include "_new_row.html" %}{% endwith %}</template>
+  </section>
+
+  <div class="savebar">
+    <span class="grow" aria-live="polite" data-change-count data-zero="{{ t('checkin.changes.zero') }}" data-one="{{ t('checkin.changes.one', n='{n}') }}" data-few="{{ t('checkin.changes.few', n='{n}') }}" data-many="{{ t('checkin.changes.many', n='{n}') }}">{{ t("checkin.changes.zero") }}</span>
+    <a class="btn btn-tertiary" href="/projects/{{ view.id }}">{{ t("common.cancel") }}</a>
+    <button class="btn btn-primary"><span data-save-label data-none="{{ t('checkin.save_none') }}" data-some="{{ t('checkin.save') }}">{{ t("checkin.save_none") }}</span></button>
   </div>
 </form>

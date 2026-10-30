@@ -1,3 +1,4 @@
+{% import "_ui.html" as ui with context %}
 <div class="row-group" data-row>
   <input type="hidden" name="grow_rows" value="{{ i }}">
   <div class="field">
@@ -9,8 +10,8 @@
   </div>
   <div class="field">
     <label for="grow-{{ i }}-days">{{ t("checkin.grow.days") }}</label>
-    <input id="grow-{{ i }}-days" name="grow_{{ i }}_days" inputmode="decimal" class="short" value="{{ fv('grow_' ~ i ~ '_days', '') }}">
-    {% if errors.get('grow_' ~ i ~ '_days') %}<p class="error-text">{{ errors['grow_' ~ i ~ '_days'] }}</p>{% endif %}
+    <input id="grow-{{ i }}-days" name="grow_{{ i }}_days" inputmode="decimal" class="input-short" value="{{ fv('grow_' ~ i ~ '_days', '') }}">
+    {{ ui.field_error("grow-" ~ i ~ "-days", errors.get('grow_' ~ i ~ '_days')) }}
   </div>
-  <button type="button" class="btn btn-quiet btn-small" data-remove-row>{{ t("setup.remove") }}</button>
+  <button type="button" class="btn btn-tertiary btn-sm" data-remove-row>{{ t("setup.remove") }}</button>
 </div>

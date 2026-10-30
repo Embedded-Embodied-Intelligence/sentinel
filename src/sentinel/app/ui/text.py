@@ -77,6 +77,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "common.cancel": ("Cancel", "Anuluj"),
     "common.save": ("Save", "Zapisz"),
     "common.retry": ("Try again", "Spróbuj ponownie"),
+    "common.optional": ("(optional)", "(opcjonalnie)"),
     "flash.checkin_saved": (
         "Check-in saved. Calculating the new forecast…",
         "Raport zapisany. Liczę nową prognozę…",
@@ -86,20 +87,20 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Raport zapisany. Szansa: {before} → {after}.",
     ),
     "flash.approved_chance": (
-        "Approved: the plan has been changed. Chance now {after}.",
-        "Zatwierdzone: plan został zmieniony. Szansa teraz {after}.",
+        "Approved: the plan has been updated. Chance now {after}.",
+        "Zatwierdzone. Plan zaktualizowany. Szansa teraz {after}.",
     ),
     "flash.approved": (
-        "Approved: the plan has been changed.",
-        "Zatwierdzone: plan został zmieniony.",
+        "Approved: the plan has been updated.",
+        "Zatwierdzone. Plan zaktualizowany.",
     ),
     "flash.rejected": (
         "Rejected. The plan stays as it was.",
         "Odrzucone. Plan pozostaje bez zmian.",
     ),
     "flash.later": (
-        "Postponed. You can decide later on the project overview.",
-        "Odłożone. Możesz zdecydować później na stronie przeglądu projektu.",
+        "Postponed. We will come back to it at the next check-in.",
+        "Propozycja odłożona. Wrócimy do niej przy następnym raporcie.",
     ),
     "flash.undone": ("The automatic change was undone.", "Automatyczna zmiana została cofnięta."),
     "flash.deleted": ("The project was deleted.", "Projekt został usunięty."),
@@ -753,8 +754,33 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chart.since": ("since {date}", "od {date}"),
     # ---- check-in
     "checkin.title": ("Check-in", "Raport statusu"),
-    "checkin.not_saved": ("The check-in was not saved:", "Raport nie został zapisany:"),
+    "checkin.not_saved": (
+        "The check-in could not be saved. Correct the fields below.",
+        "Nie udało się zapisać raportu. Popraw pola oznaczone poniżej.",
+    ),
     "checkin.when": ("When", "Kiedy"),
+    "checkin.since": ("What has changed since {date}?", "Co się zmieniło od {date}?"),
+    "checkin.since_start": ("What has changed since the start?", "Co się zmieniło od startu?"),
+    "checkin.help": ("How to fill in a check-in", "Jak wypełnić raport"),
+    "checkin.share_hint": (
+        "The share done is the part of the task's own work that is finished; mark a finished "
+        "task as done.",
+        "Wykonana część to ukończona część pracy nad samym zadaniem; zadanie skończone oznacz "
+        "jako gotowe.",
+    ),
+    "checkin.add": ("Add", "Dodaj"),
+    "checkin.percent": ("Percent", "Procent"),
+    "checkin.was_due": ("was due to start on {date}", "miało ruszyć {date}"),
+    "checkin.or_by_hand": ("or fill it in by hand:", "albo uzupełnij ręcznie:"),
+    "checkin.message_placeholder": (
+        "For example: Bartek is ill until Monday, the API is 40 % done.",
+        "np. Bartek choruje do poniedziałku, API jest w 40 % gotowe.",
+    ),
+    "checkin.changes.zero": ("No changes", "Bez zmian"),
+    "checkin.changes.one": ("{n} change", "{n} zmiana"),
+    "checkin.changes.few": ("{n} changes", "{n} zmiany"),
+    "checkin.changes.many": ("{n} changes", "{n} zmian"),
+    "checkin.save_none": ("Save the check-in (no changes)", "Zapisz raport (bez zmian)"),
     "checkin.date": ("Status at the end of", "Stan na koniec dnia"),
     "checkin.date_hint": (
         "Report what is true at the end of this day.",
@@ -790,28 +816,28 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Needs {crew}. Leave empty and Sentinel picks free people.",
         "Potrzeba: {crew}. Pozostaw puste, a Sentinel wybierze wolne osoby.",
     ),
-    "checkin.away_title": ("Someone is away", "Ktoś jest nieobecny"),
+    "checkin.away_title": ("Absences", "Nieobecności"),
     "checkin.away_hint": (
         "Only when, never why: there is no place for reasons.",
         "Tylko kiedy, nigdy dlaczego: nie ma tu miejsca na powody.",
     ),
-    "checkin.away_add": ("Add an absence", "Dodaj nieobecność"),
+    "checkin.away_add": ("an absence", "nieobecność"),
     "checkin.away.who": ("Person", "Osoba"),
     "checkin.away.choose": ("Choose a person", "Wybierz osobę"),
     "checkin.away.from": ("Away from", "Nieobecność od"),
     "checkin.away.back": ("Back on (if known)", "Powrót (jeśli wiadomo)"),
-    "checkin.grow_title": ("A task grows", "Zadanie się wydłuża"),
+    "checkin.grow_title": ("Tasks that grew", "Zadania, które urosły"),
     "checkin.grow_hint": (
         "A task in progress needs more working days than planned.",
         "Zadanie w toku potrzebuje więcej dni roboczych, niż planowano.",
     ),
-    "checkin.grow_add": ("Add a growing task", "Dodaj wydłużone zadanie"),
+    "checkin.grow_add": ("a task that grew", "zadanie, które urosło"),
     "checkin.grow.task": ("Task", "Zadanie"),
     "checkin.grow.choose": ("Choose a task in progress", "Wybierz zadanie w toku"),
     "checkin.grow.days": ("Extra working days", "Dodatkowe dni robocze"),
     "checkin.grow_none": ("No task is in progress.", "Żadne zadanie nie jest w toku."),
     "checkin.new_title": ("New task", "Nowe zadanie"),
-    "checkin.new_add": ("Add a new task", "Dodaj nowe zadanie"),
+    "checkin.new_add": ("a new task", "nowe zadanie"),
     "checkin.new.name": ("Task name", "Nazwa zadania"),
     "checkin.new.days": ("Working days", "Dni robocze"),
     "checkin.new.after": ("Comes after", "Następuje po"),
@@ -822,7 +848,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Optional (can be dropped)",
         "Opcjonalne (można z niego zrezygnować)",
     ),
-    "checkin.message_title": ("Or write a message", "Albo napisz wiadomość"),
+    "checkin.message_title": ("Write in your own words", "Napisz własnymi słowami"),
     "checkin.message_label": (
         "What happened? Describe it in plain words.",
         "Co się wydarzyło? Opisz to zwykłymi słowami.",
@@ -833,12 +859,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "AI zamieni to na nieobecności, wydłużone i nowe zadania; każde z nich potwierdzasz "
         "przed zapisaniem.",
     ),
-    "checkin.message_read": ("Read the message", "Odczytaj wiadomość"),
+    "checkin.message_read": ("Process the message", "Przetwórz wiadomość"),
     "checkin.message_nothing": (
         "The AI found nothing to report in this message.",
         "AI nie znalazło w tej wiadomości nic do zgłoszenia.",
     ),
-    "checkin.message_found": ("The AI found:", "AI znalazło:"),
+    "checkin.message_found": ("This is how I read it:", "Tak to rozumiem:"),
     "checkin.message_issues": (
         "Some parts could not be read; check the message and add them by hand.",
         "Części nie udało się odczytać; sprawdź wiadomość i dodaj je ręcznie.",
@@ -851,8 +877,32 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     # ---- recommendation
     "rec.title": ("Recommendation", "Rekomendacja"),
     "rec.from": ("since {date}", "od {date}"),
-    "rec.alt_noop": ("No change (keep the plan)", "Bez zmian (zachowaj plan)"),
+    "rec.alt_noop": ("No change", "Bez zmian"),
     "rec.can_wait": ("can wait", "może poczekać"),
+    "rec.what_changes": ("What changes", "Co się zmieni"),
+    "rec.decided.approved": ("Approved · {date}", "Zatwierdzone · {date}"),
+    "rec.decided.rejected": (
+        "Rejected · {date}. The plan stayed as it was.",
+        "Odrzucone · {date}. Plan pozostał bez zmian.",
+    ),
+    "rec.compare_all": ("Compare all the options ({n})", "Porównaj wszystkie możliwości ({n})"),
+    "rec.how": ("How we calculated this", "Jak to policzyliśmy"),
+    "rec.more": ("More", "Więcej"),
+    "rec.baseline_note": ("reference point", "punkt odniesienia"),
+    "rec.points": ("{sign}{n} pts", "{sign}{n} pkt"),
+    "rec.approve.subst": ("Approve the substitute", "Zatwierdź zastępstwo"),
+    "rec.approve.overtime": ("Approve the extra person", "Zatwierdź dodatkową osobę"),
+    "rec.approve.descope": ("Approve dropping the task", "Zatwierdź rezygnację z zadania"),
+    "rec.approve.reseq": ("Approve the new order", "Zatwierdź nową kolejność"),
+    "rec.approve.shift": ("Approve the moved dates", "Zatwierdź przesunięcie terminów"),
+    "rec.reject_confirm": (
+        "Reject this proposal? The plan stays as it is, and Sentinel will suggest again after "
+        "the next check-in.",
+        "Odrzucić tę propozycję? Plan pozostaje bez zmian, a Sentinel zaproponuje znowu po "
+        "następnym raporcie.",
+    ),
+    "rec.reject_yes": ("Reject the proposal", "Odrzuć propozycję"),
+    "rec.reject_back": ("Back", "Wróć"),
     "rec.parked": (
         "Postponed · we will come back to it at the next check-in",
         "Odłożone · wrócimy przy następnym raporcie",
@@ -875,7 +925,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "When you approved it, this action was no longer possible, so the plan did not change.",
         "W chwili zatwierdzenia to działanie nie było już możliwe, więc plan się nie zmienił.",
     ),
-    "rec.why": ("Why", "Dlaczego"),
+    "rec.why": ("Why this proposal", "Dlaczego ta propozycja"),
     "rec.ai_title": ("In other words (AI):", "Innymi słowy (AI):"),
     "rec.badge.faithful": ("checked against the data", "sprawdzone z danymi"),
     "rec.badge.unfaithful": ("not confirmed by the data", "niepotwierdzone przez dane"),
@@ -894,7 +944,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "rec.col.chance": ("Chance of meeting the deadline", "Szansa na dotrzymanie terminu"),
     "rec.col.delay": ("Expected delay (working days)", "Oczekiwane opóźnienie (dni robocze)"),
     "rec.col.cost": ("Expected cost", "Oczekiwany koszt"),
-    "rec.chosen": ("recommended", "polecana"),
+    "rec.chosen": ("Recommended", "Polecana"),
     "rec.dropped": ("(set aside early)", "(odrzucona na wstępie)"),
     "rec.alt_note": (
         "Every option was tried on the same {futures} simulated futures as the forecast on the "
@@ -911,7 +961,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "rec.reject": ("Reject", "Odrzuć"),
     "rec.later": ("Decide later", "Zdecyduj później"),
-    "rec.approve": ("Approve", "Zatwierdź"),
+    "rec.approve": ("Approve the change", "Zatwierdź zmianę"),
     "rec.back": ("Back to the overview", "Wróć do przeglądu"),
     "rec.open": ("Review and decide", "Przejrzyj i zdecyduj"),
     "chip.chance": ("Chance", "Szansa"),
@@ -939,31 +989,23 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "{p}.",
     ),
     "why.without": (
-        "Without a change, the chance of meeting the deadline is {p}.",
-        "Bez zmian szansa na dotrzymanie terminu wynosi {p}.",
+        "No change: {p}. With this change: {after}.",
+        "Bez zmian: {p}. Z tą zmianą: {after}.",
     ),
     "why.with": (
-        "Sentinel weighed {options} options. On the same {futures} simulated futures as the "
-        "forecast on the overview, this one gives a {p} chance of meeting the deadline.",
-        "Sentinel rozważył możliwości ({options}). Na tych samych {futures} symulowanych "
-        "scenariuszach co prognoza na stronie przeglądu ta zmiana daje szansę {p} na dotrzymanie "
-        "terminu.",
+        "Sentinel checked {options} options.",
+        "Sentinel sprawdził możliwości: {options}.",
     ),
     "why.with_own": (
-        "Sentinel tried {options} options, each on up to {futures} simulated futures; with this "
-        "one the chance is {p}.",
-        "Sentinel sprawdził możliwości ({options}), każdą na maksymalnie {futures} symulowanych "
-        "scenariuszach; z tą szansa wynosi {p}.",
+        "Sentinel checked {options} options.",
+        "Sentinel sprawdził możliwości: {options}.",
     ),
     "why.delay": (
         "The expected delay is {days} working days.",
         "Oczekiwane opóźnienie w dniach roboczych: {days}.",
     ),
     "why.reason": ("It was chosen because {reason}.", "Wybrano ją, ponieważ {reason}."),
-    "why.runner": (
-        "The next best option reaches {p}: {title}.",
-        "Następna w kolejności możliwość osiąga {p}: {title}.",
-    ),
+    "why.runner": ("Next best: {title} ({p}).", "Następna w kolejności: {title} ({p})."),
     "why.tie.similar": (
         "Similar chance (the difference is within the uncertainty); {part}.",
         "Podobna szansa (różnica w granicach niepewności); {part}.",

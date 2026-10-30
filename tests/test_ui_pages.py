@@ -342,7 +342,7 @@ def test_a_check_in_and_a_decision_through_the_pages(site: Site) -> None:
     again = client.post(
         f"/projects/{pid}/checkin", data={**form, "date": "2026-11-03"}, headers=headers
     )
-    assert again.status_code == 422 and "alert-error" in again.text  # out of order
+    assert again.status_code == 422 and "callout-bad" in again.text  # out of order
     seq = view["open_recommendation"]
     later = client.post(
         f"/projects/{pid}/recommendations/{seq}/decision",

@@ -1,85 +1,148 @@
-{% extends "base.html" %}
+{% extends "focus.html" %}
+{% import "_ui.html" as ui with context %}
+{% block focus_start %}<a class="btn btn-tertiary" href="/projects/{{ view.id }}">{{ icon("arrow-left", 16) }}{{ t("project.tab.overview") }}</a>{% endblock %}
+{% block focus_title %}{{ view.name }}{% endblock %}
+{% block focus_actions %}<a class="close-link" href="/projects/{{ view.id }}" aria-label="{{ t('toast.close') }}">{{ icon("x", 20) }}</a>{% endblock %}
 {% block content %}
-{% include "_project_head.html" %}
-<article class="rec" aria-labelledby="rec-title">
-  <p class="eyebrow">{{ t("rec.from", date=t.date(rec.date)) }} · <span class="badge badge-{{ 'warn' if rec.status == 'open' else 'neutral' }}">{{ rec.status_text }}</span>{% if rec.can_wait and rec.status in ("open", "later") %} · <span class="badge badge-neutral">{{ t("rec.can_wait") }}</span>{% endif %}</p>
-  <h2 id="rec-title" class="rec-title">{{ rec.title }}</h2>
-  {% if chips %}
-  <ul class="chips chips-large" aria-label="{{ t('rec.effect') }}">
-    {% for chip in chips %}<li class="chip chip-{{ chip.tone }}"><span class="chip-label">{{ chip.label }}</span> {{ chip.text }}</li>{% endfor %}
-  </ul>
+{% set before = rec.without %}
+{% set after = rec.with_action %}
+<article class="focus-column review" aria-labelledby="rec-title">
+  <div class="rec-eyebrow">
+    <p class="overline">{{ rec.status_text }} · {{ t("rec.from", date=t.date(rec.date)) }}</p>
+    {% if rec.can_wait and rec.status in ("open", "later") %}{{ ui.badge("later", t("rec.can_wait")) }}{% endif %}
+  </div>
+  <h1 id="rec-title" class="rec-title">{{ rec.title }}</h1>
+
+  {% if before %}
+  <div class="rec-chance">
+    <p class="hero-label">{{ t("overview.chance_title") }}</p>
+    {% if rec.acts and after %}
+    {% set change = chance_change %}
+    <div class="rec-chance-line">
+      <span class="vh">{{ t.pct(before.p_on_time) }} → {{ t.pct(after.p_on_time) }}</span>
+      <span class="rec-before" aria-hidden="true">{{ t.pct(before.p_on_time) }}</span>
+      <span class="rec-arrow" aria-hidden="true">{{ icon("arrow-right", 24) }}</span>
+      <span class="headline-number" aria-hidden="true">{{ t.pct(after.p_on_time) }}</span>
+      {% if change %}{{ ui.delta(t, change, "") }}{% endif %}
+    </div>
+    {% else %}
+    <p class="headline-number">{{ t.pct(before.p_on_time) }}</p>
+    {% endif %}
+  </div>
   {% endif %}
 
-  {% if rec.status in ("open", "later") and rec.needs_approval %}
-  <p class="alert alert-info">{{ t("rec.needs_approval") }}
-    {% for reason in rec.approval_reasons %}<span class="badge badge-neutral">{{ t("rec.reason." ~ reason) }}</span> {% endfor %}
-  </p>
-  {% elif rec.status == "auto" %}
-  <p class="alert alert-info">{{ t("rec.was_auto") }}{% if not rec.can_undo %} {{ t("rec.no_undo") }}{% endif %}</p>
-  {% elif rec.status == "discarded" and rec.discarded %}
-  <p class="alert alert-warn">{{ t("rec.discarded") }}</p>
+  {% if rec.acts and chips | length > 1 %}
+  <section class="rec-section" aria-labelledby="changes-title">
+    <h2 id="changes-title">{{ t("rec.what_changes") }}</h2>
+    <dl class="summary-rows" aria-label="{{ t('rec.effect') }}">
+      {% for chip in chips[1:] %}<div><dt>{{ chip.label }}</dt><dd>{{ ui.chip_value(t, chip) }}</dd></div>{% endfor %}
+    </dl>
+    {% if rec.changes %}
+    <details class="details section-sub-sm">
+      <summary>{{ t("rec.changes_title") }} ({{ rec.changes | length }})</summary>
+      <ul class="details-body bullets">
+        {% for change in rec.changes[:12] %}<li>{{ t("rec.change", task=change.name, old=t.date(change.old), new=t.date(change.new)) }}</li>{% endfor %}
+        {% if rec.changes | length > 12 %}<li class="muted">{{ t.plural("rec.more_changes", rec.changes | length - 12) }}</li>{% endif %}
+      </ul>
+    </details>
+    {% endif %}
+  </section>
+  {% elif chips | length > 1 %}
+  <section class="rec-section">
+    <dl class="summary-rows">
+      {% for chip in chips[1:] %}<div><dt>{{ chip.label }}</dt><dd>{{ chip.text }}</dd></div>{% endfor %}
+    </dl>
+  </section>
   {% endif %}
 
-  <section class="panel" aria-labelledby="why-title">
-    <h3 id="why-title">{{ t("rec.why") }}</h3>
-    <p>{{ why }}</p>
+  <div class="rec-section">
+    {% if rec.status in ("open", "later") and rec.needs_approval %}
+    {% call ui.callout("info") %}<p>{{ t("rec.needs_approval", reasons=t.reasons(rec.approval_reasons)) }}</p>{% endcall %}
+    {% elif rec.status == "approved" %}
+    {% call ui.callout("good") %}<p>{{ t("rec.decided.approved", date=t.date(rec.date)) }}</p>{% endcall %}
+    {% elif rec.status == "rejected" %}
+    {% call ui.callout("info") %}<p>{{ t("rec.decided.rejected", date=t.date(rec.date)) }}</p>{% endcall %}
+    {% elif rec.status == "auto" %}
+    {% call ui.callout("info") %}<p>{{ t("rec.was_auto") }}{% if not rec.can_undo %} {{ t("rec.no_undo") }}{% endif %}</p>{% endcall %}
+    {% elif rec.status == "undone" %}
+    {% call ui.callout("info") %}<p>{{ rec.status_text }}</p>{% endcall %}
+    {% elif rec.status == "superseded" %}
+    {% call ui.callout("info") %}<p>{{ rec.status_text }}</p>{% endcall %}
+    {% elif rec.status == "discarded" and rec.discarded %}
+    {% call ui.callout("warn") %}<p>{{ t("rec.discarded") }}</p>{% endcall %}
+    {% endif %}
+  </div>
+
+  <section class="rec-section" aria-labelledby="why-title">
+    <h2 id="why-title">{{ t("rec.why") }}</h2>
+    <ul class="bullets small">{% for point in why %}<li>{{ point }}</li>{% endfor %}</ul>
     {% if rec.llm_explanation %}
     {% set ai = rec.llm_explanation %}
-    <div class="ai-text">
-      <p class="eyebrow">{{ t("rec.ai_title") }} {% if ai.badge == "faithful" %}<span class="badge badge-good"><span aria-hidden="true">✓ </span>{{ t("rec.badge.faithful") }}</span>{% elif ai.badge == "unfaithful" %}<span class="badge badge-warn">{{ t("rec.badge.unfaithful") }}</span>{% endif %}</p>
-      {% if ai.text %}<p>{{ ai.text }}</p>{% else %}<p class="muted">{{ t("rec.ai_invalid") }}</p>{% endif %}
+    <div class="review-block">
+      <p class="rec-eyebrow"><span class="caption">{{ t("rec.ai_title") }}</span>{% if ai.badge == "faithful" %}{{ ui.badge("good", t("rec.badge.faithful")) }}{% elif ai.badge == "unfaithful" %}{{ ui.badge("warn", t("rec.badge.unfaithful")) }}{% endif %}</p>
+      {% if ai.text %}<p class="small">{{ ai.text }}</p>{% else %}<p class="small muted">{{ t("rec.ai_invalid") }}</p>{% endif %}
     </div>
     {% elif llm %}
-    <form hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/explain" hx-target="#explain-area">
-      <button class="btn btn-small">{{ t("rec.ask_ai") }}</button>
+    <form class="section-sub-sm" hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/explain" hx-target="#explain-area">
+      <button class="btn btn-tertiary">{{ t("rec.ask_ai") }}</button>
     </form>
     <div id="explain-area" aria-live="polite"></div>
     {% endif %}
   </section>
 
-  {% if rec.changes %}
-  <section class="panel" aria-labelledby="changes-title">
-    <h3 id="changes-title">{{ t("rec.changes_title") }}</h3>
-    <ul class="changes">
-      {% for change in rec.changes[:12] %}<li>{{ t("rec.change", task=change.name, old=t.date(change.old), new=t.date(change.new)) }}</li>{% endfor %}
-      {% if rec.changes | length > 12 %}<li class="muted">{{ t.plural("rec.more_changes", rec.changes | length - 12) }}</li>{% endif %}
-    </ul>
-  </section>
-  {% endif %}
-
-  {% if rec.alternatives %}
-  <section class="panel" aria-labelledby="alt-title">
-    <h3 id="alt-title">{{ t("rec.alternatives") }}</h3>
-    <div class="table-wrap">
-    <table class="table">
-      <caption class="vh">{{ t("rec.alternatives") }}</caption>
-      <thead><tr><th scope="col">{{ t("rec.col.option") }}</th><th scope="col" class="num">{{ t("rec.col.chance") }}</th><th scope="col" class="num">{{ t("rec.col.delay") }}</th><th scope="col" class="num">{{ t("rec.col.cost") }}</th></tr></thead>
-      <tbody>
-        {% if rec.with_action %}
-        <tr class="chosen"><th scope="row">{{ rec.title }} <span class="badge badge-info">{{ t("rec.chosen") }}</span></th><td class="num">{{ t.pct(rec.with_action.p_on_time) }}</td><td class="num">{{ t.decimal(rec.with_action.tardiness) }}</td><td class="num">{{ t.cost_short(rec.with_action.expected_cost) }}</td></tr>
-        {% endif %}
-        {% for alt in rec.alternatives %}
-        <tr><th scope="row">{{ t("rec.alt_noop") if alt.label == "NOOP" else alt.title }}{% if alt.dropped and not rec.compared %} <span class="small muted">{{ t("rec.dropped") }}</span>{% endif %}</th><td class="num">{{ t.pct(alt.p_on_time) }}</td><td class="num">{{ t.decimal(alt.tardiness) }}</td><td class="num">{{ t.cost_short(alt.expected_cost) }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% if options %}
+  <details class="details rec-section" id="compare-disclosure">
+    <summary>{{ t("rec.compare_all", n=options | length) }}</summary>
+    <div class="compare-card section-sub-sm">
+      <table class="compare">
+        <caption class="vh">{{ t("rec.alternatives") }}</caption>
+        <thead><tr><th scope="col">{{ t("rec.col.option") }}</th><th scope="col" class="num">{{ t("rec.col.chance") }}</th><th scope="col" class="num">{{ t("rec.col.delay") }}</th><th scope="col" class="num">{{ t("rec.col.cost") }}</th></tr></thead>
+        <tbody>
+          {% for option in options %}
+          <tr class="{% if option.chosen %}is-chosen{% elif option.base %}is-base{% endif %}">
+            <th scope="row">
+              {% if option.short %}{{ option.short }}{% else %}{{ option.title }}{% endif %}
+              {% if option.chosen %} {{ ui.badge("good", t("rec.chosen")) }}{% endif %}
+              {% if option.base %}<span class="option-note">{{ t("rec.baseline_note") }}</span>{% endif %}
+              {% if option.short %}<details class="details option-more"><summary>{{ t("rec.more") }}</summary><p class="option-note">{{ option.title }}</p></details>{% endif %}
+            </th>
+            <td class="num" data-label="{{ t('rec.col.chance') }}"><span><span class="mini-bar" aria-hidden="true"><span style="width: {{ option.percent }}%"></span></span>{{ option.chance }}{% if option.diff %}<span class="diff">{{ option.diff }}</span>{% endif %}</span></td>
+            <td class="num" data-label="{{ t('rec.col.delay') }}">{{ option.delay }}</td>
+            <td class="num" data-label="{{ t('rec.col.cost') }}">{{ option.cost }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <p class="hint">{% if rec.compared and rec.without %}{{ t("rec.alt_note", futures=rec.without.rollouts) }}{% else %}{{ t("rec.alt_note_own") }}{% endif %} {{ t("cost.note.person_days" if view.person_days else "cost.note.custom") }}</p>
-  </section>
+  </details>
   {% endif %}
+  <details class="details rec-section-sm">
+    <summary>{{ t("rec.how") }}</summary>
+    <div class="details-body">
+      <p>{% if rec.compared and rec.without %}{{ t("rec.alt_note", futures=rec.without.rollouts) }}{% else %}{{ t("rec.alt_note_own") }}{% endif %}</p>
+      <p>{{ t("cost.note.person_days" if view.person_days else "cost.note.custom") }}</p>
+    </div>
+  </details>
 
   {% if rec.status in ("open", "later") and rec.acts %}
-  <form class="decision" hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/decision">
-    <div class="actions">
-      <button class="btn" name="verdict" value="reject">{{ t("rec.reject") }}</button>
-      {% if rec.status == "open" %}<button class="btn" name="verdict" value="later">{{ t("rec.later") }}</button>{% endif %}
-      <button class="btn btn-primary" name="verdict" value="approve">{{ t("rec.approve") }}</button>
+  <form hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/decision">
+    <div class="decision-bar">
+      <button class="btn btn-primary btn-lg" name="verdict" value="approve">{{ t(approve_key) }}</button>
+      <button type="button" class="btn btn-lg" data-reveal="reject-panel" aria-expanded="false" aria-controls="reject-panel">{{ t("rec.reject") }}</button>
+      {% if rec.status == "open" %}<button class="btn btn-tertiary later" name="verdict" value="later">{{ t("rec.later") }}</button>{% endif %}
+    </div>
+    <div class="card reject-panel" id="reject-panel" hidden>
+      <p class="small">{{ t("rec.reject_confirm") }}</p>
+      <div class="btn-row">
+        <button class="btn" name="verdict" value="reject">{{ t("rec.reject_yes") }}</button>
+        <button type="button" class="btn btn-tertiary" data-reveal="reject-panel">{{ t("rec.reject_back") }}</button>
+      </div>
     </div>
   </form>
   {% elif rec.status == "auto" and rec.can_undo %}
-  <form hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/undo"><div class="actions"><button class="btn btn-primary">{{ t("overview.undo") }}</button></div></form>
+  <form hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/undo"><div class="decision-bar"><button class="btn btn-primary btn-lg">{{ t("overview.undo") }}</button></div></form>
   {% else %}
-  <p class="actions"><a class="btn btn-primary" href="/projects/{{ view.id }}">{{ t("rec.back") }}</a></p>
+  <div class="decision-bar"><a class="btn btn-primary btn-lg" href="/projects/{{ view.id }}">{{ t("rec.back") }}</a></div>
   {% endif %}
 </article>
 {% endblock %}

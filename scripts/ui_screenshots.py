@@ -40,6 +40,7 @@ SIZES = {"": (1280, 800), "_phone": (390, 844)}
 DRAFT = {"pl": "szkic", "en": "draft"}
 LIMIT_BYTES = 5 * 1024 * 1024
 COLOURS = 96  # the palette of a saved screenshot
+LOCALES = {"pl": "pl-PL", "en": "en-GB"}
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,12 @@ def chromium_env() -> dict[str, str] | None:
         return None
     current = os.environ.get("LD_LIBRARY_PATH")
     return {**os.environ, "LD_LIBRARY_PATH": ":".join([*folders, current] if current else folders)}
+
+
+def language_env(language: str) -> dict[str, str]:
+    """The browser's environment in `language`: a date field shows "13.11.2026" in Polish."""
+    name = LOCALES[language].replace("-", "_")
+    return {**(chromium_env() or dict(os.environ)), "LANGUAGE": name, "LC_ALL": f"{name}.UTF-8"}
 
 
 def free_port() -> int:
@@ -144,7 +151,7 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
             recommendation,
             None,
             "#compare-disclosure",
-            "#compare-disclosure summary",
+            "#compare-disclosure > summary",
         ),
         Shot("history", f"{live}/history", "#chance-history svg, #chance-history p"),
         Shot("settings", f"{live}/settings", None, "#autonomy-title"),
@@ -172,8 +179,9 @@ def capture(
     for suffix, (width, height) in SIZES.items():
         context = browser.new_context(
             viewport={"width": width, "height": height},
-            locale="pl-PL" if language == "pl" else "en-GB",
+            locale=LOCALES[language],
             color_scheme="light",
+            reduced_motion="reduce",
         )
         context.add_cookies([{"name": "sentinel_lang", "value": language, "url": base}])
         page = context.new_page()
@@ -205,8 +213,8 @@ def main() -> int:
 
     args.out.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(env=chromium_env())
         for language in args.lang:
+            browser = playwright.chromium.launch(env=language_env(language))
             folder = args.data / language if args.data else None
             data = folder or Path(tempfile.mkdtemp(prefix="sentinel-ui-"))
             data.mkdir(parents=True, exist_ok=True)
@@ -225,7 +233,7 @@ def main() -> int:
                 empty = AppConfig(data_dir=Path(tempfile.mkdtemp(prefix="sentinel-ui-")))
                 with serving(empty, Services(empty)) as base:
                     capture(browser, base, [Shot("start_empty", "/")], language, args.out)
-        browser.close()
+            browser.close()
     total = sum(p.stat().st_size for p in args.out.glob("*.png"))
     print(f"total {total / 1024:.0f} kB of {LIMIT_BYTES / 1024:.0f} kB")
     return 0 if total <= LIMIT_BYTES else 1

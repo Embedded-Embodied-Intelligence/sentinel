@@ -1,41 +1,45 @@
+{% import "_ui.html" as ui with context %}
 {% set started = task.state in ("in_progress", "paused") %}
 {% set status = fv("status_" ~ task.key, "in_progress" if started else "not_started") %}
 <fieldset class="task-row{% if errors.get('percent_' ~ task.key) or errors.get('finish_' ~ task.key) %} has-issue{% endif %}">
-  <legend>{{ task.name }} <span class="small muted">— {{ task.state_text }}{% if task.percent is not none %}, {{ t("checkin.done_share", percent=task.percent | round | int) }}{% endif %}{% if task.state == "not_started" and task.planned_start %}, {{ t("checkin.planned", date=t.date(task.planned_start)) }}{% endif %}</span></legend>
+  <legend><span class="task-name">{{ task.name }}</span> <span class="task-state">{{ task.state_text }}{% if task.percent is not none %}, {{ t("checkin.done_share", percent=task.percent | round | int) }}{% endif %}{% if task.state == "not_started" and task.planned_start %}{% if task.late %} · {{ t("checkin.was_due", date=t.date(task.planned_start)) }}{% else %} · {{ t("checkin.planned", date=t.date(task.planned_start)) }}{% endif %}{% endif %}</span></legend>
   <input type="hidden" name="shown" value="{{ task.key }}">
   <div class="segmented">
-    <label><input type="radio" name="status_{{ task.key }}" value="not_started"{% if status == "not_started" %} checked{% endif %}{% if started %} disabled{% endif %}> {{ t("checkin.status.not_started") }}</label>
-    <label><input type="radio" name="status_{{ task.key }}" value="in_progress"{% if status == "in_progress" %} checked{% endif %}> {{ t("checkin.status.in_progress") }}</label>
-    <label><input type="radio" name="status_{{ task.key }}" value="done"{% if status == "done" %} checked{% endif %}> {{ t("checkin.status.done") }}</label>
+    <label><input type="radio" name="status_{{ task.key }}" value="not_started"{% if status == "not_started" %} checked{% endif %}{% if started %} disabled{% endif %}>{{ t("checkin.status.not_started") }}</label>
+    <label><input type="radio" name="status_{{ task.key }}" value="in_progress"{% if status == "in_progress" %} checked{% endif %}>{{ t("checkin.status.in_progress") }}</label>
+    <label><input type="radio" name="status_{{ task.key }}" value="done"{% if status == "done" %} checked{% endif %}>{{ t("checkin.status.done") }}</label>
   </div>
   <div class="when-progress field">
     <label for="percent-{{ task.key }}">{{ t("checkin.share") }}</label>
     {% set percent = fv("percent_" ~ task.key, (task.percent | round | int) if task.percent is not none else 0) %}
-    <div class="slider"><input type="range" id="percent-{{ task.key }}" name="percent_{{ task.key }}" min="0" max="99" step="1" value="{{ percent }}" aria-describedby="percent-{{ task.key }}-out"><output id="percent-{{ task.key }}-out" for="percent-{{ task.key }}">{{ percent }} %</output></div>
-    {% if errors.get('percent_' ~ task.key) %}<p class="error-text">{{ errors['percent_' ~ task.key] }}</p>{% endif %}
+    <div class="slider"><input type="range" id="percent-{{ task.key }}" name="percent_{{ task.key }}" min="0" max="99" step="1" value="{{ percent }}"><input type="number" id="percent-{{ task.key }}-num" data-range-for="percent-{{ task.key }}" min="0" max="99" value="{{ percent }}" inputmode="numeric" aria-label="{{ t('checkin.percent') }}"><span aria-hidden="true">%</span></div>
+    {{ ui.field_error("percent-" ~ task.key, errors.get('percent_' ~ task.key)) }}
   </div>
   <div class="when-done field">
     <label for="finish-{{ task.key }}">{{ t("checkin.finished_on") }}</label>
-    <input type="date" id="finish-{{ task.key }}" name="finish_{{ task.key }}" value="{{ fv('finish_' ~ task.key, default_date) }}">
-    {% if errors.get('finish_' ~ task.key) %}<p class="error-text">{{ errors['finish_' ~ task.key] }}</p>{% endif %}
+    <input type="date" id="finish-{{ task.key }}" name="finish_{{ task.key }}" lang="{{ t.lang }}" value="{{ fv('finish_' ~ task.key, default_date) }}">
+    {{ ui.echo(t, "finish-" ~ task.key, none) }}
+    {{ ui.field_error("finish-" ~ task.key, errors.get('finish_' ~ task.key)) }}
   </div>
   {% if not started %}
-  <details class="more">
+  <details class="details task-more">
     <summary>{{ t("checkin.more") }}</summary>
-    <div class="field">
-      <label for="start-{{ task.key }}">{{ t("checkin.started_on") }}</label>
-      <input type="date" id="start-{{ task.key }}" name="start_{{ task.key }}" value="{{ fv('start_' ~ task.key, '') }}" aria-describedby="start-{{ task.key }}-hint">
-      <p class="hint" id="start-{{ task.key }}-hint">{{ t("checkin.started_hint") }}</p>
+    <div class="details-body form-stack">
+      <div class="field">
+        <label for="start-{{ task.key }}">{{ t("checkin.started_on") }}</label>
+        <input type="date" id="start-{{ task.key }}" name="start_{{ task.key }}" lang="{{ t.lang }}" value="{{ fv('start_' ~ task.key, '') }}" aria-describedby="start-{{ task.key }}-hint">
+        <p class="hint" id="start-{{ task.key }}-hint">{{ t("checkin.started_hint") }}</p>
+      </div>
+      {% if task.crew %}
+      <fieldset class="crew-pick">
+        <legend>{{ t("checkin.who") }}</legend>
+        <p class="hint">{{ t("checkin.who_hint", crew=crew_text(task)) }}</p>
+        {% for person in people if role_needed(task, person.role) %}
+        <label class="check"><input type="checkbox" name="crew_{{ task.key }}" value="{{ person.key }}"{% if person.key in fl('crew_' ~ task.key) %} checked{% endif %}><span>{{ person.name }} <span class="muted">({{ person.role }})</span></span></label>
+        {% endfor %}
+      </fieldset>
+      {% endif %}
     </div>
-    {% if task.crew %}
-    <fieldset class="crew-pick">
-      <legend>{{ t("checkin.who") }}</legend>
-      <p class="hint">{{ t("checkin.who_hint", crew=crew_text(task)) }}</p>
-      {% for person in people if role_needed(task, person.role) %}
-      <label class="check"><input type="checkbox" name="crew_{{ task.key }}" value="{{ person.key }}"{% if person.key in fl('crew_' ~ task.key) %} checked{% endif %}> {{ person.name }} <span class="muted small">({{ person.role }})</span></label>
-      {% endfor %}
-    </fieldset>
-    {% endif %}
   </details>
   {% endif %}
 </fieldset>

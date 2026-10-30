@@ -1,3 +1,4 @@
+{% import "_ui.html" as ui with context %}
 <div class="row-group" data-row>
   <input type="hidden" name="away_rows" value="{{ i }}">
   <div class="field">
@@ -9,13 +10,15 @@
   </div>
   <div class="field">
     <label for="away-{{ i }}-from">{{ t("checkin.away.from") }}</label>
-    <input type="date" id="away-{{ i }}-from" name="away_{{ i }}_from" value="{{ fv('away_' ~ i ~ '_from', default_date) }}">
-    {% if errors.get('away_' ~ i ~ '_from') %}<p class="error-text">{{ errors['away_' ~ i ~ '_from'] }}</p>{% endif %}
+    <input type="date" id="away-{{ i }}-from" name="away_{{ i }}_from" lang="{{ t.lang }}" value="{{ fv('away_' ~ i ~ '_from', default_date) }}">
+    {{ ui.echo(t, "away-" ~ i ~ "-from", none) }}
+    {{ ui.field_error("away-" ~ i ~ "-from", errors.get('away_' ~ i ~ '_from')) }}
   </div>
   <div class="field">
     <label for="away-{{ i }}-back">{{ t("checkin.away.back") }}</label>
-    <input type="date" id="away-{{ i }}-back" name="away_{{ i }}_back" value="{{ fv('away_' ~ i ~ '_back', '') }}">
-    {% if errors.get('away_' ~ i ~ '_back') %}<p class="error-text">{{ errors['away_' ~ i ~ '_back'] }}</p>{% endif %}
+    <input type="date" id="away-{{ i }}-back" name="away_{{ i }}_back" lang="{{ t.lang }}" value="{{ fv('away_' ~ i ~ '_back', '') }}">
+    {{ ui.echo(t, "away-" ~ i ~ "-back", none) }}
+    {{ ui.field_error("away-" ~ i ~ "-back", errors.get('away_' ~ i ~ '_back')) }}
   </div>
-  <button type="button" class="btn btn-quiet btn-small" data-remove-row>{{ t("setup.remove") }}</button>
+  <button type="button" class="btn btn-tertiary btn-sm" data-remove-row>{{ t("setup.remove") }}</button>
 </div>

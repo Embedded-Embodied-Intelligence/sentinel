@@ -140,7 +140,7 @@ def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
         with recorder.task("Zdecyduj o rekomendacji") as task:
             waiting = page.get_by_role("heading", name="Czeka na Twoją decyzję")
             expect(waiting).to_be_visible(timeout=60_000)
-            click(task, page.get_by_role("link", name="Zobacz rekomendację"))
+            click(task, page.get_by_role("link", name="Przejrzyj i zdecyduj"))
             expect(page.locator("#rec-title")).to_contain_text("Zastępstwo: Celina Wiśniewska")
             click(task, page.get_by_role("button", name="Zatwierdź"))
             page.wait_for_url(re.compile(r"flash=approved"))

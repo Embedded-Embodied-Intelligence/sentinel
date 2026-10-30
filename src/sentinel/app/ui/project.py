@@ -25,6 +25,7 @@ from sentinel.app.events import (
 )
 from sentinel.app.live import LiveProject
 from sentinel.app.models import CheckIn
+from sentinel.app.planning import half_up
 from sentinel.app.services import JobView
 from sentinel.app.ui.charts import forecast_strip, live_gantt
 from sentinel.app.ui.core import Ui, chance_level, is_htmx
@@ -44,41 +45,150 @@ NEXT_DAYS = 10  # unstarted tasks planned within this many working days are show
 FLASHES_WITH_CHANCE = ("checkin_saved", "approved")  # toasts that add the new chance when known
 
 
-def why_text(rec: RecommendationView, texts: Texts) -> str:
-    """Why Sentinel recommends the action, in plain language from the figures shown with it
+def why_points(rec: RecommendationView, texts: Texts) -> list[str]:
+    """Why Sentinel recommends the action, in short plain sentences from the figures shown with it
     (spec sections 10.4 and 11.5; the template explanation without internal terms)."""
     before = rec.without
     after = rec.with_action
     options = max(rec.options, len(rec.alternatives) + 1)
     if not rec.acts or after is None:
         if before is None:
-            return texts("why.keep_plain")
+            return [texts("why.keep_plain")]
         if rec.reason == "needs_met":
-            return texts("why.on_track", p=texts.pct(before.p_on_time))
-        kept = texts("why.keep", options=options, p=texts.pct(before.p_on_time))
-        return kept if rec.tie is None else f"{kept} {texts.tie(rec.tie, rec.reason)}"
+            return [texts("why.on_track", p=texts.pct(before.p_on_time))]
+        kept = [texts("why.keep", options=options, p=texts.pct(before.p_on_time))]
+        return kept if rec.tie is None else [*kept, texts.tie(rec.tie, rec.reason)]
     parts = []
     if before is not None:
-        parts.append(texts("why.without", p=texts.pct(before.p_on_time)))
-    parts.append(
-        texts(
-            "why.with" if rec.compared else "why.with_own",
-            options=options,
-            futures=after.rollouts,
-            p=texts.pct(after.p_on_time),
+        parts.append(
+            texts("why.without", p=texts.pct(before.p_on_time), after=texts.pct(after.p_on_time))
         )
-    )
+    chosen = texts("why.with" if rec.compared else "why.with_own", options=options)
+    if rec.tie is None:
+        chosen = f"{chosen} {texts('why.reason', reason=rec.reason_text)}"
+    parts.append(chosen)
     if after.tardiness >= 0.05:
         parts.append(texts("why.delay", days=texts.decimal(after.tardiness)))
-    if rec.tie is None:
-        parts.append(texts("why.reason", reason=rec.reason_text))
     runner = next((a for a in rec.alternatives if a.runner_up), None)
     if runner is not None:
         title = texts("rec.alt_noop") if runner.label == "NOOP" else runner.title
         parts.append(texts("why.runner", title=title, p=texts.pct(runner.p_on_time)))
     if rec.tie is not None:
         parts.append(texts.tie(rec.tie, rec.reason))
-    return " ".join(parts)
+    return parts
+
+
+def why_text(rec: RecommendationView, texts: Texts) -> str:
+    """The reasons of a recommendation as one text."""
+    return " ".join(why_points(rec, texts))
+
+
+@dataclass(frozen=True)
+class OptionRow:
+    """A row of the comparison table (docs/design/brief.md, section 3.7), its figures as shown."""
+
+    title: str
+    short: str | None
+    chance: str
+    percent: int
+    delay: str
+    cost: str
+    chosen: bool = False
+    base: bool = False
+    diff: str = ""
+
+
+LONG_OPTION = 60  # characters of an option's name before the rest folds behind "More"
+
+
+def short_name(title: str) -> str | None:
+    """An option's name cut at a word near the limit, or None if it fits."""
+    if len(title) <= LONG_OPTION:
+        return None
+    return title[:LONG_OPTION].rsplit(" ", 1)[0].rstrip(",:(") + "…"
+
+
+def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
+    """The options compared: the recommended one first, then the alternatives in the order of the
+    recommendation (spec section 11.5, item 6), and "no change" as the reference point, last."""
+    after = rec.with_action
+    if not rec.alternatives:
+        return []
+    base = next((a for a in rec.alternatives if a.label == "NOOP"), None)
+    reference = rec.without.p_on_time if rec.without is not None else None
+    if base is not None:
+        reference = base.p_on_time
+
+    def diff(p: float) -> str:
+        if reference is None:
+            return ""
+        change = _whole_percent(p) - _whole_percent(reference)
+        if change == 0:
+            return ""
+        sign = "+" if change > 0 else "\u2212"
+        return texts("rec.points", sign=sign, n=abs(change))
+
+    rows = []
+    if after is not None and rec.acts:
+        rows.append(
+            OptionRow(
+                rec.title,
+                short_name(rec.title),
+                texts.pct(after.p_on_time),
+                _whole_percent(after.p_on_time),
+                texts.decimal(after.tardiness),
+                texts.cost_short(after.expected_cost),
+                chosen=True,
+                diff=diff(after.p_on_time),
+            )
+        )
+    others = [a for a in rec.alternatives if a.label != "NOOP"]
+    for alt in others:
+        rows.append(
+            OptionRow(
+                alt.title,
+                short_name(alt.title),
+                texts.pct(alt.p_on_time),
+                _whole_percent(alt.p_on_time),
+                texts.decimal(alt.tardiness),
+                texts.cost_short(alt.expected_cost),
+                diff=diff(alt.p_on_time),
+            )
+        )
+    if base is not None:
+        rows.append(
+            OptionRow(
+                texts("rec.alt_noop"),
+                None,
+                texts.pct(base.p_on_time),
+                _whole_percent(base.p_on_time),
+                texts.decimal(base.tardiness),
+                texts.cost_short(base.expected_cost),
+                base=True,
+            )
+        )
+    return rows
+
+
+def _whole_percent(p: float) -> int:
+    return int(half_up(100 * p))
+
+
+def approve_label(kind: str) -> str:
+    """The key of the approve button: it names what is approved (brief, section 1.7); an action of
+    several operations reads as a change."""
+    if "_reseq" in kind or kind.startswith("proposal"):
+        return "rec.approve"
+    for prefix, name in (
+        ("subst", "subst"),
+        ("ot", "overtime"),
+        ("descope", "descope"),
+        ("reseq", "reseq"),
+        ("shift", "shift"),
+    ):
+        if kind.startswith(prefix):
+            return f"rec.approve.{name}"
+    return "rec.approve"
 
 
 @dataclass(frozen=True)
@@ -617,8 +727,14 @@ def router(ui: Ui) -> APIRouter:
             tab="overview",
             rec=rec,
             chips=impact_chips(rec, texts),
-            why=why_text(rec, texts),
-            autonomy=view.definition.settings.autonomy,
+            why=why_points(rec, texts),
+            options=option_rows(rec, texts),
+            approve_key=approve_label(rec.kind),
+            chance_change=(
+                _whole_percent(rec.with_action.p_on_time) - _whole_percent(rec.without.p_on_time)
+                if rec.with_action is not None and rec.without is not None
+                else 0
+            ),
         )
 
     @routes.post("/projects/{project_id}/recommendations/{seq}/decision")

@@ -1,23 +1,24 @@
-<div class="panel review">
-  {% if not (found.absences or found.increases or found.new_tasks) %}
-  <p class="muted">{{ t("checkin.message_nothing") }}</p>
-  {% else %}
-  <p><strong>{{ t("checkin.message_found") }}</strong></p>
+{% import "_ui.html" as ui with context %}
+{% if not (found.absences or found.increases or found.new_tasks) %}
+<p class="row-list-empty">{{ t("checkin.message_nothing") }}</p>
+{% else %}
+<div class="review-block">
+  <p class="callout-title">{{ t("checkin.message_found") }}</p>
   <ul class="confirm-list">
     {% for item in found.absences %}
     <li><label class="check"><input type="checkbox" name="msg_absence" value="{{ item.model_dump_json() }}" checked>
-      {% if item.return_date %}{{ t("history.away_back", person=people.get(item.person, item.person), first=t.date(item.first_day), back=t.date(item.return_date)) }}{% else %}{{ t("history.away", person=people.get(item.person, item.person), first=t.date(item.first_day)) }}{% endif %}</label></li>
+      <span>{% if item.return_date %}{{ t("history.away_back", person=people.get(item.person, item.person), first=t.date(item.first_day), back=t.date(item.return_date)) }}{% else %}{{ t("history.away", person=people.get(item.person, item.person), first=t.date(item.first_day)) }}{% endif %}</span></label></li>
     {% endfor %}
     {% for item in found.increases %}
     <li><label class="check"><input type="checkbox" name="msg_increase" value="{{ item.model_dump_json() }}" checked>
-      {{ t("history.grows_factor", task=names.get(item.task, item.task), percent=((item.factor - 1) * 100) | round | int) }}</label></li>
+      <span>{{ t("history.grows_factor", task=names.get(item.task, item.task), percent=((item.factor - 1) * 100) | round | int) }}</span></label></li>
     {% endfor %}
     {% for item in found.new_tasks %}
     <li><label class="check"><input type="checkbox" name="msg_new" value="{{ item.model_dump_json() }}" checked>
-      {{ t("history.new_task", task=item.name, days=item.duration) }}</label></li>
+      <span>{{ t("history.new_task", task=item.name, days=item.duration) }}</span></label></li>
     {% endfor %}
   </ul>
-  {% if found.issues %}<p class="small muted">{{ t("checkin.message_issues") }}</p>{% endif %}
-  <p class="small">{{ t("checkin.message_confirm") }}</p>
-  {% endif %}
+  {% if found.issues %}<p class="caption">{{ t("checkin.message_issues") }}</p>{% endif %}
+  <p class="caption">{{ t("checkin.message_confirm") }}</p>
 </div>
+{% endif %}

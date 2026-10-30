@@ -121,14 +121,14 @@ def test_a_project_from_a_spreadsheet_to_an_approved_recommendation(
     expect(page.get_by_role("heading", name="Waiting for your decision")).to_be_visible(
         timeout=60_000
     )
-    page.get_by_role("link", name="See the recommendation").click()
+    page.get_by_role("link", name="Review and decide").click()
     expect(page.locator("#rec-title")).to_have_text(
         "Substitute: Cleo takes over Ada's part in “Build API”"
     )
     page.get_by_role("button", name="Approve").click()
     page.wait_for_url(re.compile(r"flash=approved"))
     expect(page.locator("#flash")).to_contain_text("Approved")
-    page.get_by_role("link", name="History").click()
+    page.get_by_role("link", name="History", exact=True).click()
     expect(page.get_by_text("You approved: Substitute: Cleo takes over")).to_be_visible()
     page.context.close()
 
@@ -215,7 +215,7 @@ def test_a_check_in_by_keyboard_only(browser: Any, local: Server) -> None:
     _tab_to(page, "#percent-T1")
     for _ in range(25):
         page.keyboard.press("ArrowRight")
-    expect(page.locator("#percent-T1-out")).to_have_text("25 %")
+    expect(page.locator("#percent-T1-num")).to_have_value("25")
     _tab_to(page, 'button[data-add-row="away"]')
     page.keyboard.press("Enter")
     assert page.evaluate("() => document.activeElement.tagName") == "SELECT"
