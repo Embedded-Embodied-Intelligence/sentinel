@@ -608,6 +608,38 @@ def test_ai_features_through_the_pages(tmp_path: Path) -> None:
         assert absence == {"person": "a", "first_day": "2026-11-04", "return_date": "2026-11-16"}
 
 
+def test_a_simulation_at_work_shows_its_progress_without_waiting_for_it(site: Site) -> None:
+    """QA-03: a job holds the runs' lock for as long as it lasts; the page must not wait for it,
+    so opening the project (back, a second tab, a reload) never reads the runs meanwhile."""
+    services = site.services
+    spec = SimulatorSpec(instance="j301_1", start=date(2026, 11, 2), name="Busy")
+    row = services.store.create_project(
+        LOCAL_SESSION, "simulator", "Busy", "simulator", {"spec": spec.model_dump(mode="json")}
+    )
+    job = services.store.create_job(LOCAL_SESSION, row.id, "advance")
+    try:
+        for language in LANGUAGES:  # the instance is not there: reading the runs would fail
+            page = _get(site, f"/projects/{row.id}", language)
+            assert f"/jobs/{job.id}" in page and f"/jobs/{job.id}/cancel" in page
+            assert "Busy" in page and "<progress" in page
+    finally:
+        services.store.update_job(job.id, status="done")
+
+
+def test_a_cancelled_run_stops_at_its_next_day_and_only_a_run_can_be_cancelled(site: Site) -> None:
+    services = site.services
+    job = services.store.create_job(LOCAL_SESSION, site.ids["open"], "advance")
+    answer = site.client.post(f"/jobs/{job.id}/cancel", headers=site.headers)
+    assert answer.headers["HX-Redirect"] == f"/projects/{site.ids['open']}"
+    assert job.id in services._cancelled
+    services.store.update_job(job.id, status="done")
+    services._cancelled.discard(job.id)
+    other = services.store.create_job(LOCAL_SESSION, site.ids["open"], "recommend")
+    site.client.post(f"/jobs/{other.id}/cancel", headers=site.headers)
+    assert other.id not in services._cancelled
+    services.store.update_job(other.id, status="done")
+
+
 @pytest.mark.data
 @pytest.mark.slow  # a simulator world and 10 simulated days, about 7 s
 def test_the_simulator_pages(tmp_path: Path, psplib_root: Path) -> None:

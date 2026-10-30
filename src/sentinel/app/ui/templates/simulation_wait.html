@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <p class="crumbs"><a href="/simulator">{{ t("sim.title") }}</a> / {{ name }}</p>
+    <h1>{{ name }}</h1>
+  </div>
+  <section class="card" aria-labelledby="wait-title">
+    <h2 id="wait-title" class="section-title-sm">{{ t("sim.moving_title") }}</h2>
+    {% include "_job.html" %}
+  </section>
+</div>
+{% endblock %}

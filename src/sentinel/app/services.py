@@ -820,6 +820,25 @@ class Services:
                 self._sims.popitem(last=False)
         return row, simulation
 
+    def simulation_ready(self, session: str, project_id: str) -> bool:
+        """Whether a simulator project's runs are in memory, so that reading them is quick."""
+        row = self._row(session, project_id)
+        with self._guard:
+            cached = self._sims.get(project_id)
+        return cached is not None and cached[0] == row.seq
+
+    def load_simulation(self, session: str, project_id: str, language: Language) -> JobView:
+        """Replay a simulator project's days in a job: after a restart this takes as long as
+        simulating them did, and a page must not wait for it (QA-03)."""
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            progress(0.05, "simulating")
+            with self._lock(project_id):
+                self._simulation(session, project_id)
+            return {"project": project_id}
+
+        return self._submit(session, project_id, "simulator", work, language)
+
     def with_simulation[T](
         self, session: str, project_id: str, read: Callable[[simulator.Simulation], T]
     ) -> T:

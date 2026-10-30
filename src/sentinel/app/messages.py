@@ -92,7 +92,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "progress_below_change": "“{task}” had {minimum} % done when more work was reported; its "
         "share done cannot be lower now.",
         "no_crew_available": "There are not enough free people with the role {role} on {date} to "
-        "start “{task}” (it needs {count}, {free} are free); name the crew.",
+        "start “{task}” (it needs {count}, {free} are free); give a later start date or name the "
+        "crew.",
         "crew_unknown_member": "There is no person {person} for the crew.",
         "crew_member_busy": "{person} is in the crew of “{other}” on {date}.",
         "crew_not_hired": "{person} is not hired on {date}.",
@@ -319,7 +320,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "progress_below_change": "Zadanie „{task}” miało {minimum} % wykonania, gdy zgłoszono "
         "dodatkową pracę; wykonana część nie może być teraz mniejsza.",
         "no_crew_available": "Dnia {date} brakuje wolnych osób z rolą {role}, aby rozpocząć "
-        "„{task}” (potrzeba {count}, wolnych jest {free}); wskaż skład zespołu.",
+        "„{task}” (potrzeba {count}, wolnych jest {free}); podaj późniejszą datę rozpoczęcia albo "
+        "wskaż skład zespołu.",
         "crew_unknown_member": "Nie ma osoby {person}, którą można by przypisać do zespołu.",
         "crew_member_busy": "{person} pracuje {date} w zespole zadania „{other}”.",
         "crew_not_hired": "{person} nie jest zatrudniony(-a) dnia {date}.",

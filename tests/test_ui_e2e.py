@@ -163,6 +163,29 @@ def test_the_simulator_runs_to_the_end_and_compares(browser: Any, local: Server)
     page.context.close()
 
 
+def test_a_run_can_be_left_reopened_and_cancelled(browser: Any, local: Server) -> None:
+    """QA-03: back and forward during a run to the end, the page reopened at once, and Cancel."""
+    if not local.services.instances("j30"):
+        pytest.skip("PSPLIB data not available (run scripts/fetch_psplib.py)")
+    page = _page(browser, local)
+    page.goto(local.base + "/simulator")
+    page.get_by_role("button", name="Start the simulation").click()
+    page.wait_for_url(re.compile(r"/projects/[\w-]+$"), timeout=60_000)
+    url = page.url
+    page.get_by_role("button", name="To the end").click()
+    expect(page.get_by_text("This takes about half a minute")).to_be_visible(timeout=30_000)
+    page.goto(local.base + "/simulator")
+    began = time.perf_counter()
+    page.goto(url)
+    assert time.perf_counter() - began < 5  # the page does not wait for the run
+    cancel = page.get_by_role("button", name="Cancel")
+    expect(cancel).to_be_visible()
+    cancel.click()
+    expect(page.locator(".sim-day")).to_be_visible(timeout=60_000)
+    expect(page.get_by_role("heading", name="How it ended")).to_have_count(0)
+    page.context.close()
+
+
 def test_two_demo_visitors_see_only_their_own_projects(
     browser: Any, tmp_path_factory: pytest.TempPathFactory
 ) -> None:

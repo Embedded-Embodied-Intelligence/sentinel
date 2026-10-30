@@ -1282,6 +1282,15 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "delete.confirm": ("Delete for good", "Usuń projekt na zawsze"),
     # ---- simulator
     "sim.title": ("Simulator", "Symulator"),
+    "sim.moving_title": ("The simulation is working", "Symulacja pracuje"),
+    "sim.moving_note": (
+        "You can leave this page; the run goes on.",
+        "Możesz opuścić tę stronę; przebieg trwa dalej.",
+    ),
+    "sim.replay_note": (
+        "Restoring the run after a restart of the server takes as long as simulating it.",
+        "Odtworzenie przebiegu po restarcie serwera trwa tyle co jego symulacja.",
+    ),
     "sim.day_of": ("Day {day} of about {total}", "Dzień {day} z ok. {total}"),
     "sim.chance_from": ("from Sentinel's analysis of {date}", "z analizy Sentinela z {date}"),
     "sim.chance_none": (

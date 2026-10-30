@@ -3,9 +3,11 @@ day under Sentinel or with nobody reacting, a timeline of what happened and what
 and at the end the comparison with nobody reacting on the same events (common random numbers).
 """
 
+import contextlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
@@ -15,6 +17,7 @@ from sentinel.app import names
 from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
+from sentinel.app.services import JobView
 from sentinel.app.simulator import PolicyRun, SimSide, Simulation, SimulatorSpec
 from sentinel.app.ui.charts import Gantt, sim_gantt
 from sentinel.app.ui.core import Ui, chance_level
@@ -364,10 +367,42 @@ class Reading:
     example: str
 
 
+def waiting_page(ui: Ui, request: Request, project_id: str, job: JobView, note: str) -> Response:
+    """A simulator project while a job moves its runs: its progress, without touching the runs
+    (they are locked for as long as the job lasts, QA-03)."""
+    row = ui.services.store.project(ui.session(request), project_id)
+    assert row is not None
+    texts = ui.texts(request)
+    target = f"/projects/{project_id}"
+    label = "job.advance" if job.kind == "advance" else "job.simulator"
+    values = {"label": label, "next": target}
+    return ui.page(
+        request,
+        "simulation_wait.html",
+        title=row.name,
+        nav="simulator",
+        name=row.name,
+        job=job,
+        label=texts(label),
+        query=urlencode(values),
+        note=note,
+        cancel=f"/jobs/{job.id}/cancel" if job.kind == "advance" else "",
+    )
+
+
 def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
     services = ui.services
     session = ui.session(request)
     texts = ui.texts(request)
+    moving = services.store.project_jobs(session, project_id)
+    if moving:
+        job = services.job(session, moving[0].id, texts.lang)
+        return waiting_page(ui, request, project_id, job, texts("sim.moving_note"))
+    if not services.simulation_ready(session, project_id):
+        with contextlib.suppress(AppError):  # at a limit of jobs the page waits for the replay
+            job = services.load_simulation(session, project_id, texts.lang)
+            if job.status in ("queued", "running"):
+                return waiting_page(ui, request, project_id, job, texts("sim.replay_note"))
     view = services.simulator(session, project_id, texts.lang)
 
     def read(simulation: Simulation) -> Reading:
@@ -385,7 +420,6 @@ def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
 
     reading = services.with_simulation(session, project_id, read)
     sides = [view.main] + ([view.compare] if view.compare is not None else [])
-    running = services.store.project_jobs(session, project_id)
     calendar = WorkCalendar(view.spec.start)
     chance = reading.chance
     return ui.page(
@@ -404,7 +438,7 @@ def simulation_page(ui: Ui, request: Request, project_id: str) -> Response:
         example_key=reading.example,
         verdict=verdict(sides, texts) if view.finished else "",
         compare_rows=compare_rows(sides, texts) if view.finished else [],
-        continue_run=request.query_params.get("run") == "end" and not running,
+        continue_run=request.query_params.get("run") == "end",
     )
 
 
