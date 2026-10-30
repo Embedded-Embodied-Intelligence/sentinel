@@ -58,9 +58,16 @@ def local(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Server]:
     yield from serve(AppConfig(data_dir=tmp_path_factory.mktemp("local"), workers=1))
 
 
-def _page(browser: Any, server: Server, language: str = "en", scheme: str = "light") -> Any:
+def _page(
+    browser: Any,
+    server: Server,
+    language: str = "en",
+    scheme: str = "light",
+    width: int = 1280,
+    height: int = 800,
+) -> Any:
     context = browser.new_context(
-        viewport={"width": 1280, "height": 800}, color_scheme=scheme, locale="en-GB"
+        viewport={"width": width, "height": height}, color_scheme=scheme, locale="en-GB"
     )
     context.add_cookies([{"name": "sentinel_lang", "value": language, "url": server.base}])
     context.set_default_timeout(30_000)
@@ -243,10 +250,8 @@ def _axe(page: Any) -> list[str]:
     ]
 
 
-@pytest.mark.parametrize("scheme", ["light", "dark"])
-def test_the_main_screens_have_no_serious_accessibility_violations(
-    browser: Any, local: Server, scheme: str
-) -> None:
+def _showcase(local: Server) -> tuple[str, int | None, str]:
+    """The showcase project, its open recommendation and a draft of it."""
     services = local.services
     name = showcase.definition("pl").name
     if not any(p.name == name for p in services.projects(LOCAL_SESSION)):
@@ -255,15 +260,30 @@ def test_the_main_screens_have_no_serious_accessibility_violations(
         services.showcase(LOCAL_SESSION, "pl")
     pid = next(p.id for p in services.projects(LOCAL_SESSION) if p.name == name)
     seq = services.live(LOCAL_SESSION, pid, "pl").open_recommendation
-    draft = services.create(
-        LOCAL_SESSION, showcase.definition("pl").model_copy(update={"name": "Draft"}), "pl"
-    ).id
+    found = [p.id for p in services.projects(LOCAL_SESSION) if p.name == "Draft"]
+    draft = (
+        found[0]
+        if found
+        else services.create(
+            LOCAL_SESSION, showcase.definition("pl").model_copy(update={"name": "Draft"}), "pl"
+        ).id
+    )
+    return pid, seq, draft
+
+
+@pytest.mark.parametrize("language", ["pl", "en"])
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_the_main_screens_have_no_serious_accessibility_violations(
+    browser: Any, local: Server, scheme: str, language: str
+) -> None:
+    pid, seq, draft = _showcase(local)
     paths = [
         "/",
         "/new",
         f"/projects/{draft}/setup/team",
         f"/projects/{draft}/setup/tasks",
         f"/projects/{draft}/setup/tasks?tab=import",
+        f"/projects/{draft}/setup/tasks?tab=describe",
         f"/projects/{pid}",
         f"/projects/{pid}/checkin",
         f"/projects/{pid}/recommendations/{seq}",
@@ -273,15 +293,150 @@ def test_the_main_screens_have_no_serious_accessibility_violations(
         "/simulator",
         "/how-it-works",
         "/settings",
+        "/projects/none",
     ]
-    page = _page(browser, local, "pl", scheme)
     violations = {}
+    for width in (1280, 390):
+        page = _page(browser, local, language, scheme, width=width, height=844)
+        for path in paths:
+            page.goto(local.base + path)
+            page.wait_for_load_state("networkidle")
+            found = _axe(page)
+            if found:
+                violations[f"{width} {path}"] = found
+        page.context.close()
+    assert violations == {}
+
+
+@pytest.mark.parametrize("width", [320, 390, 768])
+def test_only_the_chart_scrolls_sideways_on_a_small_screen(
+    browser: Any, local: Server, width: int
+) -> None:
+    """docs/design/brief.md, section 7: no horizontal page scroll down to 320 px."""
+    pid, seq, draft = _showcase(local)
+    paths = [
+        "/",
+        "/new",
+        f"/projects/{draft}/setup/team",
+        f"/projects/{draft}/setup/tasks",
+        f"/projects/{pid}",
+        f"/projects/{pid}/checkin",
+        f"/projects/{pid}/recommendations/{seq}",
+        f"/projects/{pid}/history",
+        f"/projects/{pid}/settings",
+        "/simulator",
+        "/how-it-works",
+        "/settings",
+    ]
+    wide = {}
+    page = _page(browser, local, "pl", width=width, height=700)
     for path in paths:
         page.goto(local.base + path)
-        if path == f"/projects/{pid}":
-            expect(page.locator("#forecast .headline")).to_be_visible()
-        found = _axe(page)
-        if found:
-            violations[path] = found
-    assert violations == {}
+        page.wait_for_load_state("networkidle")
+        overflow = page.evaluate(
+            "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
+        )
+        if overflow > 0:
+            wide[path] = overflow
+    assert wide == {}
+    page.context.close()
+
+
+def test_the_drawer_traps_the_focus_and_closes_on_escape(browser: Any, local: Server) -> None:
+    page = _page(browser, local, "en", width=390, height=844)
+    page.goto(local.base + "/how-it-works")
+    expect(page.locator("#sidebar")).to_be_hidden()
+    page.get_by_role("button", name="Menu").click()
+    expect(page.locator("#sidebar")).to_be_visible()
+    inside = "() => document.getElementById('sidebar').contains(document.activeElement)"
+    for _ in range(14):
+        page.keyboard.press("Tab")
+        assert page.evaluate(inside)
+    page.keyboard.press("Escape")
+    expect(page.locator("#sidebar")).to_be_hidden()
+    assert page.evaluate("() => document.activeElement.hasAttribute('data-drawer-open')")
+    page.context.close()
+
+
+def test_a_toast_tells_the_result_and_can_be_closed(browser: Any, local: Server) -> None:
+    pid, _, _ = _showcase(local)
+    page = _page(browser, local, "en")
+    page.goto(f"{local.base}/projects/{pid}?flash=rejected")
+    toast = page.locator("#flash [data-toast]")
+    expect(toast).to_contain_text("Rejected")
+    expect(toast.get_by_role("link", name="See in the history")).to_be_visible()
+    assert page.locator("#flash").get_attribute("role") == "status"
+    page.get_by_role("button", name="Close").first.click()
+    expect(toast).to_have_count(0)
+    page.context.close()
+
+
+def test_the_check_in_counts_its_changes_and_its_button_says_so(
+    browser: Any, local: Server
+) -> None:
+    services = local.services
+    pid = services.create(LOCAL_SESSION, small(), "en").id
+    _wait_job(services, LOCAL_SESSION, services.plan(LOCAL_SESSION, pid, "en").id)
+    page = _page(browser, local)
+    page.goto(f"{local.base}/projects/{pid}/checkin")
+    save = page.locator("button.btn-primary")
+    expect(save).to_have_text("Save the check-in (no changes)")
+    expect(page.locator("[data-change-count]")).to_have_text("No changes")
+    page.locator("fieldset.task-row", has_text="Build API").get_by_label("In progress").check()
+    expect(save).to_have_text("Save the check-in")
+    expect(page.locator("[data-change-count]")).to_have_text("1 change")
+    page.get_by_role("button", name="Add an absence").click()
+    expect(page.locator("[data-change-count]")).to_have_text("2 changes")
+    expect(page.locator("#away-count")).to_have_text("(1)")
+    page.locator("#percent-T1-num").fill("40")
+    assert page.locator("#percent-T1").input_value() == "40"
+    page.get_by_role("button", name="Remove").first.click()
+    expect(page.locator("#away-count")).to_have_text("(0)")
+    page.context.close()
+
+
+def test_the_task_pickers_and_the_wizards_live_hints(browser: Any, local: Server) -> None:
+    services = local.services
+    pid = services.create(LOCAL_SESSION, small(), "en").id
+    page = _page(browser, local)
+    page.goto(f"{local.base}/projects/{pid}/setup/basics")
+    rule = page.locator("[data-deadline-rule]")
+    page.get_by_label("Deadline").fill("2026-12-14")
+    expect(rule).to_contain_text("6 weeks")
+    page.get_by_label("Deadline").fill("2026-10-01")
+    expect(rule).to_contain_text("cannot be before")
+    expect(page.locator("#deadline-echo")).to_contain_text("1\u00a0Oct 2026")
+    page.goto(f"{local.base}/projects/{pid}/setup/tasks")
+    after = page.locator('[data-after-picker][data-row="2"]')
+    after.locator("summary").click()
+    after.get_by_label("1. Build API").check()
+    expect(after.locator(".pop-value")).to_have_text("Build API")
+    assert after.locator("input[data-after-value]").input_value() == "1"
+    page.keyboard.press("Escape")
+    expect(after.locator("[data-after-body]")).to_be_hidden()
+    expect(page.locator("#save-status")).to_contain_text("Draft saved", timeout=10_000)
+    tasks = {t.key: t for t in services.state(LOCAL_SESSION, pid).project.definition.tasks}
+    assert tasks["T2"].predecessors == ("T1",)
+    page.context.close()
+
+
+def test_the_plan_can_be_read_as_a_table_and_settings_warn_of_unsaved_changes(
+    browser: Any, local: Server
+) -> None:
+    pid, _, _ = _showcase(local)
+    page = _page(browser, local, "en")
+    page.goto(f"{local.base}/projects/{pid}")
+    expect(page.locator(".gantt-plot")).to_be_visible()
+    expect(page.locator(".view-table table")).to_be_hidden()
+    page.get_by_label("Table").check()
+    expect(page.locator(".view-table table")).to_be_visible()
+    expect(page.locator(".gantt-plot")).to_be_hidden()
+    page.goto(f"{local.base}/projects/{pid}/settings")
+    bar = page.locator("[data-unsaved-bar]")
+    expect(bar).to_be_hidden()
+    page.get_by_label("Project name").fill("Renamed")
+    expect(bar).to_be_visible()
+    page.get_by_role("button", name="Undo the changes").click()
+    expect(bar).to_be_hidden()
+    expect(page.get_by_label("Project name")).not_to_have_value("Renamed")
     page.context.close()

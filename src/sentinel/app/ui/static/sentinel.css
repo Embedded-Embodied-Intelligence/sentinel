@@ -192,9 +192,9 @@ abbr[title] { text-decoration: none; }
   display: flex; flex-direction: column; gap: var(--space-5); overflow-y: auto;
   padding: var(--space-4) var(--space-3); background: var(--surface);
   border-right: 1px solid var(--border);
-  transform: translateX(-100%); visibility: hidden; transition: transform var(--t), visibility var(--t);
+  transform: translateX(-100%); visibility: hidden; transition: transform var(--t), visibility 0s linear 200ms;
 }
-.sidebar.open { transform: none; visibility: visible; box-shadow: var(--shadow-2); }
+.sidebar.open { transform: none; visibility: visible; box-shadow: var(--shadow-2); transition: transform var(--t); }
 .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(15, 18, 21, 0.5); }
 .scrim[hidden] { display: none; }
 .brand {

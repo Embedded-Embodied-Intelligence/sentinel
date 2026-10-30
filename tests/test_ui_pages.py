@@ -250,6 +250,106 @@ def test_one_comparison_and_costs_in_cost_units(site: Site, language: str) -> No
     assert ("rzadziej" if language == "pl" else "rougher") not in page  # the v2.0.1 note
 
 
+def _primary_buttons(page: str) -> int:
+    return len(re.findall(r'class="btn btn-primary', page))
+
+
+def test_every_view_has_at_most_one_primary_button_and_it_follows_the_decision(site: Site) -> None:
+    """docs/design/brief.md, sections 3.6 and 7: with a decision waiting its card holds the only
+    primary button; otherwise the check-in does."""
+    ids = site.ids
+    assert _primary_buttons(_get(site, "/", "en")) <= 1
+    for url in (
+        "/new",
+        "/simulator",
+        "/settings",
+        "/how-it-works",
+        f"/projects/{ids['draft']}/setup/basics",
+        f"/projects/{ids['draft']}/setup/team",
+        f"/projects/{ids['draft']}/setup/tasks",
+        f"/projects/{ids['draft']}/setup/tasks?tab=import",
+    ):
+        assert _primary_buttons(_get(site, url, "en")) <= 1, url
+    waiting = _get(site, f"/projects/{ids['open']}", "en")
+    assert _primary_buttons(waiting) == 1
+    assert re.search(r'class="btn btn-primary" href="[^"]*/recommendations/\d+"', waiting)
+    quiet = _get(site, f"/projects/{ids['planned']}", "en")
+    assert _primary_buttons(quiet) == 1
+    assert re.search(r'class="btn btn-primary" href="[^"]*/checkin"', quiet)
+    for name in ("open", "approved", "auto"):
+        pid = ids[name]
+        assert _primary_buttons(_get(site, f"/projects/{pid}/checkin", "en")) == 1
+        page = _get(site, f"/projects/{pid}/recommendations/{_last(site, name, 'en')}", "en")
+        assert _primary_buttons(page) == 1
+
+
+def test_a_recommendation_is_a_review_in_focus_mode(site: Site) -> None:
+    pid = site.ids["open"]
+    page = _get(site, f"/projects/{pid}/recommendations/{_last(site, 'open', 'pl')}", "pl")
+    assert "Zatwierdź zastępstwo" in page and "Zdecyduj później" in page
+    assert 'class="sidebar"' not in page and "is-focus" in page
+    assert "Wymaga Twojej zgody: dotyczy ludzi." in page
+    assert page.index("is-chosen") < page.index("is-base")  # the choice first, no change last
+    assert "btn-danger" not in page  # rejecting is not destructive
+    done = _get(
+        site,
+        f"/projects/{site.ids['approved']}/recommendations/{_last(site, 'approved', 'pl')}",
+        "pl",
+    )
+    assert 'name="verdict"' not in done and "callout-good" in done
+
+
+def test_the_wizard_saves_and_exits_and_adds_people_by_role(site: Site) -> None:
+    client, headers = site.client, site.headers
+    pid = _create(
+        client,
+        headers,
+        ProjectDefinition(name="Roles", start=date(2026, 11, 2)),
+    )
+    url = f"/projects/{pid}/setup/team"
+    added = client.post(
+        url,
+        data={"action": "add_role", "new_role": "Tester", "new_role_count": "2"},
+        headers=headers,
+    )
+    assert added.status_code == 200 and "Tester 2" in added.text
+    team = client.get(f"/api/projects/{pid}").json()["definition"]["team"]
+    keys = [p["key"] for p in team]
+    form = {
+        "person_key": keys,
+        "person_name": [p["name"] for p in team],
+        "person_role": [p["role"] for p in team],
+    }
+    more = client.post(url, data={**form, "action": "more:0"}, headers=headers)
+    assert "Tester 3" in more.text
+    team = client.get(f"/api/projects/{pid}").json()["definition"]["team"]
+    form = {
+        "person_key": [p["key"] for p in team],
+        "person_name": [p["name"] for p in team],
+        "person_role": [p["role"] for p in team],
+    }
+    client.post(url, data={**form, "action": "less:0"}, headers=headers)
+    assert len(client.get(f"/api/projects/{pid}").json()["definition"]["team"]) == 2
+    stay = client.post(url, data={**form, "action": "stay"}, headers=headers)
+    assert stay.status_code == 200 and 'id="team-form"' in stay.text  # Enter in a field
+    left = client.post(url, data={**form, "action": "exit"}, headers=headers)
+    assert left.headers["HX-Redirect"] == "/"
+    created = client.post(
+        "/new", data={"name": "X", "start": "2026-11-02", "action": "exit"}, headers=headers
+    )
+    assert created.headers["HX-Redirect"] == "/"
+
+
+def test_the_history_shows_the_chance_over_time(site: Site) -> None:
+    pid = site.ids["open"]
+    page = _get(site, f"/projects/{pid}/history", "pl")
+    assert f"/projects/{pid}/history/chance" in page and "tl-chip-" in page
+    chart = _get(site, f"/projects/{pid}/history/chance", "en", htmx=True)
+    assert "<svg" in chart and "→" in chart and 'hx-swap-oob="true"' in chart
+    empty = _get(site, f"/projects/{site.ids['planned']}/history?show=checkins", "en")
+    assert "chance-history" not in empty or "tl-chip" in empty
+
+
 def _last(site: Site, name: str, language: str) -> int:
     pid = site.ids[name]
     history = _get(site, f"/projects/{pid}/history", language)

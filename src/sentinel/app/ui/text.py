@@ -558,8 +558,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "setup.team.name_of": ("Name of person {n}", "Imię i nazwisko osoby {n}"),
     "setup.team.role_of": ("Role of person {n}", "Rola osoby {n}"),
     "setup.team.empty": (
-        "No one yet. Add a role below or paste a list of people.",
-        "Nikogo jeszcze nie ma. Dodaj rolę poniżej albo wklej listę osób.",
+        "No one yet. Add a role below or paste a list.",
+        "Nikogo jeszcze nie ma. Dodaj rolę poniżej albo wklej listę.",
     ),
     "setup.team.add": ("Add a person", "Dodaj osobę"),
     "setup.team.paste": ("Paste a list of people", "Wklej listę osób"),

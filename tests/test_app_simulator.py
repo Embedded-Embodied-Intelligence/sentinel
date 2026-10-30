@@ -67,6 +67,13 @@ def test_advancing_in_steps_gives_the_run_of_simulate(tiny: ProjectInstance, pol
     assert run.result().model_dump() == reference(world, policy).model_dump()
 
 
+def test_a_run_stops_between_two_days_when_asked_to(tiny: ProjectInstance) -> None:
+    simulation = Simulation(tiny_world(tiny, "no_reaction"))
+    calls = iter([False, False, True])
+    assert simulation.advance(100, stop=lambda: next(calls)) == 2
+    assert simulation.days == 2 and simulation.main.day == 2 and not simulation.finished
+
+
 def test_the_comparison_runs_noreaction_on_the_same_world(tiny: ProjectInstance) -> None:
     simulation = Simulation(tiny_world(tiny, "sentinel", autonomy=3))
     moved = simulation.advance(2)
