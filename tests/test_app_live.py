@@ -270,7 +270,7 @@ def test_crews_follow_the_dispatch_rule_unless_named() -> None:
             )
         )
     message = render(busy.value.issues[0].code, "en", busy.value.issues[0].values)
-    assert message == "Ada is in the crew of “Build API” on 2026-11-02."
+    assert message == "Ada is in the crew of “Build API” on Mon 2\u00a0Nov."
 
 
 def test_checkin_problems_are_reported_in_plain_language() -> None:

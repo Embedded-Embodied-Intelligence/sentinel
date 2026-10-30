@@ -4,11 +4,32 @@ Every issue and error has a code; `render` formats its message in a language wit
 parameters. Messages speak to a project manager: task and person names, dates, no model jargon.
 """
 
+import re
 from collections.abc import Mapping
+from datetime import date
 
 from sentinel.app.models import Language
 
 LANGUAGES: tuple[Language, ...] = ("en", "pl")
+NBSP = "\u00a0"
+WEEKDAYS: Mapping[str, tuple[str, ...]] = {
+    "en": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+    "pl": ("pon.", "wt.", "śr.", "czw.", "pt.", "sob.", "niedz."),
+}
+MONTHS: Mapping[str, tuple[str, ...]] = {
+    "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
+    "pl": ("sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"),
+}
+ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def date_text(value: date, language: Language) -> str:
+    """A date as people read it: "Mon 14 Mar" ("pon. 14 mar"), with the year if not this year's."""
+    weekday = WEEKDAYS[language][value.weekday()]
+    month = MONTHS[language][value.month - 1]
+    text = f"{weekday} {value.day}{NBSP}{month}"
+    return f"{text} {value.year}" if value.year != date.today().year else text
+
 
 MESSAGES: Mapping[Language, Mapping[str, str]] = {
     "en": {
@@ -471,13 +492,24 @@ def render(code: str, language: Language = "en", params: Mapping[str, object] | 
     template = MESSAGES.get(language, MESSAGES["en"]).get(code)
     if template is None:
         return code
-    values = dict(params or {})
+    values = {key: _shown(value, language) for key, value in (params or {}).items()}
     if "state" in values and isinstance(values["state"], str):
         values["state"] = MESSAGES[language].get(f"state_{values['state']}", values["state"])
     try:
         return template.format(**values)
     except (KeyError, IndexError, ValueError):
         return template
+
+
+def _shown(value: object, language: Language) -> object:
+    """A message's parameter as shown: an ISO date in words (spec section 11; issues store dates
+    in ISO form), anything else as it is."""
+    if isinstance(value, str) and ISO_DATE.fullmatch(value):
+        try:
+            return date_text(date.fromisoformat(value), language)
+        except ValueError:
+            return value
+    return value
 
 
 def language_of(value: str | None) -> Language:

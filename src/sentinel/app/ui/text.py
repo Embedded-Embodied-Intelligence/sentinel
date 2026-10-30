@@ -12,22 +12,13 @@ from collections.abc import Mapping, Sequence
 from datetime import date, datetime, timedelta
 
 from sentinel.app.errors import AppError
-from sentinel.app.messages import render
+from sentinel.app.messages import MONTHS, NBSP, WEEKDAYS, date_text, render
 from sentinel.app.models import Language
 from sentinel.app.planning import half_up
 from sentinel.app.views import issue_views
 
 Day = date  # the type, for the methods of `Texts` (one of them is called `date`)
-NBSP = "\u00a0"
 MINUS = "\u2212"
-WEEKDAYS = {
-    "en": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
-    "pl": ("pon.", "wt.", "śr.", "czw.", "pt.", "sob.", "niedz."),
-}
-MONTHS = {
-    "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
-    "pl": ("sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"),
-}
 
 # key -> (English, Polish); plural keys end in .one, .few and .many (English uses "many" for
 # every number but 1).
@@ -1573,12 +1564,7 @@ class Texts:
 
     def date(self, value: Day | None) -> str:
         """A date as "Mon 14 Mar" ("pon. 14 mar"), with the year if it is not this year's."""
-        if value is None:
-            return "—"
-        weekday = WEEKDAYS[self.lang][value.weekday()]
-        month = MONTHS[self.lang][value.month - 1]
-        text = f"{weekday} {value.day}{NBSP}{month}"
-        return f"{text} {value.year}" if value.year != Day.today().year else text
+        return "—" if value is None else date_text(value, self.lang)
 
     def date_long(self, value: Day) -> str:
         """A date with its year: "Fri 13 Nov 2026" ("pt. 13 lis 2026")."""

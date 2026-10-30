@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from ui_check import problems
 
-from sentinel.app.messages import MESSAGES
+from sentinel.app.messages import MESSAGES, render
 from sentinel.app.ui.text import CATALOGUE, Texts, plural_form
 
 UI = Path(__file__).parents[1] / "src/sentinel/app/ui"
@@ -83,6 +83,16 @@ def test_internal_terms_are_not_in_the_catalogue() -> None:
         for code, text in MESSAGES[language].items():
             if code.startswith(shown):
                 assert problems(f"<p>{text}</p>") == [], code
+
+
+def test_messages_show_dates_in_words() -> None:
+    """QA-02: the issues store ISO dates; no page may show one (spec section 11, ui_check)."""
+    for language, word in (("pl", "wt. 10\u00a0lis"), ("en", "Tue 10\u00a0Nov")):
+        said = render("checkin_out_of_order", language, {"date": "2026-11-10"})  # type: ignore[arg-type]
+        assert word in said.replace(" 2026", "") and problems(f"<p>{said}</p>") == []
+    assert render("no_tasks", "en", {"date": "not-a-date"}) == render("no_tasks", "en")
+    assert "2030" in render("checkin_out_of_order", "en", {"date": "2030-01-07"})
+    assert problems(f"<p>{render('checkin_out_of_order', 'en', {'date': '2026-13-45'})}</p>")
 
 
 @pytest.mark.parametrize(
