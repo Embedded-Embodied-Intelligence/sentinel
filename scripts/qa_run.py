@@ -76,6 +76,12 @@ def workdays(first: date, last: date) -> int:
     return count
 
 
+def write_log(path: Path, log: list[dict[str, Any]]) -> None:
+    """Write a run's log; a project's id is random and says nothing, so it stays out."""
+    text = json.dumps(log, ensure_ascii=False, indent=1, default=str)
+    path.write_text(re.sub(r"/projects/[\w-]{16}(?![\w-])", "/projects/<id>", text) + "\n", "utf-8")
+
+
 @contextmanager
 def server(data: Path, log: Path) -> Iterator[str]:
     """`sentinel ui` on a free port with a fresh data directory, as a user starts it."""
@@ -660,9 +666,7 @@ def run1(args: argparse.Namespace, browser: Any) -> None:
         d.shot("overview_final", full=True)
         d.phone("overview_final", f"/projects/{project}")
         d.phone("gantt", f"/projects/{project}", scroll="#plan-title")
-        (out / "run1-log.json").write_text(
-            json.dumps(d.log, ensure_ascii=False, indent=1, default=str) + "\n", "utf-8"
-        )
+        write_log(out / "run1-log.json", d.log)
         context.close()
 
 
@@ -772,9 +776,7 @@ def run2(args: argparse.Namespace, browser: Any) -> None:
             d.phone(f"{name}_report", popup.value.url.replace(base, ""))
             d.note(kind="report", example=name, title=popup.value.title())
             popup.value.close()
-        (out / "run2-log.json").write_text(
-            json.dumps(d.log, ensure_ascii=False, indent=1, default=str) + "\n", "utf-8"
-        )
+        write_log(out / "run2-log.json", d.log)
         context.close()
 
 
@@ -812,9 +814,9 @@ GOOD_CSV = (
 )
 
 
-def planned_project(page: Any, base: str, name: str) -> str:
+def planned_project(page: Any, base: str, name: str, deadline: str = "2026-12-18") -> str:
     """A small planned project created through the pages; its id."""
-    project = new_project(page, base, name, TEAM)
+    project = new_project(page, base, name, TEAM, deadline)
     page.get_by_role("link", name="Zaimportuj arkusz").click()
     page.wait_for_url("**tab=import")
     page.get_by_label("Plik arkusza (CSV)").set_input_files(csv_bytes(*GOOD_CSV))
@@ -1033,6 +1035,12 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
             tab.locator("button.btn-primary").click()
             tab.wait_for_load_state("networkidle")
             tab.wait_for_timeout(800)
+            confirm = tab.get_by_label("Tak, ta data jest prawidłowa")
+            if confirm.count():  # the dates lie more than a week ahead of today
+                confirm.check()
+                tab.locator("button.btn-primary").click()
+                tab.wait_for_load_state("networkidle")
+                tab.wait_for_timeout(1500)
         answer("two tabs: an older check-in after a newer one", "two_tabs_checkin")
         second.close()
         project3 = planned_project(page, base, "Dwie karty")
@@ -1195,7 +1203,7 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         mobile.shot("drawer")
         tab.keyboard.press("Escape")
         visit("/new", "wizard1")
-        project8 = planned_project(tab, base, "Telefon")
+        project8 = planned_project(tab, base, "Telefon", "2026-11-20")
         widths["after_wizard"] = tab.evaluate(
             "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
         )
@@ -1208,7 +1216,8 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         row.get_by_label("Zakończone dnia").fill("2026-11-04")
         tab.get_by_role("button", name="Dodaj nieobecność").click()
         away_row = tab.locator("#away-list [data-row]").last
-        away_row.get_by_label("Osoba").select_option(index=1)
+        away_row.get_by_label("Osoba").select_option(index=2)
+        away_row.get_by_label("Nieobecność od").fill("2026-11-06")
         away_row.get_by_label("Powrót").fill("2026-11-20")
         mobile.shot("checkin_filled", full=True)
         tab.locator("button.btn-primary").click()
@@ -1234,9 +1243,7 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         d.note(kind="case", case="phone: sideways scroll in px", shown=widths)
         phone.close()
 
-        (out / "wrong-log.json").write_text(
-            json.dumps(d.log, ensure_ascii=False, indent=1, default=str) + "\n", "utf-8"
-        )
+        write_log(out / "wrong-log.json", d.log)
         context.close()
 
 

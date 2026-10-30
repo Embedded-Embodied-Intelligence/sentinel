@@ -323,6 +323,13 @@ def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Thr
     return found
 
 
+def over_budget(forecast: ForecastView) -> bool:
+    """Whether the expected total cost is above the budget (QA-10: approvals add up, and the
+    status badge speaks of the deadline only)."""
+    expected, budget = forecast.expected_cost, forecast.budget
+    return expected is not None and budget is not None and expected > budget
+
+
 def level_of(summary: ForecastSummary | None) -> str:
     """The status word of a forecast."""
     return chance_level(None if summary is None else summary.forecast.p_on_time)
@@ -671,6 +678,7 @@ def router(ui: Ui) -> APIRouter:
                 "likely_gap": finish_gap(f.p50, f.deadline, calendar, texts),
                 "bad_gap": finish_gap(f.p90, f.deadline, calendar, texts, worst=True),
                 "threats": threats_of(f, texts) if f.late else [],
+                "over_budget": over_budget(f),
                 "chart": chart_html(request, project, f),
             }
         checkins = view.checkins

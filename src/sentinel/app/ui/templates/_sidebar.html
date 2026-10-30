@@ -1,5 +1,5 @@
 {% set projects = nav_projects() %}
-<div class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" aria-label="{{ t('nav.label') }}">
   <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>Sentinel</a>
   <nav aria-label="{{ t('nav.label') }}">
     <ul class="nav-list">
@@ -23,4 +23,4 @@
     {% include "_lang.html" %}
     <span class="version">{{ t("footer.version", version=version) }}</span>
   </div>
-</div>
+</aside>

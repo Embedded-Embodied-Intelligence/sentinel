@@ -1,0 +1,32 @@
+id,name,status,planned_start,planned_finish,start,finish,work_done_days,crew
+T1,Warsztaty z interesariuszami,done,,,2026-09-07,2026-09-10,3,Alicja Nowak Grażyna Dąbrowska
+T2,Specyfikacja wymagań,done,,,2026-09-11,2026-09-16,4,Alicja Nowak Karolina Wrona
+T3,Mapa procesów klienta,done,,,2026-09-17,2026-09-18,3,Alicja Nowak
+T4,Makiety ekranów,done,,,2026-09-17,2026-09-24,5,Grażyna Dąbrowska
+T5,System wizualny,done,,,2026-09-25,2026-09-29,3,Grażyna Dąbrowska
+T6,Architektura systemu,done,,,2026-09-17,2026-09-23,4,Bartosz Zieliński Cezary Wójcik
+T7,Środowiska i repozytorium,done,,,2026-09-24,2026-09-28,3,Jan Kaczmarek
+T8,Potok CI/CD,done,,,2026-09-29,2026-10-02,4,Jan Kaczmarek
+T9,Model danych,done,,,2026-09-24,2026-09-30,4,Bartosz Zieliński
+T10,Logowanie i konta,done,,,2026-10-02,2026-10-16,18.5,Cezary Wójcik Temporary Programista backend 1
+T11,API profilu klienta,done,,,2026-10-01,2026-10-06,5,Bartosz Zieliński
+T12,API umów,done,,,2026-10-01,2026-10-08,6,Dorota Mazur
+T13,API faktur,done,,,2026-10-09,2026-10-14,5,Bartosz Zieliński
+T14,Integracja z systemem CRM,started,,,2026-10-15,,1.5,Bartosz Zieliński Dorota Mazur
+T15,Integracja płatności,unstarted,2026-10-19,2026-10-23,,,0,
+T16,Szkielet aplikacji,done,,,2026-09-30,2026-10-05,3,Emil Krawczyk Filip Lis
+T17,Ekran logowania,unstarted,2026-10-21,2026-10-23,,,0,
+T18,Ekran profilu,done,,,2026-10-08,2026-10-13,4,Emil Krawczyk
+T19,Ekran umów,started,,,2026-10-14,,3,Emil Krawczyk
+T20,Ekran faktur,started,,,2026-10-16,,1,Filip Lis
+T21,Płatności w portalu,unstarted,2026-10-26,2026-10-29,,,0,
+T22,Powiadomienia e-mail,unstarted,2026-10-23,2026-10-27,,,0,
+T23,Panel analityczny,unstarted,2026-10-22,2026-10-27,,,0,
+T24,Plan testów,done,,,2026-09-17,2026-09-18,3,Hanna Pawlak
+T25,Testy API,unstarted,2026-10-27,2026-11-02,,,0,
+T26,Testy interfejsu,unstarted,2026-10-30,2026-11-05,,,0,
+T27,Testy wydajności,unstarted,2026-11-03,2026-11-05,,,0,
+T28,Testy akceptacyjne,unstarted,2026-11-06,2026-11-11,,,0,
+T29,Szkolenie użytkowników,unstarted,2026-11-12,2026-11-13,,,0,
+T30,Uruchomienie produkcyjne,unstarted,2026-11-16,2026-11-17,,,0,
+N1,Audyt bezpieczeństwa,unstarted,2026-10-19,2026-10-22,,,0,

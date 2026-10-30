@@ -4,7 +4,7 @@
     <p>{{ t("setup.describe.check") }}</p>
     {% if issues %}<p>{{ t("setup.describe.issues", count=issues) }}</p>{% endif %}
   {% endcall %}
-  <div class="table-wrap">
+  <div class="table-wrap" tabindex="0" role="region" aria-label="{{ t('setup.describe.caption') }}">
   <table class="table">
     <caption class="vh">{{ t("setup.describe.caption") }}</caption>
     <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t("setup.tasks.name") }}</th><th scope="col" class="num">{{ t("setup.tasks.days") }}</th><th scope="col">{{ t("setup.describe.people") }}</th><th scope="col">{{ t("setup.tasks.after") }}</th></tr></thead>

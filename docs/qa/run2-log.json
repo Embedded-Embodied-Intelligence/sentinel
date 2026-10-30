@@ -1,0 +1,197 @@
+[
+ {
+  "kind": "timing",
+  "step": "small start",
+  "seconds": 1.8
+ },
+ {
+  "kind": "simulator",
+  "step": "small_day0",
+  "day": "Dzień 0 z ok. 56",
+  "chance": "Szansa na dotrzymanie terminu – Sentinel jeszcze nie analizował tego projektu.",
+  "events": 0,
+  "latest": []
+ },
+ {
+  "kind": "timing",
+  "step": "small 1",
+  "seconds": 1.7
+ },
+ {
+  "kind": "simulator",
+  "step": "small_after_1",
+  "day": "Dzień 1 z ok. 56",
+  "chance": "Szansa na dotrzymanie terminu 16 % Termin zagrożony z analizy Sentinela z pt. 30 paź, gdyby plan się już nie zmieniał",
+  "events": 2,
+  "latest": [
+   "pt. 30 paź · Nieobecność Szymon X.: nieobecność, zapowiedziany powrót za 1 dzień roboczy",
+   "pt. 30 paź · Nieobecność Filip Y.: nieobecność, zapowiedziany powrót za 1 dzień roboczy"
+  ]
+ },
+ {
+  "kind": "timing",
+  "step": "small 5",
+  "seconds": 6.0
+ },
+ {
+  "kind": "simulator",
+  "step": "small_after_5",
+  "day": "Dzień 6 z ok. 56",
+  "chance": "Szansa na dotrzymanie terminu 20 % Termin zagrożony z analizy Sentinela z pt. 6 lis, gdyby plan się już nie zmieniał",
+  "events": 4,
+  "latest": [
+   "wt. 3 lis · Nieobecność Weronika J.: nieobecność, zapowiedziany powrót za 1 dzień roboczy",
+   "pon. 2 lis · Nieobecność Jan O.: nieobecność, zapowiedziany powrót za 3 dni robocze",
+   "pt. 30 paź · Nieobecność Szymon X.: nieobecność, zapowiedziany powrót za 1 dzień roboczy"
+  ]
+ },
+ {
+  "kind": "timing",
+  "step": "small 10",
+  "seconds": 10.4
+ },
+ {
+  "kind": "simulator",
+  "step": "small_after_10",
+  "day": "Dzień 16 z ok. 56",
+  "chance": "Szansa na dotrzymanie terminu 32 % Termin zagrożony z analizy Sentinela z pt. 20 lis, gdyby plan się już nie zmieniał",
+  "events": 12,
+  "latest": [
+   "czw. 19 lis · Nieobecność Joanna F.: nieobecność, zapowiedziany powrót za 1 dzień roboczy",
+   "czw. 19 lis · Nieobecność Wojciech M.: nieobecność, zapowiedziany powrót za 2 dni robocze",
+   "czw. 19 lis · Nieobecność Bogdan G.: nieobecność, zapowiedziany powrót za 1 dzień roboczy"
+  ]
+ },
+ {
+  "kind": "timing",
+  "step": "small end",
+  "seconds": 40.5
+ },
+ {
+  "kind": "simulator",
+  "step": "small_after_end",
+  "day": "",
+  "chance": "",
+  "events": 74,
+  "latest": [
+   "pt. 12 lut 2027 · Koniec Zakończono pt. 12 lut 2027: 8 dni roboczych po terminie",
+   "pt. 12 lut 2027 · Nieobecność Beata P.: nieobecność, zapowiedziany powrót za 3 dni robocze",
+   "pt. 12 lut 2027 · Nieobecność Stanisław E.: nieobecność, zapowiedziany powrót za 2 dni robocze"
+  ]
+ },
+ {
+  "kind": "result",
+  "example": "small",
+  "verdict": "Z Sentinelem projekt skończył się 10 dni roboczych wcześniej niż bez reakcji, ale wciąż 8 dni roboczych po terminie.",
+  "table": [
+   "Miara | Sentinel | Nikt nie reaguje | Różnica",
+   "Zakończenie | pt. 12 lut 2027 | pt. 26 lut 2027 | \nlepiej:\n10 dni roboczych wcześniej",
+   "Po terminie | 8 dni roboczych | 18 dni roboczych | \nlepiej:\n10 dni roboczych wcześniej",
+   "Koszt | 3 590 jedn. (103 %) | 3 580 jedn. (102 %) | \ngorzej:\n+10 jedn.",
+   "Zmiany planu | 3 | 0 | –",
+   "Osoby tymczasowe | 0 | 0 | –",
+   "Zastępstwa | 0 | 0 | –"
+  ]
+ },
+ {
+  "kind": "report",
+  "example": "small",
+  "title": "Raport projektu: Przykładowy projekt (mały)"
+ },
+ {
+  "kind": "timing",
+  "step": "medium start",
+  "seconds": 1.8
+ },
+ {
+  "kind": "simulator",
+  "step": "medium_day0",
+  "day": "Dzień 0 z ok. 69",
+  "chance": "Szansa na dotrzymanie terminu – Sentinel jeszcze nie analizował tego projektu.",
+  "events": 0,
+  "latest": []
+ },
+ {
+  "kind": "timing",
+  "step": "medium 1",
+  "seconds": 1.7
+ },
+ {
+  "kind": "simulator",
+  "step": "medium_after_1",
+  "day": "Dzień 1 z ok. 69",
+  "chance": "Szansa na dotrzymanie terminu 1 % Termin zagrożony z analizy Sentinela z pt. 30 paź, gdyby plan się już nie zmieniał",
+  "events": 0,
+  "latest": []
+ },
+ {
+  "kind": "timing",
+  "step": "medium 5",
+  "seconds": 20.3
+ },
+ {
+  "kind": "simulator",
+  "step": "medium_after_5",
+  "day": "Dzień 6 z ok. 69",
+  "chance": "Szansa na dotrzymanie terminu 0 % Termin zagrożony z analizy Sentinela z pt. 6 lis, gdyby plan się już nie zmieniał",
+  "events": 4,
+  "latest": [
+   "pt. 6 lis · Nieobecność Olga V.: nieobecność, zapowiedziany powrót za 3 dni robocze",
+   "czw. 5 lis · Nieobecność Ewa N.: nieobecność, zapowiedziany powrót za 1 dzień roboczy",
+   "śr. 4 lis · Nieobecność Łukasz V.: nieobecność, zapowiedziany powrót za 3 dni robocze"
+  ]
+ },
+ {
+  "kind": "timing",
+  "step": "medium 10",
+  "seconds": 29.7
+ },
+ {
+  "kind": "simulator",
+  "step": "medium_after_10",
+  "day": "Dzień 16 z ok. 69",
+  "chance": "Szansa na dotrzymanie terminu 0 % Termin zagrożony z analizy Sentinela z pt. 20 lis, gdyby plan się już nie zmieniał",
+  "events": 21,
+  "latest": [
+   "pt. 20 lis · Nieobecność Paweł H.: nieobecność, zapowiedziany powrót za 1 dzień roboczy",
+   "pt. 20 lis · Nieobecność Agata A.: nieobecność, zapowiedziany powrót za 5 dni roboczych",
+   "czw. 19 lis · Nieobecność Krzysztof V.: nieobecność, zapowiedziany powrót za 1 dzień roboczy"
+  ]
+ },
+ {
+  "kind": "timing",
+  "step": "medium end",
+  "seconds": 132.5
+ },
+ {
+  "kind": "simulator",
+  "step": "medium_after_end",
+  "day": "",
+  "chance": "",
+  "events": 118,
+  "latest": [
+   "pt. 19 lut 2027 · Koniec Zakończono pt. 19 lut 2027: w terminie",
+   "pon. 22 lut 2027 · Nieobecność Lena O.: nieobecność, zapowiedziany powrót za 1 dzień roboczy",
+   "pon. 22 lut 2027 · Nieobecność Agata A.: nieobecność, zapowiedziany powrót za 1 dzień roboczy"
+  ]
+ },
+ {
+  "kind": "result",
+  "example": "medium",
+  "verdict": "Sentinel dotrzymał terminu; bez reakcji te same zdarzenia opóźniły projekt o 4 dni robocze.",
+  "table": [
+   "Miara | Sentinel | Nikt nie reaguje | Różnica",
+   "Zakończenie | pt. 19 lut 2027 | pon. 1 mar 2027 | \nlepiej:\n6 dni roboczych wcześniej",
+   "Po terminie | w terminie | 4 dni robocze | \nlepiej:\n4 dni robocze wcześniej",
+   "Koszt | 7 008 jedn. (98 %) | 7 054 jedn. (98 %) | \nlepiej:\n−46 jedn.",
+   "Zmiany planu | 6 | 0 | –",
+   "Osoby tymczasowe | 0 | 0 | –",
+   "Zastępstwa | 0 | 0 | –"
+  ]
+ },
+ {
+  "kind": "report",
+  "example": "medium",
+  "title": "Raport projektu: Przykładowy projekt (średni)"
+ }
+]

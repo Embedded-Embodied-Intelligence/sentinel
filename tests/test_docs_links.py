@@ -1,5 +1,5 @@
 """The guides of WP9c point to files and sections that exist: the user guides (Polish and
-English, with their screenshots), the deployment guide and the usability protocol."""
+English, with their screenshots), the deployment guide, the usability protocol and the QA report."""
 
 import re
 from pathlib import Path
@@ -13,8 +13,10 @@ GUIDES = (
     "docs/deploy.md",
     "docs/usability/protocol-pl.md",
     "docs/usability/results-template.md",
+    "docs/qa/raport-qa-pl.md",
 )
 LINK = re.compile(r"(!?)\[[^\]]*\]\(([^)\s]+)\)")
+IMAGE = re.compile(r'<img src="([^"]+)"')
 
 
 def _headings(path: Path) -> set[str]:
@@ -43,6 +45,17 @@ def test_links_and_images_exist(guide: str) -> None:
         if missing or unknown or (image and linked.suffix != ".png"):
             broken.append(target)
     assert broken == []
+
+
+def test_the_qa_report_is_readable_on_a_phone() -> None:
+    """The owner reads it on a phone (WP10): at most 15 screenshots, all of phone width, no table
+    wider than a phone, and every screenshot there."""
+    path = ROOT / "docs/qa/raport-qa-pl.md"
+    text = path.read_text(encoding="utf-8")
+    images = IMAGE.findall(text)
+    assert 0 < len(images) <= 15
+    assert all((path.parent / image).is_file() for image in images)
+    assert not any(line.startswith("|") for line in text.splitlines())
 
 
 def test_each_user_guide_shows_its_own_language() -> None:

@@ -1,0 +1,788 @@
+[
+ {
+  "kind": "moment",
+  "step": "plan",
+  "chance": "70 %",
+  "badge": "Wymaga uwagi",
+  "delta": "",
+  "deadline": "pt. 27 lis",
+  "likely": "wt. 24 lis 3 dni robocze przed terminem",
+  "bad": "wt. 8 gru 7 dni roboczych po terminie",
+  "budget": "0 z 180 jednostek kosztu (osobodni) Wydano 0 % Oczekiwany koszt: 97 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 2.2
+ },
+ {
+  "kind": "moment",
+  "step": "c1 2026-09-10",
+  "chance": "68 %",
+  "badge": "Wymaga uwagi",
+  "delta": "spadek o 2 punkty procentowe od planu początkowego o 2 pkt proc. od planu początkowego",
+  "deadline": "pt. 27 lis",
+  "likely": "wt. 24 lis 3 dni robocze przed terminem",
+  "bad": "pon. 7 gru 6 dni roboczych po terminie",
+  "budget": "6 z 180 jednostek kosztu (osobodni) Wydano 3 % Oczekiwany koszt: 96 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 3.2
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-09-10",
+  "reported": [
+   "Warsztaty z interesariuszami: gotowe 2026-09-10"
+  ],
+  "events": [],
+  "button": "Zapisz raport",
+  "count": "1 zmiana",
+  "toast": "Raport zapisany. Szansa: 70 % → 68 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-09-10",
+  "crews": {}
+ },
+ {
+  "kind": "moment",
+  "step": "c1 przed cofnięciem",
+  "chance": "68 %",
+  "badge": "Wymaga uwagi",
+  "delta": "spadek o 2 punkty procentowe od planu początkowego o 2 pkt proc. od planu początkowego",
+  "deadline": "pt. 27 lis",
+  "likely": "wt. 24 lis 3 dni robocze przed terminem",
+  "bad": "pon. 7 gru 6 dni roboczych po terminie",
+  "budget": "6 z 180 jednostek kosztu (osobodni) Wydano 3 % Oczekiwany koszt: 96 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "moment",
+  "step": "c1 po cofnięciu",
+  "chance": "68 %",
+  "badge": "Wymaga uwagi",
+  "delta": "spadek o 2 punkty procentowe od planu początkowego o 2 pkt proc. od planu początkowego",
+  "deadline": "pt. 27 lis",
+  "likely": "wt. 24 lis 3 dni robocze przed terminem",
+  "bad": "pon. 7 gru 6 dni roboczych po terminie",
+  "budget": "6 z 180 jednostek kosztu (osobodni) Wydano 3 % Oczekiwany koszt: 96 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "settings",
+  "autonomy": "Tylko doradzaj",
+  "toast": "Ustawienia zapisane."
+ },
+ {
+  "kind": "moment",
+  "step": "c2 2026-09-15",
+  "chance": "73 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 5 punktów procentowych od raportu z czw. 10 wrz o 5 pkt proc. od raportu z czw. 10 wrz",
+  "deadline": "pt. 27 lis",
+  "likely": "wt. 24 lis 3 dni robocze przed terminem",
+  "bad": "pt. 4 gru 5 dni roboczych po terminie",
+  "budget": "12 z 180 jednostek kosztu (osobodni) Wydano 7 % Oczekiwany koszt: 96 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 3.3
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-09-15",
+  "reported": [
+   "Specyfikacja wymagań: 75 %"
+  ],
+  "events": [],
+  "button": "Zapisz raport",
+  "count": "1 zmiana",
+  "toast": "Raport zapisany. Szansa: 68 % → 73 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-09-15",
+  "crews": {
+   "Specyfikacja wymagań": [
+    "Alicja Nowak",
+    "Karolina Wrona"
+   ]
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "c3 2026-09-21",
+  "chance": "66 %",
+  "badge": "Wymaga uwagi",
+  "delta": "spadek o 7 punktów procentowych od raportu z wt. 15 wrz o 7 pkt proc. od raportu z wt. 15 wrz",
+  "deadline": "pt. 27 lis",
+  "likely": "śr. 25 lis 2 dni robocze przed terminem",
+  "bad": "wt. 8 gru 7 dni roboczych po terminie",
+  "budget": "29 z 180 jednostek kosztu (osobodni) Wydano 16 % Oczekiwany koszt: 95 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 4.2
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-09-21",
+  "reported": [
+   "Specyfikacja wymagań: gotowe 2026-09-16",
+   "Mapa procesów klienta: gotowe 2026-09-18",
+   "Makiety ekranów: 50 %",
+   "Architektura systemu: 75 %",
+   "Plan testów: gotowe 2026-09-18"
+  ],
+  "events": [
+   "nieobecność: Cezary Wójcik do 2 paź"
+  ],
+  "button": "Zapisz raport",
+  "count": "6 zmian",
+  "toast": "Raport zapisany. Szansa: 73 % → 66 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-09-21",
+  "crews": {
+   "Makiety ekranów": [
+    "Grażyna Dąbrowska"
+   ],
+   "Architektura systemu": [
+    "Bartosz Zieliński",
+    "Cezary Wójcik"
+   ]
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "c4 2026-09-25",
+  "chance": "79 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 12 punktów procentowych od raportu z pon. 21 wrz o 12 pkt proc. od raportu z pon. 21 wrz",
+  "deadline": "pt. 27 lis",
+  "likely": "wt. 24 lis 3 dni robocze przed terminem",
+  "bad": "pt. 4 gru 5 dni roboczych po terminie",
+  "budget": "38 z 180 jednostek kosztu (osobodni) Wydano 21 % Oczekiwany koszt: 95 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 2.1
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-09-25",
+  "reported": [
+   "Makiety ekranów: gotowe 2026-09-24",
+   "System wizualny: 33 %",
+   "Architektura systemu: gotowe 2026-09-23",
+   "Środowiska i repozytorium: 66 %",
+   "Model danych: 40 %"
+  ],
+  "events": [],
+  "button": "Zapisz raport",
+  "count": "5 zmian",
+  "toast": "Raport zapisany. Szansa: 66 % → 79 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-09-25",
+  "crews": {
+   "System wizualny": [
+    "Grażyna Dąbrowska"
+   ],
+   "Środowiska i repozytorium": [
+    "Jan Kaczmarek"
+   ],
+   "Model danych": [
+    "Bartosz Zieliński"
+   ]
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "c5 2026-09-30",
+  "chance": "51 %",
+  "badge": "Wymaga uwagi",
+  "delta": "spadek o 28 punktów procentowych od raportu z pt. 25 wrz o 28 pkt proc. od raportu z pt. 25 wrz",
+  "deadline": "pt. 27 lis",
+  "likely": "pt. 27 lis W dniu terminu",
+  "bad": "wt. 8 gru 7 dni roboczych po terminie",
+  "budget": "47 z 180 jednostek kosztu (osobodni) Wydano 26 % Oczekiwany koszt: 96 % budżetu Szczegóły",
+  "pending": [
+   "Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej"
+  ],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w niemal każdym scenariuszu z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 3.2
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-09-30",
+  "reported": [
+   "System wizualny: gotowe 2026-09-29",
+   "Środowiska i repozytorium: gotowe 2026-09-28",
+   "Potok CI/CD: 50 %",
+   "Model danych: gotowe 2026-09-30",
+   "Szkielet aplikacji: 25 %"
+  ],
+  "events": [
+   "nowe zadanie: Audyt bezpieczeństwa, 4 dni"
+  ],
+  "button": "Zapisz raport",
+  "count": "6 zmian",
+  "toast": "Raport zapisany. Szansa: 79 % → 51 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-09-30",
+  "crews": {
+   "Potok CI/CD": [
+    "Jan Kaczmarek"
+   ],
+   "Szkielet aplikacji": [
+    "Emil Krawczyk",
+    "Filip Lis"
+   ]
+  }
+ },
+ {
+  "kind": "decision",
+  "verdict": "approve",
+  "title": "Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej",
+  "chance": "Szansa na dotrzymanie terminu 51 % → 71 % 51 % 71 % wzrost o 20 punktów procentowych o 20 pkt proc.",
+  "rows": [
+   "Koniec pon. 30 lis → śr. 25 lis lepiej",
+   "Oczekiwane opóźnienie (dni robocze) 2,4 → 1,4 lepiej",
+   "Koszt +8 jedn., +4 % budżetu gorzej",
+   "Przesunięte zadania 19 zadań"
+  ],
+  "why": [
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "Bez zmian: 51 %. Z tą zmianą: 71 %.",
+   "Sentinel sprawdził możliwości: 6. Wybrano ją, ponieważ daje największą szansę na zakończenie w terminie.",
+   "Oczekiwane opóźnienie w dniach roboczych: 1,4 (bez zmian: 2,4).",
+   "Następna w kolejności: Ułóż zadania na nowo, aby skończyć jak najszybciej (55 %)."
+  ],
+  "options": [
+   "Dodatkowa osoba (tymczasowo): Programista backend na 10… Polecana Więcej 71 %+20 pkt 1,4 180 jedn.",
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej 55 %+4 pkt 2,2 172 jedn.",
+   "Przesuń terminy zadań bez zmiany kolejności 51 % 2,4 172 jedn.",
+   "Zrezygnuj z zadania opcjonalnego „Panel analityczny” 51 % 2,2 168 jedn.",
+   "Zrezygnuj z zadania opcjonalnego „Powiadomienia e-mail” 51 % 2,3 169 jedn.",
+   "Bez zmian punkt odniesienia 51 % 2,4 172 jedn."
+  ],
+  "toast": "Zatwierdzone. Plan zaktualizowany. Zobacz w historii",
+  "toast_after": "Zatwierdzone. Plan zaktualizowany. Szansa teraz 70 %. Zobacz w historii",
+  "seconds": 1.5
+ },
+ {
+  "kind": "moment",
+  "step": "c5 po decyzji: approve",
+  "chance": "70 %",
+  "badge": "Wymaga uwagi",
+  "delta": "spadek o 9 punktów procentowych od raportu z pt. 25 wrz o 9 pkt proc. od raportu z pt. 25 wrz",
+  "deadline": "pt. 27 lis",
+  "likely": "śr. 25 lis 2 dni robocze przed terminem",
+  "bad": "pon. 7 gru 6 dni roboczych po terminie",
+  "budget": "47 z 180 jednostek kosztu (osobodni) Wydano 26 % Oczekiwany koszt: 101 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "moment",
+  "step": "c6 2026-10-05",
+  "chance": "79 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 10 punktów procentowych od raportu z śr. 30 wrz o 10 pkt proc. od raportu z śr. 30 wrz",
+  "deadline": "pt. 27 lis",
+  "likely": "pon. 23 lis 4 dni robocze przed terminem",
+  "bad": "śr. 2 gru 3 dni robocze po terminie",
+  "budget": "66 z 180 jednostek kosztu (osobodni) Wydano 37 % Oczekiwany koszt: 99 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 2.3
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-10-05",
+  "reported": [
+   "Potok CI/CD: gotowe 2026-10-02",
+   "Logowanie i konta: 28 %",
+   "API profilu klienta: 75 %",
+   "API umów: 50 %",
+   "Szkielet aplikacji: gotowe 2026-10-05"
+  ],
+  "events": [],
+  "button": "Zapisz raport",
+  "count": "5 zmian",
+  "toast": "Raport zapisany. Szansa: 70 % → 79 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-10-05",
+  "crews": {
+   "Logowanie i konta": [
+    "Cezary Wójcik",
+    "temporary Programista backend 1"
+   ],
+   "API profilu klienta": [
+    "Bartosz Zieliński"
+   ],
+   "API umów": [
+    "Dorota Mazur"
+   ]
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "c7 2026-10-08",
+  "chance": "46 %",
+  "badge": "Termin zagrożony",
+  "delta": "spadek o 33 punkty procentowe od raportu z pon. 5 paź o 33 pkt proc. od raportu z pon. 5 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pon. 30 lis 1 dzień roboczy po terminie",
+  "bad": "wt. 8 gru 7 dni roboczych po terminie",
+  "budget": "78 z 180 jednostek kosztu (osobodni) Wydano 43 % Oczekiwany koszt: 106 % budżetu Szczegóły",
+  "pending": [
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej"
+  ],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 3.2
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-10-08",
+  "reported": [
+   "Logowanie i konta: 71 %",
+   "API profilu klienta: gotowe 2026-10-06",
+   "API umów: gotowe 2026-10-08",
+   "Ekran profilu: 25 %"
+  ],
+  "events": [
+   "zadanie urosło: Logowanie i konta +4 dni",
+   "nieobecność: Hanna Pawlak, powrót nieznany"
+  ],
+  "button": "Zapisz raport",
+  "count": "6 zmian",
+  "toast": "Raport zapisany. Szansa: 79 % → 46 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-10-08",
+  "crews": {
+   "Logowanie i konta": [
+    "Cezary Wójcik",
+    "temporary Programista backend 1"
+   ],
+   "Ekran profilu": [
+    "Emil Krawczyk"
+   ]
+  }
+ },
+ {
+  "kind": "decision",
+  "verdict": "reject",
+  "title": "Ułóż zadania na nowo, aby skończyć jak najszybciej",
+  "chance": "Szansa na dotrzymanie terminu 46 % → 55 % 46 % 55 % wzrost o 9 punktów procentowych o 9 pkt proc.",
+  "rows": [
+   "Koniec wt. 1 gru → pon. 30 lis lepiej",
+   "Oczekiwane opóźnienie (dni robocze) 2,7 → 2,3 lepiej",
+   "Koszt ±0",
+   "Przesunięte zadania 12 zadań"
+  ],
+  "why": [
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "Bez zmian: 46 %. Z tą zmianą: 55 %.",
+   "Sentinel sprawdził możliwości: 6. Wybrano ją, ponieważ działania remisują we wszystkim, więc wygrywa najprostsze.",
+   "Oczekiwane opóźnienie w dniach roboczych: 2,3 (bez zmian: 2,7).",
+   "Następna w kolejności: Ułóż zadania na nowo, zmieniając plan jak najmniej (54 %)."
+  ],
+  "options": [
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej Polecana 55 %+9 pkt 2,3 191 jedn.",
+   "Ułóż zadania na nowo, zmieniając plan jak najmniej 54 %+8 pkt 2,3 191 jedn.",
+   "Zrezygnuj z zadania opcjonalnego „Powiadomienia e-mail” 46 % 2,7 188 jedn.",
+   "Zrezygnuj z zadania opcjonalnego „Panel analityczny” 46 % 2,8 187 jedn.",
+   "Przesuń terminy zadań bez zmiany kolejności 38 %−8 pkt 3,1 191 jedn.",
+   "Bez zmian punkt odniesienia 46 % 2,7 191 jedn."
+  ],
+  "toast": "Odrzucone. Plan pozostaje bez zmian. Zobacz w historii",
+  "toast_after": "Odrzucone. Plan pozostaje bez zmian. Zobacz w historii",
+  "seconds": 1.7
+ },
+ {
+  "kind": "moment",
+  "step": "c7 po decyzji: reject",
+  "chance": "46 %",
+  "badge": "Termin zagrożony",
+  "delta": "spadek o 33 punkty procentowe od raportu z pon. 5 paź o 33 pkt proc. od raportu z pon. 5 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pon. 30 lis 1 dzień roboczy po terminie",
+  "bad": "wt. 8 gru 7 dni roboczych po terminie",
+  "budget": "78 z 180 jednostek kosztu (osobodni) Wydano 43 % Oczekiwany koszt: 106 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "moment",
+  "step": "c8 2026-10-13",
+  "chance": "57 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 10 punktów procentowych od raportu z czw. 8 paź o 10 pkt proc. od raportu z czw. 8 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pt. 27 lis W dniu terminu",
+  "bad": "pon. 7 gru 6 dni roboczych po terminie",
+  "budget": "99 z 180 jednostek kosztu (osobodni) Wydano 55 % Oczekiwany koszt: 108 % budżetu Szczegóły",
+  "pending": [
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej"
+  ],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 3.2
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-10-13",
+  "reported": [
+   "Logowanie i konta: 72 %",
+   "API faktur: 75 %",
+   "Ekran profilu: gotowe 2026-10-13"
+  ],
+  "events": [],
+  "button": "Zapisz raport",
+  "count": "3 zmiany",
+  "toast": "Raport zapisany. Szansa: 46 % → 57 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-10-13",
+  "crews": {
+   "Logowanie i konta": [
+    "Cezary Wójcik",
+    "temporary Programista backend 1"
+   ],
+   "API faktur": [
+    "Bartosz Zieliński"
+   ]
+  }
+ },
+ {
+  "kind": "decision",
+  "verdict": "later",
+  "title": "Ułóż zadania na nowo, aby skończyć jak najszybciej",
+  "chance": "Szansa na dotrzymanie terminu 57 % → 73 % 57 % 73 % wzrost o 16 punktów procentowych o 16 pkt proc.",
+  "rows": [
+   "Koniec pon. 30 lis → czw. 26 lis lepiej",
+   "Oczekiwane opóźnienie (dni robocze) 1,9 → 1,2 lepiej",
+   "Koszt ±0",
+   "Przesunięte zadania 15 zadań"
+  ],
+  "why": [
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "Bez zmian: 57 %. Z tą zmianą: 73 %.",
+   "Sentinel sprawdził możliwości: 6. Wybrano ją, ponieważ daje największą szansę na zakończenie w terminie.",
+   "Oczekiwane opóźnienie w dniach roboczych: 1,2 (bez zmian: 1,9).",
+   "Następna w kolejności: Ułóż zadania na nowo, zmieniając plan jak najmniej (67 %)."
+  ],
+  "options": [
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej Polecana 73 %+16 pkt 1,2 194 jedn.",
+   "Ułóż zadania na nowo, zmieniając plan jak najmniej 67 %+10 pkt 1,4 195 jedn.",
+   "Zrezygnuj z zadania opcjonalnego „Powiadomienia e-mail” 56 %−1 pkt 2 191 jedn.",
+   "Zrezygnuj z zadania opcjonalnego „Panel analityczny” 56 %−1 pkt 2 190 jedn.",
+   "Przesuń terminy zadań bez zmiany kolejności 54 %−3 pkt 2 195 jedn.",
+   "Bez zmian punkt odniesienia 57 % 1,9 195 jedn."
+  ],
+  "toast": "Propozycja odłożona. Wrócimy do niej przy następnym raporcie. Zobacz w historii",
+  "toast_after": "Propozycja odłożona. Wrócimy do niej przy następnym raporcie. Zobacz w historii",
+  "seconds": 1.6
+ },
+ {
+  "kind": "moment",
+  "step": "c8 po decyzji: later",
+  "chance": "57 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 10 punktów procentowych od raportu z czw. 8 paź o 10 pkt proc. od raportu z czw. 8 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pt. 27 lis W dniu terminu",
+  "bad": "pon. 7 gru 6 dni roboczych po terminie",
+  "budget": "99 z 180 jednostek kosztu (osobodni) Wydano 55 % Oczekiwany koszt: 108 % budżetu Szczegóły",
+  "pending": [
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej"
+  ],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "moment",
+  "step": "c9 2026-10-16",
+  "chance": "57 %",
+  "badge": "Wymaga uwagi",
+  "delta": "bez zmian od raportu z wt. 13 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pt. 27 lis W dniu terminu",
+  "bad": "czw. 3 gru 4 dni robocze po terminie",
+  "budget": "117 z 180 jednostek kosztu (osobodni) Wydano 65 % Oczekiwany koszt: 108 % budżetu Szczegóły",
+  "pending": [
+   "Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej"
+  ],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 8 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 3.2
+ },
+ {
+  "kind": "checkin",
+  "date": "2026-10-16",
+  "reported": [
+   "Logowanie i konta: gotowe 2026-10-16",
+   "API faktur: gotowe 2026-10-14",
+   "Integracja z systemem CRM: 25 %",
+   "Ekran umów: 60 %",
+   "Ekran faktur: 25 %"
+  ],
+  "events": [],
+  "button": "Zapisz raport",
+  "count": "5 zmian",
+  "toast": "Raport zapisany. Szansa: 57 % → 57 %. Zobacz w historii"
+ },
+ {
+  "kind": "crews",
+  "date": "2026-10-16",
+  "crews": {
+   "Integracja z systemem CRM": [
+    "Bartosz Zieliński",
+    "Dorota Mazur"
+   ],
+   "Ekran umów": [
+    "Emil Krawczyk"
+   ],
+   "Ekran faktur": [
+    "Filip Lis"
+   ]
+  }
+ },
+ {
+  "kind": "decision",
+  "verdict": "approve",
+  "title": "Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej",
+  "chance": "Szansa na dotrzymanie terminu 57 % → 83 % 57 % 83 % wzrost o 26 punktów procentowych o 26 pkt proc.",
+  "rows": [
+   "Koniec pon. 30 lis → śr. 25 lis lepiej",
+   "Oczekiwane opóźnienie (dni robocze) 1,6 → 0,7 lepiej",
+   "Koszt +9 jedn., +5 % budżetu gorzej",
+   "Przesunięte zadania 12 zadań"
+  ],
+  "why": [
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "Bez zmian: 57 %. Z tą zmianą: 83 %.",
+   "Sentinel sprawdził możliwości: 5. Wybrano ją, ponieważ daje największą szansę na zakończenie w terminie.",
+   "Oczekiwane opóźnienie w dniach roboczych: 0,7 (bez zmian: 1,6).",
+   "Następna w kolejności: Bez zmian (57 %)."
+  ],
+  "options": [
+   "Dodatkowa osoba (tymczasowo): Programista backend na 10… Polecana Więcej 83 %+26 pkt 0,7 203 jedn.",
+   "Przesuń terminy zadań bez zmiany kolejności 56 %−1 pkt 1,6 194 jedn.",
+   "Ułóż zadania na nowo, aby skończyć jak najszybciej 56 %−1 pkt 1,6 194 jedn.",
+   "Ułóż zadania na nowo, zmieniając plan jak najmniej 56 %−1 pkt 1,6 194 jedn.",
+   "Bez zmian punkt odniesienia 57 % 1,6 194 jedn."
+  ],
+  "toast": "Zatwierdzone. Plan zaktualizowany. Zobacz w historii",
+  "toast_after": "Zatwierdzone. Plan zaktualizowany. Szansa teraz 87 %. Zobacz w historii",
+  "seconds": 1.5
+ },
+ {
+  "kind": "moment",
+  "step": "c9 po decyzji: approve",
+  "chance": "87 %",
+  "badge": "Na dobrej drodze",
+  "delta": "wzrost o 30 punktów procentowych od raportu z wt. 13 paź o 30 pkt proc. od raportu z wt. 13 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pon. 23 lis 4 dni robocze przed terminem",
+  "bad": "pon. 30 lis 1 dzień roboczy po terminie",
+  "budget": "117 z 180 jednostek kosztu (osobodni) Wydano 65 % Oczekiwany koszt: 113 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "export",
+  "file": "plan.csv",
+  "bytes": 2180,
+  "rows": 31,
+  "header": "id,name,status,planned_start,planned_finish,start,finish,work_done_days,crew"
+ },
+ {
+  "kind": "report",
+  "title": "Raport projektu: Portal klienta",
+  "url": "http://127.0.0.1:41707/projects/<id>/report.html"
+ },
+ {
+  "kind": "history",
+  "count": 27,
+  "found": {
+   "9 raportów": true,
+   "zatwierdzenia": true,
+   "odrzucenie": true,
+   "odłożenie": true,
+   "cofnięcie": true,
+   "nieobecności": true,
+   "wydłużenie": true,
+   "nowe zadanie": true
+  },
+  "entries": [
+   "pon. 19 paź · Decyzja Zatwierdzono: Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej 57 % → 83 %",
+   "pon. 19 paź · Rekomendacja Rekomendacja: Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej Status: zatwierdzone i zastosowane 57 % → 83 %",
+   "pt. 16 paź · Raport statusu Raport statusu za pt. 16 paź „Logowanie i konta” gotowe pt. 16 paź „API faktur” gotowe śr. 14 paź „Integracja z systemem CRM” w toku, wykonano 25 % „Ekran umów” w toku, wykonano 60 % „Ekran faktur” w toku, wykonano 25 % 57 % → 57 %",
+   "śr. 14 paź · Decyzja Odłożono: Ułóż zadania na nowo, aby skończyć jak najszybciej",
+   "śr. 14 paź · Rekomendacja Rekomendacja: Ułóż zadania na nowo, aby skończyć jak najszybciej Status: zastąpione nowszą rekomendacją 57 % → 73 %",
+   "wt. 13 paź · Raport statusu Raport statusu za wt. 13 paź „Logowanie i konta” w toku, wykonano 72 % „API faktur” w toku, wykonano 75 % „Ekran profilu” gotowe wt. 13 paź 46 % → 57 %",
+   "pt. 9 paź · Decyzja Odrzucono: Ułóż zadania na nowo, aby skończyć jak najszybciej",
+   "pt. 9 paź · Rekomendacja Rekomendacja: Ułóż zadania na nowo, aby skończyć jak najszybciej Status: odrzucone 46 % → 55 %",
+   "czw. 8 paź · Raport statusu Raport statusu za czw. 8 paź „Logowanie i konta” w toku, wykonano 71 % „API profilu klienta” gotowe wt. 6 paź „API umów” gotowe czw. 8 paź „Ekran profilu” w toku, wykonano 25 % Hanna Pawlak: nieobecność od pt. 9 paź „Logowanie i konta”: dodatkowe dni robocze: 4 79 % → 46 %",
+   "wt. 6 paź · Rekomendacja Rekomendacja: Bez zmian — plan wciąż jest najlepszy Status: działanie niepotrzebne",
+   "pon. 5 paź · Raport statusu Raport statusu za pon. 5 paź „Potok CI/CD” gotowe pt. 2 paź „Logowanie i konta” w toku, wykonano 28 % „API profilu klienta” w toku, wykonano 75 % „API umów” w toku, wykonano 50 % „Szkielet aplikacji” gotowe pon. 5 paź 70 % → 79 %",
+   "czw. 1 paź · Decyzja Zatwierdzono: Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej 51 % → 71 %",
+   "czw. 1 paź · Rekomendacja Rekomendacja: Dodatkowa osoba (tymczasowo): Programista backend na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej Status: zatwierdzone i zastosowane 51 % → 71 %",
+   "śr. 30 wrz · Raport statusu Raport statusu za śr. 30 wrz „System wizualny” gotowe wt. 29 wrz „Środowiska i repozytorium” gotowe pon. 28 wrz „Potok CI/CD” w toku, wykonano 50 % „Model danych” gotowe śr. 30 wrz „Szkielet aplikacji” w toku, wykonano 25 % Nowe zadanie „Audyt bezpieczeństwa” (dni robocze: 4) 79 % → 51 %",
+   "pon. 28 wrz · Rekomendacja Rekomendacja: Bez zmian — plan wciąż jest najlepszy Status: działanie niepotrzebne",
+   "pt. 25 wrz · Raport statusu Raport statusu za pt. 25 wrz „Makiety ekranów” gotowe czw. 24 wrz „System wizualny” w toku, wykonano 33 % „Architektura systemu” gotowe śr. 23 wrz „Środowiska i repozytorium” w toku, wykonano 66 % „Model danych” w toku, wykonano 40 % 66 % → 79 %",
+   "wt. 22 wrz · Rekomendacja Rekomendacja: Bez zmian — plan wciąż jest najlepszy Status: działanie niepotrzebne",
+   "pon. 21 wrz · Raport statusu Raport statusu za pon. 21 wrz „Specyfikacja wymagań” gotowe śr. 16 wrz „Mapa procesów klienta” gotowe pt. 18 wrz „Makiety ekranów” w toku, wykonano 50 % „Architektura systemu” w toku, wykonano 75 % „Plan testów” gotowe pt. 18 wrz Cezary Wójcik: nieobecność od wt. 22 wrz, powrót pt. 2 paź 73 % → 66 %",
+   "śr. 16 wrz · Rekomendacja Rekomendacja: Bez zmian — plan wciąż jest najlepszy Status: działanie niepotrzebne",
+   "wt. 15 wrz · Raport statusu Raport statusu za wt. 15 wrz „Specyfikacja wymagań” w toku, wykonano 75 % 68 % → 73 %",
+   "pt. 30 paź, 23:51 · Zmiana Zmieniono dane projektu",
+   "pt. 11 wrz · Zmiana Cofnięto automatyczną zmianę: Przesuń terminy zadań bez zmiany kolejności",
+   "pt. 11 wrz · Rekomendacja Zastosowane automatycznie Rekomendacja: Przesuń terminy zadań bez zmiany kolejności Status: zastosowane automatycznie, potem cofnięte 68 % → 68 %",
+   "czw. 10 wrz · Raport statusu Raport statusu za czw. 10 wrz „Warsztaty z interesariuszami” gotowe czw. 10 wrz 70 % → 68 %",
+   "pt. 30 paź, 23:50 · Zmiana Utworzono plan: zakończenie śr. 11 lis",
+   "pt. 30 paź, 23:50 · Zmiana Zmieniono dane projektu",
+   "pt. 30 paź, 23:50 · Zmiana Utworzono projekt"
+  ]
+ },
+ {
+  "kind": "moment",
+  "step": "koniec przebiegu 1",
+  "chance": "87 %",
+  "badge": "Na dobrej drodze",
+  "delta": "wzrost o 30 punktów procentowych od raportu z wt. 13 paź o 30 pkt proc. od raportu z wt. 13 paź",
+  "deadline": "pt. 27 lis",
+  "likely": "pon. 23 lis 4 dni robocze przed terminem",
+  "bad": "pon. 30 lis 1 dzień roboczy po terminie",
+  "budget": "117 z 180 jednostek kosztu (osobodni) Wydano 65 % Oczekiwany koszt: 113 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Uruchomienie produkcyjne” decyduje o terminie w 9 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Szkolenie użytkowników” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem.",
+   "Zadanie „Testy akceptacyjne” decyduje o terminie w 6 na 10 scenariuszy z opóźnieniem."
+  ],
+  "seconds": 0.0
+ }
+]

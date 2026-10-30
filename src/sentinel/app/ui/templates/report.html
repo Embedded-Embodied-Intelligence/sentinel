@@ -26,7 +26,7 @@
         {% if f.budget %}
         {% set parts = t.cost_of_parts(view.cost_so_far or 0, f.budget) %}
         <span class="kpi-value">{{ parts[0] }}</span> <span class="kpi-unit">{{ parts[1] }}{% if view.person_days %} {{ t("cost.person_days") }}{% endif %}</span>
-        <span class="kpi-sub">{{ t("overview.expected_cost") }}: {{ t.cost(f.expected_cost) }}</span>
+        <span class="kpi-sub{% if over_budget %} warn{% endif %}">{% if over_budget %}{{ icon("alert", 14) }}{% endif %}{{ t("overview.expected_cost") }}: {{ t.cost(f.expected_cost) }} ({{ t("overview.expected_share", share=t.pct(f.expected_cost / f.budget)) }})</span>
         {% if f.p_within_budget is not none %}<span class="kpi-sub">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}
         {% else %}<span class="kpi-value">–</span>{% endif %}
       </dd></div>

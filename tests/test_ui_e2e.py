@@ -1,8 +1,10 @@
 """End-to-end tests of the pages in a real browser (WP9b; Playwright with Chromium, axe-core
 4.14.0 vendored under tests/vendor): a project created from a spreadsheet, a check-in with an
 absence and the approved recommendation in the history; the simulator run to the end with its
-comparison; the isolation of two demo visitors; a check-in by keyboard only; and an
-accessibility scan of the main screens with no serious or critical violation.
+comparison; the isolation of two demo visitors; a project, a check-in and a decision by keyboard
+only; the acceptance checks of the design brief (no violation in an accessibility scan of every
+screen, no sideways scroll, reduced motion, no outside request) and the page behaviour that QA
+found broken (WP10).
 
 The app is served by uvicorn in a thread with real background jobs. Run with
 `uv run pytest -q -m e2e` (Chromium as installed by `uv run playwright install chromium`; its
@@ -271,11 +273,7 @@ def _axe(page: Any) -> list[str]:
         """async () => (await axe.run(document, {resultTypes: ['violations']})).violations
             .map(v => ({id: v.id, impact: v.impact, nodes: v.nodes.length, help: v.help}))"""
     )
-    return [
-        f"{v['id']} ({v['impact']}, {v['nodes']} elements): {v['help']}"
-        for v in found
-        if v["impact"] in ("serious", "critical")
-    ]
+    return [f"{v['id']} ({v['impact']}, {v['nodes']} elements): {v['help']}" for v in found]
 
 
 def _showcase(local: Server) -> tuple[str, int | None, str]:
@@ -301,7 +299,7 @@ def _showcase(local: Server) -> tuple[str, int | None, str]:
 
 @pytest.mark.parametrize("language", ["pl", "en"])
 @pytest.mark.parametrize("scheme", ["light", "dark"])
-def test_the_main_screens_have_no_serious_accessibility_violations(
+def test_the_main_screens_have_no_accessibility_violations(
     browser: Any, local: Server, scheme: str, language: str
 ) -> None:
     pid, seq, draft = _showcase(local)

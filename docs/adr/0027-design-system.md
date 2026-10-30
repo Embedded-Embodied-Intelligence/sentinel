@@ -30,11 +30,13 @@ without the sidebar for the wizard and a decision. Where the brief's words or fe
 | Toasts sent by an `HX-Trigger` header | Most actions end in a full page load (`HX-Redirect`), so a toast rendered from the `flash` parameter covers them; the forecast fragment fills in the new chance out of band |
 | Sorting the start page by a blocking forecast of every project | Nothing may block a page: cards sort by the cached chance and fill in after the page |
 | A free-text "Ask Sentinel" box and rejection reasons | New LLM role and a new stored field: against the narrow LLM roles, §11.5 and invariant 7 (see the report's spec questions) |
+| Restyling the research cockpit as the report | Its contents are for researchers (model days, task numbers, P(C ≤ D), decision log); a page for people from the views the pages already use is smaller and obeys §11.7 by test. The cockpit stays at the API and `sentinel dashboard` (ADR-0021) |
 
 ## Consequences
 
 A test (`tests/test_ui_design.py`) holds the tokens and their contrast to the brief and fails on a
-style nothing uses or a class no style defines. Own JavaScript grows from 47 to about 400 lines
-(drawer, toasts, pickers, change counter), still one file with no dependency. Screenshots are
+style nothing uses or a class no style defines. Own JavaScript grows from 47 to about 480 lines
+(drawer, toasts, pickers, change counter, the question before leaving a half-filled form), still
+one file with no dependency. Screenshots are
 captured by `scripts/ui_screenshots.py` at 1280×800 and 390×844 in both languages, with a reduced
 palette so that `docs/ui/` stays under 5 MB.

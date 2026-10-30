@@ -30,6 +30,7 @@ from sentinel.app.ui.project import (
     finish_gap,
     needs_date_confirmation,
     option_rows,
+    over_budget,
     short_name,
     split_pending,
     toast_text,
@@ -307,6 +308,15 @@ def test_the_toast_adds_the_new_chance_when_it_is_known() -> None:
         toast_text("approved", summary, EN)
     )
     assert toast_text("rejected", summary, EN) is None and toast_text("approved", None, EN) is None
+
+
+def test_the_budget_tile_warns_when_the_expected_cost_is_above_the_budget() -> None:
+    def forecast(expected: float | None, budget: float | None) -> Any:
+        return SimpleNamespace(expected_cost=expected, budget=budget)
+
+    assert over_budget(forecast(203.0, 180.0))
+    assert not over_budget(forecast(180.0, 180.0))
+    assert not over_budget(forecast(None, 180.0)) and not over_budget(forecast(10.0, None))
 
 
 def test_only_a_date_far_ahead_needs_a_confirmation() -> None:

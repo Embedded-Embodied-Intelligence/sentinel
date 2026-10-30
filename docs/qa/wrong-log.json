@@ -1,0 +1,363 @@
+[
+ {
+  "kind": "case",
+  "case": "empty fields in step 1",
+  "url": "/new",
+  "shown": [
+   "Popraw pola oznaczone poniżej. Podaj nazwę projektu. Podaj datę rozpoczęcia.",
+   "Podaj nazwę projektu.",
+   "Podaj datę rozpoczęcia."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "live rule",
+  "shown": "✕ Termin nie może wypadać przed datą rozpoczęcia."
+ },
+ {
+  "kind": "case",
+  "case": "deadline before the start",
+  "url": "/new",
+  "shown": [
+   "Popraw pola oznaczone poniżej. Termin nie może wypadać przed datą rozpoczęcia.",
+   "Termin nie może wypadać przed datą rozpoczęcia."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "negative budget",
+  "url": "/new",
+  "shown": [
+   "Popraw pola oznaczone poniżej. Budżet musi być liczbą większą od 0 albo pozostać pusty.",
+   "Budżet musi być liczbą większą od 0 albo pozostać pusty."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "no team, next",
+  "url": "/projects/<id>/setup/team",
+  "shown": [
+   "Sprawdź proszę: Dodaj co najmniej jedną osobę.",
+   "Sprawdź proszę: Dodaj co najmniej jedną osobę."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "repeated names and no role",
+  "url": "/projects/<id>/setup/team",
+  "shown": [
+   "Sprawdź proszę: Ala musi mieć rolę. Dwie osoby nazywają się „Ala”; nazwy osób muszą być unikalne. Dwie osoby nazywają się „Ala”; nazwy osób muszą być unikalne."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "Enter in a name field",
+  "url": "/projects/<id>/setup/team",
+  "shown": [
+   "Sprawdź proszę: Ala musi mieć rolę. Dwie osoby nazywają się „Ala”; nazwy osób muszą być unikalne. Dwie osoby nazywają się „Ala”; nazwy osób muszą być unikalne."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "people after Enter",
+  "shown": 3
+ },
+ {
+  "kind": "case",
+  "case": "csv missing column",
+  "url": "/projects/<id>/setup/tasks?tab=import",
+  "shown": [
+   "Nie udało się zaimportować pliku: W pliku brakuje kolumny „duration_days”."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "csv bad number",
+  "url": "/projects/<id>/setup/tasks?tab=import",
+  "shown": [
+   "Nie udało się zaimportować pliku: Wiersz 2: duration_days musi być liczbą całkowitą (jest „dużo”)."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "csv unknown predecessor and role",
+  "url": "/projects/<id>/setup/tasks?tab=manual&flash=imported",
+  "shown": [
+   "Sprawdź proszę: „Analiza” potrzebuje roli Kucharz, ale nikt w zespole jej nie ma. „Analiza” następuje po T9, a takiego zadania nie ma w projekcie."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "csv repeated task",
+  "url": "/projects/<id>/setup/tasks?tab=manual&flash=imported",
+  "shown": [
+   "Sprawdź proszę: Identyfikator zadania T1 występuje dwa razy. Dwa zadania nazywają się „Analiza”; nazwy zadań muszą być unikalne."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "csv empty",
+  "url": "/projects/<id>/setup/tasks?tab=import",
+  "shown": [
+   "Plik jest pusty."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "csv in another encoding",
+  "url": "/projects/<id>/setup/tasks?tab=import",
+  "shown": [
+   "Plik nie jest tekstem w kodowaniu UTF-8."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "import without a file",
+  "url": "/projects/<id>/setup/tasks?tab=import",
+  "shown": [
+   "Najpierw wybierz plik."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "csv with a cycle",
+  "url": "/projects/<id>/setup/tasks?tab=manual&flash=imported",
+  "shown": [
+   "Sprawdź proszę: Te zadania czekają na siebie nawzajem w kółko: Analiza → Budowa → Testy → Analiza."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "create the plan with a cycle",
+  "url": "/projects/<id>/setup/tasks?tab=manual&flash=imported",
+  "shown": [
+   "Sprawdź proszę: Te zadania czekają na siebie nawzajem w kółko: Analiza → Budowa → Testy → Analiza.",
+   "Sprawdź proszę: Te zadania czekają na siebie nawzajem w kółko: Analiza → Budowa → Testy → Analiza."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "a cycle by hand, while typing",
+  "url": "/projects/<id>/setup/tasks",
+  "shown": [
+   "Sprawdź proszę: Te zadania czekają na siebie nawzajem w kółko: Zadanie 1 → Zadanie 2 → Zadanie 1.",
+   "Sprawdź proszę: Te zadania czekają na siebie nawzajem w kółko: Zadanie 1 → Zadanie 2 → Zadanie 1."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "draft project",
+  "shown": "_J0cKbEOfbRPmn9X"
+ },
+ {
+  "kind": "case",
+  "case": "double click on create the plan",
+  "url": "/projects/<id>?flash=plan_ready",
+  "shown": [
+   "Projekt utworzony."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "double click on save the check-in",
+  "url": "/projects/<id>?flash=checkin_saved",
+  "shown": [
+   "Raport zapisany. Liczę nową prognozę… Zobacz w historii"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "check-ins after a double click",
+  "shown": 1
+ },
+ {
+  "kind": "case",
+  "case": "a project with an absence",
+  "url": "/projects/<id>?flash=checkin_saved",
+  "shown": [
+   "Dodatkowa osoba (tymczasowo): Programista na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "double click on approve",
+  "url": "/projects/<id>?flash=approved",
+  "shown": [
+   "Zatwierdzone. Plan zaktualizowany. Szansa teraz 60 %. Zobacz w historii"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "decisions after a double click",
+  "shown": [
+   "Zatwierdzono: Dodatkowa osoba (tymczasowo): Programista na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej",
+   "Rekomendacja: Dodatkowa osoba (tymczasowo): Programista na 10 dni, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej",
+   "Rekomendacja: Bez zmian — plan wciąż jest najlepszy"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "a decided recommendation opened again",
+  "url": "/projects/<id>/recommendations/8",
+  "shown": [
+   "Zatwierdzone · pt. 6 lis"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "two tabs: an older check-in after a newer one",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Nie udało się zapisać raportu. Popraw pola oznaczone poniżej. Raporty statusu muszą następować po sobie w czasie; ostatni dotyczył dnia wt. 10 lis."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "two tabs: settings, last wins",
+  "shown": "/projects/<id>/settings?flash=settings_saved"
+ },
+ {
+  "kind": "case",
+  "case": "language switch on the import tab",
+  "url": "/projects/<id>/setup/tasks?tab=import",
+  "shown": [
+   "What tasks have to be done?"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "language switch on a half-filled check-in",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Check-in"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "check-in after the switch",
+  "shown": "2026-11-02",
+  "browser_asked": [
+   "beforeunload"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "draft kept",
+  "shown": "36537hsruohFk0_u"
+ },
+ {
+  "kind": "case",
+  "case": "back during a run to the end",
+  "url": "/simulator",
+  "shown": [
+   "Symulator"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "the run opened again while it works",
+  "url": "/projects/<id>",
+  "shown": [
+   "Symuluję kolejne dni…"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "the run in the end",
+  "url": "/projects/<id>",
+  "shown": [
+   "Z Sentinelem projekt skończył się 10 dni roboczych wcześniej niż bez reakcji, ale wciąż 8 dni roboczych po terminie."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "cancel a run to the end",
+  "url": "/projects/<id>",
+  "shown": [
+   "Dzień 3 z ok. 56"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "check-in without a date",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Nie udało się zapisać raportu. Popraw pola oznaczone poniżej. Podaj datę raportu."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "check-in before the project starts",
+  "url": "/projects/<id>?flash=checkin_saved",
+  "shown": []
+ },
+ {
+  "kind": "case",
+  "case": "check-in far in the future",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Ten raport ma datę pon. 7 sty 2030, ponad tydzień od dziś. Raporty następują po sobie w czasie, więc każdy kolejny musiałby mieć późniejszą datę, a tego nie da się cofnąć. Popraw datę albo ją potwierdź. Tak, ta data jest prawidłowa"
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "finished after the check-in",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Nie udało się zapisać raportu. Popraw pola oznaczone poniżej. „Analiza” nie mogło zakończyć się czw. 24 gru, po dacie raportu śr. 4 lis."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "percent above 99",
+  "url": "/projects/<id>?flash=checkin_saved",
+  "shown": []
+ },
+ {
+  "kind": "case",
+  "case": "an absence that ends before it starts",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Nie udało się zapisać raportu. Popraw pola oznaczone poniżej. Data powrotu osoby Ala musi być późniejsza niż pierwszy dzień nieobecności."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "a new task without a name",
+  "url": "/projects/<id>/checkin",
+  "shown": [
+   "Nie udało się zapisać raportu. Popraw pola oznaczone poniżej. Nowe zadanie musi mieć nazwę.",
+   "Nowe zadanie musi mieć nazwę."
+  ]
+ },
+ {
+  "kind": "case",
+  "case": "a name with markup",
+  "shown": [
+   "Bez zespołu",
+   "Zły arkusz",
+   "Cykl ręcznie",
+   "Język",
+   "<script>alert(1)</script> <b>Projekt</b>",
+   "Przykładowy projekt (mały)",
+   "Przykładowy projekt (mały)"
+  ],
+  "project": "SceDf8fe1zoffbch"
+ },
+ {
+  "kind": "case",
+  "case": "phone: sideways scroll in px",
+  "shown": {
+   "start": 0,
+   "wizard1": 0,
+   "after_wizard": 0,
+   "structure_frozen": 0,
+   "checkin": 0,
+   "recommendation": 0,
+   "history": 0,
+   "settings": 0,
+   "simulator": 0,
+   "how": 0
+  }
+ }
+]

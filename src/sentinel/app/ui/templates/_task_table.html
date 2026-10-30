@@ -1,5 +1,5 @@
 {% import "_ui.html" as ui with context %}
-<div class="table-wrap">
+<div class="table-wrap" tabindex="0" role="region" aria-label="{{ t('chart.title') }}">
 <table class="table">
   <caption class="vh">{{ t("chart.title") }}</caption>
   <thead><tr><th scope="col">{{ t("chart.col.task") }}</th><th scope="col">{{ t("chart.col.state") }}</th><th scope="col">{{ t("chart.col.dates") }}</th><th scope="col">{{ t("chart.col.people") }}</th></tr></thead>
