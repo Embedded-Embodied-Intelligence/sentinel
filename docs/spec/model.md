@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.0.2)
+# Sentinel — formal model (v2.0.3)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -56,7 +56,11 @@ come from one comparison on the forecast's sampled worlds (§11.5), the tasks th
 deadline are counted over the late rollouts without structural, zero-duration and finished tasks
 (§11.4), the simulator states that it uses the application's settings (§11.6), costs are shown
 in cost units with their meaning and changes also as a share of the budget, and the example
-projects are named in the user's language (§11.2, §11.6, §11.7).
+projects are named in the user's language (§11.2, §11.6, §11.7). v2.0.3 (WP9d) answers to the
+WP9c questions: optional tasks are left out when finding structural tasks and finished tasks are
+left out of the threats, both as written in v2.0.2 (§11.4); in the application the decision, the
+display and the explanation come from one comparison on the forecast's sampled worlds, with a
+sentence when a later component decides (§11.5, §11.6, §11.7); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -777,9 +781,10 @@ faithful.
 ## §11 Live project mode (WP9)
 
 The application runs the decision layer on a real project that a project manager updates at
-check-ins (*project mode*) and on a generated one with a hidden world (*simulator mode*). It adds
-no semantics to §1–§10: this section maps what the manager enters onto the instance (§1), the
-plan and the observation (§3), and the decisions of Sentinel (§4–§6) back onto the project.
+check-ins (*project mode*) and on a generated one with a hidden world (*simulator mode*). It
+leaves §1–§10 as they are: this section maps what the manager enters onto the instance (§1), the
+plan and the observation (§3), and the decisions of Sentinel (§4–§6) back onto the project, and
+its one comparison (§11.5) applies in the application only, not in the research runs of §6.
 
 ### §11.1 Calendar
 
@@ -905,25 +910,50 @@ without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
 
 ### §11.5 Recommendations and decisions
 
-- A **recommendation** is a Sentinel deliberation (§5–§6) on the observation of the latest
-  check-in (`t = 0` before the first), with the seed `derive_seed(project seed, "sentinel", t)`,
-  the rule candidates (the LLM proposals of §10.3 are off by default), DESCOPE candidates if the
-  project has optional tasks, and the parameters of §8. One follows every check-in; the manager
-  may ask for one at any time. It shows the chosen action in plain language, its effect against
+- A **recommendation** is a Sentinel deliberation (§5–§6, with the one comparison below) on the
+  observation of the latest check-in (`t = 0` before the first), with the rule candidates (the
+  LLM proposals of §10.3 are off by default), DESCOPE candidates if the project has optional
+  tasks, and the parameters of §8. One follows every check-in; the manager may ask for one at any
+  time. It shows the chosen action in plain language, its effect against
   NOOP (`p̂`, the expected finish date `date(C̄ − 1)` with `C̄` the mean makespan of its
   rollouts rounded half up, the expected cost `ẑ`, the plan changes), the alternatives, the
   runner-up and the explanation of §10.4.
-- **One comparison** (v2.0.2, WP9b question 1). The decision is that of §6, racing included.
-  For display, after the decision, NOOP, the chosen action and the alternatives shown are
-  evaluated on the `N = 200` sampled worlds of the forecast of the same day (§11.4: its seed and
-  rollout layout, so NOOP's rollouts are the forecast's), each applied as in the rollouts of §6
-  (an action that needs approval is approved `δ_h` days later in each world). Every figure shown
-  with a recommendation comes from this comparison, so "no change" has the overview's chance on
-  the same project and day, and after an automatic action the overview shows the action's
-  figures. The alternatives shown are the runner-up first, then the candidates racing kept, then
-  the rest by `min(p, θ_D)` and `T`, at most five, NOOP always among them; on the page they are
-  listed by their own figures after the runner-up. The comparison can order the alternatives
-  differently from racing; the decision stands.
+- **One comparison** (v2.0.3, WP9c questions 3 and 4; project and simulator modes only, the
+  research semantics of §6 are unchanged). The decision, the display and the explanation come from
+  one comparison, so that a manager never sees an alternative ranked above the recommended action
+  or an explanation whose numbers differ from the page. With `t` the day of the deliberation:
+  1. *Needs.* The needs of NOOP (§5) are read on the `N = 200` sampled worlds of the forecast of
+     the same day (§11.4: its seed `derive_seed(project seed, "forecast", t)` and rollout layout,
+     so NOOP's rollouts are the forecast's). If they are met, NOOP is the decision and its row is
+     the whole comparison.
+  2. *Racing stage 1* stays as in §6: every candidate on `N₁` rollouts with the seed
+     `derive_seed(project seed, "sentinel", t)`, the same criterion for dropping a candidate.
+  3. *The comparison* replaces stage 2. The survivors of stage 1 and every candidate the page can
+     show are evaluated on the 200 worlds of step 1, each applied as in the rollouts of §6 (an
+     action that needs approval is approved `δ_h` days later in each world). The candidates the
+     page can show are NOOP and, while fewer than six candidates are in the comparison, the best
+     of those dropped (largest `min(p, θ_D)`, then smallest `T` of stage 1, then candidate order).
+     DESCOPE candidates (§6) are generated from the figures of this comparison and join stage 1
+     and the comparison.
+  4. *The rule.* Rule (§6) with its materiality ties (paired standard errors over the 200 worlds)
+     is applied to the comparison: every candidate in it competes, a dropped one too. Its choice,
+     runner-up and deciding component are the decision; the permission gate (§4) acts on it.
+  5. *One record.* The decision record holds the comparison's figures (the needs included); the
+     candidates outside the comparison keep their stage 1 figures, marked as dropped, and are not
+     shown. The comparison table, the template explanation and the optional AI explanation (§10.4)
+     use this record; the two explanations see the rows shown and the figures as shown (a chance
+     in whole per cent and a delay in tenths of a day, each rounded half up), so every number they
+     can cite is on the page.
+  6. *What is shown.* The alternatives shown are the runner-up first, then the others of the
+     comparison by `min(p, θ_D)` and `T`, at most five, NOOP always among them; on the page they
+     are listed by their own figures after the runner-up. "No change" has the overview's chance on
+     the same project and day, and after an automatic action the overview shows the action's
+     figures.
+  7. *When a later component decides* (the deciding component comes after `min(p̂, θ_D)` in the
+     rule, or the candidate order), the chances are tied, and an alternative may show a higher
+     one. The page then says so in one sentence, with the wording of §11.7, exactly in these
+     cases. The sentence says that both reach the target where the chosen action and the
+     runner-up both have `p ≥ θ_D − ε_D` (the cap of the rule, not uncertainty, makes them tie).
 - **Autonomy.** `Λ` is a project setting (default 2, §8). A chosen action other than NOOP with
   `ℓ(a) < Λ` and without DESCOPE is applied at once and listed as applied automatically. Any
   other chosen action waits for the manager, who takes the place of the simulated human of §4:
@@ -956,11 +986,13 @@ deadline `D = ceil((1 + δ_D) C*)` (§1.2; `C*` the reference makespan, else tha
 plan) and the budget of §1.2. A seed fixes its hidden world (§2.3). `advance(n)` executes the
 next `n` days of the engine (§3) on that world from the baseline plan under the chosen policy:
 Sentinel at autonomy `Λ` with the simulated human of §4, NoReaction or a policy of §7, with
-`u_min = 1` (§11.2). Advanced to the end, the run equals `simulate` with the same plan, policy,
-seed and `u_min`. NoReaction is advanced on the same seed for a side-by-side comparison
-(common random numbers, §2.3). The simulator page says that it uses the application's settings
-(at least one temporary person per role, §11.2), not the setup of the studies, so a run can
-differ from their results (v2.0.2, WP9b question 3).
+`u_min = 1` (§11.2). Sentinel decides with the one comparison of §11.5 (v2.0.3), the project
+seed being the world seed, and the sentence of §11.5 follows its decisions on the timeline.
+Advanced to the end, the run equals `simulate` with the same plan, policy, seed and `u_min`.
+NoReaction is advanced on the same seed for a side-by-side comparison (common random numbers,
+§2.3). The simulator page says that it uses the application's settings (at least one temporary
+person per role, §11.2, and the one comparison of §11.5), not the setup of the studies, so a run
+can differ from their results (v2.0.2, WP9b question 3).
 
 - **Names** (v2.0.2). The roles, people and tasks of a simulator project, and the showcase project
   of the demo, are named in the user's language from a vocabulary file per language: the
@@ -996,6 +1028,14 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | a change of cost `Δz` (v2.0.2) | +<Δz> units, +<Δz/B> % of the budget | +<Δz> jedn., +<Δz/B> % budżetu |
 | threat (v2.0.2) | The task <task> decides the deadline in <k> of 10 late scenarios; the risk is spread across the plan | Zadanie <zadanie> decyduje o terminie w <k> na 10 scenariuszy z opóźnieniem; ryzyko rozkłada się na cały plan |
 | `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
+| a tie in `min(p̂, θ_D)` (v2.0.3) | Similar chance (the difference is within the uncertainty); <part> | Podobna szansa (różnica w granicach niepewności); <część> |
+| the same, both at the target (v2.0.3) | Both options reach the target chance; <part> | Oba warianty osiągają docelową szansę; <część> |
+| `T̂` decides (v2.0.3) | the option with the smaller expected delay was chosen | wybrano wariant z mniejszym oczekiwanym opóźnieniem |
+| the scope loss decides (v2.0.3) | the option that gives up less scope was chosen | wybrano wariant, który mniej ogranicza zakres |
+| `o` decides (v2.0.3) | the option with the smaller expected budget overrun was chosen | wybrano wariant z mniejszym oczekiwanym przekroczeniem budżetu |
+| `Δ` decides (v2.0.3) | the option that changes fewer dates was chosen | wybrano wariant, który zmienia mniej terminów |
+| `ℓ` decides (v2.0.3) | the option that needs less approval was chosen | wybrano wariant, który wymaga mniej zatwierdzeń |
+| the candidate order decides (v2.0.3) | the options are equal on the rest, so the simplest was chosen | warianty są równorzędne także pod innymi względami, więc wybrano najprostszy |
 | rollout, `N` | simulated future, number of simulated futures | symulowany scenariusz, liczba scenariuszy |
 | deliberation, recommendation | Sentinel's analysis, recommendation | analiza Sentinela, rekomendacja |
 | check-in, observation of day `t` | check-in, status at the end of <date> | raport statusu, stan na koniec dnia <data> |
