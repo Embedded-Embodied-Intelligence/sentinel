@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.0.3)
+# Sentinel — formal model (v2.0.4)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -60,7 +60,10 @@ projects are named in the user's language (§11.2, §11.6, §11.7). v2.0.3 (WP9d
 WP9c questions: optional tasks are left out when finding structural tasks and finished tasks are
 left out of the threats, both as written in v2.0.2 (§11.4); in the application the decision, the
 display and the explanation come from one comparison on the forecast's sampled worlds, with a
-sentence when a later component decides (§11.5, §11.6, §11.7); §1–§10 are unchanged.
+sentence when a later component decides (§11.5, §11.6, §11.7); §1–§10 are unchanged. v2.0.4
+(WP9d follow-up) answer to the WP9d question on how often that sentence appears: it is shown only
+when an alternative shown has a strictly higher chance, in whole per cent, than the chosen action
+(§11.5, §11.6, §11.7); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -949,11 +952,15 @@ without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
      are listed by their own figures after the runner-up. "No change" has the overview's chance on
      the same project and day, and after an automatic action the overview shows the action's
      figures.
-  7. *When a later component decides* (the deciding component comes after `min(p̂, θ_D)` in the
-     rule, or the candidate order), the chances are tied, and an alternative may show a higher
-     one. The page then says so in one sentence, with the wording of §11.7, exactly in these
-     cases. The sentence says that both reach the target where the chosen action and the
-     runner-up both have `p ≥ θ_D − ε_D` (the cap of the rule, not uncertainty, makes them tie).
+  7. *When an alternative shows a higher chance* (v2.0.4). The page says why the choice stands in
+     one sentence, with the wording of §11.7, only when an alternative shown has a strictly higher
+     chance than the chosen action, both in whole per cent as the page shows them (item 5). This
+     happens only when a later component decided (the deciding component comes after
+     `min(p̂, θ_D)` in the rule, or the candidate order), which ties the chances. In every other
+     case the sentence is omitted and the page names the deciding component as for any decision;
+     a page that shows no alternatives, like the simulator's timeline, has no such sentence. The
+     sentence says that both options reach the target where the chosen action has
+     `p ≥ θ_D − ε_D` (the cap of the rule, not uncertainty, makes them tie).
 - **Autonomy.** `Λ` is a project setting (default 2, §8). A chosen action other than NOOP with
   `ℓ(a) < Λ` and without DESCOPE is applied at once and listed as applied automatically. Any
   other chosen action waits for the manager, who takes the place of the simulated human of §4:
@@ -987,8 +994,7 @@ plan) and the budget of §1.2. A seed fixes its hidden world (§2.3). `advance(n
 next `n` days of the engine (§3) on that world from the baseline plan under the chosen policy:
 Sentinel at autonomy `Λ` with the simulated human of §4, NoReaction or a policy of §7, with
 `u_min = 1` (§11.2). Sentinel decides with the one comparison of §11.5 (v2.0.3), the project
-seed being the world seed, and the sentence of §11.5 follows its decisions on the timeline.
-Advanced to the end, the run equals `simulate` with the same plan, policy, seed and `u_min`.
+seed being the world seed. Advanced to the end, the run equals `simulate` with the same plan, policy, seed and `u_min`.
 NoReaction is advanced on the same seed for a side-by-side comparison (common random numbers,
 §2.3). The simulator page says that it uses the application's settings (at least one temporary
 person per role, §11.2, and the one comparison of §11.5), not the setup of the studies, so a run
@@ -1028,8 +1034,8 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | a change of cost `Δz` (v2.0.2) | +<Δz> units, +<Δz/B> % of the budget | +<Δz> jedn., +<Δz/B> % budżetu |
 | threat (v2.0.2) | The task <task> decides the deadline in <k> of 10 late scenarios; the risk is spread across the plan | Zadanie <zadanie> decyduje o terminie w <k> na 10 scenariuszy z opóźnieniem; ryzyko rozkłada się na cały plan |
 | `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
-| a tie in `min(p̂, θ_D)` (v2.0.3) | Similar chance (the difference is within the uncertainty); <part> | Podobna szansa (różnica w granicach niepewności); <część> |
-| the same, both at the target (v2.0.3) | Both options reach the target chance; <part> | Oba warianty osiągają docelową szansę; <część> |
+| an alternative shown has a higher chance (§11.5 item 7, v2.0.4) | Similar chance (the difference is within the uncertainty); <part> | Podobna szansa (różnica w granicach niepewności); <część> |
+| the same, the chosen action at the target (v2.0.4) | Both options reach the target chance; <part> | Oba warianty osiągają docelową szansę; <część> |
 | `T̂` decides (v2.0.3) | the option with the smaller expected delay was chosen | wybrano wariant z mniejszym oczekiwanym opóźnieniem |
 | the scope loss decides (v2.0.3) | the option that gives up less scope was chosen | wybrano wariant, który mniej ogranicza zakres |
 | `o` decides (v2.0.3) | the option with the smaller expected budget overrun was chosen | wybrano wariant z mniejszym oczekiwanym przekroczeniem budżetu |
