@@ -2,7 +2,7 @@
    swaps in the result. #}
 <div class="job" id="job-{{ job.id }}" hx-get="/jobs/{{ job.id }}?{{ query }}" hx-trigger="load delay:1s" hx-swap="outerHTML">
   <div role="status" aria-live="polite">
-    <p class="job-label"><span class="spinner" aria-hidden="true"></span> {{ label }}</p>
-    <progress max="100" value="{{ (job.progress * 100) | round | int }}" aria-label="{{ label }}">{{ (job.progress * 100) | round | int }} %</progress>
+    <p class="job-label"><span class="spinner" aria-hidden="true"></span>{{ label }}</p>
   </div>
+  <progress max="100" value="{{ (job.progress * 100) | round | int }}" aria-label="{{ label }}">{{ (job.progress * 100) | round | int }} %</progress>
 </div>

@@ -8,7 +8,7 @@ with the same placeholders and that no page shows an internal term. A missing ke
 """
 
 import math
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import date, datetime
 
 from sentinel.app.errors import AppError
@@ -78,8 +78,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "common.save": ("Save", "Zapisz"),
     "common.retry": ("Try again", "Spróbuj ponownie"),
     "flash.checkin_saved": (
-        "Check-in saved. The forecast has been updated.",
-        "Raport zapisany. Prognoza została zaktualizowana.",
+        "Check-in saved. Calculating the new forecast…",
+        "Raport zapisany. Liczę nową prognozę…",
+    ),
+    "flash.checkin_chance": (
+        "Check-in saved. Chance: {before} → {after}.",
+        "Raport zapisany. Szansa: {before} → {after}.",
+    ),
+    "flash.approved_chance": (
+        "Approved: the plan has been changed. Chance now {after}.",
+        "Zatwierdzone: plan został zmieniony. Szansa teraz {after}.",
     ),
     "flash.approved": (
         "Approved: the plan has been changed.",
@@ -577,12 +585,37 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "All tasks are done — the project is finished.",
         "Wszystkie zadania są gotowe — projekt jest zakończony.",
     ),
-    "overview.calculating": ("Calculating the forecast…", "Obliczam prognozę…"),
+    "overview.calculating": (
+        "Calculating the forecast… usually a few seconds.",
+        "Liczę prognozę… zwykle kilka sekund.",
+    ),
     "overview.ask": ("Ask Sentinel", "Zapytaj Sentinela"),
-    "overview.checkin": ("Check-in", "Raport statusu"),
-    "overview.working_title": ("Sentinel is working", "Sentinel pracuje"),
+    "overview.checkin": ("New check-in", "Nowy raport statusu"),
     "overview.pending_title": ("Waiting for your decision", "Czeka na Twoją decyzję"),
-    "overview.auto_title": ("Changed automatically", "Zmienione automatycznie"),
+    "overview.nothing_pending": (
+        "Nothing is waiting for your decision.",
+        "Nic nie czeka na Twoją decyzję.",
+    ),
+    "overview.other_proposals": ("Other proposals ({n})", "Inne propozycje ({n})"),
+    "overview.how": ("How do we calculate this?", "Jak liczymy?"),
+    "overview.drivers_how": ("How to read this", "Jak to czytać"),
+    "overview.budget": ("Budget", "Budżet"),
+    "overview.spent_share": ("Spent {share}", "Wydano {share}"),
+    "overview.expected_share": (
+        "Expected cost: {share} of the budget",
+        "Oczekiwany koszt: {share} budżetu",
+    ),
+    "overview.gap_before": ("{days} before the deadline", "{days} przed terminem"),
+    "overview.gap_after": ("{days} after the deadline", "{days} po terminie"),
+    "overview.gap_on": ("On the deadline", "W dniu terminu"),
+    "overview.days.one": ("{n} working day", "{n} dzień roboczy"),
+    "overview.days.few": ("{n} working days", "{n} dni robocze"),
+    "overview.days.many": ("{n} working days", "{n} dni roboczych"),
+    "strip.today": ("today", "dziś"),
+    "strip.likely": ("most likely {date}", "najbardziej prawdopodobny koniec {date}"),
+    "strip.deadline": ("deadline {date}", "termin {date}"),
+    "strip.bad": ("bad case {date}", "zły scenariusz {date}"),
+    "overview.auto_title": ("Applied automatically", "Zastosowane automatycznie"),
     "overview.auto_text": (
         "Sentinel applied this on {date} because your settings allow it.",
         "Sentinel zastosował to {date}, bo pozwalają na to Twoje ustawienia.",
@@ -591,7 +624,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.undo": ("Undo", "Cofnij"),
     "overview.threats_title": ("What threatens the deadline", "Co zagraża terminowi"),
     "overview.drivers_wait": ("Waiting for the forecast…", "Czekam na prognozę…"),
-    "overview.away_badge": ("Away", "Nieobecność"),
     "overview.away_back": (
         "{person}: away, back on {date}.",
         "{person}: nieobecność, powrót {date}.",
@@ -600,7 +632,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "{person}: away, return date not known yet.",
         "{person}: nieobecność, data powrotu jeszcze nieznana.",
     ),
-    "overview.late_badge": ("Late start", "Opóźniony start"),
     "overview.late": (
         "“{task}” was planned to start on {date} and has not started.",
         "„{task}” miało się rozpocząć {date} i jeszcze się nie rozpoczęło.",
@@ -611,7 +642,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Nie udało się obliczyć prognozy.",
     ),
     "overview.no_forecast": ("No forecast yet.", "Brak prognozy."),
-    "overview.chance": ("Chance of meeting the deadline:", "Szansa na dotrzymanie terminu:"),
     "overview.no_deadline": (
         "No deadline is set, so there is no chance to show.",
         "Nie ustawiono terminu, więc nie ma szansy do pokazania.",
@@ -620,15 +650,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.deadline": ("Deadline", "Termin"),
     "overview.likely": ("Most likely finish", "Najbardziej prawdopodobny koniec"),
     "overview.bad_case": ("Bad case (1 in 10 later)", "Zły scenariusz (1 na 10 później)"),
-    "overview.spent": ("Spent so far", "Wydano do tej pory"),
     "overview.expected_cost": ("Expected total cost", "Oczekiwany koszt całkowity"),
     "overview.within_budget": (
-        "{p} chance to stay within the budget",
-        "{p} szansy na zmieszczenie się w budżecie",
+        "Chance of staying within the budget: {p}",
+        "Szansa na zmieszczenie się w budżecie: {p}",
     ),
     "overview.forecast_note": (
-        "Based on {futures} simulated futures of the project from its current status.",
-        "Na podstawie {futures} symulowanych scenariuszy projektu od obecnego stanu.",
+        "Calculated on {futures} simulated futures from today's status. The chance is the "
+        "share of them that finish by the deadline.",
+        "Policzone na {futures} symulowanych scenariuszach od dzisiejszego stanu. Szansa to "
+        "odsetek scenariuszy, które kończą się przed terminem.",
     ),
     "overview.driver": (
         "The task “{task}” decides the deadline in {count} of 10 late scenarios.",
@@ -647,8 +678,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Żadne pojedyncze zadanie nie przesądza o terminie: ryzyko rozkłada się na cały plan.",
     ),
     "overview.no_late": (
-        "The project is late in none of the simulated futures.",
-        "W żadnym symulowanym scenariuszu projekt się nie spóźnia.",
+        "Nothing threatens the deadline for now: the project is late in none of the simulated "
+        "futures.",
+        "Na razie nic nie zagraża terminowi: w żadnym symulowanym scenariuszu projekt się nie "
+        "spóźnia.",
     ),
     "overview.threats_no_deadline": (
         "Set a deadline to see what threatens it.",
@@ -669,8 +702,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "chart.title": ("Plan and progress of the tasks", "Plan i postęp zadań"),
     "chart.desc": (
-        "{tasks} tasks: {done} done, {running} in progress. Status at the end of {status}.",
-        "Zadania: {tasks}; gotowe: {done}, w toku: {running}. Stan na koniec dnia {status}.",
+        "{tasks} tasks: {done} done, {running} in progress, {planned} planned. Status at the "
+        "end of {status}.",
+        "Zadania: {tasks}; gotowe: {done}, w toku: {running}, zaplanowane: {planned}. Stan na "
+        "koniec dnia {status}.",
     ),
     "chart.away": ("away from {first}, back on {back}", "nieobecność od {first}, powrót {back}"),
     "chart.away_open": (
@@ -689,16 +724,29 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "chart.tip_original": ("{task}: original plan", "{task}: plan początkowy"),
     "chart.new": ("(new)", "(nowe)"),
-    "chart.status": ("Status {date}", "Stan {date}"),
-    "chart.deadline": ("Deadline {date}", "Termin {date}"),
-    "chart.today": ("Today", "Dziś"),
+    "chart.flag.today": ("Today · {date}", "Dziś · {date}"),
+    "chart.flag.status": ("Status · {date}", "Stan · {date}"),
+    "chart.flag.deadline": ("Deadline · {date}", "Termin · {date}"),
+    "chart.flag.likely": (
+        "Most likely finish · {date}",
+        "Najbardziej prawdopodobny koniec · {date}",
+    ),
+    "chart.flag.bad": ("Bad case · {date}", "Zły scenariusz · {date}"),
+    "chart.view": ("Show the plan as", "Pokaż plan jako"),
+    "chart.view.chart": ("Chart", "Wykres"),
+    "chart.view.table": ("Table", "Tabela"),
+    "chart.legend.window": ("Forecast window", "Okno prognozy"),
+    "chart.legend.deadline": ("Deadline", "Termin"),
+    "chart.col.people": ("People", "Osoby"),
     "chart.legend": ("Legend", "Legenda"),
     "chart.legend.original": ("Original plan", "Plan początkowy"),
     "chart.legend.done": ("Done", "Gotowe"),
-    "chart.legend.running": ("In progress (outline: work left)", "W toku (obrys: pozostała praca)"),
+    "chart.legend.running": (
+        "In progress (dashed: work left)",
+        "W toku (przerywana: pozostała praca)",
+    ),
     "chart.legend.planned": ("Planned", "Zaplanowane"),
     "chart.legend.away": ("Someone away", "Nieobecność"),
-    "chart.as_table": ("Show the tasks as a table", "Pokaż zadania w tabeli"),
     "chart.col.task": ("Task", "Zadanie"),
     "chart.col.state": ("State", "Stan"),
     "chart.col.dates": ("Dates", "Daty"),
@@ -802,15 +850,15 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "checkin.save": ("Save the check-in", "Zapisz raport"),
     # ---- recommendation
     "rec.title": ("Recommendation", "Rekomendacja"),
-    "rec.from": ("Recommendation for {date}", "Rekomendacja na {date}"),
+    "rec.from": ("since {date}", "od {date}"),
     "rec.alt_noop": ("No change (keep the plan)", "Bez zmian (zachowaj plan)"),
     "rec.can_wait": ("can wait", "może poczekać"),
-    "rec.effect": ("Effect compared with no change", "Efekt w porównaniu z brakiem zmian"),
-    "rec.needs_approval": (
-        "This needs your approval because it",
-        "To wymaga Twojej zgody, ponieważ",
+    "rec.parked": (
+        "Postponed · we will come back to it at the next check-in",
+        "Odłożone · wrócimy przy następnym raporcie",
     ),
-    "rec.needs_approval_short": ("Needs your approval:", "Wymaga Twojej zgody:"),
+    "rec.effect": ("Effect compared with no change", "Efekt w porównaniu z brakiem zmian"),
+    "rec.needs_approval": ("Needs your approval: {reasons}.", "Wymaga Twojej zgody: {reasons}."),
     "rec.reason.people": ("affects people", "dotyczy ludzi"),
     "rec.reason.money": ("costs money", "kosztuje"),
     "rec.reason.scope": ("changes scope", "zmienia zakres"),
@@ -865,12 +913,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "rec.later": ("Decide later", "Zdecyduj później"),
     "rec.approve": ("Approve", "Zatwierdź"),
     "rec.back": ("Back to the overview", "Wróć do przeglądu"),
-    "rec.open": ("See the recommendation", "Zobacz rekomendację"),
-    "chip.chance": ("Chance of meeting the deadline", "Szansa na dotrzymanie terminu"),
+    "rec.open": ("Review and decide", "Przejrzyj i zdecyduj"),
+    "chip.chance": ("Chance", "Szansa"),
     "chip.from_to": ("{before} → {after}", "{before} → {after}"),
-    "chip.finish": ("Expected finish", "Oczekiwany koniec"),
+    "chip.finish": ("Finish", "Koniec"),
     "chip.cost": ("Cost", "Koszt"),
-    "chip.moved": ("Dates moved", "Przesunięte terminy"),
+    "chip.moved": ("Tasks moved", "Przesunięte zadania"),
     "chip.better": ("better", "lepiej"),
     "chip.worse": ("worse", "gorzej"),
     "chip.tasks.one": ("{n} task", "{n} zadanie"),
@@ -1437,6 +1485,10 @@ class Texts:
             return self("cost.change_small", units=units)
         share = f"{'+' if value > 0 else MINUS}{percent}{NBSP}%"
         return self("cost.change", units=units, share=share)
+
+    def reasons(self, reasons: Sequence[str]) -> str:
+        """Why an action needs approval, in the wording of spec section 11.7."""
+        return ", ".join(self(f"rec.reason.{reason}") for reason in reasons)
 
     def tie(self, kind: str, reason: str) -> str:
         """The sentence shown when an alternative has a higher chance (spec 11.5 item 7, 11.7)."""

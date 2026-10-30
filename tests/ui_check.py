@@ -15,7 +15,7 @@ WORDS = re.compile(
 SNAKE = re.compile(r"\b[a-z]+_[a-z_]+\b")
 ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
 DECIMAL_PERCENT = re.compile(r"\d[.,]\d+\s?%")
-ATTRIBUTES = re.compile(r'\s(?:title|aria-label|placeholder|alt)="([^"]*)"')
+ATTRIBUTES = re.compile(r'\s(?:title|aria-label|placeholder|alt|data-tip)="([^"]*)"')
 
 
 def visible_text(page: str) -> str:

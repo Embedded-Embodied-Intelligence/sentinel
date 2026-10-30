@@ -545,7 +545,6 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .delta-up { color: var(--good); }
 .hero-actions { margin-top: var(--space-2); }
 .loading-line { display: flex; align-items: center; gap: var(--space-2); font: var(--fs-small); color: var(--text-2); }
-.hero .details { justify-self: end; }
 .hero-how { max-width: 32rem; }
 
 /* the forecast window strip (decorative: the KPI tiles carry the same facts in words) */
@@ -564,7 +563,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .kpis dd { display: grid; gap: 2px; text-align: right; font: var(--fs-small); flex: 1 1 60%; min-width: 0; }
 .kpi-value { font: var(--fs-kpi); font-variant-numeric: tabular-nums; }
 .kpi-unit { font: var(--fs-caption); color: var(--muted); }
-.kpi-sub { display: inline-flex; gap: var(--space-1); align-items: baseline; justify-content: inherit; font: var(--fs-caption); color: var(--muted); }
+.kpi-sub { display: block; font: var(--fs-caption); color: var(--muted); }
+.kpi-sub .icon { margin-right: var(--space-1); }
 .kpi-sub.good { color: var(--good); }
 .kpi-sub.warn { color: var(--warn); }
 .kpi-sub.bad { color: var(--bad); }
@@ -577,7 +577,6 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .kpis > div { display: grid; align-content: start; gap: var(--space-1); padding: 0; }
   .kpis > div + div { border-top: 0; }
   .kpis dd { text-align: left; }
-  .kpi-sub { justify-content: flex-start; }
 }
 @media (min-width: 1024px) {
   .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
@@ -633,9 +632,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .rec-card { display: grid; gap: var(--space-3); }
 .rec-card h3 { font: var(--fs-h3); }
 .delta-chips { list-style: none; display: grid; gap: var(--space-2); }
-.delta-chip { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-2); display: grid; gap: 2px; }
+.delta-chip { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-2); display: grid; gap: 2px; align-content: start; }
 .chip-label { font: 400 0.75rem/1rem var(--font); color: var(--muted); }
-.chip-value { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font: 600 0.9375rem/1.25rem var(--font); font-variant-numeric: tabular-nums; }
+.chip-value { display: block; font: 600 0.9375rem/1.25rem var(--font); font-variant-numeric: tabular-nums; }
+.chip-value .icon { margin-left: var(--space-1); }
 .chip-value .good { color: var(--good); }
 .chip-value .bad { color: var(--bad); }
 .rec-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-3); }
@@ -651,6 +651,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .threats { list-style: none; display: grid; }
 .threats li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-2); padding: var(--space-3) 0; border-top: 1px solid var(--border); font: var(--fs-small); }
 .threats li:first-child { border-top: 0; padding-top: 0; }
+.threats:last-child li:last-child { padding-bottom: 0; }
+#drivers:has(.threats) + .threats-more li:first-child { border-top: 1px solid var(--border); padding-top: var(--space-3); }
 .threat-mark { display: inline-flex; color: var(--warn); margin-top: 2px; }
 .threat-mark.neutral { color: var(--muted); }
 .share-bar { grid-column: 2; display: block; height: 6px; max-width: 12rem; border-radius: 3px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
@@ -710,8 +712,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   background: var(--toast-bg); color: var(--toast-ink); border-radius: var(--radius); font: var(--fs-caption); box-shadow: var(--shadow-2);
 }
 .gantt-tip[hidden] { display: none; }
-.view-switch:has(input[value="table"]:checked) ~ .view-chart, .view-switch:has(input[value="chart"]:checked) ~ .view-table { display: none; }
-.card:has(.view-chart-radio:checked) .view-table, .card:has(.view-table-radio:checked) .view-chart { display: none; }
+.section:has(.view-chart-radio:checked) .view-table, .section:has(.view-table-radio:checked) .view-chart { display: none; }
 @media (min-width: 768px) { .gantt-names { width: 200px; } }
 
 /* ---- tables */

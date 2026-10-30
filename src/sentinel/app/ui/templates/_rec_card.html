@@ -1,9 +1,15 @@
-<article class="panel rec-card" aria-labelledby="rec-{{ rec.seq }}-title">
-  <p class="eyebrow">{{ t("rec.from", date=t.date(rec.date)) }} · {% if rec.status == "later" %}<span class="badge badge-neutral">{{ rec.status_text }}</span>{% else %}<span class="badge badge-warn">{{ rec.status_text }}</span>{% endif %}</p>
+{% import "_ui.html" as ui with context %}
+<article class="card rec-card" aria-labelledby="rec-{{ rec.seq }}-title">
+  <div class="rec-eyebrow">
+    <p class="overline">{% if rec.status == "later" %}{{ t("rec.parked") }}{% else %}{{ rec.status_text }} · {{ t("rec.from", date=t.date(rec.date)) }}{% endif %}</p>
+    {% if rec.can_wait %}{{ ui.badge("later", t("rec.can_wait")) }}{% endif %}
+  </div>
   <h3 id="rec-{{ rec.seq }}-title">{{ rec.title }}</h3>
-  <ul class="chips">
-    {% for chip in chips(rec, t) %}<li class="chip chip-{{ chip.tone }}"><span class="chip-label">{{ chip.label }}</span> {{ chip.text }}</li>{% endfor %}
+  <ul class="delta-chips" aria-label="{{ t('rec.effect') }}">
+    {% for chip in chips(rec, t) %}<li class="delta-chip"><span class="chip-label">{{ chip.label }}</span>{{ ui.chip_value(t, chip) }}</li>{% endfor %}
   </ul>
-  {% if rec.needs_approval %}<p class="small">{{ t("rec.needs_approval_short") }}{% for reason in rec.approval_reasons %} <span class="badge badge-neutral">{{ t("rec.reason." ~ reason) }}</span>{% endfor %}</p>{% endif %}
-  <p><a class="btn btn-small" href="/projects/{{ view.id }}/recommendations/{{ rec.seq }}">{{ t("rec.open") }}</a></p>
+  {% if rec.needs_approval %}
+  {% call ui.callout("info") %}<p>{{ t("rec.needs_approval", reasons=t.reasons(rec.approval_reasons)) }}</p>{% endcall %}
+  {% endif %}
+  <div class="rec-foot"><a class="btn{% if primary %} btn-primary{% endif %}" href="/projects/{{ view.id }}/recommendations/{{ rec.seq }}">{{ t("rec.open") }}</a></div>
 </article>

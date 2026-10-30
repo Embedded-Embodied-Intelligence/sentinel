@@ -1,101 +1,114 @@
 {% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
 {% block content %}
+<div class="page">
 {% include "_project_head.html" %}
-<div class="overview">
-  <section class="panel headline-panel" aria-labelledby="chance-title">
-    <h2 id="chance-title" class="vh">{{ t("overview.chance_title") }}</h2>
-    {% if view.finished %}
-      <p class="headline">{{ t("overview.finished") }}</p>
-    {% else %}
-    <div id="forecast" hx-get="/projects/{{ view.id }}/forecast" hx-trigger="load" hx-swap="innerHTML">
-      <div role="status"><p class="muted"><span class="spinner" aria-hidden="true"></span> {{ t("overview.calculating") }}</p></div>
+<section class="card hero" aria-labelledby="chance-title">
+  <h2 id="chance-title" class="vh">{{ t("overview.chance_title") }}</h2>
+  {% if view.finished %}
+    <p>{{ ui.badge("good", t("start.finished")) }}</p>
+    <p class="lead">{{ t("overview.finished") }}</p>
+  {% else %}
+  <div id="forecast" hx-get="/projects/{{ view.id }}/forecast{% if flash_key %}?toast={{ flash_key }}{% endif %}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="headline">
+      <p class="hero-label">{{ t("overview.chance_title") }}</p>
+      <p class="headline-number skeleton" aria-hidden="true">— %</p>
+      <p class="loading-line" role="status"><span class="spinner" aria-hidden="true"></span>{{ t("overview.calculating") }}</p>
     </div>
-    {% endif %}
-    {% if not view.finished %}
-    <div class="actions">
-      <form hx-post="/projects/{{ view.id }}/ask" hx-target="#ask-area"><button class="btn">{{ t("overview.ask") }}</button></form>
-      <a class="btn btn-primary" href="/projects/{{ view.id }}/checkin">{{ t("overview.checkin") }}</a>
-    </div>
-    <div id="ask-area" aria-live="polite"></div>
-    {% endif %}
-  </section>
+  </div>
+  <div class="btn-row hero-actions">
+    <a class="btn{% if not pending %} btn-primary{% endif %}" href="/projects/{{ view.id }}/checkin">{{ t("overview.checkin") }}</a>
+    <form hx-post="/projects/{{ view.id }}/ask" hx-target="#ask-area"><button class="btn">{{ t("overview.ask") }}</button></form>
+  </div>
+  <div id="ask-area" aria-live="polite"></div>
+  <div id="kpis"></div>
+  {% endif %}
+</section>
 
+<section class="section" aria-labelledby="pending-title">
+  {% if pending %}
+  <h2 id="pending-title" class="group-title">{{ t("overview.pending_title") }} <span class="count">({{ pending | length }})</span></h2>
+  <div class="stacked">
+    {% for rec in urgent %}{% with primary=loop.first %}{% include "_rec_card.html" %}{% endwith %}{% endfor %}
+    {% if waiting %}
+    <details class="details">
+      <summary>{{ t("overview.other_proposals", n=waiting | length) }}</summary>
+      <div class="stacked details-body">{% for rec in waiting %}{% with primary=false %}{% include "_rec_card.html" %}{% endwith %}{% endfor %}</div>
+    </details>
+    {% endif %}
+  </div>
+  {% else %}
+  <h2 id="pending-title" class="vh">{{ t("overview.pending_title") }}</h2>
   {% if job %}
-  <section class="panel" aria-labelledby="working-title">
-    <h2 id="working-title">{{ t("overview.working_title") }}</h2>
-    {% with label=t("job.recommend"), query="label=job.recommend&next=/projects/" ~ view.id %}{% include "_job.html" %}{% endwith %}
-  </section>
+  {% with label=t("job.recommend"), query="label=job.recommend&next=/projects/" ~ view.id %}{% include "_job.html" %}{% endwith %}
+  {% else %}
+  <p class="none-line">{{ icon("check", 16) }}{{ t("overview.nothing_pending") }}</p>
   {% endif %}
-
-  {% if open_recs %}
-  <section aria-labelledby="pending-title">
-    <h2 id="pending-title">{{ t("overview.pending_title") }}</h2>
-    {% for rec in open_recs %}{% include "_rec_card.html" %}{% endfor %}
-  </section>
   {% endif %}
-
   {% if checked %}
-  <section class="panel info-card" aria-labelledby="checked-title">
-    <h2 id="checked-title"><span aria-hidden="true">✓ </span>{{ t("overview.checked_title") }}</h2>
-    <p>{{ t("overview.checked") }} <a href="/projects/{{ view.id }}/recommendations/{{ checked.seq }}">{{ t("overview.details") }}</a></p>
-  </section>
+  <p class="none-line section-sub">{{ icon("check-circle", 16) }}<span>{{ t("overview.checked_title") }}. {{ t("overview.checked") }} <a href="/projects/{{ view.id }}/recommendations/{{ checked.seq }}">{{ t("overview.details") }}</a></span></p>
   {% endif %}
-
   {% if auto %}
-  <section class="panel info-card" aria-labelledby="auto-title">
-    <h2 id="auto-title"><span aria-hidden="true">ℹ </span>{{ t("overview.auto_title") }}</h2>
-    <p>{{ auto.title }}</p>
-    <p class="small muted">{{ t("overview.auto_text", date=t.date(auto.date)) }}</p>
-    <div class="actions">
-      <a class="btn btn-small" href="/projects/{{ view.id }}/recommendations/{{ auto.seq }}">{{ t("overview.details") }}</a>
-      {% if auto.can_undo %}
-      <form hx-post="/projects/{{ view.id }}/recommendations/{{ auto.seq }}/undo"><button class="btn btn-small">{{ t("overview.undo") }}</button></form>
-      {% endif %}
+  <div class="card rec-card section-sub">
+    <p>{{ ui.badge("auto", t("overview.auto_title")) }}</p>
+    <p class="small">{{ auto.title }}</p>
+    <p class="caption">{{ t("overview.auto_text", date=t.date(auto.date)) }}</p>
+    <div class="btn-row">
+      <a class="btn btn-sm" href="/projects/{{ view.id }}/recommendations/{{ auto.seq }}">{{ t("overview.details") }}</a>
+      {% if auto.can_undo %}<form hx-post="/projects/{{ view.id }}/recommendations/{{ auto.seq }}/undo"><button class="btn btn-sm">{{ t("overview.undo") }}</button></form>{% endif %}
     </div>
-  </section>
+  </div>
   {% endif %}
+</section>
 
-  <section class="panel" aria-labelledby="threats-title">
-    <h2 id="threats-title">{{ t("overview.threats_title") }}</h2>
+<section class="section" aria-labelledby="threats-title">
+  <h2 id="threats-title" class="group-title">{{ t("overview.threats_title") }}</h2>
+  <div class="card">
     <div id="drivers"><p class="muted small">{{ t("overview.drivers_wait") }}</p></div>
     {% if away or late %}
-    <ul class="threats">
+    <ul class="threats threats-more">
       {% for person in away %}
       {% set absence = person.absences[-1] if person.absences else none %}
-      <li><span class="badge badge-warn">{{ t("overview.away_badge") }}</span> {% if absence and absence.return_date %}{{ t("overview.away_back", person=person.name, date=t.date(absence.return_date)) }}{% else %}{{ t("overview.away_open", person=person.name) }}{% endif %}</li>
+      <li><span class="threat-mark neutral">{{ icon("person-off", 16) }}</span><span>{% if absence and absence.return_date %}{{ t("overview.away_back", person=person.name, date=t.date(absence.return_date)) }}{% else %}{{ t("overview.away_open", person=person.name) }}{% endif %}</span></li>
       {% endfor %}
       {% for task in late %}
-      <li><span class="badge badge-warn">{{ t("overview.late_badge") }}</span> {{ t("overview.late", task=task.name, date=t.date(task.planned_start)) }}</li>
+      <li><span class="threat-mark neutral">{{ icon("clock", 16) }}</span><span>{{ t("overview.late", task=task.name, date=t.date(task.planned_start)) }}</span></li>
       {% endfor %}
     </ul>
     {% endif %}
-  </section>
+    <div id="drivers-how"></div>
+  </div>
+</section>
 
-  <section class="panel" aria-labelledby="plan-title">
+<section class="section" aria-labelledby="plan-title">
+  <div class="section-head">
     <h2 id="plan-title">{{ t("overview.plan_title") }}</h2>
-    <ul class="legend" aria-label="{{ t('chart.legend') }}">
-      <li><span class="swatch sw-original" aria-hidden="true"></span>{{ t("chart.legend.original") }}</li>
-      <li><span class="swatch sw-done" aria-hidden="true"></span>{{ t("chart.legend.done") }}</li>
-      <li><span class="swatch sw-running" aria-hidden="true"></span>{{ t("chart.legend.running") }}</li>
-      <li><span class="swatch sw-planned" aria-hidden="true"></span>{{ t("chart.legend.planned") }}</li>
-      <li><span class="swatch sw-away" aria-hidden="true"></span>{{ t("chart.legend.away") }}</li>
-    </ul>
-    <div class="chart-wrap">{{ chart | safe }}</div>
-    <details class="chart-table">
-      <summary>{{ t("chart.as_table") }}</summary>
+    <div class="segmented segmented-sm" role="radiogroup" aria-label="{{ t('chart.view') }}">
+      <label><input class="view-chart-radio" type="radio" name="plan-view" value="chart" checked>{{ t("chart.view.chart") }}</label>
+      <label><input class="view-table-radio" type="radio" name="plan-view" value="table">{{ t("chart.view.table") }}</label>
+    </div>
+  </div>
+  <div class="card plan-card">
+    <div class="view-chart">
+      {% with with_away=true, with_window=true %}{% include "_gantt_legend.html" %}{% endwith %}
+      <div id="gantt-area">{{ chart | safe }}</div>
+    </div>
+    <div class="view-table">
       <div class="table-wrap">
       <table class="table">
         <caption class="vh">{{ t("chart.title") }}</caption>
-        <thead><tr><th scope="col">{{ t("chart.col.task") }}</th><th scope="col">{{ t("chart.col.state") }}</th><th scope="col">{{ t("chart.col.dates") }}</th></tr></thead>
+        <thead><tr><th scope="col">{{ t("chart.col.task") }}</th><th scope="col">{{ t("chart.col.state") }}</th><th scope="col">{{ t("chart.col.dates") }}</th><th scope="col">{{ t("chart.col.people") }}</th></tr></thead>
         <tbody>
         {% for task in view.tasks %}
-        <tr><td>{{ task.name }}{% if task.added %} <span class="badge badge-neutral">{{ t("chart.new") }}</span>{% endif %}</td><td>{{ task.state_text }}{% if task.percent is not none %} ({{ task.percent | round | int }} %){% endif %}</td>
-        <td>{% if task.state == "done" %}{{ t.date(task.start) }} – {{ t.date(task.finish) }}{% elif task.start %}{{ t("chart.since", date=t.date(task.start)) }}{% elif task.planned_start %}{{ t.date(task.planned_start) }} – {{ t.date(task.planned_finish) }}{% else %}—{% endif %}</td></tr>
+        <tr><td>{{ task.name }}{% if task.added %} {{ ui.badge("neutral", t("chart.new")) }}{% endif %}</td><td>{{ task.state_text }}{% if task.percent is not none %} ({{ task.percent | round | int }} %){% endif %}</td>
+        <td>{% if task.state == "done" %}{{ t.date(task.start) }} – {{ t.date(task.finish) }}{% elif task.start %}{{ t("chart.since", date=t.date(task.start)) }}{% elif task.planned_start %}{{ t.date(task.planned_start) }} – {{ t.date(task.planned_finish) }}{% else %}–{% endif %}</td>
+        <td>{{ task.crew_names | join(", ") or "–" }}</td></tr>
         {% endfor %}
         </tbody>
       </table>
       </div>
-    </details>
-  </section>
+    </div>
+  </div>
+</section>
 </div>
 {% endblock %}

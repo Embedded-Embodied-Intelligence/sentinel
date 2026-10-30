@@ -1,48 +1,85 @@
+{% import "_ui.html" as ui with context %}
 {% if failed %}
-<div class="alert alert-error" role="alert">
-  <p>{{ t("overview.forecast_failed") }} {{ failed }}</p>
-  <button class="btn btn-small" hx-get="/projects/{{ view.id }}/forecast" hx-target="#forecast">{{ t("common.retry") }}</button>
-</div>
+{% call ui.callout("bad", t("overview.forecast_failed"), ' role="alert"') %}
+  <p>{{ failed }}</p>
+  <p><button class="btn btn-sm" hx-get="/projects/{{ view.id }}/forecast" hx-target="#forecast">{{ t("common.retry") }}</button></p>
+{% endcall %}
 {% elif summary is none %}
 <p class="muted">{{ t("overview.no_forecast") }}</p>
 {% else %}
 {% set f = summary.forecast %}
-{% if f.p_on_time is not none %}
-<p class="headline">
-  <span>{{ t("overview.chance") }}</span>
-  <strong class="headline-number">{{ t.pct(f.p_on_time) }}</strong>
-  <span class="badge badge-{{ level }}">{{ t("chance.level." ~ level) }}</span>
-  {% if delta is not none %}{% import "_ui.html" as ui with context %}{{ ui.delta(t, delta, "") }}{% endif %}
-</p>
-{% else %}
-<p class="headline">{{ t("overview.no_deadline") }} <a href="/projects/{{ view.id }}/settings">{{ t("overview.set_deadline") }}</a></p>
-{% endif %}
+<div class="hero-top">
+  <div class="headline">
+    <p class="hero-label">{{ t("overview.chance_title") }}</p>
+    {% if f.p_on_time is not none %}
+    <div class="headline-line">
+      <strong class="headline-number">{{ t.pct(f.p_on_time) }}</strong>
+      {{ ui.badge(level, t("chance.level." ~ level)) }}
+    </div>
+    {% if delta is not none %}{{ ui.delta(t, delta, since) }}{% endif %}
+    {% else %}
+    <p class="lead">{{ t("overview.no_deadline") }} <a href="/projects/{{ view.id }}/settings">{{ t("overview.set_deadline") }}</a></p>
+    {% endif %}
+  </div>
+  <details class="details hero-how">
+    <summary>{{ t("overview.how") }}</summary>
+    <div class="details-body"><p>{{ t("overview.forecast_note", futures=f.rollouts) }}</p></div>
+  </details>
+</div>
+<div class="strip" aria-hidden="true">
+  <div class="strip-track">
+    <span class="strip-window" style="left: {{ strip.likely }}%; width: {{ strip.bad - strip.likely }}%"></span>
+    {% if strip.deadline is not none %}<span class="strip-deadline" style="left: {{ strip.deadline }}%"></span>{% endif %}
+    <span class="strip-dot" style="left: {{ strip.likely }}%"></span>
+  </div>
+  <ul class="strip-labels">
+    {% for label in strip_labels %}<li>{{ label }}</li>{% endfor %}
+  </ul>
+</div>
+<div id="kpis" hx-swap-oob="true">
 <dl class="kpis">
-  {% if f.deadline %}<div><dt>{{ t("overview.deadline") }}</dt><dd>{{ t.date(f.deadline) }}</dd></div>{% endif %}
-  <div><dt>{{ t("overview.likely") }}</dt><dd>{{ t.date(f.p50) }}</dd></div>
-  <div><dt>{{ t("overview.bad_case") }}</dt><dd>{{ t.date(f.p90) }}</dd></div>
-  {% if f.budget %}
-  <div><dt>{{ t("overview.spent") }}</dt><dd>{{ t.cost_of(view.cost_so_far or 0, f.budget) }}{% if view.person_days %} <span class="unit">{{ t("cost.person_days") }}</span>{% endif %}</dd></div>
-  <div><dt>{{ t("overview.expected_cost") }}</dt><dd>{{ t.cost(f.expected_cost) }}{% if f.p_within_budget is not none %}<span class="small muted block">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}</dd></div>
-  {% endif %}
+  <div><dt>{{ t("overview.deadline") }}</dt><dd><span class="kpi-value">{% if f.deadline %}{{ t.date(f.deadline) }}{% else %}–{% endif %}</span></dd></div>
+  <div><dt>{{ t("overview.likely") }}</dt><dd><span class="kpi-value">{{ t.date(f.p50) }}</span>{% if likely_gap %}<span class="kpi-sub {{ likely_gap.tone }}">{{ icon(likely_gap.icon, 14) }}{{ likely_gap.text }}</span>{% endif %}</dd></div>
+  <div><dt>{{ t("overview.bad_case") }}</dt><dd><span class="kpi-value">{{ t.date(f.p90) }}</span>{% if bad_gap %}<span class="kpi-sub {{ bad_gap.tone }}">{{ icon(bad_gap.icon, 14) }}{{ bad_gap.text }}</span>{% endif %}</dd></div>
+  <div><dt>{{ t("overview.budget") }}</dt><dd>
+    {% if f.budget %}
+    {% set parts = t.cost_of_parts(view.cost_so_far or 0, f.budget) %}
+    <span class="kpi-value">{{ parts[0] }}</span> <span class="kpi-unit">{{ parts[1] }}{% if view.person_days %} {{ t("cost.person_days") }}{% endif %}</span>
+    <span class="kpi-bar" aria-hidden="true"><span style="width: {{ [100, 100 * (view.cost_so_far or 0) / f.budget] | min | round(1) }}%"></span></span>
+    <span class="kpi-sub">{{ t("overview.spent_share", share=t.pct((view.cost_so_far or 0) / f.budget)) }}{% if f.expected_cost is not none %} · {{ t("overview.expected_share", share=t.pct(f.expected_cost / f.budget)) }}{% endif %}</span>
+    <details class="details kpi-details">
+      <summary>{{ t("overview.details") }}</summary>
+      <div class="details-body">
+        <p>{{ t("overview.expected_cost") }}: {{ t.cost(f.expected_cost) }}</p>
+        {% if f.p_within_budget is not none %}<p>{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</p>{% endif %}
+      </div>
+    </details>
+    {% else %}<span class="kpi-value">–</span>{% endif %}
+  </dd></div>
 </dl>
-<p class="small muted">{{ t("overview.forecast_note", futures=f.rollouts) }}</p>
+</div>
 <div id="drivers" hx-swap-oob="true">
   {% if f.p_on_time is none %}
   <p class="muted small">{{ t("overview.threats_no_deadline") }}</p>
   {% elif f.late == 0 %}
-  <p class="muted small">{{ t("overview.no_late") }}</p>
-  {% else %}
-  {% set shown = f.drivers | selectattr("share", ">=", 0.05) | list %}
-  {% if shown %}
-  <ol class="drivers">
-    {% for d in shown[:3] %}
-    {% set count = t.tenths(d.share) %}
-    <li>{% if d.share >= 1 %}{{ t("overview.driver_all", task=d.name) }}{% elif count >= 10 %}{{ t("overview.driver_nearly", task=d.name) }}{% else %}{{ t("overview.driver", task=d.name, count=count) }}{% endif %}</li>
+  <p class="none-line">{{ icon("check", 16) }}{{ t("overview.no_late") }}</p>
+  {% elif threats %}
+  <ol class="threats">
+    {% for threat in threats %}
+    <li><span class="threat-mark">{{ icon("alert", 16) }}</span><span>{{ threat.text }}</span><span class="share-bar" aria-hidden="true"><span style="width: {{ threat.percent }}%"></span></span></li>
     {% endfor %}
   </ol>
-  <p class="hint">{{ t("overview.drivers_note") }}</p>
   {% else %}<p class="muted small">{{ t("overview.spread") }}</p>{% endif %}
+</div>
+<div id="drivers-how" hx-swap-oob="true">
+  {% if threats %}
+  <details class="details section-sub">
+    <summary>{{ t("overview.drivers_how") }}</summary>
+    <div class="details-body"><p>{{ t("overview.drivers_note") }}</p></div>
+  </details>
   {% endif %}
 </div>
+<div id="gantt-area" hx-swap-oob="true">{{ chart | safe }}</div>
+{% with id=view.id, level=nav_level, oob=true %}{% include "_nav_status.html" %}{% endwith %}
+{% if toast %}<span id="toast-text" hx-swap-oob="true">{{ toast }}</span>{% endif %}
 {% endif %}

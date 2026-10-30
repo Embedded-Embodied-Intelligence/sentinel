@@ -1,0 +1,9 @@
+<ul class="gantt-legend" aria-label="{{ t('chart.legend') }}">
+  <li><span class="swatch sw-original" aria-hidden="true"></span>{{ t("chart.legend.original") }}</li>
+  <li><span class="swatch sw-done" aria-hidden="true"></span>{{ t("chart.legend.done") }}</li>
+  <li><span class="swatch sw-running" aria-hidden="true"></span>{{ t("chart.legend.running") }}</li>
+  <li><span class="swatch sw-planned" aria-hidden="true"></span>{{ t("chart.legend.planned") }}</li>
+  {% if with_away | default(true) %}<li><span class="swatch sw-away" aria-hidden="true"></span>{{ t("chart.legend.away") }}</li>{% endif %}
+  {% if with_window | default(true) %}<li><span class="swatch sw-window" aria-hidden="true"></span>{{ t("chart.legend.window") }}</li>{% endif %}
+  <li><span class="swatch sw-deadline" aria-hidden="true"></span>{{ t("chart.legend.deadline") }}</li>
+</ul>

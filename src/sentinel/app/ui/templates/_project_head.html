@@ -1,7 +1,7 @@
 <div class="page-head">
-  <p class="eyebrow"><a href="/">{{ t("nav.projects") }}</a> <span aria-hidden="true">›</span> {{ view.name }}</p>
+  <p class="crumbs"><a href="/">{{ t("nav.projects") }}</a> / {% if tab == "overview" %}{{ t("project.tab.overview") }}{% else %}<a href="/projects/{{ view.id }}">{{ view.name }}</a>{% endif %}</p>
   <h1>{{ title }}</h1>
-  {% if view.tracking %}<p class="sub">{{ t("project.as_of", date=t.date(view.checkins[-1].date)) }}</p>{% else %}<p class="sub">{{ t("project.not_started", date=t.date(view.definition.start)) }}</p>{% endif %}
+  <p class="meta">{% if view.tracking %}{{ t("project.as_of", date=t.date(view.checkins[-1].date)) }}{% else %}{{ t("project.not_started", date=t.date(view.definition.start)) }}{% endif %}{% if view.deadline %} · {{ t("start.deadline", date=t.date(view.deadline)) }}{% endif %}</p>
 </div>
 <nav class="tabs" aria-label="{{ t('project.sections') }}">
   <a href="/projects/{{ view.id }}"{% if tab == 'overview' %} aria-current="page"{% endif %}>{{ t("project.tab.overview") }}</a>

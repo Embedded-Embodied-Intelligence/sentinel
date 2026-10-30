@@ -157,16 +157,18 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
     ]
 
 
-def save(page: Any, target: Path) -> int:
+def save(page: Any, target: Path, full: bool = False) -> int:
     """A screenshot with a reduced palette; its size in bytes."""
-    page.screenshot(path=str(target))
+    page.screenshot(path=str(target), full_page=full)
     with Image.open(target) as image:
         reduced = image.convert("RGB").quantize(COLOURS, dither=Image.Dither.NONE)
     reduced.save(target, optimize=True)
     return target.stat().st_size
 
 
-def capture(browser: Any, base: str, shots: list[Shot], language: str, out: Path) -> None:
+def capture(
+    browser: Any, base: str, shots: list[Shot], language: str, out: Path, full: bool = False
+) -> None:
     for suffix, (width, height) in SIZES.items():
         context = browser.new_context(
             viewport={"width": width, "height": height},
@@ -187,7 +189,7 @@ def capture(browser: Any, base: str, shots: list[Shot], language: str, out: Path
                 page.locator(shot.scroll).evaluate("e => e.scrollIntoView({block: 'start'})")
                 page.evaluate("window.scrollBy(0, -72)")
             target = out / f"{language}_{shot.name}{suffix}.png"
-            print(f"{target}: {save(page, target) / 1024:.0f} kB")
+            print(f"{target}: {save(page, target, full) / 1024:.0f} kB")
         context.close()
 
 
@@ -197,6 +199,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=Path("docs/ui"))
     parser.add_argument("--data", type=Path, default=None, help="keep the seeded data here")
     parser.add_argument("--only", nargs="*", default=None, help="only these screens")
+    parser.add_argument("--full", action="store_true", help="whole pages, for a visual review")
     args = parser.parse_args()
     from playwright.sync_api import sync_playwright
 
@@ -217,7 +220,7 @@ def main() -> int:
             if args.only:
                 shots = [s for s in shots if s.name in args.only]
             with serving(config, services) as base:
-                capture(browser, base, shots, language, args.out)
+                capture(browser, base, shots, language, args.out, args.full)
             if not args.only or "start_empty" in args.only:
                 empty = AppConfig(data_dir=Path(tempfile.mkdtemp(prefix="sentinel-ui-")))
                 with serving(empty, Services(empty)) as base:

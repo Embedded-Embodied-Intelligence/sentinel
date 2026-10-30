@@ -1,0 +1,43 @@
+{# The chart's geometry comes from `charts.layout`; the names beside the plot stay in view on a small
+   screen and take the focus, which shows the row's facts (sentinel.js). #}
+<div class="gantt{% if g.rows | length > 16 %} gantt-tall{% endif %}" style="--gantt-top: {{ g.top }}px; --gantt-min: {{ g.min_width }}px">
+  <div class="gantt-scroll" data-open-at="{{ g.open_at }}">
+    <div class="gantt-body">
+      <ol class="gantt-names">
+        <li class="gantt-corner" aria-hidden="true"></li>
+        {% for item in g.rows %}
+        {% set row = item.row %}
+        <li class="{% if row.threat %}is-threat{% endif %}{% if row.state == 'removed' %} is-removed{% endif %}" tabindex="0" data-row="{{ loop.index0 }}" data-tip="{{ row.threat ~ ' ' if row.threat else '' }}{{ row.tip }}">
+          {% if row.threat %}<span class="gantt-flag" title="{{ row.threat }}" aria-hidden="true">!</span>{% endif %}
+          <span class="gantt-name" title="{{ row.label }}">{{ row.label }}{% if row.added %} {{ t("chart.new") }}{% endif %}</span>
+          {% if row.state == "absence" %}<span class="gantt-away-word">{{ t("chart.legend.away") }}</span>{% endif %}
+          <span class="vh">{{ row.tip }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      <svg class="gantt-plot" width="100%" height="{{ g.height }}" role="img" aria-labelledby="gantt-title gantt-desc">
+        <title id="gantt-title">{{ g.title }}</title>
+        <desc id="gantt-desc">{{ g.desc }}</desc>
+        <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hatch-fg" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
+        {% for item in g.rows %}
+        {% if loop.index0 % 2 == 0 %}<rect class="band" x="0" y="{{ item.y }}" width="100%" height="32"/>{% endif %}
+        <rect class="row-bg" data-row="{{ loop.index0 }}" x="0" y="{{ item.y }}" width="100%" height="32"/>
+        {% endfor %}
+        {% if g.window %}<rect class="window" x="{{ g.window[0] }}%" y="{{ g.top }}" width="{{ g.window[1] }}%" height="{{ g.bottom - g.top }}"/>{% endif %}
+        {% for tick in g.ticks %}
+        <line class="grid" x1="{{ tick.x }}%" x2="{{ tick.x }}%" y1="{{ g.top - 4 }}" y2="{{ g.bottom }}"/>
+        {% if tick.label %}<text class="tick" x="{{ tick.x }}%" y="{{ g.top - 7 }}" text-anchor="{{ tick.anchor }}">{{ tick.label }}</text>{% endif %}
+        {% endfor %}
+        {% for item in g.rows %}
+        <g data-row="{{ loop.index0 }}">{% for bar in item.bars %}<rect class="{{ bar.cls }}" x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" rx="{{ 2 if bar.height < 10 else 4 }}"/>{% endfor %}</g>
+        {% endfor %}
+        {% for line in g.lines %}
+        {% set flag_y = line.tier * 22 + 2 %}
+        <line class="{{ line.cls }}" x1="{{ line.x }}%" x2="{{ line.x }}%" y1="{{ flag_y + 18 }}" y2="{{ g.bottom }}"/>
+        <svg x="{{ line.x }}%" y="{{ flag_y }}" overflow="visible"><rect class="flag-bg" x="{{ -line.width if line.flip else 0 }}" y="0" width="{{ line.width }}" height="18" rx="4"/><text class="flag-text" x="{{ -line.width + 8 if line.flip else 8 }}" y="13">{{ line.label }}</text></svg>
+        {% endfor %}
+      </svg>
+    </div>
+  </div>
+  <div class="gantt-tip" hidden></div>
+</div>

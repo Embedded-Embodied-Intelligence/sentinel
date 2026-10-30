@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
+from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
 from sentinel.app.events import (
     BaselineSet,
@@ -25,15 +26,22 @@ from sentinel.app.events import (
 from sentinel.app.live import LiveProject
 from sentinel.app.models import CheckIn
 from sentinel.app.services import JobView
-from sentinel.app.ui.charts import gantt
+from sentinel.app.ui.charts import forecast_strip, live_gantt
 from sentinel.app.ui.core import Ui, chance_level, is_htmx
 from sentinel.app.ui.forms import Form, read_checkin, read_settings, team_roles
 from sentinel.app.ui.pages import job_progress, trend
 from sentinel.app.ui.text import Texts
-from sentinel.app.views import ProjectView, RecommendationView, TaskView
+from sentinel.app.views import (
+    ForecastSummary,
+    ForecastView,
+    ProjectView,
+    RecommendationView,
+    TaskView,
+)
 
 HISTORY_FILTERS = ("all", "checkins", "recommendations", "changes")
 NEXT_DAYS = 10  # unstarted tasks planned within this many working days are shown at check-in
+FLASHES_WITH_CHANCE = ("checkin_saved", "approved")  # toasts that add the new chance when known
 
 
 def why_text(rec: RecommendationView, texts: Texts) -> str:
@@ -117,8 +125,86 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
     cost = after.expected_cost - before.expected_cost
     tone = "bad" if cost > 0.5 else "good" if cost < -0.5 else "neutral"
     chips.append(Chip(texts("chip.cost"), texts.cost_change(cost, rec.budget), tone))
-    chips.append(Chip(texts("chip.moved"), texts.plural("chip.tasks", len(rec.changes))))
+    moved_tasks = len(rec.changes)
+    chips.append(
+        Chip(texts("chip.moved"), texts.plural("chip.tasks", moved_tasks) if moved_tasks else "–")
+    )
     return chips
+
+
+@dataclass(frozen=True)
+class Gap:
+    """How far a forecast finish lies from the deadline, in words, with its status."""
+
+    text: str
+    tone: str  # good, warn, bad, neutral
+    icon: str
+
+
+def finish_gap(
+    finish: date, deadline: date | None, calendar: WorkCalendar, texts: Texts, worst: bool = False
+) -> Gap | None:
+    """The sub-line of a finish date's tile: working days before or after the deadline; the bad
+    case's lateness counts as a problem, the most likely finish's as a warning."""
+    if deadline is None:
+        return None
+    days = calendar.last(finish) - calendar.last(deadline)
+    if days == 0:
+        return Gap(texts("overview.gap_on"), "neutral", "minus")
+    span = texts.plural("overview.days", abs(days))
+    if days < 0:
+        return Gap(texts("overview.gap_before", days=span), "good", "check")
+    text = texts("overview.gap_after", days=span)
+    return Gap(text, "bad", "cross-circle") if worst else Gap(text, "warn", "alert")
+
+
+@dataclass(frozen=True)
+class Threat:
+    """A task that threatens the deadline: its sentence (spec sections 11.4, 11.7) and share."""
+
+    task: str
+    text: str
+    percent: int
+
+
+def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Threat]:
+    """The tasks shown as threats: the highest shares, at least one in twenty late futures."""
+    shown = [d for d in forecast.drivers if d.share >= 0.05][:limit]
+    found = []
+    for driver in shown:
+        count = texts.tenths(driver.share)
+        if driver.share >= 1:
+            text = texts("overview.driver_all", task=driver.name)
+        elif count >= 10:
+            text = texts("overview.driver_nearly", task=driver.name)
+        else:
+            text = texts("overview.driver", task=driver.name, count=count)
+        found.append(Threat(driver.task, text, round(100 * driver.share)))
+    return found
+
+
+def split_pending(
+    pending: list[RecommendationView],
+) -> tuple[list[RecommendationView], list[RecommendationView]]:
+    """The decisions in the first layer and those behind "other proposals": what can wait folds
+    unless nothing else is waiting (docs/design/brief.md, section 3.6)."""
+    urgent = [r for r in pending if not r.can_wait]
+    waiting = [r for r in pending if r.can_wait]
+    if not urgent and waiting:
+        return waiting[:1], waiting[1:]
+    return urgent, waiting
+
+
+def toast_text(kind: str, summary: ForecastSummary | None, texts: Texts) -> str | None:
+    """The toast of a saved check-in or an approval once the new forecast is known."""
+    if summary is None or summary.forecast.p_on_time is None:
+        return None
+    now = texts.pct(summary.forecast.p_on_time)
+    if kind == "checkin_saved" and summary.previous_p is not None:
+        return texts("flash.checkin_chance", before=texts.pct(summary.previous_p), after=now)
+    if kind == "approved":
+        return texts("flash.approved_chance", after=now)
+    return None
 
 
 @dataclass
@@ -281,6 +367,18 @@ def router(ui: Ui) -> APIRouter:
     def live(request: Request, project_id: str) -> ProjectView:
         return services.live(ui.session(request), project_id, ui.language(request))
 
+    def chart_html(
+        request: Request, project: LiveProject, forecast: ForecastView | None = None
+    ) -> str:
+        """The chart of a project; with the forecast also its window and threats."""
+        texts = ui.texts(request)
+        window = None if forecast is None else (forecast.p50, forecast.p90)
+        threats = None
+        if forecast is not None and forecast.late:
+            threats = {threat.task: threat.text for threat in threats_of(forecast, texts)}
+        model = live_gantt(project, texts, date.today(), window, threats)
+        return ui.render(request, "_gantt.html", {"g": model})
+
     @routes.get("/projects/{project_id}")
     def overview(request: Request, project_id: str) -> Response:
         session = ui.session(request)
@@ -296,10 +394,11 @@ def router(ui: Ui) -> APIRouter:
             step = "tasks" if view.definition.team else "team"
             return ui.redirect(request, f"/projects/{project_id}/setup/{step}")
         state = services.state(session, project_id)
-        texts = ui.texts(request)
+        flash = request.query_params.get("flash")
         running = services.store.project_jobs(session, project_id)
         job = next((j for j in running if j.kind == "recommend"), None)
         open_recs = [r for r in view.recommendations if r.status in ("open", "later")]
+        urgent, waiting = split_pending(open_recs)
         auto = checked = None
         latest = view.recommendations[-1] if view.recommendations else None
         if latest is not None and latest.status == "auto":
@@ -315,15 +414,17 @@ def router(ui: Ui) -> APIRouter:
             nav="projects",
             view=view,
             tab="overview",
-            open_recs=open_recs,
+            pending=open_recs,
+            urgent=urgent,
+            waiting=waiting,
+            flash_key=flash if flash in FLASHES_WITH_CHANCE else None,
             auto=auto,
             checked=checked,
             away=away,
             late=late,
             job=None if job is None else services.job(session, job.id, ui.language(request)),
-            chart=gantt(state.project, texts, date.today()),
+            chart=chart_html(request, state.project),
             chips=impact_chips,
-            why=why_text,
         )
 
     @routes.get("/projects/{project_id}/forecast")
@@ -345,7 +446,37 @@ def router(ui: Ui) -> APIRouter:
                 level="neutral",
                 delta=None,
             )
-        p = None if summary is None else summary.forecast.p_on_time
+        texts = ui.texts(request)
+        state = services.state(ui.session(request), project_id)
+        calendar = state.project.calendar
+        f = None if summary is None else summary.forecast
+        p = None if f is None else f.p_on_time
+        values: dict[str, Any] = {}
+        if f is not None:
+            dated = [
+                (view.as_of, texts("strip.today")),
+                (f.p50, texts("strip.likely", date=texts.day_month(f.p50))),
+            ]
+            if f.deadline is not None:
+                dated.append(
+                    (f.deadline, texts("strip.deadline", date=texts.day_month(f.deadline)))
+                )
+            dated.append((f.p90, texts("strip.bad", date=texts.day_month(f.p90))))
+            values = {
+                "strip": forecast_strip(view.as_of, f.p50, f.p90, f.deadline, calendar),
+                "strip_labels": [label for _, label in sorted(dated, key=lambda item: item[0])],
+                "likely_gap": finish_gap(f.p50, f.deadline, calendar, texts),
+                "bad_gap": finish_gap(f.p90, f.deadline, calendar, texts, worst=True),
+                "threats": threats_of(f, texts),
+                "chart": chart_html(request, state.project, f),
+            }
+        checkins = view.checkins
+        since = (
+            texts("trend.since_checkin", date=texts.date(checkins[-2].date))
+            if len(checkins) > 1
+            else texts("trend.since_plan")
+        )
+        toast = request.query_params.get("toast", "")
         return ui.page(
             request,
             "_forecast.html",
@@ -354,6 +485,10 @@ def router(ui: Ui) -> APIRouter:
             failed=None,
             level=chance_level(p),
             delta=trend(summary),
+            since=since,
+            nav_level="decision" if state.open is not None else chance_level(p),
+            toast=toast_text(toast, summary, texts),
+            **values,
         )
 
     @routes.post("/projects/{project_id}/ask")
