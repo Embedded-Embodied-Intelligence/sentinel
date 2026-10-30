@@ -89,6 +89,9 @@ uv run pytest -q
 - Anything expected to run longer than ~10 minutes: do **not** run it in the session. Implement
   a `--limit` smoke mode, run that, and put the exact full command in the WP report so the
   user runs it in `tmux`.
+- Never wait for a process with `pgrep -f <name>` inside a shell loop: it matches the loop's own
+  command line, so the loop never ends. Wait on the PID or use the tool's background-task
+  completion instead.
 - The user is on a Claude Pro plan: keep context small. Do not read large data files whole;
   inspect with `head`, `wc`, targeted reads. Keep terminal output short.
 
