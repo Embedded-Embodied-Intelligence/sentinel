@@ -135,12 +135,12 @@ Further down:
 - **What threatens the deadline**: the tasks that decide the deadline in at least half of the
   futures where the project is late, at most three, the most frequent first, e.g. "The task
   “Product catalogue API” decides the deadline in 7 of 10 late scenarios". A task that decides at
-  least 95 % of all futures, late or on time, such as a go-live, is left out as it is critical
-  anyway; only if no future finishes on time is it listed, since nothing then shows that. Tasks
-  the whole plan depends on (such as the first and the last task) and tasks already done are not
-  listed either. If no task qualifies, Sentinel says that the risk is spread across the plan. The
-  list shows which tasks usually set the finish date, not what has just changed. Below the list:
-  who is away and which tasks have not started as planned.
+  least 95 % of all futures, late or on time, such as a go-live, is left out: it decides them
+  whatever happens. Only if no future finishes on time can it be listed, as nothing then shows
+  that. Tasks the whole plan depends on (such as the first and the last task) and tasks already
+  done are not listed either. If no task qualifies, Sentinel says that the risk is spread across
+  the plan. The list shows which tasks usually set the finish date, not what has just changed.
+  Below the list: who is away and which tasks have not started as planned.
 - **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
   with a dashed outline of the work left), planned (light teal) and absences (hatched), with the
   status, today, the deadline and the forecast window. Hover over or tap a task's name for its dates

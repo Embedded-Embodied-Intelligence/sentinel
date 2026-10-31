@@ -2,7 +2,8 @@
 
 Every problem found by the browser runs of 30–31 October 2026 (`scripts/qa_run.py`, Sentinel 1.2.0),
 by severity (Nielsen 1994): blocker 0, major 9, minor 12, cosmetic 3. All are fixed, the last eight
-in 1.2.1 (spec v2.1.1). The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
+in 1.2.1 (spec v2.1.1); in 1.2.2 (spec v2.1.2) QA-23 comes back at one check-in of run 1, see its
+entry. The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
 show the page after the fix unless marked "before".
 
 ## Major: all fixed, each with a regression test
@@ -188,5 +189,9 @@ implemented as §11.4 wrote it, so this one went to the architect (report, spec 
 - Screenshot: [061](shots/run1/061_overview_final.png).
 - Fix: spec v2.1.1, §11.4: tasks ranked by late share minus on-time share, from 10 percentage points.
   See the follow-up in `docs/reports/WP10.md` for what that does to the list on this project.
-- Tests: `test_threats_rank_by_how_much_more_often_they_decide_the_late_futures`,
+- Replaced in 1.2.2 (spec v2.1.2, §11.4), as that list was almost always empty: the tasks on the chain
+  of at least half of the late futures, without those on it in at least 95 % of all futures. The go-live
+  stays off the list at 8 of the 9 check-ins of run 1. **On 16 October it tops the list again** ("9 of 10"):
+  it is on the chain of 189 of 200 futures, one under the line. See "Follow-up 2" in the report.
+- Tests: `test_threats_decide_half_of_the_late_futures_but_not_nearly_all_futures`,
   `test_the_last_task_is_no_threat_though_a_side_task_goes_around_it`.

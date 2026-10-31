@@ -1,6 +1,6 @@
 # Raport QA Sentinela 1.2.0
 
-Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcja „Po raporcie: wersja 1.2.1”.
+Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcje „Po raporcie: wersja 1.2.1” i „Po raporcie: wersja 1.2.2”.
 
 ## Podsumowanie
 
@@ -209,6 +209,27 @@ Cztery odpowiedzi na pytania do specyfikacji i naprawa wszystkich 7 drobnych uwa
 - „Bez zmian” po raporcie to wiersz w tym raporcie, a nie osobny wpis (27 wpisów → 23);
 - zadanie oznaczone jako „W toku” można od razu zgłosić jako wydłużone;
 - zamiast „działania remisują we wszystkim”: „we wszystkim poza prostotą remisuje z następną w kolejności możliwością”.
+
+## Po raporcie: wersja 1.2.2
+
+Druga zmiana listy „Co zagraża terminowi”, bo w 1.2.1 była prawie zawsze pusta. Na liście są teraz zadania, które leżą na łańcuchu wyznaczającym koniec w co najmniej połowie scenariuszy z opóźnieniem, bez tych, które leżą na nim w co najmniej 95 % wszystkich scenariuszy. Kolejność: od najczęstszego, najwyżej trzy. Zdanie jest takie jak wcześniej, a „ryzyko rozkłada się na cały plan” pojawia się tylko wtedy, gdy żadne zadanie nie spełnia warunków.
+
+Przebieg 1 jeszcze raz, ten sam zespół i te same szanse. Pogrubiona jest liczba zadań na liście, a liczba przy zadaniu to „w ilu na 10 scenariuszy z opóźnieniem”.
+
+- 10 wrz, 68 %: **2**: szkolenie użytkowników 7, testy akceptacyjne 7
+- 15 wrz, 73 %: **3**: szkolenie użytkowników 8, testy akceptacyjne 8, testy interfejsu 6
+- 21 wrz, 66 %: **3**: szkolenie użytkowników 8, testy akceptacyjne 8, architektura systemu 5
+- 25 wrz, 79 %: **2**: szkolenie użytkowników 7, testy akceptacyjne 6
+- 30 wrz, 51 %: **3**: szkolenie użytkowników 9, testy akceptacyjne 8, testy wydajności 5
+- 5 paź, 79 %: **3**: szkolenie użytkowników 7, testy akceptacyjne 6, testy interfejsu 5
+- 8 paź, 46 %: **2**: szkolenie użytkowników 7, testy akceptacyjne 6
+- 13 paź, 57 %: **2**: szkolenie użytkowników 7, testy akceptacyjne 7
+- 16 paź, 57 %: **3**: uruchomienie produkcyjne 9, szkolenie użytkowników 8, testy akceptacyjne 7
+
+Lista nie jest już pusta w żadnym z 9 raportów. **Dwa skutki, które warto znać:**
+
+- **Uruchomienie produkcyjne wraca raz.** 16 października jest pierwsze, bo leży na łańcuchu w 189 z 200 scenariuszy (94,5 %), o jeden scenariusz poniżej progu. W pozostałych ośmiu raportach to 190–195 z 200, a 10 września dokładnie 190. Próg leży w granicach losowego rozrzutu tej liczby, więc to się będzie powtarzać. Próg 94 % utrzymałby je poza listą we wszystkich 9 raportach (kolejne zadanie ma najwyżej 92 %); to jedna stała.
+- **Lista prawie się nie zmienia.** Szkolenie użytkowników i testy akceptacyjne są w każdym z 9 raportów, choć częściej decydują w scenariuszach kończących się w terminie niż w tych z opóźnieniem. Lista mówi więc, które zadania zwykle wyznaczają koniec, a nie co spóźnia projekt. 8 października, przy spadku 79 → 46 % po wydłużeniu „Logowania i kont” o 4 dni i nieobecności jednej osoby, są na niej te same dwa zadania, co 5 października, a „Logowanie i konta” leży na łańcuchu tylko w 25 % scenariuszy z opóźnieniem.
 
 ## Obserwacje UX, oczami kierownika projektu
 

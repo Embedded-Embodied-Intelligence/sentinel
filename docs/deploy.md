@@ -37,7 +37,7 @@ reverse proxy.
 ```bash
 docker compose up -d --build                    # build and start (the first build takes minutes)
 docker compose ps                               # STATUS shows "(healthy)" after the first check, ~30 s
-curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.2.1","demo":false}
+curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.2.2","demo":false}
 docker compose logs -f sentinel                 # the log
 docker compose down                             # stop; the data stay in the volume
 ```
@@ -79,9 +79,9 @@ exactly the build context into a fresh environment (270 MB), started with
 the Polish start page served. To build and measure it:
 
 ```bash
-docker build -t sentinel:1.2.1 .                          # time it
-docker image ls sentinel:1.2.1                            # SIZE: about 400 MB expected
-docker run -d --name sentinel-smoke -p 127.0.0.1:8000:8000 sentinel:1.2.1
+docker build -t sentinel:1.2.2 .                          # time it
+docker image ls sentinel:1.2.2                            # SIZE: about 400 MB expected
+docker run -d --name sentinel-smoke -p 127.0.0.1:8000:8000 sentinel:1.2.2
 time sh -c 'until curl -fs http://127.0.0.1:8000/api/health; do sleep 0.5; done'
 curl -s -c /tmp/jar http://127.0.0.1:8000/api/session     # note csrf_token
 curl -s -b /tmp/jar -H "X-CSRF-Token: <csrf_token>" -H "content-type: application/json" \
