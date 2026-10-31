@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.1.2)
+# Sentinel — formal model (v2.1.3)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -71,7 +71,12 @@ and of the on-time rollouts, and shown from 10 percentage points (§11.4); "No c
 on a list that was almost always empty: the tasks that threaten the deadline are those on the
 critical chain of at least half of the late rollouts, without those on it in at least 95 % of all
 completed rollouts, ranked by the late share, at most three; with no rollout on time no task is
-left out as always critical (§11.4); §1–§10 are unchanged.
+left out as always critical (§11.4); §1–§10 are unchanged. v2.1.3 (WP10 third follow-up) the
+chain-frequency rule is replaced by duration sensitivity: the tasks that threaten the deadline are
+the unfinished tasks whose realised duration has a Spearman rank correlation of at least 0.2 with
+the finish day over the forecast's rollouts, highest first, at most three; the critical chain, the
+late and always-critical shares and the exclusion of structural tasks are gone (§11.4); the sentence
+of a threat (§11.7); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -904,25 +909,20 @@ or before `d` (`−1` before `date(0)`).
 The forecast of day `t` runs `N = 200` NoReaction rollouts (§5.1) from the latest observation and
 its plan, with the seed `derive_seed(project seed, "forecast", t)`: `P(C ≤ D)`, the finish dates
 of the 10 %, 50 % and 90 % quantiles of `C` (§5.2), and the *tasks that threaten the deadline*.
-The critical chain of a completed rollout holds the activities from which tight links lead to
-the sink: `i → j` is tight if `i` is a predecessor of `j` with `F_i = S_j`, or, for a `j`
-without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
 
-- **Threats** (v2.1.2, WP10 second follow-up; v2.1.1, WP10 question 1; v2.0.2, WP9b question 2). A
-  task's *late share* `s_L` is the fraction of the completed late rollouts (`C > D`) whose critical
-  chain holds it, its *on-time share* `s_O` the same fraction of the completed on-time rollouts
-  (`C ≤ D`), with `s_O = 0` if no rollout is on time, and its *overall share* `s_A` the same
-  fraction of all completed rollouts. The threats are the tasks with `s_L ≥ 0.50` that are not
-  *always critical*, `s_A ≥ 0.95`, both compared exactly; if no rollout is on time no task counts as
-  always critical, since nothing shows that it decides on-time futures too. They are ranked by
-  `s_L`, then by duration (longer first) and id, and at most three are shown, as "decides the
-  deadline in `k` of 10 late scenarios", `k` the late share in tenths rounded half up ("in every
-  late scenario" for a share of 1, "in nearly every" for `k = 10` below 1). Also left out are the
-  *structural* tasks, through which every source–sink path of the required tasks passes (optional
-  tasks and dropped ones are not on these paths, since they can be or were dropped), the tasks of
-  zero duration, and the tasks already done or dropped (nothing can change them any more). If no
-  task remains, the page says that the risk is spread across the plan; without a late rollout, that
-  the project is late in none of the simulated futures; without a deadline, there is no threat.
+- **Threats** (v2.1.3, WP10 third follow-up; before it v2.1.2, v2.1.1 and v2.0.2). The *duration
+  sensitivity* of an unfinished task (neither done nor dropped) is the Spearman rank correlation
+  (Spearman 1904), over the `N` rollouts, between its *realised duration* and `C`; ties share their
+  mean rank, and a rollout cut at the limit counts with its `C` of §3.1 (f). The realised duration
+  is the task's work at the end of the rollout in full-crew days, `e_j` plus the remaining work: the
+  duration sampled by §5.1 with all its growth, the work increases (§2.2 D2) already observed and
+  those of the rollout, and the SUBST handovers. Days on which the task waits, or works with part of
+  its crew, are not in it. The threats are the tasks with a sensitivity of at least 0.2, compared
+  exactly, highest first, then by duration (longer first) and id, at most three, each shown with the
+  sentence of §11.7. A task whose realised duration does not vary, as one of zero duration, has no
+  sensitivity, and no task has one if `C` does not vary. If no task remains, the page says that the
+  risk is spread across the plan; without a late rollout, that the project is late in none of the
+  simulated futures; without a deadline, there is no threat.
 
 ### §11.5 Recommendations and decisions
 
@@ -1048,7 +1048,7 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | `D`, `B`, `ẑ`, `o` | deadline, budget, expected cost, expected overrun | termin, budżet, oczekiwany koszt, oczekiwane przekroczenie |
 | a cost `x`, of `B` (v2.0.2) | <x> cost units, <x> of <B> cost units (person-days) | <x> jednostek kosztu, <x> z <B> jednostek kosztu (osobodni) |
 | a change of cost `Δz` (v2.0.2) | +<Δz> units, +<Δz/B> % of the budget | +<Δz> jedn., +<Δz/B> % budżetu |
-| threat (v2.0.2) | The task <task> decides the deadline in <k> of 10 late scenarios; the risk is spread across the plan | Zadanie <zadanie> decyduje o terminie w <k> na 10 scenariuszy z opóźnieniem; ryzyko rozkłada się na cały plan |
+| threat (v2.1.3) | Task <task>. Most strongly affects the finish date: lengthening this task usually moves the whole deadline; the risk is spread across the plan | Zadanie <zadanie>. Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle przesuwa cały termin; ryzyko rozkłada się na cały plan |
 | `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
 | an alternative shown has a higher chance (§11.5 item 7, v2.0.4) | Similar chance (the difference is within the uncertainty); <part> | Podobna szansa (różnica w granicach niepewności); <część> |
 | the same, the chosen action at the target (v2.0.4) | Both options reach the target chance; <part> | Oba warianty osiągają docelową szansę; <część> |
