@@ -228,7 +228,7 @@ Przebieg 1 jeszcze raz, ten sam zespół i te same szanse. Pogrubiona jest liczb
 
 Lista nie jest już pusta w żadnym z 9 raportów. **Dwa skutki, które warto znać:**
 
-- **Uruchomienie produkcyjne wraca raz.** 16 października jest pierwsze, bo leży na łańcuchu w 189 z 200 scenariuszy (94,5 %), o jeden scenariusz poniżej progu. W pozostałych ośmiu raportach to 190–195 z 200, a 10 września dokładnie 190. Próg leży w granicach losowego rozrzutu tej liczby, więc to się będzie powtarzać. Próg 94 % utrzymałby je poza listą we wszystkich 9 raportach (kolejne zadanie ma najwyżej 92 %); to jedna stała.
+- **Uruchomienie produkcyjne wraca raz.** 16 października jest pierwsze, bo leży na łańcuchu w 189 z 200 scenariuszy (94,5 %), o jeden scenariusz poniżej progu. W pozostałych ośmiu raportach to 190–195 z 200, a 10 września dokładnie 190. Próg leży w granicach losowego rozrzutu tej liczby, więc to się będzie powtarzać. Próg 93 % utrzymałby je poza listą we wszystkich 9 raportach (kolejne zadanie ma najwyżej 92 %); to jedna stała.
 - **Lista prawie się nie zmienia.** Szkolenie użytkowników i testy akceptacyjne są w każdym z 9 raportów, choć częściej decydują w scenariuszach kończących się w terminie niż w tych z opóźnieniem. Lista mówi więc, które zadania zwykle wyznaczają koniec, a nie co spóźnia projekt. 8 października, przy spadku 79 → 46 % po wydłużeniu „Logowania i kont” o 4 dni i nieobecności jednej osoby, są na niej te same dwa zadania, co 5 października, a „Logowanie i konta” leży na łańcuchu tylko w 25 % scenariuszy z opóźnieniem.
 
 ## Obserwacje UX, oczami kierownika projektu
