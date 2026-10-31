@@ -34,10 +34,10 @@
   {% if rec.acts and chips | length > 1 %}
   <section class="rec-section" aria-labelledby="changes-title">
     <h2 id="changes-title">{{ t("rec.what_changes") }}</h2>
-    <p class="muted small">{{ t("rec.applies_from", date=t.date(rec.date)) }}</p>
     <dl class="summary-rows" aria-label="{{ t('rec.effect') }}">
       {% for chip in rows %}<div><dt>{{ chip.label }}</dt><dd>{{ ui.chip_value(t, chip) }}</dd></div>{% endfor %}
     </dl>
+    <p class="hint section-hint">{{ t("rec.applies_from", date=t.date(rec.date)) }}</p>
     {% if rec.changes %}
     <details class="details section-sub-sm">
       <summary>{{ t("rec.changes_title") }} ({{ rec.changes | length }})</summary>

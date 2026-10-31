@@ -1,6 +1,6 @@
 # Raport QA Sentinela 1.2.0
 
-Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10).
+Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcja „Po raporcie: wersja 1.2.1”.
 
 ## Podsumowanie
 
@@ -173,7 +173,7 @@ Wszystkie poważne. Każdy ma test regresyjny i osobny commit `WP10 fix`.
 
 ## Problemy pozostawione, z propozycją
 
-Wszystkie drobne. Pełny dziennik wszystkich problemów (po angielsku, z krokami i zrzutami): [problems.md](problems.md).
+Stan przy wersji 1.2.0; wszystkie naprawiono w 1.2.1. Wszystkie drobne. Pełny dziennik wszystkich problemów (po angielsku, z krokami i zrzutami): [problems.md](problems.md).
 
 - **Raport sprzed startu projektu zapisuje się bez słowa** (specyfikacja na to pozwala, [zrzut](shots/wrong/034_check-in_before_the_project_starts.png)). Propozycja: łagodna informacja.
 - **Błędy CSV używają surowych nazw kolumn i identyfikatorów** („duration_days”, „T9”, [zrzut](shots/wrong/009_csv_unknown_predecessor_and_role.png)). Propozycja: nazwy po polsku i numer wiersza.
@@ -184,6 +184,31 @@ Wszystkie drobne. Pełny dziennik wszystkich problemów (po angielsku, z krokami
 - **„Działania remisują we wszystkim”** brzmi dziwnie, gdy szansa rośnie z 46 do 55 %: zdanie dotyczy porównania z następną możliwością ([zrzut](shots/run1/039_c7_recommendation.png)). Propozycja: pisać „z następną w kolejności”.
 
 **Pytanie do specyfikacji:** lista „Co zagraża terminowi” pokazuje ostatnie zadania planu („Uruchomienie produkcyjne: 9 na 10”), gdy choć jedno wymagane zadanie nie ma następnika. Tu była to „Mapa procesów klienta”. Reguła „zadań strukturalnych” (§11.4) przestaje je wtedy odfiltrowywać, a kierownik nic z tym nie zrobi ([zrzut](shots/run1/061_overview_final.png)). Trzy kolejne pytania dotyczą przebudowy, a nie testów; są w [raporcie WP10](../reports/WP10.md).
+
+## Po raporcie: wersja 1.2.1
+
+Cztery odpowiedzi na pytania do specyfikacji i naprawa wszystkich 7 drobnych uwag.
+
+**Co zagraża terminowi.** Zadania są teraz ułożone według różnicy: jak często decydują o terminie w scenariuszach z opóźnieniem, minus jak często w tych kończących się w terminie. Na liście są tylko zadania z różnicą co najmniej 10 pkt proc. „Uruchomienie produkcyjne” zniknęło z listy. Zdanie jest takie jak wcześniej, więc liczby nie muszą maleć w dół listy.
+
+**Bez zmian:** „Bez zmian” zostaje na końcu porównania, słownictwo §11.7 i napis symulatora zostają.
+
+**Skutek, który warto znać: lista jest teraz prawie zawsze pusta.** W tym samym projekcie zadania pojawiają się tylko w 1 z 9 raportów (10 września). W pozostałych strona pisze, że ryzyko rozkłada się na cały plan, nawet przy spadku 79 → 46 % po wydłużeniu jednego zadania.
+
+- Największa różnica w tych ośmiu raportach to 7 pkt proc.
+- Te same zadania leżą na łańcuchu wyznaczającym koniec i gdy projekt się spóźnia, i gdy zdąża. Spóźnienie bierze się najpewniej z ich długości, a nie z tego, które to zadania.
+- Przykładowy projekt z demo też pisze teraz, że ryzyko rozkłada się na cały plan.
+- Próg 5 pkt proc. dałby listę w około 5 z 9 raportów.
+
+**Naprawione drobne uwagi:**
+
+- data sprzed startu projektu ma łagodną informację, a raport nadal się zapisuje;
+- błędy CSV podają kolumnę słowami i jej nazwę z pliku, a „T9” nazywają identyfikatorem;
+- drugi zapis ustawień w innej karcie najpierw pyta i zachowuje to, co wpisano;
+- rekomendacja podaje stan na koniec dnia z raportu, a osobno pierwszy dzień, który zmiana obejmuje;
+- „Bez zmian” po raporcie to wiersz w tym raporcie, a nie osobny wpis (27 wpisów → 23);
+- zadanie oznaczone jako „W toku” można od razu zgłosić jako wydłużone;
+- zamiast „działania remisują we wszystkim”: „we wszystkim poza prostotą remisuje z następną w kolejności możliwością”.
 
 ## Obserwacje UX, oczami kierownika projektu
 

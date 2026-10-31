@@ -140,8 +140,8 @@ Niżej:
   decyduje w scenariuszach z opóźnieniem, np. „Zadanie „API katalogu produktów” decyduje o
   terminie w 7 na 10 scenariuszy z opóźnieniem”, więc liczby na liście nie muszą maleć. Nie ma
   tu zadań, od których zależy cały plan (np. pierwsze i ostatnie zadanie), ani zadań już
-  zakończonych. Jeśli żadne zadanie się nie wyróżnia, Sentinel pisze, że ryzyko rozkłada się na
-  cały plan. Pod listą: kto jest nieobecny i które
+  zakończonych. Jeśli żadne zadanie się nie wyróżnia, jak na zrzucie powyżej, Sentinel pisze, że
+  ryzyko rozkłada się na cały plan. Pod listą: kto jest nieobecny i które
   zadania nie zaczęły się zgodnie z planem.
 - **Plan i postęp**: plan początkowy (cienka szara linia), gotowe (szare), w toku (ciemny morski,
   z przerywanym obrysem pozostałej pracy), zaplanowane (jasny morski) i nieobecności (kreskowanie),
@@ -161,7 +161,8 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
 
 1. **Stan na koniec dnia** — dzień, którego dotyczy raport (zwykle dziś). Pod polem widać datę
    słownie. Data ponad tydzień od dziś wymaga potwierdzenia: raporty następują po sobie, więc
-   pomyłka w roku zablokowałaby kolejne.
+   pomyłka w roku zablokowałaby kolejne. Przy dacie sprzed startu projektu strona o tym
+   przypomina, ale raport można zapisać.
 2. Jeśli AI jest włączone: **Napisz własnymi słowami** („Ania choruje do środy, API zajmie jeszcze
    3 dni”) i kliknij **Przetwórz wiadomość**. Pod **Tak to rozumiem:** AI wypisze, co znalazło, a
    Ty odznaczysz to, co się nie zgadza. Zapisują się tylko zaznaczone pozycje.
@@ -171,7 +172,8 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    których nic nie piszesz, nie trzeba ruszać.
 4. **Nieobecności** (**Dodaj**) — osoba, od kiedy i (jeśli wiadomo) do kiedy. **Tylko kiedy, nigdy
    dlaczego**: nie ma tu miejsca na powód nieobecności.
-5. **Zadania, które urosły** (**Dodaj**) — ile dodatkowych dni roboczych potrzebuje zadanie w toku.
+5. **Zadania, które urosły** (**Dodaj**) — ile dodatkowych dni roboczych potrzebuje zadanie w toku,
+   także takie, które w tym raporcie oznaczasz jako *W toku*.
 6. **Nowe zadanie** (**Dodaj**) — nazwa, dni robocze, po czym następuje i przed czym musi być
    gotowe.
 
@@ -193,7 +195,9 @@ plan. Rekomendacja pokazuje:
 ![Rekomendacja: działanie, efekt i powód](ui/pl_recommendation.png)
 
 - **działanie** zwykłymi słowami, np. „Zastępstwo: Cezary Mazur przejmuje udział osoby
-  nieobecnej (Bartosz Kowalski) w zadaniu „API katalogu produktów””,
+  nieobecnej (Bartosz Kowalski) w zadaniu „API katalogu produktów””; nad nim dzień, którego stan
+  czyta (*stan na koniec dnia* z raportu), a pod **Co się zmieni** pierwszy dzień, który zmiana
+  obejmuje,
 - **efekt** w porównaniu z brakiem zmian: szansa („39 % → 55 %”), a pod **Co się zmieni**: koniec,
   oczekiwane opóźnienie, koszt („+2 jedn., +2 % budżetu”) i liczba zadań, których terminy się
   przesuwają,
@@ -231,10 +235,12 @@ potrzebna, czy tylko żadna możliwość nie jest wyraźnie lepsza.
 | Może też dodawać osoby i zastępstwa | także zastępstwa i osoby tymczasowe | rezygnacja z zadania |
 
 Zmiana zastosowana automatycznie jest widoczna na przeglądzie; nowe terminy albo nowa
-kolejność zadań mają przycisk **Cofnij**, dopóki po nich nic się nie wydarzyło.
+kolejność zadań mają przycisk **Cofnij**, dopóki po nich nic się nie wydarzyło. Jeśli ustawienia
+projektu zmieniły się po otwarciu strony (np. w innej karcie), strona pyta, zanim je zastąpisz.
 
 **Historia.** Zakładka **Historia** pokazuje wykres **Szansa w czasie** (jeden punkt na raport) i
-oś czasu: każdy raport, rekomendację, decyzję i zmianę, ze zmianą szansy i filtrem u góry.
+oś czasu: każdy raport, rekomendację, decyzję i zmianę, ze zmianą szansy i filtrem u góry. Gdy po
+raporcie Sentinel nie proponuje zmian, mówi o tym wiersz w tym raporcie, a nie osobny wpis.
 
 ![Historia: szansa w czasie i oś czasu](ui/pl_history.png)
 

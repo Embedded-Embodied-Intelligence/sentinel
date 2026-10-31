@@ -138,7 +138,7 @@ Further down:
   futures, e.g. "The task “Product catalogue API” decides the deadline in 7 of 10 late
   scenarios", so the numbers need not fall down the list. Tasks the whole plan depends on (such
   as the first and the last task) and tasks already done are not listed. If no task stands out,
-  Sentinel says that the risk is spread across the plan. Below the list: who is away and which tasks have not started as
+  as in the screenshot above, Sentinel says that the risk is spread across the plan. Below the list: who is away and which tasks have not started as
   planned.
 - **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
   with a dashed outline of the work left), planned (light teal) and absences (hatched), with the
@@ -158,7 +158,8 @@ when something important changes. Click **New check-in**.
 
 1. **Status at the end of**: the day the check-in describes (usually today), echoed in words below
    the field. A date more than a week from today needs a confirmation: check-ins follow each other,
-   so a mistyped year would block the next ones.
+   so a mistyped year would block the next ones. A date before the project's start gets a note, but
+   the check-in can be saved.
 2. With the AI on: **Write in your own words** ("Ada is ill until Wednesday, the API needs 3 more
    days") and click **Process the message**. Under **This is how I read it:** the AI lists what it
    found and you untick what is wrong. Only the ticked items are saved.
@@ -168,7 +169,8 @@ when something important changes. Click **New check-in**.
    nothing about stay as they are.
 4. **Absences** (**Add**): the person, from when and (if known) until when. **Only when, never
    why**: there is no place for the reason of an absence.
-5. **Tasks that grew** (**Add**): how many more working days a task in progress needs.
+5. **Tasks that grew** (**Add**): how many more working days a task in progress needs, including
+   one you mark as *In progress* in this check-in.
 6. **New task** (**Add**): its name, working days, what it comes after and what it must be done
    before.
 
@@ -190,7 +192,8 @@ recommendation shows:
 ![A recommendation: the action, its effect and the reasons](ui/en_recommendation.png)
 
 - the **action** in plain words, e.g. "Substitute: Cyrus Hill takes over Ben Carter's part in
-  “Product catalogue API”",
+  “Product catalogue API”"; above it the day whose status it reads (*status at the end of*, from the
+  check-in), and under **What changes** the first day the change applies to,
 - its **effect** compared with no change: the chance ("39 % → 55 %") and, under **What changes**, the
   finish, the expected delay, the cost ("+2 units, +2 % of the budget") and how many tasks have
   their dates moved,
@@ -228,11 +231,13 @@ than the current plan; the overview says whether no change is needed or just non
 | May also add people and substitutes | also substitutes and temporary people | dropping a task |
 
 A change applied automatically is shown on the overview; new dates or a new order have an
-**Undo** button while nothing has happened after them.
+**Undo** button while nothing has happened after them. If the project's settings changed after you
+opened the page (say, in another tab), the page asks before you replace them.
 
 **History.** The **History** tab shows the chart **Chance over time** (one point per check-in) and a
 timeline of every check-in, recommendation, decision and change, with the change of the chance and a
-filter at the top.
+filter at the top. When Sentinel proposes no change after a check-in, a line in that check-in says so
+instead of an entry of its own.
 
 ![History: the chance over time and the timeline](ui/en_history.png)
 

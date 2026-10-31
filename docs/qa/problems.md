@@ -1,9 +1,9 @@
 # WP10 QA problem log
 
 Every problem found by the browser runs of 30–31 October 2026 (`scripts/qa_run.py`, Sentinel 1.2.0),
-by severity (Nielsen 1994): blocker 0, major 9, minor 12, cosmetic 3. The owner's reading copy is
-[raport-qa-pl.md](raport-qa-pl.md). Screenshots of a fixed problem show the page after the fix unless
-marked "before".
+by severity (Nielsen 1994): blocker 0, major 9, minor 12, cosmetic 3. All are fixed, the last eight
+in 1.2.1 (spec v2.1.1). The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
+show the page after the fix unless marked "before".
 
 ## Major: all fixed, each with a regression test
 
@@ -120,55 +120,73 @@ Screenshot: [after](shots/phone/run1_gantt.png).
   minute or two").
 - Screenshot: [after](../ui/en_simulator.png).
 
-## Minor, left, with a proposal
+## Minor, fixed in 1.2.1 (WP10 follow-up)
+
+The screenshots of this section are of 1.2.0, before the fix.
 
 **QA-16. A check-in dated before the project's start is saved without a word.** Allowed by §11.1.
 
 - Expected: a mild note; actual: nothing.
 - Screenshot: [034](shots/wrong/034_check-in_before_the_project_starts.png).
-- Proposal: a note on the form, nothing refused.
+- Fix: a note under the date, for such a date only; nothing is refused.
+- Tests: `test_a_check_in_before_the_start_gets_a_note_and_is_not_refused`, and the browser test
+  of the check-in.
 
 **QA-17. CSV errors use raw column names and ids** ("duration_days", "T9").
 
 - Expected: words of the application; actual: the file's own names.
 - Screenshot: [009](shots/wrong/009_csv_unknown_predecessor_and_role.png).
-- Proposal: a Polish and English name per column, with the row number.
+- Fix: a column in words with its name in the file ("Wiersz 2: czas trwania w dniach
+  (duration_days) musi być…"), and an id called an id. The message on an unknown predecessor names
+  the task and not the row, as that check runs after the file is read.
+- Test: `test_spreadsheet_columns_are_named_in_words_and_as_in_the_file`.
 
-**QA-18. Two tabs on the settings: the last save wins without a warning.**
+**QA-18. Two tabs on the settings: the last save won without a warning.**
 
 - Expected: a warning that the settings changed meanwhile; actual: "Settings saved".
 - Screenshot: none; the page shows nothing, which is the problem (`wrong-log.json`, "two tabs: settings").
-- Proposal: a version field in the form and a question on a mismatch.
+- Fix: the form carries a fingerprint of what it was opened on. A save over other changes keeps
+  what was typed and says so; saving again replaces them.
+- Test: `test_settings_changed_elsewhere_ask_before_they_are_replaced`.
 
-**QA-19. A recommendation is dated the working day after its check-in.**
+**QA-19. A recommendation was dated the working day after its check-in.**
 
 - Expected: the check-in's date; actual: a check-in of 30 September, "from Thu 1 Oct".
 - Screenshot: [030](shots/run1/030_c5_recommendation.png).
-- Proposal: show the check-in's date, and the first working day of the change separately.
+- Fix: "status at the end of <check-in's date>" above the action, "The change applies from <first
+  working day>" under What changes; history entries sit on the check-in's date.
+- Test: `test_a_recommendation_tells_the_check_in_from_the_first_day_of_the_change`.
 
-**QA-20. A "No change" entry after every check-in clutters the history.**
+**QA-20. A "No change" entry after every check-in cluttered the history.**
 
 - Expected: entries that say something; actual: one more line per check-in.
 - Screenshot: [057](shots/run1/057_history.png).
-- Proposal: fold such an entry into its check-in.
+- Fix: a line of the check-in, with a link to the analysis; run 1 went from 27 entries to 23. A
+  "No change" that no check-in just preceded, as after asking Sentinel, stays an entry.
+- Test: `test_no_change_after_a_check_in_is_folded_into_it`.
 
-**QA-21. Growth cannot be reported for a task marked "in progress" in the same check-in.**
+**QA-21. Growth could not be reported for a task marked "in progress" in the same check-in.**
 
 - Expected: the task is in the list at once; actual: only tasks started earlier are.
 - Screenshot: [037](shots/run1/037_c7_form_filled.png) (the list as shown).
-- Proposal: refresh the list when a status changes.
+- Fix: marking a task as in progress adds it to the list at once; the server already took it.
+- Tests: `test_a_task_started_in_the_check_in_can_grow_in_it`, and the browser test of the check-in.
 
-**QA-22. "The actions tie on everything" reads oddly when the chance rises from 46 to 55 %.** The
+**QA-22. "The actions tie on everything" read oddly when the chance rose from 46 to 55 %.** The
 sentence compares the choice with the next option, not with today's plan.
 
 - Expected: it says what is compared; actual: it seems to contradict the numbers.
 - Screenshot: [039](shots/run1/039_c7_recommendation.png).
-- Proposal: "with the next option on the list".
+- Fix: "it ties with the next option on everything but simplicity".
+- Test: `test_a_tie_says_what_it_compares`.
 
-**QA-23. Threats name the plan's last tasks when a required task has no successor.** The rule is
-implemented as §11.4 writes it, so this one is a question for the architect (report, spec question 1).
+**QA-23. Threats named the plan's last tasks when a required task had no successor.** The rule was
+implemented as §11.4 wrote it, so this one went to the architect (report, spec question 1).
 
 - Expected: threats a manager can act on; actual: "Uruchomienie produkcyjne" (the go-live) decides the
   deadline in 9 of 10 late scenarios.
 - Screenshot: [061](shots/run1/061_overview_final.png).
-- Proposal: find the structural tasks with such side tasks set aside.
+- Fix: spec v2.1.1, §11.4: tasks ranked by late share minus on-time share, from 10 percentage points.
+  See the follow-up in `docs/reports/WP10.md` for what that does to the list on this project.
+- Tests: `test_threats_rank_by_how_much_more_often_they_decide_the_late_futures`,
+  `test_the_last_task_is_no_threat_though_a_side_task_goes_around_it`.

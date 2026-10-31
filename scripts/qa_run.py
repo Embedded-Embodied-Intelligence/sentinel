@@ -1053,7 +1053,8 @@ def wrong(args: argparse.Namespace, browser: Any) -> None:
         other.get_by_role("button", name="Zapisz zmiany").click()
         other.wait_for_load_state("networkidle")
         other.wait_for_timeout(500)
-        d.note(kind="case", case="two tabs: settings, last wins", shown=other.url.replace(base, ""))
+        shown = other.locator('[role="alert"]').first.inner_text()
+        d.note(kind="case", case="two tabs: settings, the second save asks", shown=shown)
         other.close()
 
         # ---- language in mid-flow
