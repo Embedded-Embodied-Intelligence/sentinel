@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.1.1)
+# Sentinel — formal model (v2.1.2)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -67,7 +67,11 @@ when an alternative shown has a strictly higher chance, in whole per cent, than 
 the tasks that threaten the deadline are ranked by the difference between their shares of the late
 and of the on-time rollouts, and shown from 10 percentage points (§11.4); "No change" is listed last
 (§11.5); the wording of §11.7 stays; the simulator keeps its forecast and says what it assumes
-(§11.6); §1–§10 are unchanged.
+(§11.6); §1–§10 are unchanged. v2.1.2 (WP10 second follow-up) answer to the follow-up's question
+on a list that was almost always empty: the tasks that threaten the deadline are those on the
+critical chain of at least half of the late rollouts, without those on it in at least 95 % of all
+completed rollouts, ranked by the late share, at most three; with no rollout on time no task is
+left out as always critical (§11.4); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -904,19 +908,21 @@ The critical chain of a completed rollout holds the activities from which tight 
 the sink: `i → j` is tight if `i` is a predecessor of `j` with `F_i = S_j`, or, for a `j`
 without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
 
-- **Threats** (v2.1.1, WP10 question 1; v2.0.2, WP9b question 2). A task's *late share* `s_L` is
-  the fraction of the completed late rollouts (`C > D`) whose critical chain holds it, its *on-time
-  share* `s_O` the same fraction of the completed on-time rollouts (`C ≤ D`), and `s_O = 0` if no
-  rollout is on time. The threats are the tasks with `s_L − s_O ≥ 0.10`, compared exactly; they are
-  ranked by that difference, then by duration (longer first) and id, and shown as "decides the
+- **Threats** (v2.1.2, WP10 second follow-up; v2.1.1, WP10 question 1; v2.0.2, WP9b question 2). A
+  task's *late share* `s_L` is the fraction of the completed late rollouts (`C > D`) whose critical
+  chain holds it, its *on-time share* `s_O` the same fraction of the completed on-time rollouts
+  (`C ≤ D`), with `s_O = 0` if no rollout is on time, and its *overall share* `s_A` the same
+  fraction of all completed rollouts. The threats are the tasks with `s_L ≥ 0.50` that are not
+  *always critical*, `s_A ≥ 0.95`, both compared exactly; if no rollout is on time no task counts as
+  always critical, since nothing shows that it decides on-time futures too. They are ranked by
+  `s_L`, then by duration (longer first) and id, and at most three are shown, as "decides the
   deadline in `k` of 10 late scenarios", `k` the late share in tenths rounded half up ("in every
-  late scenario" for a share of 1, "in nearly every" for `k = 10` below 1). Left out are the
+  late scenario" for a share of 1, "in nearly every" for `k = 10` below 1). Also left out are the
   *structural* tasks, through which every source–sink path of the required tasks passes (optional
-  tasks and dropped ones are not on these paths, since they can be or were dropped; with an
-  on-time rollout such a task has a difference of 0 anyway), the tasks of zero duration, and the
-  tasks already done or dropped (nothing can change them any more). If no task remains, the page
-  says that the risk is spread across the plan; without a late rollout, that the project is late
-  in none of the simulated futures; without a deadline, there is no threat.
+  tasks and dropped ones are not on these paths, since they can be or were dropped), the tasks of
+  zero duration, and the tasks already done or dropped (nothing can change them any more). If no
+  task remains, the page says that the risk is spread across the plan; without a late rollout, that
+  the project is late in none of the simulated futures; without a deadline, there is no threat.
 
 ### §11.5 Recommendations and decisions
 
