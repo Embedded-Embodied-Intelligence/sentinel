@@ -31,7 +31,8 @@ jakie wybierzesz przy zakładaniu projektu. Z tych scenariuszy wynika:
   terminie),
 - **najbardziej prawdopodobna data zakończenia** i **zły scenariusz** (jeden na dziesięć kończy
   się jeszcze później),
-- **co zagraża terminowi** — zadania, od których termin zależy najczęściej,
+- **co zagraża terminowi** — zadania, które decydują o terminie częściej, gdy projekt się
+  spóźnia, niż gdy kończy się w terminie,
 - **rekomendacja**: najlepsza zmiana, sprawdzona na tych samych scenariuszach co prognoza.
 
 Sentinel nie zgaduje i nie „czuje”: każda liczba na ekranie pochodzi z tych samych symulacji,
@@ -133,11 +134,14 @@ Niżej:
 
 ![Co zagraża terminowi oraz plan i postęp](ui/pl_overview_threats.png)
 
-- **Co zagraża terminowi**: zadania, które najczęściej decydują o terminie w scenariuszach,
-  w których projekt się spóźnia, np. „Zadanie „API katalogu produktów” decyduje o terminie w 7
-  na 10 scenariuszy z opóźnieniem”. Nie ma tu zadań, od których zależy cały plan (np. pierwsze
-  i ostatnie zadanie), ani zadań już zakończonych. Jeśli żadne zadanie się nie wyróżnia,
-  Sentinel pisze, że ryzyko rozkłada się na cały plan. Pod listą: kto jest nieobecny i które
+- **Co zagraża terminowi**: zadania, które decydują o terminie częściej w scenariuszach, w
+  których projekt się spóźnia, niż w tych, w których kończy się w terminie: co najmniej o 10
+  punktów procentowych, największa różnica jest pierwsza. Zdanie podaje, jak często zadanie
+  decyduje w scenariuszach z opóźnieniem, np. „Zadanie „API katalogu produktów” decyduje o
+  terminie w 7 na 10 scenariuszy z opóźnieniem”, więc liczby na liście nie muszą maleć. Nie ma
+  tu zadań, od których zależy cały plan (np. pierwsze i ostatnie zadanie), ani zadań już
+  zakończonych. Jeśli żadne zadanie się nie wyróżnia, Sentinel pisze, że ryzyko rozkłada się na
+  cały plan. Pod listą: kto jest nieobecny i które
   zadania nie zaczęły się zgodnie z planem.
 - **Plan i postęp**: plan początkowy (cienka szara linia), gotowe (szare), w toku (ciemny morski,
   z przerywanym obrysem pozostałej pracy), zaplanowane (jasny morski) i nieobecności (kreskowanie),

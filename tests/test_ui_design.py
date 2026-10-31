@@ -33,6 +33,7 @@ from sentinel.app.ui.project import (
     over_budget,
     short_name,
     split_pending,
+    threats_of,
     toast_text,
     week_groups,
     why_points,
@@ -354,6 +355,18 @@ def test_chart_flags_never_overlap_and_turn_at_the_end() -> None:
         left, right = (flag.x - width, flag.x) if flag.flip else (flag.x, flag.x + width)
         assert all(right <= a or left >= b for a, b in spans.get(flag.tier, []))
         spans.setdefault(flag.tier, []).append((left, right))
+
+
+def test_threats_are_phrased_by_their_share_of_the_late_futures() -> None:
+    """Spec section 11.4: the order comes from the ranking, the sentence from the late share."""
+    shares = (("A", 0.5), ("B", 1.0), ("C", 0.96), ("D", 0.9))
+    drivers = [SimpleNamespace(task=n, name=n, share=s, on_time_share=0.1) for n, s in shares]
+    found = threats_of(SimpleNamespace(drivers=drivers), EN)  # type: ignore[arg-type]
+    assert [t.text for t in found] == [
+        "The task “A” decides the deadline in 5 of 10 late scenarios.",
+        "The task “B” decides the deadline in every late scenario.",
+        "The task “C” decides the deadline in nearly every late scenario.",
+    ]
 
 
 def test_the_chart_shows_status_deadline_window_threats_and_absence() -> None:

@@ -9,6 +9,7 @@ from app_cases import ABSENCE_CHECKIN, absence_recommendation, checked_in, plann
 
 from sentinel.app import names, planning, showcase
 from sentinel.app.live import LiveProject
+from sentinel.app.models import Task
 from sentinel.interpret.team import FIRST_NAMES, INITIALS, roster
 from sentinel.model import ProjectInstance
 from sentinel.wbs.narrate import ROLE_NAMES, VOCABULARY, activity_names
@@ -34,6 +35,35 @@ def test_no_change_on_a_recommendation_is_the_overview_forecast() -> None:
     assert recommendation.impacts == ()  # the figures of v2.0.1 are not stored any more
 
 
+def test_threats_rank_by_how_much_more_often_they_decide_the_late_futures() -> None:
+    late = {1: 50, 2: 90, 3: 100, 4: 30, 5: 29}
+    on_time = {1: 10, 2: 70, 3: 100, 4: 20, 5: 20}
+    durations = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1}
+    # 40 points above 20 although in fewer late futures; exactly 10 points count (0.3 - 0.2 falls
+    # short in floats), 9 do not, and what decides both kinds of future does not.
+    assert planning.rank_threats(late, 100, on_time, 100, durations) == [1, 2, 4]
+    # Equal differences: the longer task, then the id.
+    assert planning.rank_threats({1: 5, 2: 5, 3: 5}, 10, {}, 10, {1: 2, 2: 7, 3: 2}) == [2, 1, 3]
+    # At a chance of 0 % the on-time share counts as 0; nothing late, nothing to name.
+    assert planning.rank_threats({1: 10, 2: 9, 3: 50}, 100, {}, 0, dict.fromkeys(late, 1)) == [3, 1]
+    assert planning.rank_threats({}, 0, {}, 200, {}) == []
+
+
+def test_the_last_task_is_no_threat_though_a_side_task_goes_around_it() -> None:
+    """QA-23: a required task without a successor made the plan's last task non-structural, and it
+    topped the list with nothing for a manager to do. It decides both kinds of future alike."""
+    base = small()
+    side = Task(key="T4", name="Docs", duration=1, crew={"Tester": 1}, predecessors=("T2",))
+    project = planned(base.model_copy(update={"tasks": (*base.tasks, side)}))
+    nodes = project.nodes()
+    assert planning.structural(nodes, set()) == set()
+    assert "T3" in planning.threat_candidates(project, nodes)
+    forecast = planning.forecast(project)
+    assert forecast.p_on_time is not None and 0 < forecast.p_on_time < 1
+    assert [d.task for d in forecast.drivers] == ["T4"]
+    assert forecast.drivers[0].share - forecast.drivers[0].on_time_share >= 0.1
+
+
 def test_threats_leave_out_structural_and_finished_tasks() -> None:
     project = checked_in(planned(small()), ABSENCE_CHECKIN)
     nodes = project.nodes()
@@ -42,8 +72,7 @@ def test_threats_leave_out_structural_and_finished_tasks() -> None:
     forecast = planning.forecast(project)
     assert forecast.p_on_time is not None
     assert forecast.late == round((1 - forecast.p_on_time) * 200) - forecast.truncated
-    assert [d.task for d in forecast.drivers] == ["T1"]
-    assert 0 < forecast.drivers[0].share <= 1
+    assert forecast.drivers == ()  # T1 decides the late and the on-time futures alike
     # The showcase: the first task, the performance tests and the launch are on every path of
     # the required tasks; the optional gift cards are left out of the paths.
     nodes = LiveProject(showcase.definition("pl")).nodes()

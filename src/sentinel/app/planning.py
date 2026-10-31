@@ -9,6 +9,7 @@ import math
 import time
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
+from fractions import Fraction
 from typing import Literal
 
 import numpy as np
@@ -50,6 +51,7 @@ T_CP = 0.1  # deterministic seconds of CP-SAT per plan (spec section 8)
 CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
 FORECAST_ROLLOUTS = 200  # N of the forecast and of the comparison shown (spec 5.2, 11.4, 11.5)
 DRIVERS = 5  # tasks that threaten the deadline, at most
+THREAT_DIFFERENCE = Fraction(1, 10)  # late share minus on-time share, at least (section 11.4)
 SHOWN = 5  # alternatives shown with a recommendation besides its action, at most (11.5)
 # The deciding components after min(p, theta_D), and the candidate order: the chances tie (11.5).
 LATER_COMPONENTS = frozenset(("tardiness", "scope", "budget", "stability", "level", "order"))
@@ -98,10 +100,11 @@ def baseline_plan(model: Model, *, deterministic_time_limit: float = T_CP) -> Ba
 
 class Driver(_Frozen):
     """A task that threatens the deadline (spec section 11.4): on the critical chain of `share`
-    of the late rollouts."""
+    of the late rollouts and of `on_time_share` of the on-time ones."""
 
     task: str
     share: float
+    on_time_share: float
 
 
 class ForecastResult(_Frozen):
@@ -128,8 +131,8 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
     """NoReaction rollouts from the current observation (spec sections 5.1 and 11.4), exactly
     those of `sentinel.forecasting.forecast.forecast` with the seed derive_seed(project seed,
     "forecast", t), keeping each rollout's final state for its critical chain: the tasks that
-    threaten the deadline are ranked by their share of the completed late rollouts (C > D)
-    whose chain holds them, structural, zero-duration and finished tasks left out."""
+    threaten the deadline are those of `rank_threats`, structural, zero-duration and finished
+    tasks left out."""
     began = time.perf_counter()
     observation = project.observation()
     seed = derive_seed(project.definition.settings.seed, "forecast", str(observation.day))
@@ -138,15 +141,20 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
     ids = project.activity_ids()
     nodes = project.nodes()
     candidates = {ids[key]: key for key in threat_candidates(project, nodes)}
-    late = [
-        state
-        for state, makespan in zip(states, makespans, strict=True)
-        if deadline is not None and makespan > deadline and state.start[state.sink] is not None
-    ]
+    late: list[EngineState] = []
+    on_time: list[EngineState] = []
+    if deadline is not None:
+        for state, makespan in zip(states, makespans, strict=True):
+            if state.start[state.sink] is not None:
+                (late if makespan > deadline else on_time).append(state)
     counts: Counter[int] = Counter()
     for state in late:
         counts.update(j for j in critical_chain(state) if j in candidates)
-    ranked = sorted(counts, key=lambda j: (-counts[j], -nodes[candidates[j]].duration, j))
+    counts_on_time: Counter[int] = Counter()
+    for state in on_time:
+        counts_on_time.update(j for j in critical_chain(state) if j in candidates)
+    durations = {j: nodes[key].duration for j, key in candidates.items()}
+    ranked = rank_threats(counts, len(late), counts_on_time, len(on_time), durations)
     costs = [state.cost for state in states]
     q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
     return ForecastResult(
@@ -158,13 +166,39 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
         mean=float(np.mean(makespans)),
         truncated=sum(state.start[state.sink] is None for state in states),
         drivers=tuple(
-            Driver(task=candidates[j], share=counts[j] / len(late)) for j in ranked[:DRIVERS]
+            Driver(
+                task=candidates[j],
+                share=counts[j] / len(late),
+                on_time_share=counts_on_time[j] / len(on_time) if on_time else 0.0,
+            )
+            for j in ranked[:DRIVERS]
         ),
         late=len(late),
         mean_cost=float(np.mean(costs)),
         p_within_budget=None if budget is None else sum(c <= budget for c in costs) / rollouts,
         wall_time_s=time.perf_counter() - began,
     )
+
+
+def rank_threats(
+    late: Mapping[int, int],
+    late_runs: int,
+    on_time: Mapping[int, int],
+    on_time_runs: int,
+    durations: Mapping[int, int],
+) -> list[int]:
+    """The tasks that threaten the deadline, most first (spec section 11.4): on the critical chain
+    of the late rollouts at least 10 percentage points more often than of the on-time ones, by
+    that difference, then by duration (longer first) and id. Exact, as 0.3 - 0.2 < 0.1 in floats."""
+
+    def difference(j: int) -> Fraction:
+        # SPEC-Q: with no on-time rollout the on-time share counts as 0, so at a chance of 0 % the
+        # late share ranks the tasks, as before v2.1.1.
+        seen = Fraction(on_time.get(j, 0), on_time_runs) if on_time_runs else Fraction(0)
+        return Fraction(late[j], late_runs) - seen
+
+    shown = [j for j in late if difference(j) >= THREAT_DIFFERENCE]
+    return sorted(shown, key=lambda j: (-difference(j), -durations[j], j))
 
 
 def threat_candidates(project: LiveProject, nodes: Mapping[str, Node]) -> list[str]:
@@ -186,8 +220,6 @@ def structural(nodes: Mapping[str, Node], left_out: set[str]) -> set[str]:
     of the required tasks, without the tasks `left_out` (the optional ones and those dropped,
     which have no edges any more): a task is structural if no path reaches the sink without
     it."""
-    # SPEC-Q: a required task with no successor opens a path around the plan's last tasks, so they
-    # stop being structural and top the threats; the rule is kept as written.
     graph = {
         key: [s for s in node.successors if s not in left_out]
         for key, node in nodes.items()

@@ -167,8 +167,6 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
                 note=texts("rec.dropped") if alt.dropped and not rec.compared else "",
             )
         )
-    # SPEC-Q: item 6 lists the alternatives by their own figures; "no change" is pinned last, as the
-    # reference the differences are read against.
     if base is not None:
         rows.append(
             OptionRow(
@@ -310,10 +308,9 @@ class Threat:
 
 
 def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Threat]:
-    """The tasks shown as threats: the highest shares, at least one in twenty late futures."""
-    shown = [d for d in forecast.drivers if d.share >= 0.05][:limit]
+    """The tasks shown as threats: the first of the ranking (spec section 11.4)."""
     found = []
-    for driver in shown:
+    for driver in forecast.drivers[:limit]:
         count = texts.tenths(driver.share)
         if driver.share >= 1:
             text = texts("overview.driver_all", task=driver.name)

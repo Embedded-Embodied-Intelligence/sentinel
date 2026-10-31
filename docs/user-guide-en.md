@@ -30,7 +30,8 @@ up. From these futures come:
 - the **chance of meeting the deadline** (e.g. "39 %": the project ends on time in 78 of the
   200 futures),
 - the **most likely finish** and the **bad case** (one in ten finishes even later),
-- **what threatens the deadline**: the tasks it depends on most often,
+- **what threatens the deadline**: the tasks that decide it more often when the project is
+  late than when it finishes on time,
 - a **recommendation**: the best change, tried on the same futures as the forecast.
 
 Sentinel does not guess: every number on the screen comes from the same simulations, so "no
@@ -131,11 +132,13 @@ Further down:
 
 ![What threatens the deadline, and plan and progress](ui/en_overview_threats.png)
 
-- **What threatens the deadline**: the tasks that most often decide the deadline in the futures
-  where the project is late, e.g. "The task “Product catalogue API” decides the deadline in 7
-  of 10 late scenarios". Tasks the whole plan depends on (such as the first and the last task)
-  and tasks already done are not listed. If no task stands out, Sentinel says that the risk is
-  spread across the plan. Below the list: who is away and which tasks have not started as
+- **What threatens the deadline**: the tasks that decide the deadline more often in the futures
+  where the project is late than in those where it finishes on time: by at least 10 percentage
+  points, the largest difference first. The sentence says how often the task decides in the late
+  futures, e.g. "The task “Product catalogue API” decides the deadline in 7 of 10 late
+  scenarios", so the numbers need not fall down the list. Tasks the whole plan depends on (such
+  as the first and the last task) and tasks already done are not listed. If no task stands out,
+  Sentinel says that the risk is spread across the plan. Below the list: who is away and which tasks have not started as
   planned.
 - **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
   with a dashed outline of the work left), planned (light teal) and absences (hatched), with the

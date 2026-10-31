@@ -380,6 +380,13 @@ def test_the_report_is_for_people_and_travels_alone(site: Site, language: str) -
     assert site.client.get("/projects/none/report.html").status_code == 404
 
 
+def test_with_no_task_standing_out_the_risk_is_spread(site: Site) -> None:
+    """Spec section 11.4: this project is late in most futures, and its only candidate decides the
+    late and the on-time ones alike."""
+    page = _get(site, f"/projects/{site.ids['open']}/forecast", "en", htmx=True)
+    assert "the risk is spread across the plan" in page and "How to read this" not in page
+
+
 def test_the_forecast_says_it_assumes_the_plan_stays_as_it_is(site: Site) -> None:
     """QA-09: 0 % for weeks and then on time, with no word that a forecast keeps the plan."""
     page = _get(site, f"/projects/{site.ids['open']}/forecast", "pl", htmx=True)

@@ -216,6 +216,7 @@ class DriverView(View):
     task: str
     name: str
     share: float
+    on_time_share: float
 
 
 class ForecastView(View):
@@ -709,7 +710,13 @@ def forecast_view(project: LiveProject, result: ForecastResult) -> ForecastView:
         p90=calendar.finish_date(q90),
         mean=result.mean,
         drivers=[
-            DriverView(task=d.task, name=nodes[d.task].name, share=d.share) for d in result.drivers
+            DriverView(
+                task=d.task,
+                name=nodes[d.task].name,
+                share=d.share,
+                on_time_share=d.on_time_share,
+            )
+            for d in result.drivers
         ],
         late=result.late,
         expected_cost=result.mean_cost,
