@@ -9,6 +9,7 @@ import tomllib
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,7 @@ from app_cases import ABSENCE_CHECKIN, small
 from fastapi.testclient import TestClient
 from ui_check import problems, visible_text
 
-from sentinel.app import names
+from sentinel.app import names, planning
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits
 from sentinel.app.events import Recommended
@@ -501,17 +502,29 @@ def test_no_change_after_a_check_in_is_folded_into_it(site: Site) -> None:
     assert "No change" not in only
 
 
-def test_with_no_task_standing_out_the_risk_is_spread(site: Site) -> None:
-    """Spec section 11.4: this project is late in some futures, and no task decides half of them."""
-    page = _get(site, f"/projects/{site.ids['planned']}/forecast", "en", htmx=True)
+def test_with_no_task_standing_out_the_risk_is_spread(
+    site: Site, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Spec section 11.4: late in some futures, and with this line no task reaches it (a new
+    project, as forecasts are kept)."""
+    monkeypatch.setattr(planning, "THREAT_SENSITIVITY", Fraction(1))
+    project = _create(site.client, site.headers, small())
+    plan = site.client.post(f"/api/projects/{project}/plan", headers=site.headers)
+    assert plan.status_code == 202
+    page = _get(site, f"/projects/{project}/forecast", "en", htmx=True)
     assert "the risk is spread across the plan" in page and "How to read this" not in page
 
 
-def test_a_task_that_decides_most_late_futures_is_named(site: Site) -> None:
-    """Spec section 11.4: the existing sentence, read from the task's share of the late futures."""
-    page = _get(site, f"/projects/{site.ids['open']}/forecast", "en", htmx=True)
-    assert "The task “Build API” decides the deadline in 9 of 10 late scenarios." in page
-    assert "How to read this" in page and "the risk is spread" not in page
+def test_a_task_that_goes_with_the_finish_date_is_named(site: Site) -> None:
+    """Spec sections 11.4, 11.7: the owner's sentence, word for word, with the task's name."""
+    page = _get(site, f"/projects/{site.ids['open']}/forecast", "pl", htmx=True)
+    assert (
+        "Zadanie „Build API”. Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle "
+        "przesuwa cały termin." in page
+    )
+    assert "Jak to czytać" in page and "ryzyko rozkłada się" not in page
+    english = _get(site, f"/projects/{site.ids['open']}/forecast", "en", htmx=True)
+    assert "Most strongly affects the finish date" in english and "How to read this" in english
 
 
 def test_the_forecast_says_it_assumes_the_plan_stays_as_it_is(site: Site) -> None:

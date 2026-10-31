@@ -134,9 +134,9 @@ def test_a_live_project_through_the_api(tmp_path: Path, client: Visitor) -> None
     assert types == ["created", "baseline", "checkin", "recommendation", "decision"]
     forecast = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert forecast["status"] == "done" and forecast["result"]["rollouts"] == 200
-    # T1 decides most of the late futures, but not nearly every future: a threat (11.4).
+    # T1 goes with the finish day most; T2 is done (11.4).
     assert forecast["result"]["late"] > 0
-    assert [d["task"] for d in forecast["result"]["drivers"]] == ["T1"]
+    assert [d["task"] for d in forecast["result"]["drivers"]] == ["T1", "T3"]
     again = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert again["result"] == forecast["result"]  # deterministic for the project's seed
     csv_text = test.get(f"/api/projects/{pid}/plan.csv").text

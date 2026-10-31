@@ -2,15 +2,17 @@
 the forecast's simulated futures, the tasks that threaten the deadline, and the names of the
 example projects from a vocabulary file per language."""
 
+import math
 import re
 from datetime import date
 
 import numpy as np
+import pytest
 from app_cases import ABSENCE_CHECKIN, absence_recommendation, checked_in, planned, small
 
 from sentinel.app import names, planning, showcase
 from sentinel.app.live import LiveProject
-from sentinel.app.models import CheckIn, Task
+from sentinel.app.models import CheckIn, TaskReport, WorkIncreaseReport
 from sentinel.app.views import forecast_view
 from sentinel.interpret.team import FIRST_NAMES, INITIALS, roster
 from sentinel.model import ProjectInstance
@@ -37,60 +39,89 @@ def test_no_change_on_a_recommendation_is_the_overview_forecast() -> None:
     assert recommendation.impacts == ()  # the figures of v2.0.1 are not stored any more
 
 
-def test_threats_decide_half_of_the_late_futures_but_not_nearly_all_futures() -> None:
-    durations = dict.fromkeys(range(1, 6), 1)
-    late = {1: 50, 2: 49, 3: 90, 4: 90, 5: 60}
-    on_time = {3: 99, 4: 100, 5: 100}
-    # Exactly half of the late futures counts and 49 % does not; 189 of 200 futures stays, exactly
-    # 190 of 200 (95 %) is always critical; the order is the late share alone.
-    assert planning.rank_threats(late, 100, on_time, 100, durations) == [3, 5, 1]
-    # Equal late shares: the longer task, then the id; and at most three.
-    equal = {1: 5, 2: 5, 3: 5, 4: 5}
-    assert planning.rank_threats(equal, 10, {}, 10, {1: 2, 2: 7, 3: 2, 4: 2}) == [2, 1, 3]
-    # At a chance of 0 % nothing is always critical; nothing late, nothing to name.
-    assert planning.rank_threats({1: 50, 2: 100, 3: 49}, 100, {}, 0, durations) == [2, 1]
-    assert planning.rank_threats({}, 0, {}, 200, {}) == []
+def test_threats_are_the_tasks_whose_duration_goes_with_the_finish_day() -> None:
+    """Spec section 11.4: duration sensitivity from 0.2, compared exactly, highest first."""
+    finishes = [1, 2, 3, 4, 5]
+    realised = {
+        1: [1, 4, 5, 2, 3],  # exactly 0.2
+        2: [3, 2, 5, 1, 4],  # 0.1
+        3: [1, 2, 3, 5, 4],  # 0.9
+        4: [5, 4, 3, 2, 1],  # -1: shorter goes with later, no threat
+        5: [3, 3, 3, 3, 3],  # does not vary, no correlation
+    }
+    ranked = planning.rank_threats(realised, finishes, dict.fromkeys(range(1, 6), 1))
+    assert ranked == [(3, pytest.approx(0.9)), (1, pytest.approx(0.2))]
+    # Still exactly on the line over 200 futures, with ties sharing their mean rank.
+    line = planning.rank_threats({1: realised[1] * 40}, finishes * 40, {1: 1})
+    assert [j for j, _ in line] == [1]
+    # Equal correlations: the longer task, then the id; and at most three.
+    same = dict.fromkeys(range(1, 5), finishes)
+    ties = planning.rank_threats(same, finishes, {1: 2, 2: 7, 3: 2, 4: 2})
+    assert [j for j, _ in ties] == [2, 1, 3]
+    # A finish day that does not vary correlates with nothing.
+    assert planning.rank_threats({1: finishes}, [9] * 5, {1: 1}) == []
 
 
-def test_the_last_task_is_no_threat_though_a_side_task_goes_around_it() -> None:
-    """QA-23: a required task without a successor made the plan's last task non-structural, and it
-    topped the list with nothing for a manager to do. It decides nearly every future."""
-    base = small()
-    side = Task(key="T4", name="Docs", duration=1, crew={"Tester": 1}, predecessors=("T2",))
-    definition = base.model_copy(update={"tasks": (*base.tasks, side)})
-    project = planned(definition)
-    nodes = project.nodes()
-    assert planning.structural(nodes, set()) == set()
-    assert "T3" in planning.threat_candidates(project, nodes)
-    forecast = planning.forecast(project)
-    assert forecast.p_on_time is not None and 0 < forecast.p_on_time < 1
-    assert forecast.drivers == ()
-    # No future can finish on time, so nothing shows that it decides on-time futures too.
-    too_late = checked_in(planned(definition), CheckIn(date=date(2026, 11, 13)))
-    zero = planning.forecast(too_late)
-    assert zero.p_on_time == 0 and [d.task for d in zero.drivers] == ["T3", "T1"]
-    assert zero.drivers[0].share >= 0.95 and zero.drivers[0].on_time_share == 0
+def test_spearman_is_pearson_on_mean_ranks() -> None:
+    """Spearman 1904; the value is that of scipy.stats.spearmanr, not a dependency here."""
+    squared = planning.signed_squared_spearman([1, 2, 2, 3, 5], [2, 1, 3, 3, 9])
+    assert math.sqrt(squared) == pytest.approx(0.7631578947368421)
+    assert planning.signed_squared_spearman([1, 2, 3], [3, 2, 1]) == -1
 
 
-def test_threats_leave_out_structural_and_finished_tasks() -> None:
+def test_a_realised_duration_holds_the_growth_of_its_rollout() -> None:
+    """Spec section 11.4: sampled durations are whole, so growth alone (D2) makes a fraction."""
+    project = planned(small())
+    j = project.activity_ids()["T1"]
+    _, states = planning.forecast_rollouts(project.observation(), 200, 7)
+    grown = [any(i == j for i, *_ in state.work_increases) for state in states]
+    assert any(grown) and not all(grown)
+    assert [planning.realised_days(state, j) % 1 != 0 for state in states] == grown
+
+
+def test_growth_at_a_check_in_raises_the_realised_duration() -> None:
+    """Spec section 11.4: the growth already reported counts, not only that of the rollouts."""
+    report = TaskReport(task="T1", status="in_progress", percent=30)
+    before = checked_in(planned(small()), CheckIn(date=date(2026, 11, 3), tasks=(report,)))
+    grown = checked_in(
+        planned(small()),
+        CheckIn(
+            date=date(2026, 11, 3),
+            tasks=(report,),
+            increases=(WorkIncreaseReport(task="T1", extra_days=4),),
+        ),
+    )
+    j = before.activity_ids()["T1"]
+
+    def mean_days(project: LiveProject) -> float:
+        _, states = planning.forecast_rollouts(project.observation(), 200, 7)
+        return float(np.mean([planning.realised_days(state, j) for state in states]))
+
+    assert mean_days(grown) - mean_days(before) > 3
+
+
+def test_threats_are_the_unfinished_tasks_and_need_a_late_future() -> None:
     project = checked_in(planned(small()), ABSENCE_CHECKIN)
     nodes = project.nodes()
-    assert planning.structural(nodes, set()) == {"T3"}  # the test task follows both others
-    assert planning.threat_candidates(project, nodes) == ["T1"]  # T2 is done
+    # T2 is done; T3, which every path passes through, is unfinished like any other.
+    assert planning.threat_candidates(project, nodes) == ["T1", "T3"]
     forecast = planning.forecast(project)
     assert forecast.p_on_time is not None
-    assert forecast.late == round((1 - forecast.p_on_time) * 200) - forecast.truncated
-    assert [d.task for d in forecast.drivers] == ["T1"]
-    assert 0.5 <= forecast.drivers[0].share <= 1
+    assert forecast.late == round((1 - forecast.p_on_time) * 200)
+    assert [d.task for d in forecast.drivers] == ["T1", "T3"]
+    assert forecast.drivers[0].sensitivity > forecast.drivers[1].sensitivity >= 0.2
     shown = forecast_view(project, forecast).drivers[0]  # what the API and the pages read
-    assert (shown.name, shown.share) == ("Build API", forecast.drivers[0].share)
-    assert shown.on_time_share == forecast.drivers[0].on_time_share
-    # The showcase: the first task, the performance tests and the launch are on every path of
-    # the required tasks; the optional gift cards are left out of the paths.
-    nodes = LiveProject(showcase.definition("pl")).nodes()
-    optional = {key for key, node in nodes.items() if node.optional}
-    assert optional == {"T11"}
-    assert planning.structural(nodes, optional) == {"T1", "T10", "T12"}
+    assert (shown.name, shown.sensitivity) == ("Build API", forecast.drivers[0].sensitivity)
+    project.tasks["T3"].state = "removed"
+    assert planning.threat_candidates(project, nodes) == ["T1"]
+    # A chance of 0 % follows the same rule; without a late future or a deadline, no threat.
+    too_late = checked_in(planned(small()), CheckIn(date=date(2026, 11, 13)))
+    zero = planning.forecast(too_late)
+    assert zero.p_on_time == 0 and [d.task for d in zero.drivers] == ["T1", "T3"]
+    calm = planning.forecast(planned(small(deadline=date(2026, 12, 18))))
+    assert calm.p_on_time == 1 and calm.late == 0 and calm.drivers == ()
+    undated = planning.forecast(planned(small(deadline=None)))
+    assert undated.p_on_time is None and undated.late == 0 and undated.drivers == ()
 
 
 def test_the_vocabularies_have_one_shape_and_english_is_the_studies() -> None:

@@ -773,16 +773,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "się już nie zmieniał. Szansa to odsetek scenariuszy, które kończą się przed terminem.",
     ),
     "overview.driver": (
-        "The task “{task}” decides the deadline in {count} of 10 late scenarios.",
-        "Zadanie „{task}” decyduje o terminie w {count} na 10 scenariuszy z opóźnieniem.",
-    ),
-    "overview.driver_nearly": (
-        "The task “{task}” decides the deadline in nearly every late scenario.",
-        "Zadanie „{task}” decyduje o terminie w niemal każdym scenariuszu z opóźnieniem.",
-    ),
-    "overview.driver_all": (
-        "The task “{task}” decides the deadline in every late scenario.",
-        "Zadanie „{task}” decyduje o terminie w każdym scenariuszu z opóźnieniem.",
+        "Task “{task}”. Most strongly affects the finish date: lengthening this task usually "
+        "moves the whole deadline.",
+        "Zadanie „{task}”. Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle "
+        "przesuwa cały termin.",
     ),
     "overview.spread": (
         "No single task decides the deadline: the risk is spread across the plan.",
@@ -799,18 +793,21 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Ustaw termin, aby zobaczyć, co mu zagraża.",
     ),
     "overview.drivers_note": (
-        "A task decides the deadline in a late scenario when it lies on the chain of tasks that "
-        "sets the finish date there. Listed are the tasks that do so in at least half of the late "
-        "scenarios, at most three, the most frequent first. Not listed are the tasks on that chain "
-        "in at least 95 % of all scenarios, late or on time (unless none finishes on time), the "
-        "tasks the whole plan depends on, such as the first and the last one, and tasks already "
-        "done.",
-        "Zadanie decyduje o terminie w scenariuszu z opóźnieniem, gdy leży w nim na łańcuchu "
-        "zadań wyznaczającym datę zakończenia. Wymieniamy zadania, które robią to w co najmniej "
-        "połowie scenariuszy z opóźnieniem, najwyżej trzy, od najczęstszego. Nie wymieniamy zadań "
-        "leżących na tym łańcuchu w co najmniej 95 % wszystkich scenariuszy, z opóźnieniem lub "
-        "bez (chyba że żaden nie kończy się w terminie), zadań, od których zależy cały plan (np. "
-        "pierwszego i ostatniego), ani zadań już zakończonych.",
+        "For every unfinished task we compare, across the simulated futures, how long it takes, "
+        "growth included, with the project's finish date. Listed are the tasks where a longer "
+        "duration goes most clearly with a later finish (a rank correlation of at least 0.2), at "
+        "most three, the strongest first; the bar shows that strength. A task that varies little, "
+        "such as a short go-live, is rarely listed, even if it sets the finish date in most "
+        "futures. A value close to 0.2 is uncertain on this number of futures, so such a task can "
+        "leave the list at the next check-in though nothing changed in the project.",
+        "Dla każdego niezakończonego zadania porównujemy w symulowanych scenariuszach czas jego "
+        "trwania, razem z wydłużeniami, z datą zakończenia projektu. Wymieniamy zadania, w których "
+        "dłuższy czas najwyraźniej idzie w parze z późniejszym końcem (korelacja rang co najmniej "
+        "0,2), najwyżej trzy, od najsilniejszego; pasek pokazuje tę siłę. Zadanie o małej "
+        "zmienności, np. krótkie uruchomienie produkcyjne, rzadko trafia na listę, nawet jeśli w "
+        "większości scenariuszy wyznacza datę zakończenia. Wartość bliska 0,2 jest przy tej "
+        "liczbie scenariuszy niepewna, więc takie zadanie może zniknąć z listy przy następnym "
+        "raporcie, choć w projekcie nic się nie zmieniło.",
     ),
     "overview.checked_title": ("Sentinel checked the new status", "Sentinel sprawdził nowy stan"),
     "overview.checked": (
@@ -1733,10 +1730,6 @@ class Texts:
     def tie(self, kind: str, reason: str) -> str:
         """The sentence shown when an alternative has a higher chance (spec 11.5 item 7, 11.7)."""
         return self(f"why.tie.{kind}", part=self(f"why.tie.by.{reason}"))
-
-    def tenths(self, share: float) -> int:
-        """A share in tenths, rounded half up: 0.74 -> 7 ("7 of 10")."""
-        return math.floor(10 * share + 0.5)
 
 
 def _whole(value: float) -> int:

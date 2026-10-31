@@ -7,7 +7,7 @@ called inside a rollout.
 
 import math
 import time
-from collections import Counter, defaultdict
+from bisect import bisect_left, bisect_right
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 from typing import Literal
@@ -51,8 +51,7 @@ T_CP = 0.1  # deterministic seconds of CP-SAT per plan (spec section 8)
 CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
 FORECAST_ROLLOUTS = 200  # N of the forecast and of the comparison shown (spec 5.2, 11.4, 11.5)
 THREAT_LIMIT = 3  # tasks that threaten the deadline, at most (spec section 11.4)
-THREAT_LATE_SHARE = Fraction(1, 2)  # of the late rollouts, on the critical chain, at least (11.4)
-THREAT_ALWAYS_CRITICAL = Fraction(19, 20)  # of all completed rollouts: left out from here (11.4)
+THREAT_SENSITIVITY = Fraction(1, 5)  # rank correlation with the finish day, at least (11.4)
 SHOWN = 5  # alternatives shown with a recommendation besides its action, at most (11.5)
 # The deciding components after min(p, theta_D), and the candidate order: the chances tie (11.5).
 LATER_COMPONENTS = frozenset(("tardiness", "scope", "budget", "stability", "level", "order"))
@@ -100,19 +99,18 @@ def baseline_plan(model: Model, *, deterministic_time_limit: float = T_CP) -> Ba
 
 
 class Driver(_Frozen):
-    """A task that threatens the deadline (spec section 11.4): on the critical chain of `share`
-    of the late rollouts and of `on_time_share` of the on-time ones."""
+    """A task that threatens the deadline (spec section 11.4): the rank correlation `sensitivity`
+    of its realised duration with the finish day."""
 
     task: str
-    share: float
-    on_time_share: float
+    sensitivity: float
 
 
 class ForecastResult(_Frozen):
     """The forecast of day `day` (spec section 11.4): P(C <= D) (None without a deadline), the
-    10/50/90 % quantiles and the mean of the makespan C, the tasks that threaten the deadline
-    with the number of `late` rollouts they are counted over, and for the budget outlook the
-    mean total cost of the rollouts and the share within the budget B."""
+    10/50/90 % quantiles and the mean of the makespan C, the tasks that threaten the deadline,
+    the number of `late` rollouts, and for the budget outlook the mean total cost of the rollouts
+    and the share within the budget B."""
 
     day: int
     seed: int
@@ -131,9 +129,9 @@ class ForecastResult(_Frozen):
 def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> ForecastResult:
     """NoReaction rollouts from the current observation (spec sections 5.1 and 11.4), exactly
     those of `sentinel.forecasting.forecast.forecast` with the seed derive_seed(project seed,
-    "forecast", t), keeping each rollout's final state for its critical chain: the tasks that
-    threaten the deadline are those of `rank_threats`, structural, zero-duration and finished
-    tasks left out."""
+    "forecast", t), keeping each rollout's final state for the realised durations: the tasks that
+    threaten the deadline are the unfinished ones `rank_threats` keeps, none without a late
+    rollout."""
     began = time.perf_counter()
     observation = project.observation()
     seed = derive_seed(project.definition.settings.seed, "forecast", str(observation.day))
@@ -142,20 +140,10 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
     ids = project.activity_ids()
     nodes = project.nodes()
     candidates = {ids[key]: key for key in threat_candidates(project, nodes)}
-    late: list[EngineState] = []
-    on_time: list[EngineState] = []
-    if deadline is not None:
-        for state, makespan in zip(states, makespans, strict=True):
-            if state.start[state.sink] is not None:
-                (late if makespan > deadline else on_time).append(state)
-    counts: Counter[int] = Counter()
-    for state in late:
-        counts.update(j for j in critical_chain(state) if j in candidates)
-    counts_on_time: Counter[int] = Counter()
-    for state in on_time:
-        counts_on_time.update(j for j in critical_chain(state) if j in candidates)
+    late = 0 if deadline is None else sum(c > deadline for c in makespans)
+    realised = {j: [realised_days(state, j) for state in states] for j in candidates}
     durations = {j: nodes[key].duration for j, key in candidates.items()}
-    ranked = rank_threats(counts, len(late), counts_on_time, len(on_time), durations)
+    ranked = rank_threats(realised, makespans, durations) if late else []
     costs = [state.cost for state in states]
     q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
     return ForecastResult(
@@ -166,89 +154,59 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
         quantiles=(q10, q50, q90),
         mean=float(np.mean(makespans)),
         truncated=sum(state.start[state.sink] is None for state in states),
-        drivers=tuple(
-            Driver(
-                task=candidates[j],
-                share=counts[j] / len(late),
-                on_time_share=counts_on_time[j] / len(on_time) if on_time else 0.0,
-            )
-            for j in ranked
-        ),
-        late=len(late),
+        drivers=tuple(Driver(task=candidates[j], sensitivity=rho) for j, rho in ranked),
+        late=late,
         mean_cost=float(np.mean(costs)),
         p_within_budget=None if budget is None else sum(c <= budget for c in costs) / rollouts,
         wall_time_s=time.perf_counter() - began,
     )
 
 
+def realised_days(state: EngineState, j: int) -> float:
+    """The realised duration of task j in a rollout's final state (spec section 11.4): its work in
+    full-crew days, with all its growth, as `SimulationResult.work`."""
+    # SPEC-Q: work, not F_j - S_j: days a task waits or works with part of its crew do not count.
+    return (state.done[j] + state.remaining[j]) / state.unit[j]
+
+
+def signed_squared_spearman(xs: Sequence[float], ys: Sequence[float]) -> Fraction:
+    """The square of Spearman's rank correlation with its sign (Spearman 1904), ties sharing their
+    mean rank: exact, and in the order of the correlation; 0 if a series does not vary."""
+
+    def doubled_ranks(values: Sequence[float]) -> list[int]:
+        ordered = sorted(values)
+        return [bisect_left(ordered, v) + bisect_right(ordered, v) + 1 for v in values]
+
+    x, y = doubled_ranks(xs), doubled_ranks(ys)
+    n, sum_x, sum_y = len(x), sum(x), sum(y)
+    covariance = n * sum(a * b for a, b in zip(x, y, strict=True)) - sum_x * sum_y
+    variance_x = n * sum(a * a for a in x) - sum_x * sum_x
+    variance_y = n * sum(b * b for b in y) - sum_y * sum_y
+    if not variance_x or not variance_y:
+        return Fraction(0)
+    return Fraction(covariance * abs(covariance), variance_x * variance_y)
+
+
 def rank_threats(
-    late: Mapping[int, int],
-    late_runs: int,
-    on_time: Mapping[int, int],
-    on_time_runs: int,
+    realised: Mapping[int, Sequence[float]],
+    finishes: Sequence[int],
     durations: Mapping[int, int],
-) -> list[int]:
-    """The tasks that threaten the deadline, most first (spec section 11.4): on the critical chain
-    of at least half of the late rollouts, but of fewer than 95 % of all completed ones, by the late
-    share, then by duration (longer first) and id, at most three; compared exactly."""
-
-    def always_critical(j: int) -> bool:
-        # SPEC-Q: with no on-time rollout the on-time share counts as 0 and nothing shows that a
-        # task decides on-time futures too, so at a chance of 0 % none is always critical.
-        if not on_time_runs:
-            return False
-        overall = Fraction(late[j] + on_time.get(j, 0), late_runs + on_time_runs)
-        return overall >= THREAT_ALWAYS_CRITICAL
-
-    shown = [
-        j
-        for j in late
-        if Fraction(late[j], late_runs) >= THREAT_LATE_SHARE and not always_critical(j)
-    ]
-    return sorted(shown, key=lambda j: (-late[j], -durations[j], j))[:THREAT_LIMIT]
+) -> list[tuple[int, float]]:
+    """The tasks that threaten the deadline with their sensitivity, highest first (spec section
+    11.4; Spearman 1904): a rank correlation of at least 0.2 between the realised duration and the
+    finish day, then by duration (longer first) and id, at most three; compared exactly."""
+    scores = {j: signed_squared_spearman(days, finishes) for j, days in realised.items()}
+    shown = [j for j, score in scores.items() if score >= THREAT_SENSITIVITY**2]
+    ranked = sorted(shown, key=lambda j: (-scores[j], -durations[j], j))[:THREAT_LIMIT]
+    return [(j, math.sqrt(scores[j])) for j in ranked]
 
 
 def threat_candidates(project: LiveProject, nodes: Mapping[str, Node]) -> list[str]:
-    """The tasks that may be named as threats to the deadline (spec section 11.4): not
-    structural, of positive duration, and neither done nor dropped."""
-    dropped = {key for key, tracked in project.tasks.items() if tracked.state == "removed"}
-    done = {key for key, tracked in project.tasks.items() if tracked.state == "done"}
-    optional = {key for key, node in nodes.items() if node.optional}
-    skeleton = structural(nodes, optional | dropped)
-    return [
-        key
-        for key, node in nodes.items()
-        if key not in skeleton and key not in done | dropped and node.duration > 0
-    ]
-
-
-def structural(nodes: Mapping[str, Node], left_out: set[str]) -> set[str]:
-    """The tasks that every source-sink path passes through (spec section 11.4) in the network
-    of the required tasks, without the tasks `left_out` (the optional ones and those dropped,
-    which have no edges any more): a task is structural if no path reaches the sink without
-    it."""
-    graph = {
-        key: [s for s in node.successors if s not in left_out]
-        for key, node in nodes.items()
-        if key not in left_out
-    }
-    firsts = [key for key in graph if not any(p in graph for p in nodes[key].predecessors)]
-
-    def bypassed(avoid: str) -> bool:
-        """Whether a path from the source reaches the sink without `avoid`."""
-        stack = [key for key in firsts if key != avoid]
-        seen = set(stack)
-        while stack:
-            key = stack.pop()
-            if not graph[key]:
-                return True
-            for successor in graph[key]:
-                if successor != avoid and successor not in seen:
-                    seen.add(successor)
-                    stack.append(successor)
-        return False
-
-    return {key for key in graph if not bypassed(key)}
+    """The tasks that may be named as threats to the deadline (spec section 11.4): the unfinished
+    ones, neither done nor dropped."""
+    # SPEC-Q: "each unfinished task" taken literally: tasks every path passes through count too.
+    closed = {key for key, tracked in project.tasks.items() if tracked.state in ("done", "removed")}
+    return [key for key in nodes if key not in closed]
 
 
 def forecast_rollouts(
@@ -271,41 +229,6 @@ def forecast_rollouts(
         makespans.append(state.max_days if finish is None else finish)
         states.append(state)
     return makespans, states
-
-
-def critical_chain(state: EngineState) -> set[int]:
-    """The activities of a completed run from which tight links lead to the sink (spec section
-    11.4): i -> j is tight if i precedes j and F_i = S_j, or, for a j without such a
-    predecessor, if F_i = S_j and i and j need a common role."""
-    n = len(state.status)
-    predecessors: list[list[int]] = [[] for _ in range(n)]
-    for i, successors in enumerate(state.successors):
-        for j in successors:
-            predecessors[j].append(i)
-    finishing: defaultdict[int, list[int]] = defaultdict(list)
-    for i, finish in enumerate(state.finish):
-        if finish is not None:
-            finishing[finish].append(i)
-    critical: set[int] = set()
-    stack = [state.sink]
-    while stack:
-        j = stack.pop()
-        start = state.start[j]
-        if start is None:
-            continue
-        tight = [i for i in predecessors[j] if state.finish[i] == start]
-        if not tight:
-            roles = {k for k, _ in state.demands[j]}
-            tight = [
-                i
-                for i in finishing.get(start, ())
-                if i != j and any(k in roles for k, _ in state.demands[i])
-            ]
-        for i in tight:
-            if i not in critical:
-                critical.add(i)
-                stack.append(i)
-    return critical
 
 
 # --------------------------------------------------------------------------- recommendations

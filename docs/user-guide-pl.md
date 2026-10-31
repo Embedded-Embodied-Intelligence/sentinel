@@ -31,8 +31,8 @@ jakie wybierzesz przy zakładaniu projektu. Z tych scenariuszy wynika:
   terminie),
 - **najbardziej prawdopodobna data zakończenia** i **zły scenariusz** (jeden na dziesięć kończy
   się jeszcze później),
-- **co zagraża terminowi** — zadania, które decydują o terminie w co najmniej połowie
-  scenariuszy, w których projekt się spóźnia, poza tymi, które i tak decydują niemal zawsze,
+- **co zagraża terminowi** — zadania, których czas trwania w tych scenariuszach najwyraźniej
+  idzie w parze z datą zakończenia, najwyżej trzy,
 - **rekomendacja**: najlepsza zmiana, sprawdzona na tych samych scenariuszach co prognoza.
 
 Sentinel nie zgaduje i nie „czuje”: każda liczba na ekranie pochodzi z tych samych symulacji,
@@ -134,17 +134,18 @@ Niżej:
 
 ![Co zagraża terminowi oraz plan i postęp](ui/pl_overview_threats.png)
 
-- **Co zagraża terminowi**: zadania, które decydują o terminie w co najmniej połowie
-  scenariuszy, w których projekt się spóźnia, najwyżej trzy, od najczęstszego, np. „Zadanie „API
-  katalogu produktów” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem”. Zadanie, które
-  decyduje w co najmniej 95 % wszystkich scenariuszy, z opóźnieniem lub bez, np. uruchomienie
-  produkcyjne, pomijamy: decyduje niezależnie od tego, co się stanie. Może się pojawić tylko
-  wtedy, gdy żaden scenariusz nie kończy się w terminie, bo nic tego wtedy nie pokazuje. Nie ma
-  tu też zadań, od których zależy cały plan (np. pierwsze i ostatnie zadanie), ani zadań już
-  zakończonych. Jeśli żadne zadanie nie spełnia tych warunków, Sentinel pisze, że ryzyko
-  rozkłada się na cały plan. Lista pokazuje, które zadania zwykle wyznaczają datę zakończenia, a
-  nie to, co właśnie się zmieniło. Pod listą: kto jest nieobecny i które zadania nie zaczęły się
-  zgodnie z planem.
+- **Co zagraża terminowi**: dla każdego niezakończonego zadania Sentinel porównuje w 200
+  scenariuszach czas jego trwania, razem z wydłużeniami, z datą zakończenia projektu (korelacja
+  rang). Wymieniamy zadania o wartości co najmniej 0,2, najwyżej trzy, od najsilniejszego, np.
+  „Zadanie „API katalogu produktów”. Najsilniej wpływa na datę końca: wydłużenie tego zadania
+  zwykle przesuwa cały termin”. Pasek pokazuje siłę tego związku. Zadanie o małej zmienności, np.
+  krótkie uruchomienie produkcyjne, rzadko trafia na listę, nawet jeśli w większości scenariuszy
+  wyznacza datę zakończenia. Jeśli żadne zadanie nie spełnia tego warunku, Sentinel pisze, że
+  ryzyko rozkłada się na cały plan. Wartość bliska 0,2 jest przy 200 scenariuszach niepewna, więc
+  takie zadanie może zniknąć z listy przy następnym raporcie, choć w projekcie nic się nie
+  zmieniło; zadanie wyraźnie powyżej tej wartości, np. takie, które właśnie mocno się wydłużyło,
+  to mocniejszy sygnał. Pod listą: kto jest nieobecny i które zadania nie zaczęły się zgodnie z
+  planem.
 - **Plan i postęp**: plan początkowy (cienka szara linia), gotowe (szare), w toku (ciemny morski,
   z przerywanym obrysem pozostałej pracy), zaplanowane (jasny morski) i nieobecności (kreskowanie),
   ze stanem, dzisiejszym dniem, terminem i oknem prognozy. Po najechaniu albo dotknięciu nazwy

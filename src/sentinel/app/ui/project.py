@@ -302,7 +302,7 @@ def finish_gap(
 
 @dataclass(frozen=True)
 class Threat:
-    """A task that threatens the deadline: its sentence (spec sections 11.4, 11.7) and share."""
+    """A task that threatens the deadline: its sentence (spec sections 11.4, 11.7) and strength."""
 
     task: str
     text: str
@@ -311,17 +311,10 @@ class Threat:
 
 def threats_of(forecast: ForecastView, texts: Texts) -> list[Threat]:
     """The tasks shown as threats: the forecast's ranking, in words (spec section 11.4)."""
-    found = []
-    for driver in forecast.drivers:
-        count = texts.tenths(driver.share)
-        if driver.share >= 1:
-            text = texts("overview.driver_all", task=driver.name)
-        elif count >= 10:
-            text = texts("overview.driver_nearly", task=driver.name)
-        else:
-            text = texts("overview.driver", task=driver.name, count=count)
-        found.append(Threat(driver.task, text, round(100 * driver.share)))
-    return found
+    return [
+        Threat(d.task, texts("overview.driver", task=d.name), round(100 * d.sensitivity))
+        for d in forecast.drivers
+    ]
 
 
 def settings_version(definition: ProjectDefinition) -> str:

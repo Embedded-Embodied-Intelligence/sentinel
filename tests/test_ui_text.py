@@ -139,6 +139,5 @@ def test_formats_people_read() -> None:
     assert en.cost_change(-9.6, 84) == "\u221210 units, \u221211\u00a0% of the budget"
     assert pl.cost_change(1, 500) == "+1 jedn., poniżej 1\u00a0% budżetu"
     assert (en.cost_change(0.2, 84), en.cost_change(3, None)) == ("±0", "+3 units")
-    assert [en.tenths(s) for s in (0.04, 0.05, 0.74, 0.95)] == [0, 1, 7, 10]
     assert en("nope") == "⟦nope⟧"
     assert pl.plural("chip.tasks", 3) == "3 zadania" and en.plural("chip.tasks", 1) == "1 task"

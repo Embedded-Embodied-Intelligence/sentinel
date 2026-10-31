@@ -357,16 +357,15 @@ def test_chart_flags_never_overlap_and_turn_at_the_end() -> None:
         spans.setdefault(flag.tier, []).append((left, right))
 
 
-def test_threats_are_phrased_by_their_share_of_the_late_futures() -> None:
-    """Spec section 11.4: the order comes from the ranking, the sentence from the late share."""
-    shares = (("A", 0.5), ("B", 1.0), ("C", 0.96))
-    drivers = [SimpleNamespace(task=n, name=n, share=s, on_time_share=0.1) for n, s in shares]
+def test_a_threat_has_the_sentence_and_its_bar_the_strength() -> None:
+    """Spec sections 11.4, 11.7: the order comes from the ranking, the bar from the correlation."""
+    drivers = [SimpleNamespace(task=n, name=n, sensitivity=s) for n, s in (("A", 0.38), ("B", 0.2))]
     found = threats_of(SimpleNamespace(drivers=drivers), EN)  # type: ignore[arg-type]
-    assert [t.text for t in found] == [
-        "The task “A” decides the deadline in 5 of 10 late scenarios.",
-        "The task “B” decides the deadline in every late scenario.",
-        "The task “C” decides the deadline in nearly every late scenario.",
-    ]
+    assert [(t.task, t.percent) for t in found] == [("A", 38), ("B", 20)]
+    assert found[0].text == (
+        "Task “A”. Most strongly affects the finish date: lengthening this task usually moves the "
+        "whole deadline."
+    )
 
 
 def test_the_chart_shows_status_deadline_window_threats_and_absence() -> None:
