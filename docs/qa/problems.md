@@ -2,8 +2,8 @@
 
 Every problem found by the browser runs of 30–31 October 2026 (`scripts/qa_run.py`, Sentinel 1.2.0),
 by severity (Nielsen 1994): blocker 0, major 9, minor 12, cosmetic 3. All are fixed, the last eight
-in 1.2.1 (spec v2.1.1); in 1.2.2 (spec v2.1.2) QA-23 comes back at one check-in of run 1, and 1.2.3
-(spec v2.1.3) replaces that rule, see its entry. The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
+in 1.2.1 (spec v2.1.1); in 1.2.2 (spec v2.1.2) QA-23 comes back at one check-in of run 1, 1.2.3
+(spec v2.1.3) replaces that rule, and 1.2.4 (spec v2.1.4) reads it on more futures, see its entry. The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
 show the page after the fix unless marked "before".
 
 ## Major: all fixed, each with a regression test
@@ -197,5 +197,11 @@ implemented as §11.4 wrote it, so this one went to the architect (report, spec 
   duration has a rank correlation of at least 0.2 with the finish day, at most 3. The go-live is named at
   none of the 9 check-ins of run 1, and third (0.25) after the approval of 16 October. See "Follow-up 3" in
   the report.
+- In 1.2.4 (spec v2.1.4, §11.4) the same rule reads 1,000 futures whose first 200 are the forecast's, in a
+  background job after a check-in, as most names of 1.2.3 were noise. The go-live is named at none of the 9
+  check-ins and not after the approval of 16 October. The list changes at 6 of the 8 steps between check-ins
+  instead of 8, and a task moves without a related event 7 times instead of 14. See "Follow-up 4" in the report.
 - Tests: `test_threats_are_the_tasks_whose_duration_goes_with_the_finish_day`,
-  `test_threats_are_the_unfinished_tasks_and_need_a_late_future`.
+  `test_threats_are_the_unfinished_tasks_and_need_a_late_future`,
+  `test_the_threat_list_adds_to_the_forecasts_worlds_and_changes_none`,
+  `test_a_check_in_starts_the_threat_list_and_nothing_waits_for_it`.

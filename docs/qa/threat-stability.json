@@ -1,0 +1,684 @@
+{
+ "seed": 2026,
+ "before": {
+  "rollouts": 200,
+  "lists": [
+   {
+    "check_in": "2026-09-10",
+    "chance": 0.68,
+    "listed": [
+     {
+      "task": "Model danych",
+      "sensitivity": 0.247985
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-15",
+    "chance": 0.73,
+    "listed": [
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.230155
+     },
+     {
+      "task": "Płatności w portalu",
+      "sensitivity": 0.223926
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-21",
+    "chance": 0.66,
+    "listed": [
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.238879
+     },
+     {
+      "task": "Architektura systemu",
+      "sensitivity": 0.219283
+     },
+     {
+      "task": "Integracja z systemem CRM",
+      "sensitivity": 0.216106
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-25",
+    "chance": 0.785,
+    "listed": [
+     {
+      "task": "Model danych",
+      "sensitivity": 0.210159
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-30",
+    "chance": 0.51,
+    "listed": [
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.251528
+     },
+     {
+      "task": "API profilu klienta",
+      "sensitivity": 0.232993
+     },
+     {
+      "task": "Audyt bezpieczeństwa",
+      "sensitivity": 0.213133
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-05",
+    "chance": 0.79,
+    "listed": [
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.309794
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-08",
+    "chance": 0.46,
+    "listed": [
+     {
+      "task": "Logowanie i konta",
+      "sensitivity": 0.377358
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.255873
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-13",
+    "chance": 0.565,
+    "listed": [
+     {
+      "task": "Płatności w portalu",
+      "sensitivity": 0.25104
+     },
+     {
+      "task": "Testy API",
+      "sensitivity": 0.249453
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.215161
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-16",
+    "chance": 0.57,
+    "listed": [
+     {
+      "task": "Integracja płatności",
+      "sensitivity": 0.326788
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.292906
+     },
+     {
+      "task": "Płatności w portalu",
+      "sensitivity": 0.2373
+     }
+    ]
+   }
+  ],
+  "transitions": [
+   {
+    "check_in": "2026-09-15",
+    "seen": [
+     "Model danych"
+    ],
+    "listed": [
+     "Testy interfejsu",
+     "Płatności w portalu"
+    ],
+    "moves": [
+     {
+      "task": "Testy interfejsu",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Płatności w portalu",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Model danych",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-21",
+    "seen": [
+     "Testy interfejsu",
+     "Płatności w portalu"
+    ],
+    "listed": [
+     "Testy interfejsu",
+     "Architektura systemu",
+     "Integracja z systemem CRM"
+    ],
+    "moves": [
+     {
+      "task": "Architektura systemu",
+      "move": "entered",
+      "reasons": [
+       "started",
+       "absence"
+      ]
+     },
+     {
+      "task": "Integracja z systemem CRM",
+      "move": "entered",
+      "reasons": [
+       "absence"
+      ]
+     },
+     {
+      "task": "Płatności w portalu",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-25",
+    "seen": [
+     "Testy interfejsu",
+     "Architektura systemu",
+     "Integracja z systemem CRM"
+    ],
+    "listed": [
+     "Model danych"
+    ],
+    "moves": [
+     {
+      "task": "Model danych",
+      "move": "entered",
+      "reasons": [
+       "started"
+      ]
+     },
+     {
+      "task": "Testy interfejsu",
+      "move": "left",
+      "reasons": []
+     },
+     {
+      "task": "Architektura systemu",
+      "move": "left",
+      "reasons": [
+       "done"
+      ]
+     },
+     {
+      "task": "Integracja z systemem CRM",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-30",
+    "seen": [
+     "Model danych"
+    ],
+    "listed": [
+     "Testy akceptacyjne",
+     "API profilu klienta",
+     "Audyt bezpieczeństwa"
+    ],
+    "moves": [
+     {
+      "task": "Testy akceptacyjne",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "API profilu klienta",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Audyt bezpieczeństwa",
+      "move": "entered",
+      "reasons": [
+       "new"
+      ]
+     },
+     {
+      "task": "Model danych",
+      "move": "left",
+      "reasons": [
+       "done"
+      ]
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-05",
+    "seen": [],
+    "listed": [
+     "Testy interfejsu"
+    ],
+    "moves": [
+     {
+      "task": "Testy interfejsu",
+      "move": "entered",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-08",
+    "seen": [
+     "Testy interfejsu"
+    ],
+    "listed": [
+     "Logowanie i konta",
+     "Testy akceptacyjne"
+    ],
+    "moves": [
+     {
+      "task": "Logowanie i konta",
+      "move": "entered",
+      "reasons": [
+       "grew"
+      ]
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "move": "entered",
+      "reasons": [
+       "absence"
+      ]
+     },
+     {
+      "task": "Testy interfejsu",
+      "move": "left",
+      "reasons": [
+       "absence"
+      ]
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-13",
+    "seen": [
+     "Logowanie i konta",
+     "Testy akceptacyjne"
+    ],
+    "listed": [
+     "Płatności w portalu",
+     "Testy API",
+     "Testy akceptacyjne"
+    ],
+    "moves": [
+     {
+      "task": "Płatności w portalu",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Testy API",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Logowanie i konta",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-16",
+    "seen": [
+     "Płatności w portalu",
+     "Testy API",
+     "Testy akceptacyjne"
+    ],
+    "listed": [
+     "Integracja płatności",
+     "Testy akceptacyjne",
+     "Płatności w portalu"
+    ],
+    "moves": [
+     {
+      "task": "Integracja płatności",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Testy API",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   }
+  ],
+  "lists_changed": 8,
+  "with_unrelated_move": 7,
+  "moves": 23,
+  "unrelated_moves": 14,
+  "names_per_list": 2.111111111111111,
+  "control": {
+   "next_seed_changed": 7,
+   "next_seed_of": 8,
+   "other_seeds_differing": 79,
+   "other_seeds_of": 81
+  }
+ },
+ "after": {
+  "rollouts": 1000,
+  "lists": [
+   {
+    "check_in": "2026-09-10",
+    "chance": 0.68,
+    "listed": []
+   },
+   {
+    "check_in": "2026-09-15",
+    "chance": 0.73,
+    "listed": []
+   },
+   {
+    "check_in": "2026-09-21",
+    "chance": 0.66,
+    "listed": [
+     {
+      "task": "Architektura systemu",
+      "sensitivity": 0.217491
+     },
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.200234
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-25",
+    "chance": 0.785,
+    "listed": []
+   },
+   {
+    "check_in": "2026-09-30",
+    "chance": 0.51,
+    "listed": [
+     {
+      "task": "Logowanie i konta",
+      "sensitivity": 0.237803
+     },
+     {
+      "task": "Integracja z systemem CRM",
+      "sensitivity": 0.215912
+     },
+     {
+      "task": "Testy API",
+      "sensitivity": 0.208371
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-05",
+    "chance": 0.79,
+    "listed": [
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.226442
+     },
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.201109
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-08",
+    "chance": 0.46,
+    "listed": [
+     {
+      "task": "Logowanie i konta",
+      "sensitivity": 0.372883
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.204032
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-13",
+    "chance": 0.565,
+    "listed": [
+     {
+      "task": "Integracja płatności",
+      "sensitivity": 0.244781
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.238854
+     },
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.202039
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-16",
+    "chance": 0.57,
+    "listed": [
+     {
+      "task": "Integracja płatności",
+      "sensitivity": 0.2907
+     },
+     {
+      "task": "Testy interfejsu",
+      "sensitivity": 0.277427
+     },
+     {
+      "task": "Testy akceptacyjne",
+      "sensitivity": 0.259056
+     }
+    ]
+   }
+  ],
+  "transitions": [
+   {
+    "check_in": "2026-09-15",
+    "seen": [],
+    "listed": [],
+    "moves": []
+   },
+   {
+    "check_in": "2026-09-21",
+    "seen": [],
+    "listed": [
+     "Architektura systemu",
+     "Testy interfejsu"
+    ],
+    "moves": [
+     {
+      "task": "Architektura systemu",
+      "move": "entered",
+      "reasons": [
+       "started",
+       "absence"
+      ]
+     },
+     {
+      "task": "Testy interfejsu",
+      "move": "entered",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-25",
+    "seen": [
+     "Architektura systemu",
+     "Testy interfejsu"
+    ],
+    "listed": [],
+    "moves": [
+     {
+      "task": "Architektura systemu",
+      "move": "left",
+      "reasons": [
+       "done"
+      ]
+     },
+     {
+      "task": "Testy interfejsu",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-09-30",
+    "seen": [],
+    "listed": [
+     "Logowanie i konta",
+     "Integracja z systemem CRM",
+     "Testy API"
+    ],
+    "moves": [
+     {
+      "task": "Logowanie i konta",
+      "move": "entered",
+      "reasons": [
+       "neighbour grew or is new"
+      ]
+     },
+     {
+      "task": "Integracja z systemem CRM",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Testy API",
+      "move": "entered",
+      "reasons": [
+       "neighbour grew or is new"
+      ]
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-05",
+    "seen": [
+     "Testy akceptacyjne"
+    ],
+    "listed": [
+     "Testy akceptacyjne",
+     "Testy interfejsu"
+    ],
+    "moves": [
+     {
+      "task": "Testy interfejsu",
+      "move": "entered",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-08",
+    "seen": [
+     "Testy akceptacyjne",
+     "Testy interfejsu"
+    ],
+    "listed": [
+     "Logowanie i konta",
+     "Testy akceptacyjne"
+    ],
+    "moves": [
+     {
+      "task": "Logowanie i konta",
+      "move": "entered",
+      "reasons": [
+       "grew"
+      ]
+     },
+     {
+      "task": "Testy interfejsu",
+      "move": "left",
+      "reasons": [
+       "absence"
+      ]
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-13",
+    "seen": [
+     "Logowanie i konta",
+     "Testy akceptacyjne"
+    ],
+    "listed": [
+     "Integracja płatności",
+     "Testy akceptacyjne",
+     "Testy interfejsu"
+    ],
+    "moves": [
+     {
+      "task": "Integracja płatności",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Testy interfejsu",
+      "move": "entered",
+      "reasons": []
+     },
+     {
+      "task": "Logowanie i konta",
+      "move": "left",
+      "reasons": []
+     }
+    ]
+   },
+   {
+    "check_in": "2026-10-16",
+    "seen": [
+     "Integracja płatności",
+     "Testy akceptacyjne",
+     "Testy interfejsu"
+    ],
+    "listed": [
+     "Integracja płatności",
+     "Testy interfejsu",
+     "Testy akceptacyjne"
+    ],
+    "moves": []
+   }
+  ],
+  "lists_changed": 6,
+  "with_unrelated_move": 5,
+  "moves": 13,
+  "unrelated_moves": 7,
+  "names_per_list": 1.6666666666666667,
+  "control": {
+   "next_seed_changed": 7,
+   "next_seed_of": 8,
+   "other_seeds_differing": 60,
+   "other_seeds_of": 81
+  }
+ }
+}

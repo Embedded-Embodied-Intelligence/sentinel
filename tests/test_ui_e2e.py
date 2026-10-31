@@ -155,14 +155,16 @@ def test_the_threat_list_arrives_by_itself_after_the_chance(
     release = threading.Event()
     real = planning.threats
 
+    definition = small().model_copy(update={"name": "Polled"})
+
     def held(project: LiveProject, *, rollouts: int) -> planning.ThreatList:
-        assert release.wait(60)
+        if project.definition.name == definition.name:  # another test's job may be queued
+            assert release.wait(60)
         return real(project, rollouts=rollouts)
 
     monkeypatch.setattr(planning, "threats", held)
     services = local.services
     try:
-        definition = small().model_copy(update={"name": "Polled"})
         pid = services.create(LOCAL_SESSION, definition, "en").id
         _wait_job(services, LOCAL_SESSION, services.plan(LOCAL_SESSION, pid, "en").id)
         page = _page(browser, local)

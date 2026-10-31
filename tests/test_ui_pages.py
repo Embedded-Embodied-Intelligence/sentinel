@@ -540,6 +540,7 @@ def test_a_task_that_goes_with_the_finish_date_is_named(site: Site) -> None:
     assert "How to read this" in english and "loading-line" not in english
 
 
+@pytest.mark.slow  # two plans and a report, under 1 s, out of the default run
 def test_the_chance_does_not_wait_for_the_threat_list(
     site: Site, monkeypatch: pytest.MonkeyPatch
 ) -> None:

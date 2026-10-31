@@ -12,7 +12,7 @@ name: sentinel
 services:
   sentinel:
     build: .
-    image: sentinel:1.2.3
+    image: sentinel:1.2.4
     restart: unless-stopped
     ports:
       - "127.0.0.1:8000:8000"  # this host only; a reverse proxy publishes it

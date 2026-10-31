@@ -251,7 +251,8 @@ def check_run(run: PolicyRun, evaluators: dict[int, Evaluator], seed: int) -> di
         )
         check_explanations(recommendation, observation, params)
         assert observation.deadline is not None
-        makespans = planning.forecast_rollouts(observation, 200, comparison.seed)[0]
+        rollouts = planning.forecast_rollouts(observation, 200, comparison.seed)
+        makespans = [planning.makespan_of(state) for state in rollouts]
         first = next(i for i in comparison.impacts if i.label == "NOOP")
         assert first.p_on_time == sum(c <= observation.deadline for c in makespans) / 200
     return reasons

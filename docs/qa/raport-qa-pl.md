@@ -1,6 +1,6 @@
 # Raport QA Sentinela 1.2.0
 
-Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcje „Po raporcie: wersja 1.2.1”, „Po raporcie: wersja 1.2.2” i „Po raporcie: wersja 1.2.3”.
+Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcje „Po raporcie: wersja 1.2.1”, „Po raporcie: wersja 1.2.2”, „Po raporcie: wersja 1.2.3” i „Po raporcie: wersja 1.2.4”.
 
 ## Podsumowanie
 
@@ -255,6 +255,35 @@ Poza raportami: na planie 3 zadania (testy akceptacyjne 0,26, API umów 0,21, AP
 
 - **Poza tym przypadkiem lista to w dużej mierze szum.** Przy 200 scenariuszach błąd standardowy korelacji to około 0,07, a większość zadań ma prawdziwą wartość około 0,1–0,2, tuż pod progiem. Z 19 nazw w 9 raportach tylko 5 ma przy 4000 scenariuszy wartość co najmniej 0,2, a w 4 z 9 raportów nie ma jej żadne zadanie, choć strona wymienia tam 1 lub 2. Ten sam stan projektu z innymi liczbami losowymi daje od 0 do 3 nazw. Lista zmienia się więc prawie w każdym raporcie, nawet gdy w projekcie nic się nie zmieniło; w 1.2.2 kłopot był odwrotny. Próg 0,3 to jedna stała: nazwy trafniejsze (69 % zamiast 33 %), a „ryzyko rozkłada się” w 6 z 9 raportów, „Logowanie i konta” zostaje.
 - **„Zwykle” nie sprawdza się akurat 8 października.** Wydłużenie „Logowania i kont” o 2 dni na tych samych 200 scenariuszach przesuwa koniec tylko w 86 z nich (43 %). Korelacja jest wysoka, bo czas tego zadania bardzo się waha (od 5,3 do 20 dni), a nie dlatego, że zwykle wyznacza koniec. Dla 17 z 19 nazw zdanie się sprawdza (co najmniej 100 z 200). Uruchomienie produkcyjne przesuwa koniec w 192 z 200, a szkolenie użytkowników w 180 z 200, ale ich czas prawie się nie waha, więc w żadnym z 9 raportów ich nie ma.
+
+## Po raporcie: wersja 1.2.4
+
+Czwarta i ostatnia zmiana listy „Co zagraża terminowi”. Reguła ta sama (korelacja rang co najmniej 0,2, najwyżej 3 zadania, od najwyższej), ale liczona na 1000 scenariuszach, z których pierwsze 200 to scenariusze prognozy (to samo ziarno). Liczy się w tle po raporcie, około sekundy na tym projekcie, więc szansa i rekomendacje zostają na 200 scenariuszach: wszystkie 17 momentów przebiegu 1 ma te same szanse, daty, budżet i rekomendacje, a dziennik zdarzeń różni się tylko czasami obliczeń. Nowe zdanie: „Im dłużej trwa to zadanie, tym później zwykle kończy się projekt”. Gdy żadne zadanie nie osiąga 0,2, strona nadal pisze, że ryzyko rozkłada się na cały plan.
+
+Przebieg 1 jeszcze raz, ten sam zespół i te same szanse. Pogrubiona jest liczba zadań na liście, a liczba przy zadaniu to korelacja.
+
+- 10 wrz, 68 %: **0**: ryzyko rozkłada się na cały plan
+- 15 wrz, 73 %: **0**: ryzyko rozkłada się na cały plan
+- 21 wrz, 66 %: **2**: architektura systemu 0,22, testy interfejsu 0,20
+- 25 wrz, 79 %: **0**: ryzyko rozkłada się na cały plan
+- 30 wrz, 51 %: **3**: Logowanie i konta 0,24, integracja z systemem CRM 0,22, testy API 0,21
+- 5 paź, 79 %: **2**: testy akceptacyjne 0,23, testy interfejsu 0,20
+- 8 paź, 46 %: **2**: Logowanie i konta 0,37, testy akceptacyjne 0,20
+- 13 paź, 57 %: **3**: integracja płatności 0,24, testy akceptacyjne 0,24, testy interfejsu 0,20
+- 16 paź, 57 %: **3**: integracja płatności 0,29, testy interfejsu 0,28, testy akceptacyjne 0,26
+
+Poza raportami: na planie i po cofnięciu z 10 września ryzyko rozkłada się na cały plan, po zatwierdzeniu z 30 września testy akceptacyjne 0,21, a po zatwierdzeniu z 16 października testy akceptacyjne 0,29, testy interfejsu 0,25 i płatności w portalu 0,24, co zostaje do końca przebiegu przy 87 %. Uruchomienia produkcyjnego nie ma na żadnej z tych list.
+
+**Jak często lista zmienia się między kolejnymi raportami bez związanego zdarzenia.** Listę porównano z tą, którą kierownik widział tuż przed raportem. Zdarzenie jest związane z zadaniem, jeśli w tym raporcie zadanie się zaczęło, skończyło albo zmieniło stan, urosło lub jest nowe; jeśli urósł albo jest nowy jego bezpośredni poprzednik lub następca; albo jeśli osoba z jego zespołu lub z potrzebną mu rolą odeszła, wróciła albo została zgłoszona jako nieobecna. Zwykły postęp zdarzeniem nie jest.
+
+Przed zmianą to 1.2.3 (200 scenariuszy), po zmianie 1.2.4 (1000 scenariuszy):
+
+- Listy, które się zmieniły, z 8 przejść: **8 przed, 6 po**.
+- Przejścia, w których zadanie weszło na listę lub z niej zeszło bez związanego zdarzenia, z 8: **7 przed, 5 po**.
+- Zadania wchodzące na listę lub z niej schodzące: **23 przed, 13 po**, w tym bez związanego zdarzenia **14 przed, 7 po**.
+- Ten sam stan, inne ziarno: listy różnią się w **79 z 81 par przed, 60 z 81 po**.
+
+**Lista jest spokojniejsza, ale nie stabilna.** Zmian bez powodu jest o połowę mniej, a „Logowanie i konta” 8 października nadal jest na pierwszym miejscu, z wartością 0,37. Nadal jednak dwie listy tego samego stanu projektu różnią się w trzech czwartych par, a ziarno zmienia się z każdym dniem raportu. Przy 1000 scenariuszy błąd standardowy korelacji to około 0,03, a 8 z 15 nazw w 9 raportach leży w tej odległości od progu. „Ryzyko rozkłada się na cały plan” pojawia się teraz w 3 z 9 raportów (w 1.2.3 w żadnym).
 
 ## Obserwacje UX, oczami kierownika projektu
 
