@@ -309,10 +309,10 @@ class Threat:
     percent: int
 
 
-def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Threat]:
-    """The tasks shown as threats: the first of the ranking (spec section 11.4)."""
+def threats_of(forecast: ForecastView, texts: Texts) -> list[Threat]:
+    """The tasks shown as threats: the forecast's ranking, in words (spec section 11.4)."""
     found = []
-    for driver in forecast.drivers[:limit]:
+    for driver in forecast.drivers:
         count = texts.tenths(driver.share)
         if driver.share >= 1:
             text = texts("overview.driver_all", task=driver.name)

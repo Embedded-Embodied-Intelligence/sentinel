@@ -30,8 +30,8 @@ up. From these futures come:
 - the **chance of meeting the deadline** (e.g. "39 %": the project ends on time in 78 of the
   200 futures),
 - the **most likely finish** and the **bad case** (one in ten finishes even later),
-- **what threatens the deadline**: the tasks that decide it more often when the project is
-  late than when it finishes on time,
+- **what threatens the deadline**: the tasks that decide it in at least half of the futures
+  where the project is late, apart from those that decide nearly every future anyway,
 - a **recommendation**: the best change, tried on the same futures as the forecast.
 
 Sentinel does not guess: every number on the screen comes from the same simulations, so "no
@@ -132,14 +132,15 @@ Further down:
 
 ![What threatens the deadline, and plan and progress](ui/en_overview_threats.png)
 
-- **What threatens the deadline**: the tasks that decide the deadline more often in the futures
-  where the project is late than in those where it finishes on time: by at least 10 percentage
-  points, the largest difference first. The sentence says how often the task decides in the late
-  futures, e.g. "The task “Product catalogue API” decides the deadline in 7 of 10 late
-  scenarios", so the numbers need not fall down the list. Tasks the whole plan depends on (such
-  as the first and the last task) and tasks already done are not listed. If no task stands out,
-  as in the screenshot above, Sentinel says that the risk is spread across the plan. Below the list: who is away and which tasks have not started as
-  planned.
+- **What threatens the deadline**: the tasks that decide the deadline in at least half of the
+  futures where the project is late, at most three, the most frequent first, e.g. "The task
+  “Product catalogue API” decides the deadline in 7 of 10 late scenarios". A task that decides at
+  least 95 % of all futures, late or on time, such as a go-live, is left out as it is critical
+  anyway; only if no future finishes on time is it listed, since nothing then shows that. Tasks
+  the whole plan depends on (such as the first and the last task) and tasks already done are not
+  listed either. If no task qualifies, Sentinel says that the risk is spread across the plan. The
+  list shows which tasks usually set the finish date, not what has just changed. Below the list:
+  who is away and which tasks have not started as planned.
 - **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
   with a dashed outline of the work left), planned (light teal) and absences (hatched), with the
   status, today, the deadline and the forecast window. Hover over or tap a task's name for its dates

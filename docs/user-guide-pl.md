@@ -31,8 +31,8 @@ jakie wybierzesz przy zakładaniu projektu. Z tych scenariuszy wynika:
   terminie),
 - **najbardziej prawdopodobna data zakończenia** i **zły scenariusz** (jeden na dziesięć kończy
   się jeszcze później),
-- **co zagraża terminowi** — zadania, które decydują o terminie częściej, gdy projekt się
-  spóźnia, niż gdy kończy się w terminie,
+- **co zagraża terminowi** — zadania, które decydują o terminie w co najmniej połowie
+  scenariuszy, w których projekt się spóźnia, poza tymi, które i tak decydują niemal zawsze,
 - **rekomendacja**: najlepsza zmiana, sprawdzona na tych samych scenariuszach co prognoza.
 
 Sentinel nie zgaduje i nie „czuje”: każda liczba na ekranie pochodzi z tych samych symulacji,
@@ -134,15 +134,16 @@ Niżej:
 
 ![Co zagraża terminowi oraz plan i postęp](ui/pl_overview_threats.png)
 
-- **Co zagraża terminowi**: zadania, które decydują o terminie częściej w scenariuszach, w
-  których projekt się spóźnia, niż w tych, w których kończy się w terminie: co najmniej o 10
-  punktów procentowych, największa różnica jest pierwsza. Zdanie podaje, jak często zadanie
-  decyduje w scenariuszach z opóźnieniem, np. „Zadanie „API katalogu produktów” decyduje o
-  terminie w 7 na 10 scenariuszy z opóźnieniem”, więc liczby na liście nie muszą maleć. Nie ma
-  tu zadań, od których zależy cały plan (np. pierwsze i ostatnie zadanie), ani zadań już
-  zakończonych. Jeśli żadne zadanie się nie wyróżnia, jak na zrzucie powyżej, Sentinel pisze, że
-  ryzyko rozkłada się na cały plan. Pod listą: kto jest nieobecny i które
-  zadania nie zaczęły się zgodnie z planem.
+- **Co zagraża terminowi**: zadania, które decydują o terminie w co najmniej połowie
+  scenariuszy, w których projekt się spóźnia, najwyżej trzy, od najczęstszego, np. „Zadanie „API
+  katalogu produktów” decyduje o terminie w 7 na 10 scenariuszy z opóźnieniem”. Zadanie, które
+  decyduje w co najmniej 95 % wszystkich scenariuszy, z opóźnieniem lub bez, np. uruchomienie
+  produkcyjne, pomijamy, bo i tak jest krytyczne; pojawia się tylko wtedy, gdy żaden scenariusz
+  nie kończy się w terminie, bo nic tego wtedy nie pokazuje. Nie ma tu też zadań, od których
+  zależy cały plan (np. pierwsze i ostatnie zadanie), ani zadań już zakończonych. Jeśli żadne
+  zadanie nie spełnia tych warunków, Sentinel pisze, że ryzyko rozkłada się na cały plan. Lista
+  pokazuje, które zadania zwykle wyznaczają datę zakończenia, a nie to, co właśnie się zmieniło.
+  Pod listą: kto jest nieobecny i które zadania nie zaczęły się zgodnie z planem.
 - **Plan i postęp**: plan początkowy (cienka szara linia), gotowe (szare), w toku (ciemny morski,
   z przerywanym obrysem pozostałej pracy), zaplanowane (jasny morski) i nieobecności (kreskowanie),
   ze stanem, dzisiejszym dniem, terminem i oknem prognozy. Po najechaniu albo dotknięciu nazwy

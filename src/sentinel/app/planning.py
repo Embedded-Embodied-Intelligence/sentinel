@@ -50,8 +50,9 @@ from sentinel.simulation.state import EngineState, Observation, state_from_obser
 T_CP = 0.1  # deterministic seconds of CP-SAT per plan (spec section 8)
 CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
 FORECAST_ROLLOUTS = 200  # N of the forecast and of the comparison shown (spec 5.2, 11.4, 11.5)
-DRIVERS = 5  # tasks that threaten the deadline, at most
-THREAT_DIFFERENCE = Fraction(1, 10)  # late share minus on-time share, at least (section 11.4)
+THREAT_LIMIT = 3  # tasks that threaten the deadline, at most (spec section 11.4)
+THREAT_LATE_SHARE = Fraction(1, 2)  # of the late rollouts, on the critical chain, at least (11.4)
+THREAT_ALWAYS_CRITICAL = Fraction(19, 20)  # of all completed rollouts: left out from here (11.4)
 SHOWN = 5  # alternatives shown with a recommendation besides its action, at most (11.5)
 # The deciding components after min(p, theta_D), and the candidate order: the chances tie (11.5).
 LATER_COMPONENTS = frozenset(("tardiness", "scope", "budget", "stability", "level", "order"))
@@ -171,7 +172,7 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
                 share=counts[j] / len(late),
                 on_time_share=counts_on_time[j] / len(on_time) if on_time else 0.0,
             )
-            for j in ranked[:DRIVERS]
+            for j in ranked
         ),
         late=len(late),
         mean_cost=float(np.mean(costs)),
@@ -188,17 +189,23 @@ def rank_threats(
     durations: Mapping[int, int],
 ) -> list[int]:
     """The tasks that threaten the deadline, most first (spec section 11.4): on the critical chain
-    of the late rollouts at least 10 percentage points more often than of the on-time ones, by
-    that difference, then by duration (longer first) and id. Exact, as 0.3 - 0.2 < 0.1 in floats."""
+    of at least half of the late rollouts, but of fewer than 95 % of all completed ones, by the late
+    share, then by duration (longer first) and id, at most three; compared exactly."""
 
-    def difference(j: int) -> Fraction:
-        # SPEC-Q: with no on-time rollout the on-time share counts as 0, so at a chance of 0 % the
-        # late share ranks the tasks, as before v2.1.1.
-        seen = Fraction(on_time.get(j, 0), on_time_runs) if on_time_runs else Fraction(0)
-        return Fraction(late[j], late_runs) - seen
+    def always_critical(j: int) -> bool:
+        # SPEC-Q: with no on-time rollout the on-time share counts as 0 and nothing shows that a
+        # task decides on-time futures too, so at a chance of 0 % none is always critical.
+        if not on_time_runs:
+            return False
+        overall = Fraction(late[j] + on_time.get(j, 0), late_runs + on_time_runs)
+        return overall >= THREAT_ALWAYS_CRITICAL
 
-    shown = [j for j in late if difference(j) >= THREAT_DIFFERENCE]
-    return sorted(shown, key=lambda j: (-difference(j), -durations[j], j))
+    shown = [
+        j
+        for j in late
+        if Fraction(late[j], late_runs) >= THREAT_LATE_SHARE and not always_critical(j)
+    ]
+    return sorted(shown, key=lambda j: (-late[j], -durations[j], j))[:THREAT_LIMIT]
 
 
 def threat_candidates(project: LiveProject, nodes: Mapping[str, Node]) -> list[str]:

@@ -502,10 +502,16 @@ def test_no_change_after_a_check_in_is_folded_into_it(site: Site) -> None:
 
 
 def test_with_no_task_standing_out_the_risk_is_spread(site: Site) -> None:
-    """Spec section 11.4: this project is late in most futures, and its only candidate decides the
-    late and the on-time ones alike."""
-    page = _get(site, f"/projects/{site.ids['open']}/forecast", "en", htmx=True)
+    """Spec section 11.4: this project is late in some futures, and no task decides half of them."""
+    page = _get(site, f"/projects/{site.ids['planned']}/forecast", "en", htmx=True)
     assert "the risk is spread across the plan" in page and "How to read this" not in page
+
+
+def test_a_task_that_decides_most_late_futures_is_named(site: Site) -> None:
+    """Spec section 11.4: the existing sentence, read from the task's share of the late futures."""
+    page = _get(site, f"/projects/{site.ids['open']}/forecast", "en", htmx=True)
+    assert "The task “Build API” decides the deadline in 9 of 10 late scenarios." in page
+    assert "How to read this" in page and "the risk is spread" not in page
 
 
 def test_the_forecast_says_it_assumes_the_plan_stays_as_it_is(site: Site) -> None:

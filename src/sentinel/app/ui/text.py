@@ -800,16 +800,17 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "overview.drivers_note": (
         "A task decides the deadline in a late scenario when it lies on the chain of tasks that "
-        "sets the finish date there. Listed are the tasks that do so more often in late scenarios "
-        "than in those that finish on time, by at least 10 percentage points; the largest "
-        "difference comes first, so the numbers need not fall down the list. Tasks the whole plan "
-        "depends on, such as the first and the last one, and tasks already done are not listed.",
+        "sets the finish date there. Listed are the tasks that do so in at least half of the late "
+        "scenarios, at most three, the most frequent first. Not listed are the tasks on that chain "
+        "in at least 95 % of all scenarios, late or on time (unless none finishes on time), the "
+        "tasks the whole plan depends on, such as the first and the last one, and tasks already "
+        "done.",
         "Zadanie decyduje o terminie w scenariuszu z opóźnieniem, gdy leży w nim na łańcuchu "
-        "zadań wyznaczającym datę zakończenia. Wymieniamy zadania, które robią to częściej w "
-        "scenariuszach z opóźnieniem niż w tych kończących się w terminie, o co najmniej 10 "
-        "punktów procentowych; największa różnica jest pierwsza, więc liczby nie muszą maleć. Nie "
-        "wymieniamy zadań, od których zależy cały plan (np. pierwszego i ostatniego), ani zadań "
-        "już zakończonych.",
+        "zadań wyznaczającym datę zakończenia. Wymieniamy zadania, które robią to w co najmniej "
+        "połowie scenariuszy z opóźnieniem, najwyżej trzy, od najczęstszego. Nie wymieniamy zadań "
+        "leżących na tym łańcuchu w co najmniej 95 % wszystkich scenariuszy, z opóźnieniem lub "
+        "bez (chyba że żaden nie kończy się w terminie), zadań, od których zależy cały plan (np. "
+        "pierwszego i ostatniego), ani zadań już zakończonych.",
     ),
     "overview.checked_title": ("Sentinel checked the new status", "Sentinel sprawdził nowy stan"),
     "overview.checked": (
