@@ -149,6 +149,7 @@ class RecommendationView(View):
 
     seq: int
     day: int
+    as_of: date
     date: date
     status: str
     status_text: str
@@ -569,6 +570,13 @@ def _outcome(impact: Impact | None, calendar: WorkCalendar) -> OutcomeView | Non
     )
 
 
+def status_date(project: LiveProject, day: int) -> date:
+    """The date whose end a recommendation of `day` reads: the date of its check-in (spec section
+    11.1), or that day itself before any check-in (QA-19)."""
+    reported = [dated for dated, t in project.checkins if t <= day]
+    return reported[-1] if reported else project.calendar.date_of(day)
+
+
 def recommendation_view(
     project: LiveProject,
     entry: RecommendationEntry,
@@ -626,6 +634,7 @@ def recommendation_view(
         seq=entry.seq,
         day=recommendation.day,
         date=calendar.date_of(recommendation.day),
+        as_of=status_date(project, recommendation.day),
         status=entry.status,
         status_text=render(f"status_{entry.status}", language),
         label=record.chosen,

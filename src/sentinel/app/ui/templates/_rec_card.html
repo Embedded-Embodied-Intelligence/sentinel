@@ -1,7 +1,7 @@
 {% import "_ui.html" as ui with context %}
 <article class="card rec-card" aria-labelledby="rec-{{ rec.seq }}-title">
   <div class="rec-eyebrow">
-    <p class="overline">{% if rec.status == "later" %}{{ t("rec.parked") }}{% else %}{{ rec.status_text }} · {{ t("rec.from", date=t.date(rec.date)) }}{% endif %}</p>
+    <p class="overline">{% if rec.status == "later" %}{{ t("rec.parked") }}{% else %}{{ rec.status_text }} · {{ t("rec.as_of", date=t.date(rec.as_of)) }}{% endif %}</p>
     {% if rec.can_wait %}{{ ui.badge("later", t("rec.can_wait")) }}{% endif %}
   </div>
   <h3 id="rec-{{ rec.seq }}-title">{{ rec.title }}</h3>

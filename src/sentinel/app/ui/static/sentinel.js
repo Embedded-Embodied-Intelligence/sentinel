@@ -29,6 +29,7 @@
       holder.innerHTML = template.innerHTML.split("__i__").join(String(counter)).trim();
       const row = holder.firstElementChild;
       list.appendChild(row);
+      syncGrowth();
       if (window.htmx) window.htmx.process(row);
       const first = row.querySelector("input:not([type=hidden]), select, textarea");
       if (first) first.focus();
@@ -121,6 +122,11 @@
     echo.textContent = weekday + " " + value.getDate() + " " + months[value.getMonth()] + " " + value.getFullYear();
   }
 
+  function noteBeforeStart(input) {
+    const note = document.querySelector("[data-before-start]");
+    if (note && input.id === "date") note.hidden = !input.value || input.value >= note.dataset.beforeStart;
+  }
+
   function checkRule() {
     const rule = document.querySelector("[data-deadline-rule]");
     if (!rule) return;
@@ -154,6 +160,7 @@
     } else if (target.matches("input[type=date]")) {
       echoDate(target);
       checkRule();
+      noteBeforeStart(target);
     } else if (target.matches("[data-crew-input]")) {
       summariseCrew(target.closest("details"));
     }
@@ -168,9 +175,32 @@
       const range = document.getElementById(event.target.dataset.rangeFor);
       if (range) event.target.value = range.value;
     }
+    syncGrowth();
     countChanges();
     markUnsaved();
   });
+
+  // ---- growth: a task marked as in progress in this check-in can grow too (QA-21)
+  function syncGrowth() {
+    const form = document.getElementById("checkin-form");
+    const template = document.getElementById("grow-template");
+    if (!form || !template) return;
+    const started = function (option) {
+      return form.querySelector('input[name="status_' + option.value + '"][value="in_progress"]:checked') !== null;
+    };
+    form.querySelectorAll("#grow-list option[data-starts]").forEach(function (option) {
+      const on = started(option);
+      option.hidden = !on;
+      option.disabled = !on;
+      if (!on && option.selected) option.closest("select").value = "";
+    });
+    const any = Array.from(template.content.querySelectorAll("option")).some(function (option) {
+      return option.value && (!option.hasAttribute("data-starts") || started(option));
+    });
+    form.querySelector('[data-add-row="grow"]').hidden = !any;
+    form.querySelector("[data-grow-hint]").hidden = !any;
+    form.querySelector("[data-grow-none]").hidden = any;
+  }
 
   // ---- the check-in's count of changes and the label of its button
   function changeCount(form) {
@@ -462,6 +492,7 @@
       scrollGantt(scope);
     }
     checkRule();
+    syncGrowth();
     countChanges();
   }
 

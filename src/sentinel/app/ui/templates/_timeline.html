@@ -10,7 +10,7 @@
     <div>
       <p class="tl-meta"><span><time datetime="{{ item.day }}">{{ item.when }}</time> · {{ t("history.kind." ~ item.kind) }}</span>{% if item.auto %} {{ ui.badge("auto", t("overview.auto_title")) }}{% endif %}</p>
       <p class="tl-title">{% if item.href %}<a href="{{ item.href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</p>
-      {% if item.lines %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+      {% if item.lines or item.outcome %}<ul class="tl-lines">{% for line in item.lines %}<li>{{ line }}</li>{% endfor %}{% if item.outcome %}<li>{% if item.outcome_href %}<a href="{{ item.outcome_href }}">{{ item.outcome }}</a>{% else %}{{ item.outcome }}{% endif %}</li>{% endif %}</ul>{% endif %}
       {% if item.chip %}<p class="tl-chip">{{ item.chip }}</p>{% elif item.seq %}<p class="tl-chip" id="tl-chip-{{ item.seq }}"></p>{% endif %}
     </div>
   </li>

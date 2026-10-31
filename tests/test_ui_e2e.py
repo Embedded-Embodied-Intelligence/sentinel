@@ -528,6 +528,23 @@ def test_the_check_in_counts_its_changes_and_its_button_says_so(
     assert page.locator("#percent-T1").input_value() == "99"
     page.get_by_role("button", name="Remove").first.click()
     expect(page.locator("#away-count")).to_have_text("(0)")
+    # QA-16: a date before the project's start gets a note, and only such a date.
+    note = page.locator("[data-before-start]")
+    expect(note).to_be_hidden()
+    page.locator("#date").fill("2026-10-01")
+    expect(note).to_be_visible()
+    page.locator("#date").fill("2026-11-03")
+    expect(note).to_be_hidden()
+    # QA-21: the task marked as in progress above can grow in this check-in; the others cannot.
+    add = page.get_by_role("button", name="Add a task that grew")
+    expect(add).to_be_visible()
+    add.click()
+    choice = page.locator("#grow-list select")
+    assert choice.locator("option:not([disabled])").all_inner_texts()[1:] == ["Build API"]
+    choice.select_option(label="Build API")
+    page.locator("fieldset.task-row", has_text="Build API").get_by_label("Not started").check()
+    assert choice.input_value() == ""
+    expect(add).to_be_hidden()
     page.context.close()
 
 

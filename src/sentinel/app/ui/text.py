@@ -911,6 +911,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "checkin.changes.many": ("{n} changes", "{n} zmian"),
     "checkin.save_none": ("Save the check-in (no changes)", "Zapisz raport (bez zmian)"),
     "checkin.date": ("Status at the end of", "Stan na koniec dnia"),
+    "checkin.before_start": (
+        "This date is before the project starts ({date}). You can still save it.",
+        "Ta data jest przed startem projektu ({date}). Raport i tak można zapisać.",
+    ),
     "checkin.date_hint": (
         "Report what is true at the end of this day.",
         "Zgłoś stan na koniec tego dnia.",
@@ -1004,7 +1008,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "checkin.save": ("Save the check-in", "Zapisz raport"),
     # ---- recommendation
     "rec.title": ("Recommendation", "Rekomendacja"),
-    "rec.from": ("since {date}", "od {date}"),
+    "rec.as_of": ("status at the end of {date}", "stan na koniec dnia {date}"),
+    "rec.applies_from": ("The change applies from {date}.", "Zmiana obejmuje dni od {date}."),
     "rec.alt_noop": ("No change", "Bez zmian"),
     "rec.can_wait": ("can wait", "może poczekać"),
     "rec.what_changes": ("What changes", "Co się zmieni"),
@@ -1238,6 +1243,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Nowe zadanie „{task}” (dni robocze: {days})",
     ),
     "history.nothing": ("No changes reported", "Bez zgłoszonych zmian"),
+    "history.no_change": ("Sentinel proposes no change", "Sentinel nie proponuje zmian"),
     # ---- project settings
     "psettings.title": ("Project settings", "Ustawienia projektu"),
     "psettings.basics": ("Name, deadline and budget", "Nazwa, termin i budżet"),
@@ -1252,6 +1258,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "psettings.cost_unit": ("cost units (person-days)", "jednostek kosztu (osobodni)"),
     "psettings.costs_how": ("How to count the cost", "Jak liczyć koszt"),
     "psettings.unsaved": ("You have unsaved changes", "Masz niezapisane zmiany"),
+    "psettings.changed_title": (
+        "These settings changed after you opened this page",
+        "Te ustawienia zmieniły się po otwarciu tej strony",
+    ),
+    "psettings.changed_text": (
+        "Probably in another tab. What you entered is below and is not saved yet. Save again to "
+        "replace those changes, or reload the page to see them.",
+        "Pewnie w innej karcie. To, co wpisano, jest poniżej i nie jest jeszcze zapisane. Zapisz "
+        "ponownie, żeby zastąpić tamte zmiany, albo odśwież stronę, żeby je zobaczyć.",
+    ),
     "psettings.reset": ("Undo the changes", "Cofnij zmiany"),
     "psettings.save": ("Save the changes", "Zapisz zmiany"),
     "psettings.download": ("Download", "Pobierz"),

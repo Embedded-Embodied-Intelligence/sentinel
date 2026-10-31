@@ -857,7 +857,7 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
   .savebar { margin: var(--space-2) 0 0; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); padding-inline: var(--space-4); }
 }
 .savebar .grow { flex: 1 1 auto; font: var(--fs-small); color: var(--text-2); font-variant-numeric: tabular-nums; }
-.savebar[hidden] { display: none; }
+.savebar[hidden], .btn[hidden] { display: none; }
 @media (max-width: 767px) { .savebar .btn-primary { flex: 1 1 100%; min-height: 48px; } }
 
 /* ---- team and tasks */

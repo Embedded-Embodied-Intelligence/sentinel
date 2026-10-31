@@ -6,6 +6,8 @@ the project's last change), the recommendation of spec section 11.5 with the fig
 simulated futures, and the event log for the history.
 """
 
+import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any
@@ -23,8 +25,8 @@ from sentinel.app.events import (
     Undone,
     parse,
 )
-from sentinel.app.live import LiveProject
-from sentinel.app.models import CheckIn
+from sentinel.app.live import LiveProject, role_key
+from sentinel.app.models import CheckIn, ProjectDefinition
 from sentinel.app.planning import half_up
 from sentinel.app.services import ChanceStep, JobView
 from sentinel.app.ui.charts import chance_points, forecast_strip, live_gantt
@@ -322,6 +324,17 @@ def threats_of(forecast: ForecastView, texts: Texts, limit: int = 3) -> list[Thr
     return found
 
 
+def settings_version(definition: ProjectDefinition) -> str:
+    """A fingerprint of what the settings page was opened on, to notice a save from elsewhere."""
+    return hashlib.sha256(definition.model_dump_json().encode()).hexdigest()[:16]
+
+
+def cost_lookup(definition: ProjectDefinition) -> Callable[[str], float]:
+    """The daily cost of a role, as the settings page shows it."""
+    costs = {role_key(c.role): c.daily_cost for c in definition.roles}
+    return lambda role: costs.get(role_key(role), 1.0)
+
+
 def over_budget(forecast: ForecastView) -> bool:
     """Whether the expected total cost is above the budget (QA-10: approvals add up, and the
     status badge speaks of the deadline only)."""
@@ -389,6 +402,8 @@ class HistoryItem:
     chip: str | None = None  # the chance before and after, when it is known with the entry
     seq: int | None = None  # a check-in's event: its chip arrives with the chart of the chance
     auto: bool = False
+    outcome: str | None = None  # a check-in's "no change", with the link to its analysis
+    outcome_href: str | None = None
 
 
 @dataclass(frozen=True)
@@ -455,15 +470,20 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
                 rec = titles.get(row.seq)
                 if rec is None:
                     continue
+                if rec.status == "none" and items and items[-1].kind == "checkin":
+                    # QA-20: "no change" after a check-in is part of it, not an entry of its own.
+                    items[-1].outcome = texts("history.no_change")
+                    items[-1].outcome_href = f"/projects/{project_id}/recommendations/{rec.seq}"
+                    continue
                 title = rec.title
                 status = rec.status_text
                 auto = rec.status in ("auto", "undone")
                 items.append(
                     HistoryItem(
                         "recommendation",
-                        texts.date(rec.date),
+                        texts.date(rec.as_of),
                         texts("history.recommendation", title=title),
-                        rec.date,
+                        rec.as_of,
                         "swap" if auto else "clock",
                         [texts("history.status", status=status)],
                         f"/projects/{project_id}/recommendations/{rec.seq}",
@@ -480,14 +500,14 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
                     if event.verdict == "approve" and event.discarded is not None
                     else f"history.verdict.{event.verdict}"
                 )
-                when = texts.date(rec.date) if rec else stamp
+                when = texts.date(rec.as_of) if rec else stamp
                 icons = {"approve": "check", "reject": "x", "later": "clock-dashed"}
                 items.append(
                     HistoryItem(
                         "decision",
                         when,
                         texts(key, title=title),
-                        rec.date if rec else day,
+                        rec.as_of if rec else day,
                         icons[event.verdict],
                         href=f"/projects/{project_id}/recommendations/{event.recommendation}",
                         chip=chance_chip(rec, texts) if event.verdict == "approve" else None,
@@ -495,14 +515,14 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
                 )
             case Undone():
                 rec = titles.get(event.recommendation)
-                when = texts.date(rec.date) if rec else stamp
+                when = texts.date(rec.as_of) if rec else stamp
                 title = rec.title if rec else "?"
                 items.append(
                     HistoryItem(
                         "change",
                         when,
                         texts("history.undone", title=title),
-                        rec.date if rec else day,
+                        rec.as_of if rec else day,
                         "arrow-left",
                     )
                 )
@@ -818,6 +838,7 @@ def router(ui: Ui) -> APIRouter:
             "roles": roles,
             "people": [p for p in view.people if not p.temporary],
             "running": [t for t in view.tasks if t.state in ("in_progress", "paused")],
+            "startable": [t for t in (*first, *rest) if t.state not in ("in_progress", "paused")],
             "open_tasks": [t for t in view.tasks if t.state not in ("done", "removed")],
             "default_date": default,
             "last": last,
@@ -990,16 +1011,15 @@ def router(ui: Ui) -> APIRouter:
     def settings_values(request: Request, project_id: str) -> dict[str, Any]:
         view = live(request, project_id)
         roles = team_roles(view.definition.team)
-        from sentinel.app.live import role_key
-
-        costs = {role_key(c.role): c.daily_cost for c in view.definition.roles}
         return {
             "title": ui.texts(request)("psettings.title"),
             "nav": "projects",
             "view": view,
             "tab": "settings",
             "roles": roles,
-            "cost_of": lambda role: costs.get(role_key(role), 1.0),
+            "cost_of": cost_lookup(view.definition),
+            "version": settings_version(view.definition),
+            "changed_elsewhere": False,
             "errors": {},
         }
 
@@ -1017,6 +1037,12 @@ def router(ui: Ui) -> APIRouter:
         if read.definition is None:
             values["errors"] = {e.name: texts(e.key, **e.values) for e in read.errors}
             return ui.page(request, "project_settings.html", 422, **values)
+        if form.get("seen_version", values["version"]) != values["version"]:
+            # QA-18: saved from elsewhere since this form was opened: ask before replacing that.
+            values["view"] = view.model_copy(update={"definition": read.definition})
+            values["cost_of"] = cost_lookup(read.definition)
+            values["changed_elsewhere"] = True
+            return ui.page(request, "project_settings.html", 409, **values)
         services.update_definition(
             ui.session(request), project_id, read.definition, ui.language(request)
         )
@@ -1048,7 +1074,7 @@ def router(ui: Ui) -> APIRouter:
         items = history(ui, request, project_id, view)
         chips = chance_chips(steps, texts)
         for item in items:
-            item.href = None  # no links back into the application from a page that travels
+            item.href = item.outcome_href = None  # no links back from a page that travels
             if item.seq in chips:
                 item.chip = chips[int(item.seq or 0)]
         return ui.page(

@@ -216,7 +216,7 @@ def test_csv_import_and_templates(tmp_path: Path, client: Visitor) -> None:
     assert bad.status_code == 422
     assert [d["message"] for d in bad.json()["error"]["details"]] == [
         "Wiersz 2: pole name jest wymagane.",
-        "Wiersz 2: duration_days musi być liczbą całkowitą (jest „x”).",
+        "Wiersz 2: czas trwania w dniach (duration_days) musi być liczbą całkowitą (jest „x”).",
     ]
 
 

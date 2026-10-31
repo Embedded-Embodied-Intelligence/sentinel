@@ -17,6 +17,8 @@
       <label for="date">{{ t("checkin.date") }}</label>
       <input type="date" id="date" name="date" value="{{ fv('date', default_date) }}" lang="{{ t.lang }}"{% if errors.get('date') %} aria-invalid="true"{% endif %}>
       {{ ui.echo(t, "date", default_date if not form else none) }}
+      {% set typed = fv('date', default_date) | string %}
+      <p class="hint" data-before-start="{{ view.definition.start }}"{% if not typed or typed >= view.definition.start | string %} hidden{% endif %}>{{ t("checkin.before_start", date=t.date(view.definition.start)) }}</p>
     </div>
     <details class="details">
       <summary>{{ t("checkin.help") }}</summary>
@@ -69,10 +71,11 @@
   <section class="card" aria-labelledby="grow-title">
     <div class="checkin-section-head">
       <h2 id="grow-title"><span class="step-number" aria-hidden="true">3</span>{{ t("checkin.grow_title") }} <span class="count" id="grow-count">({{ fl("grow_rows") | length }})</span></h2>
-      {% if running %}<button type="button" class="btn btn-sm" data-add-row="grow">{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.grow_add") }}</span></button>{% endif %}
+      {% if running or startable %}<button type="button" class="btn btn-sm" data-add-row="grow"{% if not running %} hidden{% endif %}>{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.grow_add") }}</span></button>{% endif %}
     </div>
-    {% if running %}
-    <p class="hint section-hint">{{ t("checkin.grow_hint") }}</p>
+    {% if running or startable %}
+    <p class="hint section-hint" data-grow-hint{% if not running %} hidden{% endif %}>{{ t("checkin.grow_hint") }}</p>
+    <p class="hint section-hint" data-grow-none{% if running %} hidden{% endif %}>{{ t("checkin.grow_none") }}</p>
     <div id="grow-list">{% for i in fl("grow_rows") %}{% include "_grow_row.html" %}{% endfor %}</div>
     <template id="grow-template">{% with i="__i__" %}{% include "_grow_row.html" %}{% endwith %}</template>
     {% else %}<p class="hint section-hint">{{ t("checkin.grow_none") }}</p>{% endif %}

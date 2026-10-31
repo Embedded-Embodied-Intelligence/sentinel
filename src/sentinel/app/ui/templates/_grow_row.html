@@ -6,6 +6,7 @@
     <select id="grow-{{ i }}-task" name="grow_{{ i }}_task">
       <option value="">{{ t("checkin.grow.choose") }}</option>
       {% for task in running %}<option value="{{ task.key }}"{% if fv('grow_' ~ i ~ '_task', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
+      {% for task in startable %}<option value="{{ task.key }}" data-starts hidden disabled{% if fv('grow_' ~ i ~ '_task', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
     </select>
   </div>
   <div class="field">

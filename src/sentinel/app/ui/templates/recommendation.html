@@ -8,7 +8,7 @@
 {% set after = rec.with_action %}
 <article class="focus-column review" aria-labelledby="rec-title">
   <div class="rec-eyebrow">
-    <p class="overline">{{ rec.status_text }} · {{ t("rec.from", date=t.date(rec.date)) }}</p>
+    <p class="overline">{{ rec.status_text }} · {{ t("rec.as_of", date=t.date(rec.as_of)) }}</p>
     {% if rec.can_wait and rec.status in ("open", "later") %}{{ ui.badge("later", t("rec.can_wait")) }}{% endif %}
   </div>
   <h1 id="rec-title" class="rec-title">{{ rec.title }}</h1>
@@ -34,6 +34,7 @@
   {% if rec.acts and chips | length > 1 %}
   <section class="rec-section" aria-labelledby="changes-title">
     <h2 id="changes-title">{{ t("rec.what_changes") }}</h2>
+    <p class="muted small">{{ t("rec.applies_from", date=t.date(rec.date)) }}</p>
     <dl class="summary-rows" aria-label="{{ t('rec.effect') }}">
       {% for chip in rows %}<div><dt>{{ chip.label }}</dt><dd>{{ ui.chip_value(t, chip) }}</dd></div>{% endfor %}
     </dl>

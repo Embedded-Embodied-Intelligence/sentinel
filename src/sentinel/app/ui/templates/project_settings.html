@@ -6,6 +6,12 @@
 {% set d = view.definition %}
 <div class="form-column stacked">
 <form class="stacked" hx-post="/projects/{{ view.id }}/settings" hx-target="main" hx-select="main" hx-swap="outerHTML" novalidate>
+  <input type="hidden" name="seen_version" value="{{ version }}">
+  {% if changed_elsewhere %}
+  {% call ui.callout("warn", t("psettings.changed_title"), ' role="alert" tabindex="-1" data-focus') %}
+    <p>{{ t("psettings.changed_text") }}</p>
+  {% endcall %}
+  {% endif %}
   {% if errors %}
   {% call ui.callout("bad", t("form.fix_below"), ' role="alert" tabindex="-1" data-focus') %}
     <ul>{% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}</ul>
@@ -89,7 +95,7 @@
   <input type="hidden" name="llm_proposals" value="{{ 'on' if d.settings.llm_proposals else '' }}">
   {% endif %}
   <input type="hidden" name="llm_explanations" value="{{ 'on' if d.settings.llm_explanations else '' }}">
-  <div class="savebar" data-unsaved-bar{% if not errors %} hidden{% endif %}>
+  <div class="savebar" data-unsaved-bar{% if not errors and not changed_elsewhere %} hidden{% endif %}>
     <span class="grow">{{ t("psettings.unsaved") }}</span>
     <button type="reset" class="btn btn-tertiary">{{ t("psettings.reset") }}</button>
     <button class="btn btn-primary">{{ t("psettings.save") }}</button>

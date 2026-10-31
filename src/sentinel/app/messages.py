@@ -51,8 +51,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "unknown_role": "“{task}” needs the role {role}, but nobody in the team has it.",
         "crew_above_team": "“{task}” needs {count} × {role}, but the team has only {capacity}.",
         "self_predecessor": "“{task}” cannot come after itself.",
-        "unknown_predecessor": "“{task}” comes after {predecessor}, which is not a task of this "
-        "project.",
+        "unknown_predecessor": "“{task}” comes after a task with the id {predecessor}, but no "
+        "task has that id.",
         "cycle": "These tasks wait for each other in a circle: {cycle}.",
         "optional_with_successors": "“{task}” is optional, but “{successor}” depends on it; only "
         "a task that nothing depends on can be dropped.",
@@ -151,7 +151,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "reason_budget": "it has the lowest expected cost",
         "reason_stability": "it changes the plan the least",
         "reason_level": "it needs the least approval",
-        "reason_order": "the actions tie on everything, so the simplest one wins",
+        "reason_order": "it ties with the next option on everything but simplicity",
         "reason_utility": "it has the best combined score",
         "reason_approved": "the action was approved",
         "reason_idle_events": "nothing changed for the crews",
@@ -219,7 +219,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "csv_empty": "The file is empty.",
         "csv_no_file": "Choose a file first.",
         "csv_encoding": "The file is not UTF-8 text.",
-        "csv_missing_column": "The file has no column “{column}”.",
+        "csv_missing_column": "The file has no column: {column}.",
         "csv_number": "Row {row}: {column} must be a whole number (it is “{value}”).",
         "csv_decimal": "Row {row}: {column} must be a number (it is “{value}”).",
         "csv_flag": "Row {row}: {column} must be yes or no (it is “{value}”).",
@@ -279,8 +279,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "unknown_role": "„{task}” potrzebuje roli {role}, ale nikt w zespole jej nie ma.",
         "crew_above_team": "„{task}” potrzebuje {count} × {role}, a zespół ma tylko {capacity}.",
         "self_predecessor": "„{task}” nie może następować po samym sobie.",
-        "unknown_predecessor": "„{task}” następuje po {predecessor}, a takiego zadania nie ma w "
-        "projekcie.",
+        "unknown_predecessor": "„{task}” następuje po zadaniu o identyfikatorze {predecessor}, "
+        "ale żadne zadanie nie ma takiego identyfikatora.",
         "cycle": "Te zadania czekają na siebie nawzajem w kółko: {cycle}.",
         "optional_with_successors": "„{task}” jest opcjonalne, ale zależy od niego „{successor}”; "
         "zrezygnować można tylko z zadania, od którego nic nie zależy.",
@@ -382,7 +382,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "reason_budget": "ma najniższy oczekiwany koszt",
         "reason_stability": "najmniej zmienia plan",
         "reason_level": "wymaga najmniej zatwierdzeń",
-        "reason_order": "działania remisują we wszystkim, więc wygrywa najprostsze",
+        "reason_order": "we wszystkim poza prostotą remisuje z następną w kolejności możliwością",
         "reason_utility": "ma najlepszy łączny wynik",
         "reason_approved": "działanie zostało zatwierdzone",
         "reason_idle_events": "w zespołach nic się nie zmieniło",
@@ -447,7 +447,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "csv_empty": "Plik jest pusty.",
         "csv_no_file": "Najpierw wybierz plik.",
         "csv_encoding": "Plik nie jest tekstem w kodowaniu UTF-8.",
-        "csv_missing_column": "W pliku brakuje kolumny „{column}”.",
+        "csv_missing_column": "W pliku brakuje kolumny: {column}.",
         "csv_number": "Wiersz {row}: {column} musi być liczbą całkowitą (jest „{value}”).",
         "csv_decimal": "Wiersz {row}: {column} musi być liczbą (jest „{value}”).",
         "csv_flag": "Wiersz {row}: {column} musi mieć wartość tak albo nie (jest „{value}”).",
@@ -491,18 +491,44 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
 }
 
 
+COLUMN_WORDS: dict[Language, dict[str, str]] = {
+    "en": {"duration_days": "duration in days", "predecessors": "the tasks it comes after"},
+    "pl": {
+        "id": "identyfikator",
+        "name": "nazwa",
+        "role": "rola",
+        "crew": "skład",
+        "duration_days": "czas trwania w dniach",
+        "predecessors": "zadania, po których następuje",
+        "optional": "opcjonalne",
+    },
+}
+
+
 def render(code: str, language: Language = "en", params: Mapping[str, object] | None = None) -> str:
     """The message of `code` in `language` with its parameters; unknown codes show themselves."""
     template = MESSAGES.get(language, MESSAGES["en"]).get(code)
     if template is None:
         return code
     values = {key: _shown(value, language) for key, value in (params or {}).items()}
+    if "column" in values:
+        values["column"] = column_text(str(values["column"]), language)
     if "state" in values and isinstance(values["state"], str):
         values["state"] = MESSAGES[language].get(f"state_{values['state']}", values["state"])
     try:
         return template.format(**values)
     except (KeyError, IndexError, ValueError):
         return template
+
+
+def column_text(column: str, language: Language) -> str:
+    """A spreadsheet's column in words, with the name it has in the file (QA-17)."""
+    role = column.removeprefix("crew:")
+    if role != column:
+        word = f"liczba osób w roli {role}" if language == "pl" else f"people as {role}"
+    else:
+        word = COLUMN_WORDS[language].get(column, column)
+    return column if word == column else f"{word} ({column})"
 
 
 def _shown(value: object, language: Language) -> object:

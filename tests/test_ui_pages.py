@@ -21,12 +21,15 @@ from sentinel.app import names
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits
 from sentinel.app.events import Recommended
+from sentinel.app.messages import render
 from sentinel.app.models import Person, ProjectDefinition
 from sentinel.app.services import Services
 from sentinel.app.simulator import SimulatorSpec
 from sentinel.app.store import LOCAL_SESSION
+from sentinel.app.ui.text import Texts
 
 LANGUAGES = ("pl", "en")
+EN = Texts("en")
 
 
 @dataclass
@@ -378,6 +381,124 @@ def test_the_report_is_for_people_and_travels_alone(site: Site, language: str) -
     draft = site.client.get(f"/projects/{site.ids['draft']}/report.html", follow_redirects=False)
     assert draft.status_code == 303
     assert site.client.get("/projects/none/report.html").status_code == 404
+
+
+def test_spreadsheet_columns_are_named_in_words_and_as_in_the_file() -> None:
+    """QA-17: the words say what is wrong, the file's name says where to look."""
+    params = {"row": 2, "column": "duration_days", "value": "x"}
+    assert render("csv_number", "en", params).startswith("Row 2: duration in days (duration_days) ")
+    assert render("csv_number", "pl", params).startswith("Wiersz 2: czas trwania w dniach (")
+    assert render("csv_missing_column", "pl", {"column": "name"}).endswith("kolumny: nazwa (name).")
+    assert render("csv_required", "en", {"row": 3, "column": "name"}) == "Row 3: name is required."
+    crew = {"row": 2, "column": "crew:Tester", "value": "x"}
+    assert "people as Tester (crew:Tester)" in render("csv_number", "en", crew)
+    assert "identyfikatorze T9" in render(
+        "unknown_predecessor", "pl", {"task": "A", "predecessor": "T9"}
+    )
+
+
+def test_a_tie_says_what_it_compares() -> None:
+    """QA-22: "the actions tie on everything" read oddly beside a chance rising from 46 to 55 %."""
+    assert "next option" in render("reason_order", "en")
+    assert "następną w kolejności" in render("reason_order", "pl")
+
+
+def _project(site: Site, name: str) -> str:
+    """A planned project of this test's own."""
+    definition = small().model_copy(update={"name": name})
+    pid = _create(site.client, site.headers, definition)
+    assert site.client.post(f"/api/projects/{pid}/plan", headers=site.headers).status_code == 202
+    return pid
+
+
+def test_settings_changed_elsewhere_ask_before_they_are_replaced(site: Site) -> None:
+    """QA-18: two tabs on the settings: the last save won without a word."""
+    pid = _project(site, "Two tabs")
+    url = f"/projects/{pid}/settings"
+
+    def version(page: str) -> str:
+        found = re.search(r'name="seen_version" value="(\w+)"', page)
+        assert found is not None
+        return found.group(1)
+
+    opened = version(_get(site, url, "en"))
+    fields = {"name": "Two tabs", "autonomy": "2", "seen_version": opened}
+    _post(site, url, "en", fields | {"budget": "1000"})  # the first tab saves
+    assert site.services.live(LOCAL_SESSION, pid, "en").definition.budget == 1000
+    stale = _post(
+        site, url, "en", fields | {"budget": "2000"}, 409
+    ).text  # the second one has not seen it
+    assert "These settings changed after you opened this page" in stale
+    assert 'value="2000' in stale  # what was typed is kept
+    assert site.services.live(LOCAL_SESSION, pid, "en").definition.budget == 1000
+    _post(
+        site, url, "en", fields | {"budget": "2000", "seen_version": version(stale)}
+    )  # save again
+    assert site.services.live(LOCAL_SESSION, pid, "en").definition.budget == 2000
+    _post(
+        site, url, "en", {"name": "Two tabs", "autonomy": "2", "budget": "3000"}
+    )  # no version: saved
+    assert site.services.live(LOCAL_SESSION, pid, "en").definition.budget == 3000
+
+
+def test_a_check_in_before_the_start_gets_a_note_and_is_not_refused(site: Site) -> None:
+    """QA-16: spec section 11.1 allows it, and it used to pass without a word."""
+    pid = _project(site, "Early check-in")
+    url = f"/projects/{pid}/checkin"
+    assert re.search(r'data-before-start="2026-11-02" hidden>', _get(site, url, "en"))
+    early = {"date": "2026-10-01", "grow_rows": ["1"], "grow_1_task": "T1", "grow_1_days": "x"}
+    note = _post(site, url, "en", early, 422).text  # refused for the days, which keeps the form
+    assert re.search(r'data-before-start="2026-11-02">This date is before the project starts', note)
+    _post(site, url, "en", {"date": "2026-10-01"})
+    assert site.services.live(LOCAL_SESSION, pid, "en").checkins[-1].date == date(2026, 10, 1)
+
+
+def test_a_task_started_in_the_check_in_can_grow_in_it(site: Site) -> None:
+    """QA-21: the list offers it once the task is marked in progress, and the server takes it."""
+    pid = _project(site, "Early growth")
+    url = f"/projects/{pid}/checkin"
+    page = _get(site, url, "en")
+    assert re.search(r'<option value="T1" data-starts hidden disabled>Build API</option>', page)
+    body = {
+        "date": "2026-11-03",
+        "shown": ["T1", "T2"],
+        "status_T1": "in_progress",
+        "percent_T1": "10",
+        "status_T2": "not_started",
+        "grow_rows": ["1"],
+        "grow_1_task": "T1",
+        "grow_1_days": "2",
+    }
+    _post(site, url, "en", body)
+    history = visible_text(_get(site, f"/projects/{pid}/history", "en"))
+    assert "Build API" in history and "2 more" in history
+
+
+def test_a_recommendation_tells_the_check_in_from_the_first_day_of_the_change(site: Site) -> None:
+    """QA-19: a check-in of Wednesday read "since Thursday"; both dates are true, but differ."""
+    pid = site.ids["open"]
+    seq = site.client.get(f"/api/projects/{pid}").json()["open_recommendation"]
+    page = visible_text(_get(site, f"/projects/{pid}/recommendations/{seq}", "en"))
+    wednesday, thursday = (EN.date(date(2026, 11, day)) for day in (4, 5))
+    assert f"status at the end of {wednesday}" in page
+    assert f"The change applies from {thursday}." in page
+    assert f"status at the end of {wednesday}" in visible_text(_get(site, f"/projects/{pid}", "en"))
+    history = visible_text(_get(site, f"/projects/{pid}/history", "en"))
+    assert f"{thursday} ·" not in history  # the entries sit on the check-in's date
+
+
+def test_no_change_after_a_check_in_is_folded_into_it(site: Site) -> None:
+    """QA-20: every check-in added a line of its own that said nothing."""
+    pid = site.ids["calm"]
+    history = _get(site, f"/projects/{pid}/history", "en")
+    text = visible_text(history)
+    assert "Sentinel proposes no change" in text
+    assert "Recommended: No change" not in text
+    assert re.search(
+        rf'href="/projects/{pid}/recommendations/\d+">Sentinel proposes no change', history
+    )
+    only = visible_text(_get(site, f"/projects/{pid}/history?show=recommendations", "en"))
+    assert "No change" not in only
 
 
 def test_with_no_task_standing_out_the_risk_is_spread(site: Site) -> None:

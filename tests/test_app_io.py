@@ -57,20 +57,22 @@ def test_csv_errors_are_reported_per_row_in_both_languages() -> None:
     english = _messages(error.value, "en")
     polish = _messages(error.value, "pl")
     assert english == [
-        "Row 2: duration_days must be a whole number (it is “two”).",
+        "Row 2: duration in days (duration_days) must be a whole number (it is “two”).",
         "Row 3: name is required.",
         "Row 3: the id “T 2” may hold only letters, digits, “_”, “-” and “.”.",
-        "Row 3: crew:Developer must be a whole number (it is “x”).",
+        "Row 3: people as Developer (crew:Developer) must be a whole number (it is “x”).",
         "Row 3: optional must be yes or no (it is “maybe”).",
         "Row 3: name is required.",
     ]
-    assert polish[0] == "Wiersz 2: duration_days musi być liczbą całkowitą (jest „two”)."
-    assert polish[-1] == "Wiersz 3: pole name jest wymagane."
+    assert polish[0] == (
+        "Wiersz 2: czas trwania w dniach (duration_days) musi być liczbą całkowitą (jest „two”)."
+    )
+    assert polish[-1] == "Wiersz 3: pole nazwa (name) jest wymagane."
     with pytest.raises(AppError) as missing:
         io.definition_from_csv(b"id,title\n", None, name="P", start=date(2026, 11, 2))
     assert _messages(missing.value, "en") == [
-        "The file has no column “name”.",
-        "The file has no column “duration_days”.",
+        "The file has no column: name.",
+        "The file has no column: duration in days (duration_days).",
     ]
     with pytest.raises(AppError) as empty:
         io.definition_from_csv(b"  \n", None, name="P", start=date(2026, 11, 2))
