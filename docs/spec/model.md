@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.1.3)
+# Sentinel — formal model (v2.1.4)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -76,7 +76,11 @@ chain-frequency rule is replaced by duration sensitivity: the tasks that threate
 the unfinished tasks whose realised duration has a Spearman rank correlation of at least 0.2 with
 the finish day over the forecast's rollouts, highest first, at most three; the critical chain, the
 late and always-critical shares and the exclusion of structural tasks are gone (§11.4); the sentence
-of a threat (§11.7); §1–§10 are unchanged.
+of a threat (§11.7); §1–§10 are unchanged. v2.1.4 (WP10 fourth follow-up) answer to the follow-up's
+measurement of a list that changed at nearly every check-in: the duration sensitivity is computed on
+1,000 rollouts whose first 200 are the forecast's worlds, in a background job after a check-in, so
+the chance and the recommendations stay on the 200 worlds; the line of 0.2, the limit of three and
+the fallback stay (§11.4); the sentence of a threat (§11.7); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -907,22 +911,30 @@ or before `d` (`−1` before `date(0)`).
 ### §11.4 Forecasts
 
 The forecast of day `t` runs `N = 200` NoReaction rollouts (§5.1) from the latest observation and
-its plan, with the seed `derive_seed(project seed, "forecast", t)`: `P(C ≤ D)`, the finish dates
-of the 10 %, 50 % and 90 % quantiles of `C` (§5.2), and the *tasks that threaten the deadline*.
+its plan, with the seed `derive_seed(project seed, "forecast", t)`: `P(C ≤ D)` and the finish dates
+of the 10 %, 50 % and 90 % quantiles of `C` (§5.2). The *tasks that threaten the deadline* are read on
+`M = 1000` rollouts of the same state.
 
-- **Threats** (v2.1.3, WP10 third follow-up; before it v2.1.2, v2.1.1 and v2.0.2). The *duration
-  sensitivity* of an unfinished task (neither done nor dropped) is the Spearman rank correlation
-  (Spearman 1904), over the `N` rollouts, between its *realised duration* and `C`; ties share their
-  mean rank, and a rollout cut at the limit counts with its `C` of §3.1 (f). The realised duration
-  is the task's work at the end of the rollout in full-crew days, `e_j` plus the remaining work: the
-  duration sampled by §5.1 with all its growth, the work increases (§2.2 D2) already observed and
-  those of the rollout, and the SUBST handovers. Days on which the task waits, or works with part of
-  its crew, are not in it. The threats are the tasks with a sensitivity of at least 0.2, compared
-  exactly, highest first, then by duration (longer first) and id, at most three, each shown with the
-  sentence of §11.7. A task whose realised duration does not vary, as one of zero duration, has no
-  sensitivity, and no task has one if `C` does not vary. If no task remains, the page says that the
-  risk is spread across the plan; without a late rollout, that the project is late in none of the
-  simulated futures; without a deadline, there is no threat.
+- **Threats** (v2.1.4, WP10 fourth follow-up; before it v2.1.3, v2.1.2, v2.1.1 and v2.0.2). The `M`
+  rollouts have the forecast's seed and rollout layout, so the first `N` of them are the forecast's
+  worlds. The *duration sensitivity* of an unfinished task (neither done nor dropped) is the Spearman
+  rank correlation (Spearman 1904), over the `M` rollouts, between its *realised duration* and `C`;
+  ties share their mean rank, and a rollout cut at the limit counts with its `C` of §3.1 (f). The
+  realised duration is the task's work at the end of the rollout in full-crew days, `e_j` plus the
+  remaining work: the duration sampled by §5.1 with all its growth, the work increases (§2.2 D2)
+  already observed and those of the rollout, and the SUBST handovers. Days on which the task waits, or
+  works with part of its crew, are not in it. The threats are the tasks with a sensitivity of at least
+  0.2, compared exactly, highest first, then by duration (longer first) and id, at most three, each
+  shown with the sentence of §11.7. A task whose realised duration does not vary, as one of zero
+  duration, has no sensitivity, and no task has one if `C` does not vary. If no task remains, the page
+  says that the risk is spread across the plan; without a late rollout among the forecast's `N`, that
+  the project is late in none of the simulated futures; without a deadline, there is no threat.
+- **When** (v2.1.4). The `M` rollouts run in a background job after a check-in, and when a page needs
+  the list of a state that has none yet (the plan before the first check-in, an approval, an undo, a
+  change of the settings); the list is kept with the state, as the forecast is. The chance, the
+  quantiles, the budget outlook and the recommendation of §11.5 stay on the `N` worlds and do not wait
+  for the job: until it is done, the page shows them and says that the list is being calculated. A
+  page that cannot wait, the report, and the forecast job of the API compute it at once.
 
 ### §11.5 Recommendations and decisions
 
@@ -1048,7 +1060,7 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | `D`, `B`, `ẑ`, `o` | deadline, budget, expected cost, expected overrun | termin, budżet, oczekiwany koszt, oczekiwane przekroczenie |
 | a cost `x`, of `B` (v2.0.2) | <x> cost units, <x> of <B> cost units (person-days) | <x> jednostek kosztu, <x> z <B> jednostek kosztu (osobodni) |
 | a change of cost `Δz` (v2.0.2) | +<Δz> units, +<Δz/B> % of the budget | +<Δz> jedn., +<Δz/B> % budżetu |
-| threat (v2.1.3) | Task <task>. Most strongly affects the finish date: lengthening this task usually moves the whole deadline; the risk is spread across the plan | Zadanie <zadanie>. Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle przesuwa cały termin; ryzyko rozkłada się na cały plan |
+| threat (v2.1.4) | Task <task>. The longer this task takes, the later the project usually finishes; the risk is spread across the plan | Zadanie <zadanie>. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt; ryzyko rozkłada się na cały plan |
 | `T̂` | expected delay in working days | oczekiwane opóźnienie w dniach roboczych |
 | an alternative shown has a higher chance (§11.5 item 7, v2.0.4) | Similar chance (the difference is within the uncertainty); <part> | Podobna szansa (różnica w granicach niepewności); <część> |
 | the same, the chosen action at the target (v2.0.4) | Both options reach the target chance; <part> | Oba warianty osiągają docelową szansę; <część> |
