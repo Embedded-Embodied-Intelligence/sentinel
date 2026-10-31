@@ -1,0 +1,5145 @@
+[
+{
+"seq": 1,
+"type": "created",
+"payload": {
+"definition": {
+"budget": null,
+"deadline": "2026-11-27",
+"name": "Portal klienta",
+"roles": [],
+"settings": {
+"advanced": {
+"lambda_a": null,
+"lambda_n": null,
+"lambda_s": null,
+"mean_absence": null,
+"pert_a": null,
+"pert_b": null,
+"pert_m": null
+},
+"autonomy": 2,
+"disruptions": "typical",
+"estimation": "typical",
+"language": "pl",
+"llm_explanations": false,
+"llm_proposals": false,
+"seed": 2026
+},
+"start": "2026-09-07",
+"tasks": [],
+"team": []
+},
+"source": "new"
+}
+},
+{
+"seq": 2,
+"type": "definition",
+"payload": {
+"definition": {
+"budget": null,
+"deadline": "2026-11-27",
+"name": "Portal klienta",
+"roles": [],
+"settings": {
+"advanced": {
+"lambda_a": null,
+"lambda_n": null,
+"lambda_s": null,
+"mean_absence": null,
+"pert_a": null,
+"pert_b": null,
+"pert_m": null
+},
+"autonomy": 2,
+"disruptions": "typical",
+"estimation": "typical",
+"language": "pl",
+"llm_explanations": false,
+"llm_proposals": false,
+"seed": 2026
+},
+"start": "2026-09-07",
+"tasks": [],
+"team": [
+{
+"key": "P1",
+"name": "Alicja Nowak",
+"role": "Analityk"
+},
+{
+"key": "P2",
+"name": "Karolina Wrona",
+"role": "Analityk"
+},
+{
+"key": "P3",
+"name": "Grażyna Dąbrowska",
+"role": "Projektant UX"
+},
+{
+"key": "P4",
+"name": "Bartosz Zieliński",
+"role": "Programista backend"
+},
+{
+"key": "P5",
+"name": "Cezary Wójcik",
+"role": "Programista backend"
+},
+{
+"key": "P6",
+"name": "Dorota Mazur",
+"role": "Programista backend"
+},
+{
+"key": "P7",
+"name": "Emil Krawczyk",
+"role": "Programista frontend"
+},
+{
+"key": "P8",
+"name": "Filip Lis",
+"role": "Programista frontend"
+},
+{
+"key": "P9",
+"name": "Hanna Pawlak",
+"role": "Tester"
+},
+{
+"key": "P10",
+"name": "Igor Sikora",
+"role": "Tester"
+},
+{
+"key": "P11",
+"name": "Jan Kaczmarek",
+"role": "DevOps"
+}
+]
+}
+}
+},
+{
+"seq": 3,
+"type": "definition",
+"payload": {
+"definition": {
+"budget": null,
+"deadline": "2026-11-27",
+"name": "Portal klienta",
+"roles": [],
+"settings": {
+"advanced": {
+"lambda_a": null,
+"lambda_n": null,
+"lambda_s": null,
+"mean_absence": null,
+"pert_a": null,
+"pert_b": null,
+"pert_m": null
+},
+"autonomy": 2,
+"disruptions": "typical",
+"estimation": "typical",
+"language": "pl",
+"llm_explanations": false,
+"llm_proposals": false,
+"seed": 2026
+},
+"start": "2026-09-07",
+"tasks": [
+{
+"crew": {
+"Analityk": 1,
+"Projektant UX": 1
+},
+"duration": 3,
+"key": "T1",
+"name": "Warsztaty z interesariuszami",
+"optional": false,
+"predecessors": []
+},
+{
+"crew": {
+"Analityk": 2
+},
+"duration": 4,
+"key": "T2",
+"name": "Specyfikacja wymagań",
+"optional": false,
+"predecessors": [
+"T1"
+]
+},
+{
+"crew": {
+"Analityk": 1
+},
+"duration": 3,
+"key": "T3",
+"name": "Mapa procesów klienta",
+"optional": false,
+"predecessors": [
+"T1"
+]
+},
+{
+"crew": {
+"Projektant UX": 1
+},
+"duration": 5,
+"key": "T4",
+"name": "Makiety ekranów",
+"optional": false,
+"predecessors": [
+"T2"
+]
+},
+{
+"crew": {
+"Projektant UX": 1
+},
+"duration": 3,
+"key": "T5",
+"name": "System wizualny",
+"optional": false,
+"predecessors": [
+"T4"
+]
+},
+{
+"crew": {
+"Programista backend": 2
+},
+"duration": 4,
+"key": "T6",
+"name": "Architektura systemu",
+"optional": false,
+"predecessors": [
+"T2"
+]
+},
+{
+"crew": {
+"DevOps": 1
+},
+"duration": 3,
+"key": "T7",
+"name": "Środowiska i repozytorium",
+"optional": false,
+"predecessors": [
+"T6"
+]
+},
+{
+"crew": {
+"DevOps": 1
+},
+"duration": 4,
+"key": "T8",
+"name": "Potok CI/CD",
+"optional": false,
+"predecessors": [
+"T7"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 4,
+"key": "T9",
+"name": "Model danych",
+"optional": false,
+"predecessors": [
+"T6"
+]
+},
+{
+"crew": {
+"Programista backend": 2
+},
+"duration": 5,
+"key": "T10",
+"name": "Logowanie i konta",
+"optional": false,
+"predecessors": [
+"T7",
+"T9"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 5,
+"key": "T11",
+"name": "API profilu klienta",
+"optional": false,
+"predecessors": [
+"T9"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 6,
+"key": "T12",
+"name": "API umów",
+"optional": false,
+"predecessors": [
+"T9"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 5,
+"key": "T13",
+"name": "API faktur",
+"optional": false,
+"predecessors": [
+"T12"
+]
+},
+{
+"crew": {
+"Programista backend": 2
+},
+"duration": 6,
+"key": "T14",
+"name": "Integracja z systemem CRM",
+"optional": false,
+"predecessors": [
+"T11"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 5,
+"key": "T15",
+"name": "Integracja płatności",
+"optional": false,
+"predecessors": [
+"T13"
+]
+},
+{
+"crew": {
+"Programista frontend": 2
+},
+"duration": 3,
+"key": "T16",
+"name": "Szkielet aplikacji",
+"optional": false,
+"predecessors": [
+"T5",
+"T7"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 3,
+"key": "T17",
+"name": "Ekran logowania",
+"optional": false,
+"predecessors": [
+"T10",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T18",
+"name": "Ekran profilu",
+"optional": false,
+"predecessors": [
+"T11",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 5,
+"key": "T19",
+"name": "Ekran umów",
+"optional": false,
+"predecessors": [
+"T12",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T20",
+"name": "Ekran faktur",
+"optional": false,
+"predecessors": [
+"T13",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T21",
+"name": "Płatności w portalu",
+"optional": false,
+"predecessors": [
+"T15",
+"T20"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 3,
+"key": "T22",
+"name": "Powiadomienia e-mail",
+"optional": true,
+"predecessors": [
+"T10"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T23",
+"name": "Panel analityczny",
+"optional": true,
+"predecessors": [
+"T19"
+]
+},
+{
+"crew": {
+"Tester": 1
+},
+"duration": 3,
+"key": "T24",
+"name": "Plan testów",
+"optional": false,
+"predecessors": [
+"T2"
+]
+},
+{
+"crew": {
+"Tester": 1
+},
+"duration": 5,
+"key": "T25",
+"name": "Testy API",
+"optional": false,
+"predecessors": [
+"T14",
+"T15",
+"T24"
+]
+},
+{
+"crew": {
+"Tester": 1
+},
+"duration": 5,
+"key": "T26",
+"name": "Testy interfejsu",
+"optional": false,
+"predecessors": [
+"T17",
+"T18",
+"T19",
+"T21"
+]
+},
+{
+"crew": {
+"DevOps": 1,
+"Programista backend": 1
+},
+"duration": 3,
+"key": "T27",
+"name": "Testy wydajności",
+"optional": false,
+"predecessors": [
+"T25",
+"T8"
+]
+},
+{
+"crew": {
+"Analityk": 1,
+"Tester": 1
+},
+"duration": 4,
+"key": "T28",
+"name": "Testy akceptacyjne",
+"optional": false,
+"predecessors": [
+"T26",
+"T27"
+]
+},
+{
+"crew": {
+"Analityk": 1
+},
+"duration": 2,
+"key": "T29",
+"name": "Szkolenie użytkowników",
+"optional": false,
+"predecessors": [
+"T28"
+]
+},
+{
+"crew": {
+"DevOps": 1,
+"Programista backend": 1
+},
+"duration": 2,
+"key": "T30",
+"name": "Uruchomienie produkcyjne",
+"optional": false,
+"predecessors": [
+"T29"
+]
+}
+],
+"team": [
+{
+"key": "P1",
+"name": "Alicja Nowak",
+"role": "Analityk"
+},
+{
+"key": "P2",
+"name": "Karolina Wrona",
+"role": "Analityk"
+},
+{
+"key": "P3",
+"name": "Grażyna Dąbrowska",
+"role": "Projektant UX"
+},
+{
+"key": "P4",
+"name": "Bartosz Zieliński",
+"role": "Programista backend"
+},
+{
+"key": "P5",
+"name": "Cezary Wójcik",
+"role": "Programista backend"
+},
+{
+"key": "P6",
+"name": "Dorota Mazur",
+"role": "Programista backend"
+},
+{
+"key": "P7",
+"name": "Emil Krawczyk",
+"role": "Programista frontend"
+},
+{
+"key": "P8",
+"name": "Filip Lis",
+"role": "Programista frontend"
+},
+{
+"key": "P9",
+"name": "Hanna Pawlak",
+"role": "Tester"
+},
+{
+"key": "P10",
+"name": "Igor Sikora",
+"role": "Tester"
+},
+{
+"key": "P11",
+"name": "Jan Kaczmarek",
+"role": "DevOps"
+}
+]
+}
+}
+},
+{
+"seq": 4,
+"type": "baseline",
+"payload": {
+"baseline": {
+"lower_bound": 48,
+"makespan": 48,
+"method": "cpsat",
+"starts": {
+"T1": 0,
+"T10": 26,
+"T11": 15,
+"T12": 15,
+"T13": 21,
+"T14": 20,
+"T15": 26,
+"T16": 15,
+"T17": 31,
+"T18": 20,
+"T19": 21,
+"T2": 3,
+"T20": 26,
+"T21": 31,
+"T22": 31,
+"T23": 26,
+"T24": 7,
+"T25": 31,
+"T26": 35,
+"T27": 37,
+"T28": 40,
+"T29": 44,
+"T3": 7,
+"T30": 46,
+"T4": 7,
+"T5": 12,
+"T6": 7,
+"T7": 11,
+"T8": 14,
+"T9": 11
+},
+"status": "OPTIMAL",
+"wall_time_s": 0.0
+}
+}
+},
+{
+"seq": 5,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-09-10",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": "2026-09-10",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T1"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-09-10",
+"day": 4,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P1",
+"P3"
+],
+"finish": 4,
+"start": 0,
+"status": "done",
+"task": "T1",
+"work": 6
+}
+]
+}
+}
+},
+{
+"seq": 6,
+"type": "recommendation",
+"payload": {
+"applied": {
+"crews": {},
+"day": 4,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"10": 27,
+"11": 16,
+"12": 16,
+"13": 22,
+"14": 21,
+"15": 27,
+"16": 16,
+"17": 32,
+"18": 21,
+"19": 22,
+"2": 4,
+"20": 27,
+"21": 32,
+"22": 32,
+"23": 27,
+"24": 8,
+"25": 32,
+"26": 36,
+"27": 37,
+"28": 41,
+"29": 45,
+"3": 8,
+"30": 47,
+"31": 49,
+"4": 8,
+"5": 13,
+"6": 8,
+"7": 12,
+"8": 15,
+"9": 12
+}
+}
+]
+},
+"handovers": [],
+"kind": "shift",
+"label": "SHIFT",
+"plan": {
+"T10": 27,
+"T11": 16,
+"T12": 16,
+"T13": 22,
+"T14": 21,
+"T15": 27,
+"T16": 16,
+"T17": 32,
+"T18": 21,
+"T19": 22,
+"T2": 4,
+"T20": 27,
+"T21": 32,
+"T22": 32,
+"T23": 27,
+"T24": 8,
+"T25": 32,
+"T26": 36,
+"T28": 41,
+"T29": 45,
+"T3": 8,
+"T30": 47,
+"T4": 8,
+"T5": 13,
+"T6": 8,
+"T7": 12,
+"T8": 15,
+"T9": 12
+},
+"removed": [],
+"sink_plan": 49,
+"temps": []
+},
+"recommendation": {
+"changes": [
+{
+"new": 4,
+"old": 3,
+"task": "T2"
+},
+{
+"new": 8,
+"old": 7,
+"task": "T3"
+},
+{
+"new": 8,
+"old": 7,
+"task": "T4"
+},
+{
+"new": 13,
+"old": 12,
+"task": "T5"
+},
+{
+"new": 8,
+"old": 7,
+"task": "T6"
+},
+{
+"new": 12,
+"old": 11,
+"task": "T7"
+},
+{
+"new": 15,
+"old": 14,
+"task": "T8"
+},
+{
+"new": 12,
+"old": 11,
+"task": "T9"
+},
+{
+"new": 27,
+"old": 26,
+"task": "T10"
+},
+{
+"new": 16,
+"old": 15,
+"task": "T11"
+},
+{
+"new": 16,
+"old": 15,
+"task": "T12"
+},
+{
+"new": 22,
+"old": 21,
+"task": "T13"
+},
+{
+"new": 21,
+"old": 20,
+"task": "T14"
+},
+{
+"new": 27,
+"old": 26,
+"task": "T15"
+},
+{
+"new": 16,
+"old": 15,
+"task": "T16"
+},
+{
+"new": 32,
+"old": 31,
+"task": "T17"
+},
+{
+"new": 21,
+"old": 20,
+"task": "T18"
+},
+{
+"new": 22,
+"old": 21,
+"task": "T19"
+},
+{
+"new": 27,
+"old": 26,
+"task": "T20"
+},
+{
+"new": 32,
+"old": 31,
+"task": "T21"
+},
+{
+"new": 32,
+"old": 31,
+"task": "T22"
+},
+{
+"new": 27,
+"old": 26,
+"task": "T23"
+},
+{
+"new": 8,
+"old": 7,
+"task": "T24"
+},
+{
+"new": 32,
+"old": 31,
+"task": "T25"
+},
+{
+"new": 36,
+"old": 35,
+"task": "T26"
+},
+{
+"new": 41,
+"old": 40,
+"task": "T28"
+},
+{
+"new": 45,
+"old": 44,
+"task": "T29"
+},
+{
+"new": 47,
+"old": 46,
+"task": "T30"
+}
+],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 172.535,
+"mean_makespan": 58.545,
+"overrun": 0.0,
+"p_on_time": 0.68,
+"rollouts": 200,
+"tardiness": 1.7
+},
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 172.55,
+"mean_makespan": 58.335,
+"overrun": 0.0,
+"p_on_time": 0.7,
+"rollouts": 200,
+"tardiness": 1.605
+},
+{
+"kind": "descope",
+"label": "DESCOPE(23)",
+"mean_cost": 167.97,
+"mean_makespan": 58.14,
+"overrun": 0.0,
+"p_on_time": 0.705,
+"rollouts": 200,
+"tardiness": 1.555
+},
+{
+"kind": "descope",
+"label": "DESCOPE(22)",
+"mean_cost": 169.2,
+"mean_makespan": 58.31,
+"overrun": 0.0,
+"p_on_time": 0.695,
+"rollouts": 200,
+"tardiness": 1.595
+},
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 172.545,
+"mean_makespan": 58.4,
+"overrun": 0.0,
+"p_on_time": 0.68,
+"rollouts": 200,
+"tardiness": 1.615
+}
+],
+"rollouts": 200,
+"seed": 1656046271
+},
+"day": 4,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.68,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 172.545,
+"overrun": 0.0,
+"p_on_time": 0.68,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.615,
+"utility": 0.68
+},
+{
+"capped": 0.68,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"10": 27,
+"11": 16,
+"12": 16,
+"13": 22,
+"14": 21,
+"15": 27,
+"16": 16,
+"17": 32,
+"18": 21,
+"19": 22,
+"2": 4,
+"20": 27,
+"21": 32,
+"22": 32,
+"23": 27,
+"24": 8,
+"25": 32,
+"26": 36,
+"27": 37,
+"28": 41,
+"29": 45,
+"3": 8,
+"30": 47,
+"31": 49,
+"4": 8,
+"5": 13,
+"6": 8,
+"7": 12,
+"8": 15,
+"9": 12
+}
+}
+]
+},
+"delay": 0,
+"deviation": 0.9655172413793104,
+"dropped": false,
+"eliminated": null,
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 172.535,
+"overrun": 0.0,
+"p_on_time": 0.68,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.7,
+"utility": 0.670344827586207
+},
+{
+"capped": 0.7,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"10": 21,
+"11": 16,
+"12": 16,
+"13": 22,
+"14": 26,
+"15": 27,
+"16": 16,
+"17": 26,
+"18": 21,
+"19": 22,
+"2": 4,
+"20": 27,
+"21": 32,
+"22": 32,
+"23": 29,
+"24": 8,
+"25": 32,
+"26": 36,
+"27": 37,
+"28": 41,
+"29": 45,
+"3": 8,
+"30": 47,
+"31": 49,
+"4": 8,
+"5": 13,
+"6": 8,
+"7": 12,
+"8": 15,
+"9": 12
+}
+}
+]
+},
+"delay": 0,
+"deviation": 1.4827586206896552,
+"dropped": false,
+"eliminated": "stability",
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 172.55,
+"overrun": 0.0,
+"p_on_time": 0.7,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.605,
+"utility": 0.6851724137931035
+},
+{
+"capped": 0.705,
+"decision": {
+"operations": [
+{
+"activity": 23,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "scope",
+"kind": "descope",
+"label": "DESCOPE(23)",
+"level": 2,
+"mean_cost": 167.97,
+"overrun": 0.0,
+"p_on_time": 0.705,
+"rollouts": 200,
+"scope_loss": 0.5714285714285714,
+"substituted": 0,
+"tardiness": 1.555,
+"utility": 0.705
+},
+{
+"capped": 0.695,
+"decision": {
+"operations": [
+{
+"activity": 22,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "scope",
+"kind": "descope",
+"label": "DESCOPE(22)",
+"level": 2,
+"mean_cost": 169.2,
+"overrun": 0.0,
+"p_on_time": 0.695,
+"rollouts": 200,
+"scope_loss": 0.42857142857142855,
+"substituted": 0,
+"tardiness": 1.595,
+"utility": 0.695
+}
+],
+"chosen": "SHIFT",
+"cp_fallbacks": 0,
+"cp_solves": 2,
+"day": 4,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"10": 27,
+"11": 16,
+"12": 16,
+"13": 22,
+"14": 21,
+"15": 27,
+"16": 16,
+"17": 32,
+"18": 21,
+"19": 22,
+"2": 4,
+"20": 27,
+"21": 32,
+"22": 32,
+"23": 27,
+"24": 8,
+"25": 32,
+"26": 36,
+"27": 37,
+"28": 41,
+"29": 45,
+"3": 8,
+"30": 47,
+"31": 49,
+"4": 8,
+"5": 13,
+"6": 8,
+"7": 12,
+"8": 15,
+"9": 12
+}
+}
+]
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": "auto",
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0,
+"deadline": 0.12,
+"met": false,
+"p_on_time": 0.68,
+"rollouts": 200
+},
+"reason": "stability",
+"rollouts": 1125,
+"rule": "lexicographic",
+"runner_up": "RESEQ-M",
+"tied": [
+"SHIFT"
+],
+"wall_time_s": 0.0
+},
+"seed": 1092896701,
+"urgency": 11.0
+}
+}
+},
+{
+"seq": 7,
+"type": "undo",
+"payload": {
+"plan": {
+"T10": 26,
+"T11": 15,
+"T12": 15,
+"T13": 21,
+"T14": 20,
+"T15": 26,
+"T16": 15,
+"T17": 31,
+"T18": 20,
+"T19": 21,
+"T2": 3,
+"T20": 26,
+"T21": 31,
+"T22": 31,
+"T23": 26,
+"T24": 7,
+"T25": 31,
+"T26": 35,
+"T28": 40,
+"T29": 44,
+"T3": 7,
+"T30": 46,
+"T4": 7,
+"T5": 12,
+"T6": 7,
+"T7": 11,
+"T8": 14,
+"T9": 11
+},
+"recommendation": 6,
+"sink_plan": 48
+}
+},
+{
+"seq": 8,
+"type": "definition",
+"payload": {
+"definition": {
+"budget": null,
+"deadline": "2026-11-27",
+"name": "Portal klienta",
+"roles": [],
+"settings": {
+"advanced": {
+"lambda_a": null,
+"lambda_n": null,
+"lambda_s": null,
+"mean_absence": null,
+"pert_a": null,
+"pert_b": null,
+"pert_m": null
+},
+"autonomy": 0,
+"disruptions": "typical",
+"estimation": "typical",
+"language": "pl",
+"llm_explanations": false,
+"llm_proposals": false,
+"seed": 2026
+},
+"start": "2026-09-07",
+"tasks": [
+{
+"crew": {
+"Analityk": 1,
+"Projektant UX": 1
+},
+"duration": 3,
+"key": "T1",
+"name": "Warsztaty z interesariuszami",
+"optional": false,
+"predecessors": []
+},
+{
+"crew": {
+"Analityk": 2
+},
+"duration": 4,
+"key": "T2",
+"name": "Specyfikacja wymagań",
+"optional": false,
+"predecessors": [
+"T1"
+]
+},
+{
+"crew": {
+"Analityk": 1
+},
+"duration": 3,
+"key": "T3",
+"name": "Mapa procesów klienta",
+"optional": false,
+"predecessors": [
+"T1"
+]
+},
+{
+"crew": {
+"Projektant UX": 1
+},
+"duration": 5,
+"key": "T4",
+"name": "Makiety ekranów",
+"optional": false,
+"predecessors": [
+"T2"
+]
+},
+{
+"crew": {
+"Projektant UX": 1
+},
+"duration": 3,
+"key": "T5",
+"name": "System wizualny",
+"optional": false,
+"predecessors": [
+"T4"
+]
+},
+{
+"crew": {
+"Programista backend": 2
+},
+"duration": 4,
+"key": "T6",
+"name": "Architektura systemu",
+"optional": false,
+"predecessors": [
+"T2"
+]
+},
+{
+"crew": {
+"DevOps": 1
+},
+"duration": 3,
+"key": "T7",
+"name": "Środowiska i repozytorium",
+"optional": false,
+"predecessors": [
+"T6"
+]
+},
+{
+"crew": {
+"DevOps": 1
+},
+"duration": 4,
+"key": "T8",
+"name": "Potok CI/CD",
+"optional": false,
+"predecessors": [
+"T7"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 4,
+"key": "T9",
+"name": "Model danych",
+"optional": false,
+"predecessors": [
+"T6"
+]
+},
+{
+"crew": {
+"Programista backend": 2
+},
+"duration": 5,
+"key": "T10",
+"name": "Logowanie i konta",
+"optional": false,
+"predecessors": [
+"T7",
+"T9"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 5,
+"key": "T11",
+"name": "API profilu klienta",
+"optional": false,
+"predecessors": [
+"T9"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 6,
+"key": "T12",
+"name": "API umów",
+"optional": false,
+"predecessors": [
+"T9"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 5,
+"key": "T13",
+"name": "API faktur",
+"optional": false,
+"predecessors": [
+"T12"
+]
+},
+{
+"crew": {
+"Programista backend": 2
+},
+"duration": 6,
+"key": "T14",
+"name": "Integracja z systemem CRM",
+"optional": false,
+"predecessors": [
+"T11"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 5,
+"key": "T15",
+"name": "Integracja płatności",
+"optional": false,
+"predecessors": [
+"T13"
+]
+},
+{
+"crew": {
+"Programista frontend": 2
+},
+"duration": 3,
+"key": "T16",
+"name": "Szkielet aplikacji",
+"optional": false,
+"predecessors": [
+"T5",
+"T7"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 3,
+"key": "T17",
+"name": "Ekran logowania",
+"optional": false,
+"predecessors": [
+"T10",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T18",
+"name": "Ekran profilu",
+"optional": false,
+"predecessors": [
+"T11",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 5,
+"key": "T19",
+"name": "Ekran umów",
+"optional": false,
+"predecessors": [
+"T12",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T20",
+"name": "Ekran faktur",
+"optional": false,
+"predecessors": [
+"T13",
+"T16"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T21",
+"name": "Płatności w portalu",
+"optional": false,
+"predecessors": [
+"T15",
+"T20"
+]
+},
+{
+"crew": {
+"Programista backend": 1
+},
+"duration": 3,
+"key": "T22",
+"name": "Powiadomienia e-mail",
+"optional": true,
+"predecessors": [
+"T10"
+]
+},
+{
+"crew": {
+"Programista frontend": 1
+},
+"duration": 4,
+"key": "T23",
+"name": "Panel analityczny",
+"optional": true,
+"predecessors": [
+"T19"
+]
+},
+{
+"crew": {
+"Tester": 1
+},
+"duration": 3,
+"key": "T24",
+"name": "Plan testów",
+"optional": false,
+"predecessors": [
+"T2"
+]
+},
+{
+"crew": {
+"Tester": 1
+},
+"duration": 5,
+"key": "T25",
+"name": "Testy API",
+"optional": false,
+"predecessors": [
+"T14",
+"T15",
+"T24"
+]
+},
+{
+"crew": {
+"Tester": 1
+},
+"duration": 5,
+"key": "T26",
+"name": "Testy interfejsu",
+"optional": false,
+"predecessors": [
+"T17",
+"T18",
+"T19",
+"T21"
+]
+},
+{
+"crew": {
+"DevOps": 1,
+"Programista backend": 1
+},
+"duration": 3,
+"key": "T27",
+"name": "Testy wydajności",
+"optional": false,
+"predecessors": [
+"T25",
+"T8"
+]
+},
+{
+"crew": {
+"Analityk": 1,
+"Tester": 1
+},
+"duration": 4,
+"key": "T28",
+"name": "Testy akceptacyjne",
+"optional": false,
+"predecessors": [
+"T26",
+"T27"
+]
+},
+{
+"crew": {
+"Analityk": 1
+},
+"duration": 2,
+"key": "T29",
+"name": "Szkolenie użytkowników",
+"optional": false,
+"predecessors": [
+"T28"
+]
+},
+{
+"crew": {
+"DevOps": 1,
+"Programista backend": 1
+},
+"duration": 2,
+"key": "T30",
+"name": "Uruchomienie produkcyjne",
+"optional": false,
+"predecessors": [
+"T29"
+]
+}
+],
+"team": [
+{
+"key": "P1",
+"name": "Alicja Nowak",
+"role": "Analityk"
+},
+{
+"key": "P2",
+"name": "Karolina Wrona",
+"role": "Analityk"
+},
+{
+"key": "P3",
+"name": "Grażyna Dąbrowska",
+"role": "Projektant UX"
+},
+{
+"key": "P4",
+"name": "Bartosz Zieliński",
+"role": "Programista backend"
+},
+{
+"key": "P5",
+"name": "Cezary Wójcik",
+"role": "Programista backend"
+},
+{
+"key": "P6",
+"name": "Dorota Mazur",
+"role": "Programista backend"
+},
+{
+"key": "P7",
+"name": "Emil Krawczyk",
+"role": "Programista frontend"
+},
+{
+"key": "P8",
+"name": "Filip Lis",
+"role": "Programista frontend"
+},
+{
+"key": "P9",
+"name": "Hanna Pawlak",
+"role": "Tester"
+},
+{
+"key": "P10",
+"name": "Igor Sikora",
+"role": "Tester"
+},
+{
+"key": "P11",
+"name": "Jan Kaczmarek",
+"role": "DevOps"
+}
+]
+}
+}
+},
+{
+"seq": 9,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-09-15",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": null,
+"percent": 75.0,
+"start": "2026-09-11",
+"status": "in_progress",
+"task": "T2"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-09-15",
+"day": 7,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P1",
+"P2"
+],
+"finish": null,
+"start": 4,
+"status": "started",
+"task": "T2",
+"work": 6
+}
+]
+}
+}
+},
+{
+"seq": 10,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 171.67,
+"mean_makespan": 58.29,
+"overrun": 0.0,
+"p_on_time": 0.73,
+"rollouts": 200,
+"tardiness": 1.6
+},
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 171.68,
+"mean_makespan": 58.61,
+"overrun": 0.0,
+"p_on_time": 0.715,
+"rollouts": 200,
+"tardiness": 1.765
+},
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 171.695,
+"mean_makespan": 58.48,
+"overrun": 0.0,
+"p_on_time": 0.75,
+"rollouts": 200,
+"tardiness": 1.655
+},
+{
+"kind": "descope",
+"label": "DESCOPE(23)",
+"mean_cost": 167.245,
+"mean_makespan": 57.97,
+"overrun": 0.0,
+"p_on_time": 0.745,
+"rollouts": 200,
+"tardiness": 1.585
+},
+{
+"kind": "descope",
+"label": "DESCOPE(22)",
+"mean_cost": 168.3,
+"mean_makespan": 58.36,
+"overrun": 0.0,
+"p_on_time": 0.73,
+"rollouts": 200,
+"tardiness": 1.765
+}
+],
+"rollouts": 200,
+"seed": 1249507573
+},
+"day": 7,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.73,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": null,
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 171.67,
+"overrun": 0.0,
+"p_on_time": 0.73,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.6,
+"utility": 0.73
+},
+{
+"capped": 0.715,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"10": 27,
+"11": 16,
+"12": 16,
+"13": 22,
+"14": 21,
+"15": 27,
+"16": 16,
+"17": 32,
+"18": 21,
+"19": 22,
+"20": 27,
+"21": 32,
+"22": 32,
+"23": 27,
+"24": 8,
+"25": 32,
+"26": 36,
+"27": 37,
+"28": 41,
+"29": 45,
+"3": 8,
+"30": 47,
+"31": 49,
+"4": 8,
+"5": 13,
+"6": 8,
+"7": 12,
+"8": 15,
+"9": 12
+}
+}
+]
+},
+"delay": 1,
+"deviation": 0.9642857142857143,
+"dropped": false,
+"eliminated": "stability",
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 171.68,
+"overrun": 0.0,
+"p_on_time": 0.715,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.765,
+"utility": 0.7053571428571428
+},
+{
+"capped": 0.75,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"10": 21,
+"11": 16,
+"12": 16,
+"13": 22,
+"14": 26,
+"15": 27,
+"16": 16,
+"17": 26,
+"18": 21,
+"19": 22,
+"20": 27,
+"21": 32,
+"22": 32,
+"23": 29,
+"24": 8,
+"25": 32,
+"26": 36,
+"27": 37,
+"28": 41,
+"29": 45,
+"3": 8,
+"30": 47,
+"31": 49,
+"4": 8,
+"5": 13,
+"6": 8,
+"7": 12,
+"8": 15,
+"9": 12
+}
+}
+]
+},
+"delay": 1,
+"deviation": 1.5,
+"dropped": false,
+"eliminated": "stability",
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 171.695,
+"overrun": 0.0,
+"p_on_time": 0.75,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.655,
+"utility": 0.735
+},
+{
+"capped": 0.745,
+"decision": {
+"operations": [
+{
+"activity": 23,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "scope",
+"kind": "descope",
+"label": "DESCOPE(23)",
+"level": 2,
+"mean_cost": 167.245,
+"overrun": 0.0,
+"p_on_time": 0.745,
+"rollouts": 200,
+"scope_loss": 0.5714285714285714,
+"substituted": 0,
+"tardiness": 1.585,
+"utility": 0.745
+},
+{
+"capped": 0.73,
+"decision": {
+"operations": [
+{
+"activity": 22,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "scope",
+"kind": "descope",
+"label": "DESCOPE(22)",
+"level": 2,
+"mean_cost": 168.3,
+"overrun": 0.0,
+"p_on_time": 0.73,
+"rollouts": 200,
+"scope_loss": 0.42857142857142855,
+"substituted": 0,
+"tardiness": 1.765,
+"utility": 0.73
+}
+],
+"chosen": "NOOP",
+"cp_fallbacks": 0,
+"cp_solves": 2,
+"day": 7,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": null,
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0,
+"deadline": 0.07000000000000006,
+"met": false,
+"p_on_time": 0.73,
+"rollouts": 200
+},
+"reason": "stability",
+"rollouts": 1125,
+"rule": "lexicographic",
+"runner_up": "SHIFT",
+"tied": [
+"NOOP"
+],
+"wall_time_s": 0.0
+},
+"seed": 2088252285,
+"urgency": 10.622095422791327
+}
+}
+},
+{
+"seq": 11,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [
+{
+"first_day": "2026-09-22",
+"person": "P5",
+"return_date": "2026-10-02"
+}
+],
+"date": "2026-09-21",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": "2026-09-16",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T2"
+},
+{
+"crew": null,
+"finish": "2026-09-18",
+"percent": null,
+"start": "2026-09-17",
+"status": "done",
+"task": "T3"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 50.0,
+"start": "2026-09-17",
+"status": "in_progress",
+"task": "T4"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 75.0,
+"start": "2026-09-17",
+"status": "in_progress",
+"task": "T6"
+},
+{
+"crew": null,
+"finish": "2026-09-18",
+"percent": null,
+"start": "2026-09-17",
+"status": "done",
+"task": "T24"
+}
+]
+},
+"effects": {
+"absences": [
+{
+"back": 19,
+"person": "P5",
+"start": 11
+}
+],
+"date": "2026-09-21",
+"day": 11,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P1",
+"P2"
+],
+"finish": 8,
+"start": 4,
+"status": "done",
+"task": "T2",
+"work": 8
+},
+{
+"crew": [
+"P1"
+],
+"finish": 10,
+"start": 8,
+"status": "done",
+"task": "T3",
+"work": 3
+},
+{
+"crew": [
+"P3"
+],
+"finish": null,
+"start": 8,
+"status": "started",
+"task": "T4",
+"work": 3
+},
+{
+"crew": [
+"P4",
+"P5"
+],
+"finish": null,
+"start": 8,
+"status": "started",
+"task": "T6",
+"work": 6
+},
+{
+"crew": [
+"P9"
+],
+"finish": 10,
+"start": 8,
+"status": "done",
+"task": "T24",
+"work": 3
+}
+]
+}
+}
+},
+{
+"seq": 12,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 170.575,
+"mean_makespan": 59.195,
+"overrun": 0.0,
+"p_on_time": 0.66,
+"rollouts": 200,
+"tardiness": 1.82
+},
+{
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"mean_cost": 170.585,
+"mean_makespan": 59.375,
+"overrun": 0.0,
+"p_on_time": 0.665,
+"rollouts": 200,
+"tardiness": 1.87
+},
+{
+"kind": "descope",
+"label": "DESCOPE(22)",
+"mean_cost": 167.235,
+"mean_makespan": 59.03,
+"overrun": 0.0,
+"p_on_time": 0.67,
+"rollouts": 200,
+"tardiness": 1.665
+},
+{
+"kind": "descope",
+"label": "DESCOPE(23)",
+"mean_cost": 166.095,
+"mean_makespan": 58.94,
+"overrun": 0.0,
+"p_on_time": 0.67,
+"rollouts": 200,
+"tardiness": 1.68
+},
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 170.565,
+"mean_makespan": 59.41,
+"overrun": 0.0,
+"p_on_time": 0.665,
+"rollouts": 200,
+"tardiness": 1.89
+},
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 170.63,
+"mean_makespan": 59.315,
+"overrun": 0.0,
+"p_on_time": 0.645,
+"rollouts": 200,
+"tardiness": 1.92
+}
+],
+"rollouts": 200,
+"seed": 998317403
+},
+"day": 11,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.66,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": null,
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 170.575,
+"overrun": 0.0,
+"p_on_time": 0.66,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.82,
+"utility": 0.66
+},
+{
+"capped": 0.665,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"10": 28,
+"11": 17,
+"12": 17,
+"13": 23,
+"14": 22,
+"15": 28,
+"16": 17,
+"17": 33,
+"18": 22,
+"19": 23,
+"20": 28,
+"21": 33,
+"22": 33,
+"23": 28,
+"25": 33,
+"26": 37,
+"27": 38,
+"28": 42,
+"29": 46,
+"30": 48,
+"31": 50,
+"5": 13,
+"7": 13,
+"8": 16,
+"9": 13
+}
+}
+]
+},
+"delay": 1,
+"deviation": 1.9166666666666667,
+"dropped": false,
+"eliminated": "stability",
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 170.565,
+"overrun": 0.0,
+"p_on_time": 0.665,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.89,
+"utility": 0.6458333333333334
+},
+{
+"capped": 0.645,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"10": 22,
+"11": 17,
+"12": 17,
+"13": 23,
+"14": 27,
+"15": 28,
+"16": 16,
+"17": 27,
+"18": 22,
+"19": 23,
+"20": 28,
+"21": 33,
+"22": 33,
+"23": 30,
+"25": 33,
+"26": 37,
+"27": 38,
+"28": 42,
+"29": 46,
+"30": 48,
+"31": 50,
+"5": 13,
+"7": 13,
+"8": 16,
+"9": 13
+}
+}
+]
+},
+"delay": 1,
+"deviation": 2.3333333333333335,
+"dropped": false,
+"eliminated": "stability",
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 170.63,
+"overrun": 0.0,
+"p_on_time": 0.645,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.92,
+"utility": 0.6216666666666667
+},
+{
+"capped": 0.665,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"10": 28,
+"11": 17,
+"12": 17,
+"13": 23,
+"14": 22,
+"15": 28,
+"16": 16,
+"17": 33,
+"18": 22,
+"19": 23,
+"20": 28,
+"21": 33,
+"22": 33,
+"23": 28,
+"25": 33,
+"26": 37,
+"27": 38,
+"28": 42,
+"29": 46,
+"30": 48,
+"31": 50,
+"5": 13,
+"7": 13,
+"8": 16,
+"9": 13
+}
+}
+]
+},
+"delay": 1,
+"deviation": 1.875,
+"dropped": false,
+"eliminated": "stability",
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"level": 1,
+"mean_cost": 170.585,
+"overrun": 0.0,
+"p_on_time": 0.665,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.87,
+"utility": 0.64625
+},
+{
+"capped": 0.635,
+"decision": {
+"operations": [
+{
+"activity": 6,
+"kind": "subst",
+"workers": [
+5
+]
+}
+]
+},
+"delay": 1,
+"deviation": 2.0,
+"dropped": false,
+"eliminated": "stability",
+"kind": "subst",
+"label": "SUBST(6)",
+"level": 2,
+"mean_cost": 173.625,
+"overrun": 0.0,
+"p_on_time": 0.635,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 1,
+"tardiness": 2.025,
+"utility": 0.615
+},
+{
+"capped": 0.645,
+"decision": {
+"operations": [
+{
+"activity": 6,
+"kind": "subst",
+"workers": [
+5
+]
+},
+{
+"kind": "reseq",
+"starts": {
+"10": 22,
+"11": 17,
+"12": 17,
+"13": 23,
+"14": 27,
+"15": 28,
+"16": 16,
+"17": 27,
+"18": 22,
+"19": 23,
+"20": 28,
+"21": 33,
+"22": 33,
+"23": 30,
+"25": 33,
+"26": 37,
+"27": 38,
+"28": 42,
+"29": 46,
+"30": 48,
+"31": 50,
+"5": 13,
+"7": 13,
+"8": 16,
+"9": 13
+}
+}
+]
+},
+"delay": 1,
+"deviation": 4.333333333333334,
+"dropped": false,
+"eliminated": "stability",
+"kind": "subst_all_reseq_m",
+"label": "SUBST-ALL+RESEQ-M",
+"level": 2,
+"mean_cost": 173.555,
+"overrun": 0.0,
+"p_on_time": 0.645,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 1,
+"tardiness": 1.94,
+"utility": 0.6016666666666667
+},
+{
+"capped": 0.67,
+"decision": {
+"operations": [
+{
+"activity": 23,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "scope",
+"kind": "descope",
+"label": "DESCOPE(23)",
+"level": 2,
+"mean_cost": 166.095,
+"overrun": 0.0,
+"p_on_time": 0.67,
+"rollouts": 200,
+"scope_loss": 0.5714285714285714,
+"substituted": 0,
+"tardiness": 1.68,
+"utility": 0.67
+},
+{
+"capped": 0.67,
+"decision": {
+"operations": [
+{
+"activity": 22,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "scope",
+"kind": "descope",
+"label": "DESCOPE(22)",
+"level": 2,
+"mean_cost": 167.235,
+"overrun": 0.0,
+"p_on_time": 0.67,
+"rollouts": 200,
+"scope_loss": 0.42857142857142855,
+"substituted": 0,
+"tardiness": 1.665,
+"utility": 0.67
+}
+],
+"chosen": "NOOP",
+"cp_fallbacks": 0,
+"cp_solves": 3,
+"day": 11,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": null,
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0,
+"deadline": 0.14,
+"met": false,
+"p_on_time": 0.66,
+"rollouts": 200
+},
+"reason": "stability",
+"rollouts": 1800,
+"rule": "lexicographic",
+"runner_up": "RESEQ-S",
+"tied": [
+"NOOP"
+],
+"wall_time_s": 0.0
+},
+"seed": 418764253,
+"urgency": 10.622095422791327
+}
+}
+},
+{
+"seq": 13,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-09-25",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": "2026-09-24",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T4"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 33.0,
+"start": "2026-09-25",
+"status": "in_progress",
+"task": "T5"
+},
+{
+"crew": null,
+"finish": "2026-09-23",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T6"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 66.0,
+"start": "2026-09-24",
+"status": "in_progress",
+"task": "T7"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 40.0,
+"start": "2026-09-24",
+"status": "in_progress",
+"task": "T9"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-09-25",
+"day": 15,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P3"
+],
+"finish": 14,
+"start": 8,
+"status": "done",
+"task": "T4",
+"work": 5
+},
+{
+"crew": [
+"P3"
+],
+"finish": null,
+"start": 14,
+"status": "started",
+"task": "T5",
+"work": 1
+},
+{
+"crew": [
+"P4",
+"P5"
+],
+"finish": 13,
+"start": 8,
+"status": "done",
+"task": "T6",
+"work": 8
+},
+{
+"crew": [
+"P11"
+],
+"finish": null,
+"start": 13,
+"status": "started",
+"task": "T7",
+"work": 2
+},
+{
+"crew": [
+"P4"
+],
+"finish": null,
+"start": 13,
+"status": "started",
+"task": "T9",
+"work": 2
+}
+]
+}
+}
+},
+{
+"seq": 14,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 170.01,
+"mean_makespan": 57.97,
+"overrun": 0.0,
+"p_on_time": 0.785,
+"rollouts": 200,
+"tardiness": 1.285
+}
+],
+"rollouts": 200,
+"seed": 939536997
+},
+"day": 15,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [],
+"chosen": "NOOP",
+"cp_fallbacks": 0,
+"cp_solves": 0,
+"day": 15,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": null,
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0,
+"deadline": 0.015000000000000013,
+"met": true,
+"p_on_time": 0.785,
+"rollouts": 200
+},
+"reason": "needs_met",
+"rollouts": 200,
+"rule": "lexicographic",
+"runner_up": null,
+"tied": [],
+"wall_time_s": 0.0
+},
+"seed": 537745256,
+"urgency": 9.722049832344055
+}
+}
+},
+{
+"seq": 15,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-09-30",
+"increases": [],
+"new_tasks": [
+{
+"after": "T10",
+"before": "T25",
+"crew": {
+"Programista backend": 1
+},
+"duration": 4,
+"key": null,
+"name": "Audyt bezpieczeństwa",
+"optional": false
+}
+],
+"tasks": [
+{
+"crew": null,
+"finish": "2026-09-29",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T5"
+},
+{
+"crew": null,
+"finish": "2026-09-28",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T7"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 50.0,
+"start": "2026-09-29",
+"status": "in_progress",
+"task": "T8"
+},
+{
+"crew": null,
+"finish": "2026-09-30",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T9"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 25.0,
+"start": "2026-09-30",
+"status": "in_progress",
+"task": "T16"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-09-30",
+"day": 18,
+"inserted": [
+{
+"after": "T10",
+"before": "T25",
+"crew": {
+"Programista backend": 1
+},
+"day": 18,
+"duration": 4,
+"key": "N1",
+"name": "Audyt bezpieczeństwa",
+"optional": false,
+"planned": 31
+}
+],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P3"
+],
+"finish": 17,
+"start": 14,
+"status": "done",
+"task": "T5",
+"work": 3
+},
+{
+"crew": [
+"P11"
+],
+"finish": 16,
+"start": 13,
+"status": "done",
+"task": "T7",
+"work": 3
+},
+{
+"crew": [
+"P11"
+],
+"finish": null,
+"start": 16,
+"status": "started",
+"task": "T8",
+"work": 2
+},
+{
+"crew": [
+"P4"
+],
+"finish": 18,
+"start": 13,
+"status": "done",
+"task": "T9",
+"work": 4
+},
+{
+"crew": [
+"P7",
+"P8"
+],
+"finish": null,
+"start": 17,
+"status": "started",
+"task": "T16",
+"work": 2
+}
+]
+}
+}
+},
+{
+"seq": 16,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [
+{
+"new": 19,
+"old": 26,
+"task": "T10"
+},
+{
+"new": 18,
+"old": 15,
+"task": "T11"
+},
+{
+"new": 18,
+"old": 15,
+"task": "T12"
+},
+{
+"new": 24,
+"old": 21,
+"task": "T13"
+},
+{
+"new": 24,
+"old": 20,
+"task": "T14"
+},
+{
+"new": 29,
+"old": 26,
+"task": "T15"
+},
+{
+"new": 24,
+"old": 31,
+"task": "T17"
+},
+{
+"new": 23,
+"old": 20,
+"task": "T18"
+},
+{
+"new": 27,
+"old": 21,
+"task": "T19"
+},
+{
+"new": 29,
+"old": 26,
+"task": "T20"
+},
+{
+"new": 34,
+"old": 31,
+"task": "T21"
+},
+{
+"new": 30,
+"old": 31,
+"task": "T22"
+},
+{
+"new": 32,
+"old": 26,
+"task": "T23"
+},
+{
+"new": 35,
+"old": 31,
+"task": "T25"
+},
+{
+"new": 38,
+"old": 35,
+"task": "T26"
+},
+{
+"new": 40,
+"old": 37,
+"task": "T27"
+},
+{
+"new": 43,
+"old": 40,
+"task": "T28"
+},
+{
+"new": 47,
+"old": 44,
+"task": "T29"
+},
+{
+"new": 49,
+"old": 46,
+"task": "T30"
+}
+],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "ot_reseq_m",
+"label": "OT(2)+RESEQ-M",
+"mean_cost": 179.9475,
+"mean_makespan": 58.48,
+"overrun": 0.002381350267379571,
+"p_on_time": 0.71,
+"rollouts": 200,
+"tardiness": 1.41
+},
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 172.41,
+"mean_makespan": 60.96,
+"overrun": 0.0,
+"p_on_time": 0.545,
+"rollouts": 200,
+"tardiness": 2.245
+},
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 172.365,
+"mean_makespan": 61.115,
+"overrun": 0.0,
+"p_on_time": 0.51,
+"rollouts": 200,
+"tardiness": 2.385
+},
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 172.41,
+"mean_makespan": 61.28,
+"overrun": 0.0,
+"p_on_time": 0.51,
+"rollouts": 200,
+"tardiness": 2.425
+},
+{
+"kind": "descope",
+"label": "DESCOPE(23)",
+"mean_cost": 168.0,
+"mean_makespan": 60.95,
+"overrun": 0.0,
+"p_on_time": 0.505,
+"rollouts": 200,
+"tardiness": 2.215
+},
+{
+"kind": "descope",
+"label": "DESCOPE(22)",
+"mean_cost": 169.095,
+"mean_makespan": 61.1,
+"overrun": 0.0,
+"p_on_time": 0.505,
+"rollouts": 200,
+"tardiness": 2.345
+}
+],
+"rollouts": 200,
+"seed": 796311172
+},
+"day": 18,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.51,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 172.365,
+"overrun": 0.0,
+"p_on_time": 0.51,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 2.385,
+"utility": 0.51
+},
+{
+"capped": 0.51,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"10": 29,
+"11": 18,
+"12": 18,
+"13": 24,
+"14": 23,
+"15": 29,
+"17": 34,
+"18": 23,
+"19": 24,
+"20": 29,
+"21": 34,
+"22": 34,
+"23": 29,
+"25": 38,
+"26": 38,
+"27": 43,
+"28": 46,
+"29": 50,
+"30": 52,
+"31": 54,
+"32": 34
+}
+}
+]
+},
+"delay": 1,
+"deviation": 3.8421052631578947,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 172.41,
+"overrun": 0.0,
+"p_on_time": 0.51,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 2.425,
+"utility": 0.47157894736842104
+},
+{
+"capped": 0.545,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"10": 19,
+"11": 24,
+"12": 18,
+"13": 24,
+"14": 29,
+"15": 29,
+"17": 24,
+"18": 33,
+"19": 24,
+"20": 29,
+"21": 34,
+"22": 34,
+"23": 29,
+"25": 35,
+"26": 38,
+"27": 40,
+"28": 43,
+"29": 47,
+"30": 49,
+"31": 51,
+"32": 24
+}
+}
+]
+},
+"delay": 1,
+"deviation": 4.631578947368421,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 172.41,
+"overrun": 0.0,
+"p_on_time": 0.545,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 2.245,
+"utility": 0.49868421052631584
+},
+{
+"capped": 0.71,
+"decision": {
+"operations": [
+{
+"days": 10,
+"kind": "overtime",
+"role": 2,
+"workers": 1
+},
+{
+"kind": "reseq",
+"starts": {
+"10": 19,
+"11": 18,
+"12": 18,
+"13": 24,
+"14": 24,
+"15": 29,
+"17": 24,
+"18": 23,
+"19": 27,
+"20": 29,
+"21": 34,
+"22": 30,
+"23": 32,
+"25": 35,
+"26": 38,
+"27": 40,
+"28": 43,
+"29": 47,
+"30": 49,
+"31": 51,
+"32": 24
+}
+}
+]
+},
+"delay": 1,
+"deviation": 3.736842105263158,
+"dropped": false,
+"eliminated": null,
+"kind": "ot_reseq_m",
+"label": "OT(2)+RESEQ-M",
+"level": 2,
+"mean_cost": 179.9475,
+"overrun": 0.002381350267379571,
+"p_on_time": 0.71,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.41,
+"utility": 0.6702502286799887
+},
+{
+"capped": 0.505,
+"decision": {
+"operations": [
+{
+"activity": 23,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "descope",
+"label": "DESCOPE(23)",
+"level": 2,
+"mean_cost": 168.0,
+"overrun": 0.0,
+"p_on_time": 0.505,
+"rollouts": 200,
+"scope_loss": 0.5714285714285714,
+"substituted": 0,
+"tardiness": 2.215,
+"utility": 0.505
+},
+{
+"capped": 0.505,
+"decision": {
+"operations": [
+{
+"activity": 22,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "descope",
+"label": "DESCOPE(22)",
+"level": 2,
+"mean_cost": 169.095,
+"overrun": 0.0,
+"p_on_time": 0.505,
+"rollouts": 200,
+"scope_loss": 0.42857142857142855,
+"substituted": 0,
+"tardiness": 2.345,
+"utility": 0.505
+}
+],
+"chosen": "OT(2)+RESEQ-M",
+"cp_fallbacks": 0,
+"cp_solves": 3,
+"day": 18,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": "deferred",
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0,
+"deadline": 0.29000000000000004,
+"met": false,
+"p_on_time": 0.51,
+"rollouts": 200
+},
+"reason": "on_time",
+"rollouts": 1350,
+"rule": "lexicographic",
+"runner_up": "RESEQ-M",
+"tied": [
+"OT(2)+RESEQ-M"
+],
+"wall_time_s": 0.0
+},
+"seed": 1168573250,
+"urgency": 9.0
+}
+}
+},
+{
+"seq": 17,
+"type": "decision",
+"payload": {
+"applied": {
+"crews": {},
+"day": 18,
+"decision": {
+"operations": [
+{
+"days": 10,
+"kind": "overtime",
+"role": 2,
+"workers": 1
+},
+{
+"kind": "reseq",
+"starts": {
+"10": 19,
+"11": 18,
+"12": 18,
+"13": 24,
+"14": 24,
+"15": 29,
+"17": 24,
+"18": 23,
+"19": 27,
+"20": 29,
+"21": 34,
+"22": 30,
+"23": 32,
+"25": 35,
+"26": 38,
+"27": 40,
+"28": 43,
+"29": 47,
+"30": 49,
+"31": 51,
+"32": 24
+}
+}
+]
+},
+"handovers": [],
+"kind": "ot_reseq_m",
+"label": "OT(2)+RESEQ-M",
+"plan": {
+"N1": 24,
+"T10": 19,
+"T11": 18,
+"T12": 18,
+"T13": 24,
+"T14": 24,
+"T15": 29,
+"T17": 24,
+"T18": 23,
+"T19": 27,
+"T20": 29,
+"T21": 34,
+"T22": 30,
+"T23": 32,
+"T25": 35,
+"T26": 38,
+"T27": 40,
+"T28": 43,
+"T29": 47,
+"T30": 49
+},
+"removed": [],
+"sink_plan": 51,
+"temps": [
+{
+"hired": 18,
+"key": "temp:1",
+"name": "Temporary Programista backend 1",
+"role": 2,
+"until": 28
+}
+]
+},
+"discarded": null,
+"recommendation": 16,
+"verdict": "approve"
+}
+},
+{
+"seq": 18,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-10-05",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": "2026-10-02",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T8"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 28.0,
+"start": null,
+"status": "in_progress",
+"task": "T10"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 75.0,
+"start": null,
+"status": "in_progress",
+"task": "T11"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 50.0,
+"start": null,
+"status": "in_progress",
+"task": "T12"
+},
+{
+"crew": null,
+"finish": "2026-10-05",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T16"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-10-05",
+"day": 21,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P11"
+],
+"finish": 20,
+"start": 16,
+"status": "done",
+"task": "T8",
+"work": 4
+},
+{
+"crew": [
+"P5",
+"temp:1"
+],
+"finish": null,
+"start": 19,
+"status": "started",
+"task": "T10",
+"work": 3
+},
+{
+"crew": [
+"P4"
+],
+"finish": null,
+"start": 18,
+"status": "started",
+"task": "T11",
+"work": 4
+},
+{
+"crew": [
+"P6"
+],
+"finish": null,
+"start": 18,
+"status": "started",
+"task": "T12",
+"work": 3
+},
+{
+"crew": [
+"P7",
+"P8"
+],
+"finish": 21,
+"start": 17,
+"status": "done",
+"task": "T16",
+"work": 6
+}
+]
+}
+}
+},
+{
+"seq": 19,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 178.3625,
+"mean_makespan": 57.37,
+"overrun": 0.0,
+"p_on_time": 0.79,
+"rollouts": 200,
+"tardiness": 0.925
+}
+],
+"rollouts": 200,
+"seed": 36987569
+},
+"day": 21,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [],
+"chosen": "NOOP",
+"cp_fallbacks": 0,
+"cp_solves": 0,
+"day": 21,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": null,
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0,
+"deadline": 0.010000000000000009,
+"met": true,
+"p_on_time": 0.79,
+"rollouts": 200
+},
+"reason": "needs_met",
+"rollouts": 200,
+"rule": "lexicographic",
+"runner_up": null,
+"tied": [],
+"wall_time_s": 0.0
+},
+"seed": 214741588,
+"urgency": 8.606398547137225
+}
+}
+},
+{
+"seq": 20,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [
+{
+"first_day": "2026-10-09",
+"person": "P9",
+"return_date": null
+}
+],
+"date": "2026-10-08",
+"increases": [
+{
+"extra_days": 4.0,
+"factor": null,
+"task": "T10"
+}
+],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": null,
+"percent": 71.0,
+"start": null,
+"status": "in_progress",
+"task": "T10"
+},
+{
+"crew": null,
+"finish": "2026-10-06",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T11"
+},
+{
+"crew": null,
+"finish": "2026-10-08",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T12"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 25.0,
+"start": null,
+"status": "in_progress",
+"task": "T18"
+}
+]
+},
+"effects": {
+"absences": [
+{
+"back": null,
+"person": "P9",
+"start": 24
+}
+],
+"date": "2026-10-08",
+"day": 24,
+"inserted": [],
+"shocks": [
+{
+"day": 24,
+"factor": 3.6666666666666665,
+"task": "T10",
+"work": 7
+}
+],
+"tasks": [
+{
+"crew": [
+"P5",
+"temp:1"
+],
+"finish": null,
+"start": 19,
+"status": "started",
+"task": "T10",
+"work": 7
+},
+{
+"crew": [
+"P4"
+],
+"finish": 22,
+"start": 18,
+"status": "done",
+"task": "T11",
+"work": 5
+},
+{
+"crew": [
+"P6"
+],
+"finish": 24,
+"start": 18,
+"status": "done",
+"task": "T12",
+"work": 6
+},
+{
+"crew": [
+"P7"
+],
+"finish": null,
+"start": 23,
+"status": "started",
+"task": "T18",
+"work": 1
+}
+]
+}
+}
+},
+{
+"seq": 21,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [
+{
+"new": 30,
+"old": 24,
+"task": "T14"
+},
+{
+"new": 30,
+"old": 24,
+"task": "T17"
+},
+{
+"new": 24,
+"old": 27,
+"task": "T19"
+},
+{
+"new": 36,
+"old": 30,
+"task": "T22"
+},
+{
+"new": 33,
+"old": 32,
+"task": "T23"
+},
+{
+"new": 38,
+"old": 35,
+"task": "T25"
+},
+{
+"new": 41,
+"old": 38,
+"task": "T26"
+},
+{
+"new": 43,
+"old": 40,
+"task": "T27"
+},
+{
+"new": 46,
+"old": 43,
+"task": "T28"
+},
+{
+"new": 50,
+"old": 47,
+"task": "T29"
+},
+{
+"new": 52,
+"old": 49,
+"task": "T30"
+},
+{
+"new": 34,
+"old": 24,
+"task": "N1"
+}
+],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 191.275,
+"mean_makespan": 61.085,
+"overrun": 0.06548016934046343,
+"p_on_time": 0.545,
+"rollouts": 200,
+"tardiness": 2.275
+},
+{
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"mean_cost": 191.275,
+"mean_makespan": 61.12,
+"overrun": 0.06548016934046343,
+"p_on_time": 0.535,
+"rollouts": 200,
+"tardiness": 2.335
+},
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 191.09,
+"mean_makespan": 61.68,
+"overrun": 0.0644496434937611,
+"p_on_time": 0.46,
+"rollouts": 200,
+"tardiness": 2.66
+},
+{
+"kind": "descope",
+"label": "DESCOPE(22)",
+"mean_cost": 187.91,
+"mean_makespan": 61.775,
+"overrun": 0.04673573975044555,
+"p_on_time": 0.455,
+"rollouts": 200,
+"tardiness": 2.74
+},
+{
+"kind": "descope",
+"label": "DESCOPE(23)",
+"mean_cost": 186.77,
+"mean_makespan": 61.815,
+"overrun": 0.040385472370766486,
+"p_on_time": 0.455,
+"rollouts": 200,
+"tardiness": 2.765
+},
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 191.275,
+"mean_makespan": 62.58,
+"overrun": 0.06548016934046343,
+"p_on_time": 0.375,
+"rollouts": 200,
+"tardiness": 3.12
+}
+],
+"rollouts": 200,
+"seed": 357385389
+},
+"day": 24,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.46,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 191.09,
+"overrun": 0.0644496434937611,
+"p_on_time": 0.46,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 2.66,
+"utility": 0.39555035650623893
+},
+{
+"capped": 0.375,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"13": 24,
+"14": 29,
+"15": 34,
+"17": 30,
+"19": 30,
+"20": 34,
+"21": 39,
+"22": 35,
+"23": 35,
+"25": 39,
+"26": 43,
+"27": 44,
+"28": 48,
+"29": 52,
+"30": 54,
+"31": 56,
+"32": 30
+}
+}
+]
+},
+"delay": 1,
+"deviation": 4.4375,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 191.275,
+"overrun": 0.06548016934046343,
+"p_on_time": 0.375,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 3.12,
+"utility": 0.2651448306595366
+},
+{
+"capped": 0.545,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"13": 24,
+"14": 30,
+"15": 29,
+"17": 30,
+"19": 24,
+"20": 29,
+"21": 34,
+"22": 36,
+"23": 33,
+"25": 38,
+"26": 41,
+"27": 43,
+"28": 46,
+"29": 50,
+"30": 52,
+"31": 54,
+"32": 34
+}
+}
+]
+},
+"delay": 1,
+"deviation": 3.125,
+"dropped": false,
+"eliminated": null,
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 191.275,
+"overrun": 0.06548016934046343,
+"p_on_time": 0.545,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 2.275,
+"utility": 0.44826983065953663
+},
+{
+"capped": 0.535,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"13": 24,
+"14": 30,
+"15": 29,
+"17": 30,
+"19": 25,
+"20": 29,
+"21": 34,
+"22": 36,
+"23": 33,
+"25": 38,
+"26": 38,
+"27": 43,
+"28": 46,
+"29": 50,
+"30": 52,
+"31": 56,
+"32": 34
+}
+}
+]
+},
+"delay": 1,
+"deviation": 2.875,
+"dropped": false,
+"eliminated": null,
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"level": 1,
+"mean_cost": 191.275,
+"overrun": 0.06548016934046343,
+"p_on_time": 0.535,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 2.335,
+"utility": 0.4407698306595366
+},
+{
+"capped": 0.455,
+"decision": {
+"operations": [
+{
+"activity": 23,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "descope",
+"label": "DESCOPE(23)",
+"level": 2,
+"mean_cost": 186.77,
+"overrun": 0.040385472370766486,
+"p_on_time": 0.455,
+"rollouts": 200,
+"scope_loss": 0.5714285714285714,
+"substituted": 0,
+"tardiness": 2.765,
+"utility": 0.4146145276292335
+},
+{
+"capped": 0.455,
+"decision": {
+"operations": [
+{
+"activity": 22,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "descope",
+"label": "DESCOPE(22)",
+"level": 2,
+"mean_cost": 187.91,
+"overrun": 0.04673573975044555,
+"p_on_time": 0.455,
+"rollouts": 200,
+"scope_loss": 0.42857142857142855,
+"substituted": 0,
+"tardiness": 2.74,
+"utility": 0.4082642602495545
+}
+],
+"chosen": "RESEQ-M",
+"cp_fallbacks": 0,
+"cp_solves": 2,
+"day": 24,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": "deferred",
+"generation_s": 0.0,
+"needs": {
+"budget": 0.0644496434937611,
+"deadline": 0.34,
+"met": false,
+"p_on_time": 0.46,
+"rollouts": 200
+},
+"reason": "order",
+"rollouts": 1350,
+"rule": "lexicographic",
+"runner_up": "RESEQ-S",
+"tied": [
+"RESEQ-M",
+"RESEQ-S"
+],
+"wall_time_s": 0.0
+},
+"seed": 57861835,
+"urgency": 9.0
+}
+}
+},
+{
+"seq": 22,
+"type": "decision",
+"payload": {
+"applied": null,
+"discarded": null,
+"recommendation": 21,
+"verdict": "reject"
+}
+},
+{
+"seq": 23,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-10-13",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": null,
+"percent": 72.0,
+"start": null,
+"status": "in_progress",
+"task": "T10"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 75.0,
+"start": null,
+"status": "in_progress",
+"task": "T13"
+},
+{
+"crew": null,
+"finish": "2026-10-13",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T18"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-10-13",
+"day": 27,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P5",
+"temp:1"
+],
+"finish": null,
+"start": 19,
+"status": "started",
+"task": "T10",
+"work": 26
+},
+{
+"crew": [
+"P4"
+],
+"finish": null,
+"start": 24,
+"status": "started",
+"task": "T13",
+"work": 4
+},
+{
+"crew": [
+"P7"
+],
+"finish": 27,
+"start": 23,
+"status": "done",
+"task": "T18",
+"work": 4
+}
+]
+}
+}
+},
+{
+"seq": 24,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [
+{
+"new": 28,
+"old": 24,
+"task": "T14"
+},
+{
+"new": 28,
+"old": 29,
+"task": "T15"
+},
+{
+"new": 28,
+"old": 24,
+"task": "T17"
+},
+{
+"new": 31,
+"old": 27,
+"task": "T19"
+},
+{
+"new": 28,
+"old": 29,
+"task": "T20"
+},
+{
+"new": 33,
+"old": 34,
+"task": "T21"
+},
+{
+"new": 34,
+"old": 30,
+"task": "T22"
+},
+{
+"new": 36,
+"old": 32,
+"task": "T23"
+},
+{
+"new": 37,
+"old": 35,
+"task": "T25"
+},
+{
+"new": 40,
+"old": 38,
+"task": "T26"
+},
+{
+"new": 42,
+"old": 40,
+"task": "T27"
+},
+{
+"new": 45,
+"old": 43,
+"task": "T28"
+},
+{
+"new": 49,
+"old": 47,
+"task": "T29"
+},
+{
+"new": 51,
+"old": 49,
+"task": "T30"
+},
+{
+"new": 33,
+"old": 24,
+"task": "N1"
+}
+],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 194.4775,
+"mean_makespan": 59.01,
+"overrun": 0.0833194073083778,
+"p_on_time": 0.725,
+"rollouts": 200,
+"tardiness": 1.195
+},
+{
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"mean_cost": 194.6225,
+"mean_makespan": 59.43,
+"overrun": 0.08412711675579318,
+"p_on_time": 0.665,
+"rollouts": 200,
+"tardiness": 1.38
+},
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 194.6875,
+"mean_makespan": 60.96,
+"overrun": 0.08448919340463452,
+"p_on_time": 0.565,
+"rollouts": 200,
+"tardiness": 1.93
+},
+{
+"kind": "descope",
+"label": "DESCOPE(22)",
+"mean_cost": 191.3875,
+"mean_makespan": 61.035,
+"overrun": 0.06610684046345798,
+"p_on_time": 0.56,
+"rollouts": 200,
+"tardiness": 2.01
+},
+{
+"kind": "descope",
+"label": "DESCOPE(23)",
+"mean_cost": 190.1775,
+"mean_makespan": 61.065,
+"overrun": 0.05936664438502673,
+"p_on_time": 0.555,
+"rollouts": 200,
+"tardiness": 2.035
+},
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 194.6975,
+"mean_makespan": 61.095,
+"overrun": 0.08454489750445622,
+"p_on_time": 0.535,
+"rollouts": 200,
+"tardiness": 1.99
+}
+],
+"rollouts": 200,
+"seed": 1327143552
+},
+"day": 27,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.565,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 194.6875,
+"overrun": 0.08448919340463452,
+"p_on_time": 0.565,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.93,
+"utility": 0.48051080659536544
+},
+{
+"capped": 0.535,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"14": 28,
+"15": 32,
+"17": 28,
+"19": 28,
+"20": 32,
+"21": 37,
+"22": 34,
+"23": 34,
+"25": 37,
+"26": 41,
+"27": 42,
+"28": 46,
+"29": 50,
+"30": 52,
+"31": 54,
+"32": 28
+}
+}
+]
+},
+"delay": 1,
+"deviation": 2.933333333333333,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 194.6975,
+"overrun": 0.08454489750445622,
+"p_on_time": 0.535,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.99,
+"utility": 0.4211217691622105
+},
+{
+"capped": 0.725,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"14": 28,
+"15": 28,
+"17": 28,
+"19": 31,
+"20": 28,
+"21": 33,
+"22": 34,
+"23": 36,
+"25": 37,
+"26": 40,
+"27": 42,
+"28": 45,
+"29": 49,
+"30": 51,
+"31": 53,
+"32": 33
+}
+}
+]
+},
+"delay": 1,
+"deviation": 2.933333333333333,
+"dropped": false,
+"eliminated": null,
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 194.4775,
+"overrun": 0.0833194073083778,
+"p_on_time": 0.725,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.195,
+"utility": 0.6123472593582888
+},
+{
+"capped": 0.665,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"14": 28,
+"15": 28,
+"17": 28,
+"19": 27,
+"20": 31,
+"21": 35,
+"22": 34,
+"23": 32,
+"25": 37,
+"26": 39,
+"27": 42,
+"28": 45,
+"29": 49,
+"30": 51,
+"31": 54,
+"32": 33
+}
+}
+]
+},
+"delay": 1,
+"deviation": 2.4,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"level": 1,
+"mean_cost": 194.6225,
+"overrun": 0.08412711675579318,
+"p_on_time": 0.665,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.38,
+"utility": 0.5568728832442068
+},
+{
+"capped": 0.555,
+"decision": {
+"operations": [
+{
+"activity": 23,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "descope",
+"label": "DESCOPE(23)",
+"level": 2,
+"mean_cost": 190.1775,
+"overrun": 0.05936664438502673,
+"p_on_time": 0.555,
+"rollouts": 200,
+"scope_loss": 0.5714285714285714,
+"substituted": 0,
+"tardiness": 2.035,
+"utility": 0.49563335561497335
+},
+{
+"capped": 0.56,
+"decision": {
+"operations": [
+{
+"activity": 22,
+"kind": "descope"
+}
+]
+},
+"delay": 1,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "descope",
+"label": "DESCOPE(22)",
+"level": 2,
+"mean_cost": 191.3875,
+"overrun": 0.06610684046345798,
+"p_on_time": 0.56,
+"rollouts": 200,
+"scope_loss": 0.42857142857142855,
+"substituted": 0,
+"tardiness": 2.01,
+"utility": 0.49389315953654206
+}
+],
+"chosen": "RESEQ-M",
+"cp_fallbacks": 0,
+"cp_solves": 2,
+"day": 27,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": "deferred",
+"generation_s": 0.0,
+"needs": {
+"budget": 0.08448919340463452,
+"deadline": 0.2350000000000001,
+"met": false,
+"p_on_time": 0.565,
+"rollouts": 200
+},
+"reason": "on_time",
+"rollouts": 1350,
+"rule": "lexicographic",
+"runner_up": "RESEQ-S",
+"tied": [
+"RESEQ-M"
+],
+"wall_time_s": 0.0
+},
+"seed": 1071053288,
+"urgency": 9.486186311259198
+}
+}
+},
+{
+"seq": 25,
+"type": "decision",
+"payload": {
+"applied": null,
+"discarded": null,
+"recommendation": 24,
+"verdict": "later"
+}
+},
+{
+"seq": 26,
+"type": "checkin",
+"payload": {
+"checkin": {
+"absences": [],
+"date": "2026-10-16",
+"increases": [],
+"new_tasks": [],
+"tasks": [
+{
+"crew": null,
+"finish": "2026-10-16",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T10"
+},
+{
+"crew": null,
+"finish": "2026-10-14",
+"percent": null,
+"start": null,
+"status": "done",
+"task": "T13"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 25.0,
+"start": "2026-10-15",
+"status": "in_progress",
+"task": "T14"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 60.0,
+"start": null,
+"status": "in_progress",
+"task": "T19"
+},
+{
+"crew": null,
+"finish": null,
+"percent": 25.0,
+"start": null,
+"status": "in_progress",
+"task": "T20"
+}
+]
+},
+"effects": {
+"absences": [],
+"date": "2026-10-16",
+"day": 30,
+"inserted": [],
+"shocks": [],
+"tasks": [
+{
+"crew": [
+"P5",
+"temp:1"
+],
+"finish": 30,
+"start": 19,
+"status": "done",
+"task": "T10",
+"work": 37
+},
+{
+"crew": [
+"P4"
+],
+"finish": 28,
+"start": 24,
+"status": "done",
+"task": "T13",
+"work": 5
+},
+{
+"crew": [
+"P4",
+"P6"
+],
+"finish": null,
+"start": 28,
+"status": "started",
+"task": "T14",
+"work": 3
+},
+{
+"crew": [
+"P7"
+],
+"finish": null,
+"start": 27,
+"status": "started",
+"task": "T19",
+"work": 3
+},
+{
+"crew": [
+"P8"
+],
+"finish": null,
+"start": 29,
+"status": "started",
+"task": "T20",
+"work": 1
+}
+]
+}
+}
+},
+{
+"seq": 27,
+"type": "recommendation",
+"payload": {
+"applied": null,
+"recommendation": {
+"changes": [
+{
+"new": 30,
+"old": 29,
+"task": "T15"
+},
+{
+"new": 32,
+"old": 24,
+"task": "T17"
+},
+{
+"new": 35,
+"old": 34,
+"task": "T21"
+},
+{
+"new": 34,
+"old": 30,
+"task": "T22"
+},
+{
+"new": 33,
+"old": 32,
+"task": "T23"
+},
+{
+"new": 36,
+"old": 35,
+"task": "T25"
+},
+{
+"new": 39,
+"old": 38,
+"task": "T26"
+},
+{
+"new": 41,
+"old": 40,
+"task": "T27"
+},
+{
+"new": 44,
+"old": 43,
+"task": "T28"
+},
+{
+"new": 48,
+"old": 47,
+"task": "T29"
+},
+{
+"new": 50,
+"old": 49,
+"task": "T30"
+},
+{
+"new": 30,
+"old": 24,
+"task": "N1"
+}
+],
+"comparison": {
+"decides": true,
+"impacts": [
+{
+"kind": "ot_reseq_m",
+"label": "OT(2)+RESEQ-M",
+"mean_cost": 203.405,
+"mean_makespan": 57.595,
+"overrun": 0.13304924242424238,
+"p_on_time": 0.825,
+"rollouts": 200,
+"tardiness": 0.675
+},
+{
+"kind": "noop",
+"label": "NOOP",
+"mean_cost": 194.255,
+"mean_makespan": 60.535,
+"overrun": 0.08207999108734394,
+"p_on_time": 0.57,
+"rollouts": 200,
+"tardiness": 1.555
+},
+{
+"kind": "shift",
+"label": "SHIFT",
+"mean_cost": 194.255,
+"mean_makespan": 60.695,
+"overrun": 0.08207999108734394,
+"p_on_time": 0.555,
+"rollouts": 200,
+"tardiness": 1.605
+},
+{
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"mean_cost": 194.26,
+"mean_makespan": 60.7,
+"overrun": 0.08210784313725479,
+"p_on_time": 0.555,
+"rollouts": 200,
+"tardiness": 1.605
+},
+{
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"mean_cost": 194.255,
+"mean_makespan": 60.68,
+"overrun": 0.08207999108734394,
+"p_on_time": 0.555,
+"rollouts": 200,
+"tardiness": 1.605
+}
+],
+"rollouts": 200,
+"seed": 1642033754
+},
+"day": 30,
+"impacts": [],
+"record": {
+"approval_day": null,
+"candidates": [
+{
+"capped": 0.57,
+"decision": {
+"operations": []
+},
+"delay": 0,
+"deviation": 0.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "noop",
+"label": "NOOP",
+"level": 0,
+"mean_cost": 194.255,
+"overrun": 0.08207999108734394,
+"p_on_time": 0.57,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.555,
+"utility": 0.487920008912656
+},
+{
+"capped": 0.555,
+"decision": {
+"operations": [
+{
+"kind": "shift",
+"starts": {
+"15": 35,
+"17": 32,
+"21": 40,
+"22": 35,
+"23": 35,
+"25": 40,
+"26": 44,
+"27": 45,
+"28": 49,
+"29": 53,
+"30": 55,
+"31": 57,
+"32": 32
+}
+}
+]
+},
+"delay": 1,
+"deviation": 5.833333333333333,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "shift",
+"label": "SHIFT",
+"level": 0,
+"mean_cost": 194.255,
+"overrun": 0.08207999108734394,
+"p_on_time": 0.555,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.605,
+"utility": 0.41458667557932277
+},
+{
+"capped": 0.555,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"15": 30,
+"17": 32,
+"21": 35,
+"22": 35,
+"23": 33,
+"25": 39,
+"26": 42,
+"27": 44,
+"28": 47,
+"29": 51,
+"30": 53,
+"31": 55,
+"32": 35
+}
+}
+]
+},
+"delay": 1,
+"deviation": 4.25,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "reseq_m",
+"label": "RESEQ-M",
+"level": 1,
+"mean_cost": 194.26,
+"overrun": 0.08210784313725479,
+"p_on_time": 0.555,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.605,
+"utility": 0.4303921568627453
+},
+{
+"capped": 0.555,
+"decision": {
+"operations": [
+{
+"kind": "reseq",
+"starts": {
+"15": 30,
+"17": 32,
+"21": 35,
+"22": 35,
+"23": 33,
+"25": 39,
+"26": 39,
+"27": 44,
+"28": 47,
+"29": 51,
+"30": 53,
+"31": 57,
+"32": 35
+}
+}
+]
+},
+"delay": 1,
+"deviation": 4.0,
+"dropped": false,
+"eliminated": "on_time",
+"kind": "reseq_s",
+"label": "RESEQ-S",
+"level": 1,
+"mean_cost": 194.255,
+"overrun": 0.08207999108734394,
+"p_on_time": 0.555,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 1.605,
+"utility": 0.43292000891265614
+},
+{
+"capped": 0.8,
+"decision": {
+"operations": [
+{
+"days": 10,
+"kind": "overtime",
+"role": 2,
+"workers": 1
+},
+{
+"kind": "reseq",
+"starts": {
+"15": 30,
+"17": 32,
+"21": 35,
+"22": 34,
+"23": 33,
+"25": 36,
+"26": 39,
+"27": 41,
+"28": 44,
+"29": 48,
+"30": 50,
+"31": 52,
+"32": 30
+}
+}
+]
+},
+"delay": 1,
+"deviation": 2.25,
+"dropped": false,
+"eliminated": null,
+"kind": "ot_reseq_m",
+"label": "OT(2)+RESEQ-M",
+"level": 2,
+"mean_cost": 203.405,
+"overrun": 0.13304924242424238,
+"p_on_time": 0.825,
+"rollouts": 200,
+"scope_loss": 0.0,
+"substituted": 0,
+"tardiness": 0.675,
+"utility": 0.6694507575757576
+}
+],
+"chosen": "OT(2)+RESEQ-M",
+"cp_fallbacks": 0,
+"cp_solves": 3,
+"day": 30,
+"decision": {
+"operations": []
+},
+"deliberated": true,
+"discarded": null,
+"evaluation_s": 0.0,
+"gate": "deferred",
+"generation_s": 0.0,
+"needs": {
+"budget": 0.08207999108734394,
+"deadline": 0.2300000000000001,
+"met": false,
+"p_on_time": 0.57,
+"rollouts": 200
+},
+"reason": "on_time",
+"rollouts": 1125,
+"rule": "lexicographic",
+"runner_up": "NOOP",
+"tied": [
+"OT(2)+RESEQ-M"
+],
+"wall_time_s": 0.0
+},
+"seed": 369119845,
+"urgency": 8.0
+}
+}
+},
+{
+"seq": 28,
+"type": "decision",
+"payload": {
+"applied": {
+"crews": {},
+"day": 30,
+"decision": {
+"operations": [
+{
+"days": 10,
+"kind": "overtime",
+"role": 2,
+"workers": 1
+},
+{
+"kind": "reseq",
+"starts": {
+"15": 30,
+"17": 32,
+"21": 35,
+"22": 34,
+"23": 33,
+"25": 36,
+"26": 39,
+"27": 41,
+"28": 44,
+"29": 48,
+"30": 50,
+"31": 52,
+"32": 30
+}
+}
+]
+},
+"handovers": [],
+"kind": "ot_reseq_m",
+"label": "OT(2)+RESEQ-M",
+"plan": {
+"N1": 30,
+"T15": 30,
+"T17": 32,
+"T21": 35,
+"T22": 34,
+"T23": 33,
+"T25": 36,
+"T26": 39,
+"T27": 41,
+"T28": 44,
+"T29": 48,
+"T30": 50
+},
+"removed": [],
+"sink_plan": 52,
+"temps": [
+{
+"hired": 30,
+"key": "temp:2",
+"name": "Temporary Programista backend 2",
+"role": 2,
+"until": 40
+}
+]
+},
+"discarded": null,
+"recommendation": 27,
+"verdict": "approve"
+}
+}
+]

@@ -1,5 +1,5 @@
-"""The computations of a live project (spec sections 11.3-11.5): the baseline plan, the forecast
-with the tasks that threaten the deadline, the recommendation (a deliberation whose decision,
+"""The computations of a live project (spec sections 11.3-11.5): the baseline plan, the forecast,
+the tasks that threaten the deadline, the recommendation (a deliberation whose decision,
 display and explanation come from one comparison on the forecast's sampled worlds, `AppSentinel`)
 and the approval of a recommended action. All are deterministic for the project's seed; none is
 called inside a rollout.
@@ -8,7 +8,7 @@ called inside a rollout.
 import math
 import time
 from bisect import bisect_left, bisect_right
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from fractions import Fraction
 from typing import Literal
 
@@ -50,6 +50,7 @@ from sentinel.simulation.state import EngineState, Observation, state_from_obser
 T_CP = 0.1  # deterministic seconds of CP-SAT per plan (spec section 8)
 CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
 FORECAST_ROLLOUTS = 200  # N of the forecast and of the comparison shown (spec 5.2, 11.4, 11.5)
+THREAT_ROLLOUTS = 1000  # M of the duration sensitivity: the first N are the forecast's (11.4)
 THREAT_LIMIT = 3  # tasks that threaten the deadline, at most (spec section 11.4)
 THREAT_SENSITIVITY = Fraction(1, 5)  # rank correlation with the finish day, at least (11.4)
 SHOWN = 5  # alternatives shown with a recommendation besides its action, at most (11.5)
@@ -108,9 +109,8 @@ class Driver(_Frozen):
 
 class ForecastResult(_Frozen):
     """The forecast of day `day` (spec section 11.4): P(C <= D) (None without a deadline), the
-    10/50/90 % quantiles and the mean of the makespan C, the tasks that threaten the deadline,
-    the number of `late` rollouts, and for the budget outlook the mean total cost of the rollouts
-    and the share within the budget B."""
+    10/50/90 % quantiles and the mean of the makespan C, the number of `late` rollouts, and for
+    the budget outlook the mean total cost of the rollouts and the share within the budget B."""
 
     day: int
     seed: int
@@ -119,31 +119,38 @@ class ForecastResult(_Frozen):
     quantiles: tuple[int, int, int]
     mean: float
     truncated: int
-    drivers: tuple[Driver, ...]
     late: int = 0
     mean_cost: float = 0.0
     p_within_budget: float | None = None
     wall_time_s: float = Field(default=0.0, exclude=True)
 
 
+class ThreatList(_Frozen):
+    """The tasks that threaten the deadline on day `day` (spec section 11.4): those of the
+    duration sensitivity over `rollouts` futures, the first of them the forecast's (same `seed`)."""
+
+    day: int
+    seed: int
+    rollouts: int
+    drivers: tuple[Driver, ...]
+    wall_time_s: float = Field(default=0.0, exclude=True)
+
+
+def forecast_seed(project: LiveProject, day: int) -> int:
+    """The seed of the forecast of a day and of its threat list (spec section 11.4)."""
+    return derive_seed(project.definition.settings.seed, "forecast", str(day))
+
+
 def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> ForecastResult:
     """NoReaction rollouts from the current observation (spec sections 5.1 and 11.4), exactly
     those of `sentinel.forecasting.forecast.forecast` with the seed derive_seed(project seed,
-    "forecast", t), keeping each rollout's final state for the realised durations: the tasks that
-    threaten the deadline are the unfinished ones `rank_threats` keeps, none without a late
-    rollout."""
+    "forecast", t), keeping each rollout's final state for the costs."""
     began = time.perf_counter()
     observation = project.observation()
-    seed = derive_seed(project.definition.settings.seed, "forecast", str(observation.day))
-    makespans, states = forecast_rollouts(observation, rollouts, seed)
+    seed = forecast_seed(project, observation.day)
+    states = list(forecast_rollouts(observation, rollouts, seed))
+    makespans = [makespan_of(state) for state in states]
     deadline, budget = observation.deadline, observation.budget
-    ids = project.activity_ids()
-    nodes = project.nodes()
-    candidates = {ids[key]: key for key in threat_candidates(project, nodes)}
-    late = 0 if deadline is None else sum(c > deadline for c in makespans)
-    realised = {j: [realised_days(state, j) for state in states] for j in candidates}
-    durations = {j: nodes[key].duration for j, key in candidates.items()}
-    ranked = rank_threats(realised, makespans, durations) if late else []
     costs = [state.cost for state in states]
     q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
     return ForecastResult(
@@ -154,10 +161,39 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
         quantiles=(q10, q50, q90),
         mean=float(np.mean(makespans)),
         truncated=sum(state.start[state.sink] is None for state in states),
-        drivers=tuple(Driver(task=candidates[j], sensitivity=rho) for j, rho in ranked),
-        late=late,
+        late=0 if deadline is None else sum(c > deadline for c in makespans),
         mean_cost=float(np.mean(costs)),
         p_within_budget=None if budget is None else sum(c <= budget for c in costs) / rollouts,
+        wall_time_s=time.perf_counter() - began,
+    )
+
+
+def threats(
+    project: LiveProject, *, rollouts: int = THREAT_ROLLOUTS, seed: int | None = None
+) -> ThreatList:
+    """The tasks that threaten the deadline (spec section 11.4): `rank_threats` on the unfinished
+    tasks over `rollouts` futures from the current observation, the forecast's seed (unless another
+    is given, to study the list) and layout, so its worlds come first. Long enough for a background
+    job; a final state is kept only for as long as its rollout's figures are read."""
+    began = time.perf_counter()
+    observation = project.observation()
+    seed = forecast_seed(project, observation.day) if seed is None else seed
+    ids = project.activity_ids()
+    nodes = project.nodes()
+    candidates = {ids[key]: key for key in threat_candidates(project, nodes)}
+    realised: dict[int, list[float]] = {j: [] for j in candidates}
+    makespans: list[int] = []
+    for state in forecast_rollouts(observation, rollouts, seed):
+        makespans.append(makespan_of(state))
+        for j, days in realised.items():
+            days.append(realised_days(state, j))
+    durations = {j: nodes[key].duration for j, key in candidates.items()}
+    ranked = rank_threats(realised, makespans, durations)
+    return ThreatList(
+        day=observation.day,
+        seed=seed,
+        rollouts=rollouts,
+        drivers=tuple(Driver(task=candidates[j], sensitivity=rho) for j, rho in ranked),
         wall_time_s=time.perf_counter() - began,
     )
 
@@ -209,15 +245,12 @@ def threat_candidates(project: LiveProject, nodes: Mapping[str, Node]) -> list[s
     return [key for key in nodes if key not in closed]
 
 
-def forecast_rollouts(
-    observation: Observation, rollouts: int, seed: int
-) -> tuple[list[int], list[EngineState]]:
-    """The makespans and final states of the forecaster's rollouts (spec 5.1; ADR-0009)."""
+def forecast_rollouts(observation: Observation, rollouts: int, seed: int) -> Iterator[EngineState]:
+    """The final states of the forecaster's rollouts, one at a time (spec 5.1; ADR-0009): rollout
+    i has the same worlds however many there are."""
     belief = Belief(observation)
     plan = Schedule(starts=observation.plan)
     params = observation.disruptions
-    makespans: list[int] = []
-    states: list[EngineState] = []
     for i in range(rollouts):
         root = np.random.SeedSequence(derive_seed(seed, "rollout", str(i)))
         belief_seq, future_seq = root.spawn(2)
@@ -225,10 +258,13 @@ def forecast_rollouts(
         state = state_from_observation(observation, world, plan=plan.starts)
         streams = rollout_streams(observation, world, params, future_seq)
         Run(state, streams, NoReaction(), review_period=REVIEW_PERIOD, record_events=False).resume()
-        finish = state.start[state.sink]
-        makespans.append(state.max_days if finish is None else finish)
-        states.append(state)
-    return makespans, states
+        yield state
+
+
+def makespan_of(state: EngineState) -> int:
+    """The makespan C of a rollout's final state; one cut at the limit counts with it (3.1 f)."""
+    finish = state.start[state.sink]
+    return state.max_days if finish is None else finish
 
 
 # --------------------------------------------------------------------------- recommendations

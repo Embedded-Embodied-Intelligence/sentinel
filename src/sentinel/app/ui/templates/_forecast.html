@@ -59,27 +59,7 @@
   </dd></div>
 </dl>
 </div>
-<div id="drivers" hx-swap-oob="true">
-  {% if f.p_on_time is none %}
-  <p class="muted small">{{ t("overview.threats_no_deadline") }}</p>
-  {% elif f.late == 0 %}
-  <p class="none-line">{{ icon("check", 16) }}{{ t("overview.no_late") }}</p>
-  {% elif threats %}
-  <ol class="threats">
-    {% for threat in threats %}
-    <li><span class="threat-mark">{{ icon("alert", 16) }}</span><span>{{ threat.text }}</span><span class="share-bar" aria-hidden="true"><span style="width: {{ threat.percent }}%"></span></span></li>
-    {% endfor %}
-  </ol>
-  {% else %}<p class="muted small">{{ t("overview.spread") }}</p>{% endif %}
-</div>
-<div id="drivers-how" hx-swap-oob="true">
-  {% if threats %}
-  <details class="details section-sub">
-    <summary>{{ t("overview.drivers_how") }}</summary>
-    <div class="details-body"><p>{{ t("overview.drivers_note") }}</p></div>
-  </details>
-  {% endif %}
-</div>
+{% with id=view.id %}{% include "_threats.html" %}{% endwith %}
 <div id="gantt-area" hx-swap-oob="true">{{ chart | safe }}</div>
 {% with id=view.id, level=nav_level, oob=true %}{% include "_nav_status.html" %}{% endwith %}
 {% if toast %}<span id="toast-text" hx-swap-oob="true">{{ toast }}</span>{% endif %}

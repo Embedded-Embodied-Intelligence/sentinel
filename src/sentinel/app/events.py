@@ -132,14 +132,16 @@ class RecommendationEntry:
 @dataclass
 class LiveState:
     """A live project rebuilt from its log: the project, its recommendations, how it was
-    created, the sequence number of its last event and of its last event that changed the
-    project (every event but an explanation)."""
+    created, the sequence number of its last event, of its last event that changed the project
+    (every event but an explanation) and of its last event that can change a forecast (without a
+    recommendation or a decision that applied nothing either)."""
 
     project: LiveProject
     source: Source
     seq: int
     recommendations: list[RecommendationEntry] = field(default_factory=list)
     last_change: int = 0
+    last_forecast_change: int = 0
 
     def recommendation(self, seq: int) -> RecommendationEntry | None:
         return next((r for r in self.recommendations if r.seq == seq), None)
@@ -178,7 +180,7 @@ def replay(rows: Sequence[EventRow]) -> LiveState:
         raise ValueError("a live project's log starts with a 'created' event")
     first = Created.model_validate(rows[0].payload)
     state = LiveState(LiveProject(first.definition), first.source, rows[0].seq)
-    state.last_change = rows[0].seq
+    state.last_change = state.last_forecast_change = rows[0].seq
     for row in rows[1:]:
         apply(state, row.seq, parse(row))
     return state
@@ -238,6 +240,8 @@ def apply(state: LiveState, seq: int, event: _Event) -> None:
         case _:
             raise ValueError(f"unexpected event {type(event).__name__} in a live project")
     state.seq = state.last_change = seq
+    if not isinstance(event, Recommended | Decided) or event.applied is not None:
+        state.last_forecast_change = seq
 
 
 def _supersede(state: LiveState) -> None:

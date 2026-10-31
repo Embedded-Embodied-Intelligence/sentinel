@@ -63,6 +63,7 @@ from sentinel.app.store import (
 )
 from sentinel.app.views import (
     ForecastSummary,
+    ForecastView,
     IssueView,
     ProjectSummary,
     ProjectView,
@@ -77,7 +78,8 @@ from sentinel.simulation.state import Observation
 from sentinel.wbs.extract import Extraction
 
 SIMULATIONS_KEPT = 8  # simulator projects kept in memory; others are re-simulated
-FORECASTS_KEPT = 128  # forecasts kept in memory, by project and last change
+FORECASTS_KEPT = 128  # forecasts and threat lists kept in memory, by project and last change
+THREATS_JOB = "threats"  # the job of a threat list: the pages' own, outside the demo's job limit
 
 
 class ErrorView(BaseModel):
@@ -193,6 +195,7 @@ class Services:
         self._live: OrderedDict[str, tuple[int, LiveState]] = OrderedDict()
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
         self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
+        self._threats: OrderedDict[tuple[str, int], planning.ThreatList] = OrderedDict()
         # set by the web layer (demo): seeds a sandbox with the showcase in a language
         self.showcase: Callable[[str, Language], None] | None = None
 
@@ -286,7 +289,8 @@ class Services:
         language: Language,
     ) -> JobView:
         limit = self.limits.concurrent_jobs
-        if self.config.demo and limit is not None and self.store.active_jobs(session) >= limit:
+        active = self.store.active_jobs(session, besides=THREATS_JOB)
+        if self.config.demo and limit is not None and active >= limit:
             raise AppError("limit_jobs", "limit")
         return job_view(self.jobs.submit(session, project, kind, work), language)
 
@@ -400,9 +404,29 @@ class Services:
             _, current = self._state(session, project_id)
             progress(0.05, "simulating")
             result = planning.forecast(current.project)
-            return forecast_view(current.project, result).model_dump(mode="json")
+            threats = self._threat_list(project_id, current) if result.late else None
+            return forecast_view(current.project, result, threats).model_dump(mode="json")
 
         return self._submit(session, project_id, "forecast", work, language)
+
+    def threats_job(self, session: str, project_id: str, language: Language) -> JobView:
+        """The background job of the project's threat list (spec section 11.4): the one queued or
+        running, else a new one on the state it finds when it starts. It needs no lock and shows
+        nothing but the list, so it does not count towards the demo's limit on a session's jobs."""
+        for job in self.store.project_jobs(session, project_id):
+            if job.kind == THREATS_JOB:
+                return job_view(job, language)
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            _, current = self._state(session, project_id)
+            if not _forecastable(current.project):
+                return {}
+            progress(0.05, "simulating")
+            if not self._forecast(project_id, current).late:
+                return {}
+            return self._threat_list(project_id, current).model_dump(mode="json")
+
+        return job_view(self.jobs.submit(session, project_id, THREATS_JOB, work), language)
 
     def checkin(
         self, session: str, project_id: str, checkin: CheckIn, language: Language
@@ -421,6 +445,8 @@ class Services:
             except LiveError as exc:
                 raise AppError.of(exc) from exc
             self._append(session, row, "checkin", CheckinDone(checkin=checkin, effects=effects))
+        if not self.jobs.inline:  # inline, a page that needs the list calculates it
+            self.threats_job(session, project_id, language)  # ahead of the longer recommendation
         job = None
         _, state = self._state(session, project_id)
         if state.project.definition.deadline is not None and not state.project.finished:
@@ -537,17 +563,32 @@ class Services:
             self._append(session, row, "undo", event)
         return self.live(session, project_id, language)
 
+    def forecast_now(self, session: str, project_id: str) -> ForecastView | None:
+        """The forecast of the project now with its threat list if that is known (spec section
+        11.4), None for a project without a valid plan or a finished one."""
+        _, state = self._state(session, project_id)
+        if not _forecastable(state.project):
+            return None
+        return forecast_view(
+            state.project, self._forecast(project_id, state), self._known_threats(project_id, state)
+        )
+
     def forecast_summary(
-        self, session: str, project_id: str, language: Language
+        self, session: str, project_id: str, language: Language, *, with_threats: bool = False
     ) -> ForecastSummary | None:
         """The forecast of the project now (spec section 11.4) and the chance of meeting the
         deadline before its latest check-in (the trend), None for a project without a valid
         plan or a finished one. Computed in the request (0.2-0.5 s) and cached by the project's
-        last change, since a forecast is deterministic for its state."""
+        last change, since a forecast is deterministic for its state. The threat list comes from
+        its job (`threats_job`), or with `with_threats` from here, for a page that cannot wait."""
         _, state = self._state(session, project_id)
         if not _forecastable(state.project):
             return None
-        current = forecast_view(state.project, self._forecast(project_id, state))
+        result = self._forecast(project_id, state)
+        threats = self._known_threats(project_id, state)
+        if with_threats and result.late and threats is None:
+            threats = self._threat_list(project_id, state)
+        current = forecast_view(state.project, result, threats)
         previous = None
         rows = self.store.events(session, project_id)
         checkins = [row.seq for row in rows if row.type == "checkin"]
@@ -606,6 +647,26 @@ class Services:
             self._forecasts[key] = result
             while len(self._forecasts) > FORECASTS_KEPT:
                 self._forecasts.popitem(last=False)
+        return result
+
+    def _known_threats(self, project_id: str, state: LiveState) -> planning.ThreatList | None:
+        with self._guard:
+            return self._threats.get((project_id, state.last_forecast_change))
+
+    def _threat_list(self, project_id: str, state: LiveState) -> planning.ThreatList:
+        """The threat list of `state`, deterministic for it and kept while nothing changes that
+        a forecast reads: long enough to matter, it outlives a recommendation or a refusal."""
+        key = (project_id, state.last_forecast_change)
+        with self._guard:
+            found = self._threats.get(key)
+            if found is not None:
+                self._threats.move_to_end(key)
+                return found
+        result = planning.threats(state.project, rollouts=planning.THREAT_ROLLOUTS)
+        with self._guard:
+            self._threats[key] = result
+            while len(self._threats) > FORECASTS_KEPT:
+                self._threats.popitem(last=False)
         return result
 
     def read_message(
@@ -966,6 +1027,7 @@ def _copy(state: LiveState) -> LiveState:
         state.seq,
         [*state.recommendations],
         state.last_change,
+        state.last_forecast_change,
     )
 
 

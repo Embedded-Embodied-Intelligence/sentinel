@@ -187,12 +187,13 @@ class Driver:
         print(json.dumps(values, ensure_ascii=False, default=str)[:400], flush=True)
 
     def settle(self, page: Any = None) -> None:
-        """Wait for the forecast of an overview and any running analysis."""
+        """Wait for the forecast of an overview, its threat list and any running analysis."""
         page = page or self.page
         page.wait_for_load_state("networkidle")
         page.wait_for_function(
             """() => !document.querySelector('.job') &&
-                 !document.querySelector('#forecast .skeleton')""",
+                 !document.querySelector('#forecast .skeleton') &&
+                 !document.querySelector('#drivers .loading-line')""",
             timeout=WAIT,
         )
         page.wait_for_load_state("networkidle")

@@ -16,7 +16,14 @@ from sentinel.app.events import LiveState, LlmExplanation, RecommendationEntry, 
 from sentinel.app.live import AppliedAction, Issue, LiveProject, Tracked, validate_definition
 from sentinel.app.messages import render
 from sentinel.app.models import Language, ProjectDefinition
-from sentinel.app.planning import ForecastResult, Impact, Tie, sentinel_params, tie_kind
+from sentinel.app.planning import (
+    ForecastResult,
+    Impact,
+    ThreatList,
+    Tie,
+    sentinel_params,
+    tie_kind,
+)
 from sentinel.dashboard.explain import template_explanation
 from sentinel.policies.base import LEVELS, Decision, Descope, Overtime, Reseq, Shift, Subst
 from sentinel.simulation.state import PAUSED, RUNNING, Observation
@@ -220,6 +227,9 @@ class DriverView(View):
 
 
 class ForecastView(View):
+    """A forecast as shown (spec section 11.4); `drivers` is None until the list is calculated,
+    and `threat_rollouts` the futures it reads."""
+
     day: int
     as_of: date
     rollouts: int
@@ -229,7 +239,8 @@ class ForecastView(View):
     p50: date
     p90: date
     mean: float
-    drivers: list[DriverView]
+    drivers: list[DriverView] | None
+    threat_rollouts: int | None = None
     late: int = 0
     expected_cost: float | None = None
     budget: float | None = None
@@ -703,10 +714,21 @@ def llm_view(explanation: LlmExplanation) -> ExplanationView:
     )
 
 
-def forecast_view(project: LiveProject, result: ForecastResult) -> ForecastView:
+def forecast_view(
+    project: LiveProject, result: ForecastResult, threats: ThreatList | None = None
+) -> ForecastView:
+    """A forecast with its threat list if known; with no late future none is needed (11.4)."""
     calendar = project.calendar
     nodes = project.nodes()
     q10, q50, q90 = result.quantiles
+    drivers = None
+    if not result.late:
+        drivers = []
+    elif threats is not None:
+        drivers = [
+            DriverView(task=d.task, name=nodes[d.task].name, sensitivity=d.sensitivity)
+            for d in threats.drivers
+        ]
     return ForecastView(
         day=result.day,
         as_of=calendar.date_of(result.day),
@@ -717,14 +739,8 @@ def forecast_view(project: LiveProject, result: ForecastResult) -> ForecastView:
         p50=calendar.finish_date(q50),
         p90=calendar.finish_date(q90),
         mean=result.mean,
-        drivers=[
-            DriverView(
-                task=d.task,
-                name=nodes[d.task].name,
-                sensitivity=d.sensitivity,
-            )
-            for d in result.drivers
-        ],
+        drivers=drivers,
+        threat_rollouts=None if threats is None or not result.late else threats.rollouts,
         late=result.late,
         expected_cost=result.mean_cost,
         budget=project.require_model().budget,

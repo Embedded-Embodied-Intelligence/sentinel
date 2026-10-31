@@ -1,6 +1,6 @@
 [project]
 name = "sentinel"
-version = "1.2.3"
+version = "1.2.4"
 description = "Goal-driven project management agent: RCPSP scheduling, Monte Carlo risk forecasts and simulated interventions."
 readme = "README.md"
 license = "MIT"

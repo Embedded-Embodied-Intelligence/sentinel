@@ -3,6 +3,8 @@ error format, CSRF tokens, demo isolation and limits, LLM settings that never sh
 
 import json
 import os
+import threading
+import time
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import ExitStack
 from datetime import date
@@ -14,11 +16,13 @@ from app_cases import ABSENCE_CHECKIN, absence_recommendation, answer_from, smal
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from sentinel.app import planning
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits
+from sentinel.app.live import LiveProject
 from sentinel.app.llm import LlmSettings
 from sentinel.app.models import CheckIn, Settings
-from sentinel.app.services import Services
+from sentinel.app.services import JobView, Services
 from sentinel.llm import FakeLlmClient, LlmCache, LlmClient, Message
 
 KEY = "gsk_" + "testkey0123456789abcdef"  # pragma: allowlist secret
@@ -65,7 +69,7 @@ def _definition(**update: Any) -> dict[str, Any]:
 
 def test_health_session_and_the_error_format(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
-    assert test.get("/api/health").json() == {"status": "ok", "version": "1.2.3", "demo": False}
+    assert test.get("/api/health").json() == {"status": "ok", "version": "1.2.4", "demo": False}
     assert test.get("/api/docs").status_code == 404  # no HTML pages before WP9b
     session = test.get("/api/session").json()
     assert session["demo"] is False and len(session["csrf_token"]) == 64
@@ -136,6 +140,7 @@ def test_a_live_project_through_the_api(tmp_path: Path, client: Visitor) -> None
     assert forecast["status"] == "done" and forecast["result"]["rollouts"] == 200
     # T1 goes with the finish day most; T2 is done (11.4).
     assert forecast["result"]["late"] > 0
+    assert forecast["result"]["threat_rollouts"] == 1000
     assert [d["task"] for d in forecast["result"]["drivers"]] == ["T1", "T3"]
     again = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert again["result"] == forecast["result"]  # deterministic for the project's seed
@@ -490,3 +495,69 @@ def test_simulator_projects_through_the_api(psplib_root: Path, tmp_path: Path) -
     assert "j30/j301_1" in page and "<svg" in page
     unknown = test.post("/api/simulator", json={**spec, "instance": "j309_99"}, headers=csrf)
     assert unknown.status_code == 404
+
+
+@pytest.mark.slow  # real job threads, about 1.5 s, out of the default run
+def test_a_check_in_starts_the_threat_list_and_nothing_waits_for_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Spec section 11.4: its job runs after a check-in, beside the recommendation and outside the
+    demo's limit on a session's jobs; the chance and the recommendation stay on the 200 worlds."""
+    started, release = threading.Event(), threading.Event()
+    real = planning.threats
+
+    def held(project: LiveProject, *, rollouts: int) -> planning.ThreatList:
+        started.set()
+        assert release.wait(60)
+        return real(project, rollouts=200)
+
+    monkeypatch.setattr(planning, "threats", held)
+    limits = Limits(concurrent_jobs=1)
+    services = Services(
+        AppConfig(data_dir=tmp_path, demo=True, workers=2, showcase=False, limits=limits)
+    )
+
+    def until(condition: Callable[[], bool]) -> None:
+        latest = time.monotonic() + 60
+        while not condition():
+            assert time.monotonic() < latest
+            time.sleep(0.01)
+
+    def finished(job: JobView) -> None:
+        until(lambda: services.job(session, job.id, "en").status in ("done", "failed"))
+        found = services.job(session, job.id, "en")
+        assert found.status == "done", found.error
+
+    def known() -> list[str] | None:
+        forecast = services.forecast_now(session, project)
+        assert forecast is not None
+        return None if forecast.drivers is None else [d.task for d in forecast.drivers]
+
+    try:
+        session = services.new_session("en").id
+        project = services.create(session, small(), "en").id
+        finished(services.plan(session, project, "en"))
+        recommendation = services.checkin(
+            session, project, ABSENCE_CHECKIN, "en"
+        ).recommendation_job
+        assert recommendation is not None and started.wait(60)
+        finished(recommendation)
+        forecast = services.forecast_now(session, project)
+        assert forecast is not None and forecast.p_on_time is not None
+        assert forecast.drivers is None  # the job is still held, and nothing else waited for it
+        comparison = services.state(session, project).recommendations[-1].recommendation.comparison
+        assert comparison is not None and comparison.rollouts == forecast.rollouts == 200
+        assert services.threats_job(session, project, "en").kind == "threats"  # the same job
+        assert services.store.active_jobs(session, besides="threats") == 0
+        assert services.store.active_jobs(session) == 1
+        release.set()
+        until(lambda: known() is not None)
+        assert known() == ["T1", "T3"]
+        # The recommendation changed nothing a forecast reads, and neither does a refusal.
+        latest = services.state(session, project).recommendations[-1].seq
+        services.decide(session, project, latest, "reject", "en")
+        state = services.state(session, project)
+        assert state.last_forecast_change < state.last_change and known() == ["T1", "T3"]
+    finally:
+        release.set()
+        services.close()

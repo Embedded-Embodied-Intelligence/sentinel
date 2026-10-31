@@ -735,6 +735,14 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.undo": ("Undo", "Cofnij"),
     "overview.threats_title": ("What threatens the deadline", "Co zagraża terminowi"),
     "overview.drivers_wait": ("Waiting for the forecast…", "Czekam na prognozę…"),
+    "overview.threats_calculating": (
+        "Working out which tasks threaten the deadline…",
+        "Sprawdzam, które zadania zagrażają terminowi…",
+    ),
+    "overview.threats_failed": (
+        "The list of tasks could not be calculated.",
+        "Nie udało się obliczyć listy zadań.",
+    ),
     "overview.away_back": (
         "{person}: away, back on {date}.",
         "{person}: nieobecność, powrót {date}.",
@@ -773,10 +781,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "się już nie zmieniał. Szansa to odsetek scenariuszy, które kończą się przed terminem.",
     ),
     "overview.driver": (
-        "Task “{task}”. Most strongly affects the finish date: lengthening this task usually "
-        "moves the whole deadline.",
-        "Zadanie „{task}”. Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle "
-        "przesuwa cały termin.",
+        "Task “{task}”. The longer this task takes, the later the project usually finishes.",
+        "Zadanie „{task}”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
     ),
     "overview.spread": (
         "No single task decides the deadline: the risk is spread across the plan.",
@@ -793,21 +799,23 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Ustaw termin, aby zobaczyć, co mu zagraża.",
     ),
     "overview.drivers_note": (
-        "For every unfinished task we compare, across the simulated futures, how long it takes, "
-        "growth included, with the project's finish date. Listed are the tasks where a longer "
-        "duration goes most clearly with a later finish (a rank correlation of at least 0.2), at "
-        "most three, the strongest first; the bar shows that strength. A task that varies little, "
-        "such as a short go-live, is rarely listed, even if it sets the finish date in most "
-        "futures. A value close to 0.2 is uncertain on this number of futures, so such a task can "
-        "leave the list at the next check-in though nothing changed in the project.",
-        "Dla każdego niezakończonego zadania porównujemy w symulowanych scenariuszach czas jego "
-        "trwania, razem z wydłużeniami, z datą zakończenia projektu. Wymieniamy zadania, dla "
-        "których dłuższy czas trwania najwyraźniej idzie w parze z późniejszym końcem (korelacja "
-        "rang co najmniej 0,2), najwyżej trzy, od najsilniejszego związku; pasek pokazuje jego "
-        "siłę. Zadanie o małej zmienności, np. krótkie uruchomienie produkcyjne, rzadko trafia na "
-        "listę, nawet jeśli w większości scenariuszy wyznacza datę zakończenia. Wartość bliska 0,2 "
-        "jest przy tej liczbie scenariuszy niepewna, więc takie zadanie może zniknąć z listy przy "
-        "następnym raporcie, choć w projekcie nic się nie zmieniło.",
+        "For every unfinished task we compare, across {futures} simulated futures (the first "
+        "{first} are those behind the chance), how long it takes, growth included, with the "
+        "project's finish date. Listed are the tasks where a longer duration goes most clearly "
+        "with a later finish (a rank correlation of at least 0.2), at most three, the strongest "
+        "first; the bar shows that strength. A task that varies little, such as a short go-live, "
+        "is rarely listed, even if it sets the finish date in most futures. A value close to 0.2 "
+        "remains uncertain, so such a task can leave the list at the next check-in though nothing "
+        "changed in the project.",
+        "Dla każdego niezakończonego zadania porównujemy w {futures} symulowanych scenariuszach "
+        "(pierwsze {first} to te, z których liczymy szansę) czas jego trwania, razem z "
+        "wydłużeniami, z datą zakończenia projektu. Wymieniamy zadania, dla których dłuższy czas "
+        "trwania najwyraźniej idzie w parze z późniejszym końcem (korelacja rang co najmniej 0,2), "
+        "najwyżej trzy, od najsilniejszego związku; pasek pokazuje jego siłę. Zadanie o małej "
+        "zmienności, np. krótkie uruchomienie produkcyjne, rzadko trafia na listę, nawet jeśli w "
+        "większości scenariuszy wyznacza datę zakończenia. Wartość bliska 0,2 pozostaje niepewna, "
+        "więc takie zadanie może zniknąć z listy przy następnym raporcie, choć w projekcie nic się "
+        "nie zmieniło.",
     ),
     "overview.checked_title": ("Sentinel checked the new status", "Sentinel sprawdził nowy stan"),
     "overview.checked": (

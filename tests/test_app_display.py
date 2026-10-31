@@ -73,7 +73,7 @@ def test_a_realised_duration_holds_the_growth_of_its_rollout() -> None:
     """Spec section 11.4: sampled durations are whole, so growth alone (D2) makes a fraction."""
     project = planned(small())
     j = project.activity_ids()["T1"]
-    _, states = planning.forecast_rollouts(project.observation(), 200, 7)
+    states = list(planning.forecast_rollouts(project.observation(), 200, 7))
     grown = [any(i == j for i, *_ in state.work_increases) for state in states]
     assert any(grown) and not all(grown)
     assert [planning.realised_days(state, j) % 1 != 0 for state in states] == grown
@@ -94,7 +94,7 @@ def test_growth_at_a_check_in_raises_the_realised_duration() -> None:
     j = before.activity_ids()["T1"]
 
     def mean_days(project: LiveProject) -> float:
-        _, states = planning.forecast_rollouts(project.observation(), 200, 7)
+        states = planning.forecast_rollouts(project.observation(), 200, 7)
         return float(np.mean([planning.realised_days(state, j) for state in states]))
 
     assert mean_days(grown) - mean_days(before) > 3
@@ -108,20 +108,43 @@ def test_threats_are_the_unfinished_tasks_and_need_a_late_future() -> None:
     forecast = planning.forecast(project)
     assert forecast.p_on_time is not None
     assert forecast.late == round((1 - forecast.p_on_time) * 200)
-    assert [d.task for d in forecast.drivers] == ["T1", "T3"]
-    assert forecast.drivers[0].sensitivity > forecast.drivers[1].sensitivity >= 0.2
-    shown = forecast_view(project, forecast).drivers[0]  # what the API and the pages read
-    assert (shown.name, shown.sensitivity) == ("Build API", forecast.drivers[0].sensitivity)
+    found = planning.threats(project, rollouts=200)
+    assert [d.task for d in found.drivers] == ["T1", "T3"]
+    assert found.drivers[0].sensitivity > found.drivers[1].sensitivity >= 0.2
+    shown = forecast_view(project, forecast, found).drivers  # what the API and the pages read
+    assert shown is not None
+    assert (shown[0].name, shown[0].sensitivity) == ("Build API", found.drivers[0].sensitivity)
+    assert forecast_view(project, forecast).drivers is None  # still being calculated
     project.tasks["T3"].state = "removed"
     assert planning.threat_candidates(project, nodes) == ["T1"]
-    # A chance of 0 % follows the same rule; without a late future or a deadline, no threat.
+    # A chance of 0 % follows the same rule; without a late future or a deadline, no list is due.
     too_late = checked_in(planned(small()), CheckIn(date=date(2026, 11, 13)))
-    zero = planning.forecast(too_late)
-    assert zero.p_on_time == 0 and [d.task for d in zero.drivers] == ["T1", "T3"]
-    calm = planning.forecast(planned(small(deadline=date(2026, 12, 18))))
-    assert calm.p_on_time == 1 and calm.late == 0 and calm.drivers == ()
-    undated = planning.forecast(planned(small(deadline=None)))
-    assert undated.p_on_time is None and undated.late == 0 and undated.drivers == ()
+    assert planning.forecast(too_late).p_on_time == 0
+    assert [d.task for d in planning.threats(too_late, rollouts=200).drivers] == ["T1", "T3"]
+    calm_project = planned(small(deadline=date(2026, 12, 18)))
+    calm = planning.forecast(calm_project)
+    assert calm.p_on_time == 1 and calm.late == 0
+    assert forecast_view(calm_project, calm).drivers == []
+    undated_project = planned(small(deadline=None))
+    undated = planning.forecast(undated_project)
+    assert undated.p_on_time is None and undated.late == 0
+    assert forecast_view(undated_project, undated).drivers == []
+
+
+def test_the_threat_list_adds_to_the_forecasts_worlds_and_changes_none() -> None:
+    """Spec section 11.4: M = 1000 with the forecast's seed and layout, its N = 200 worlds first."""
+    assert (planning.THREAT_ROLLOUTS, planning.FORECAST_ROLLOUTS) == (1000, 200)
+    project = checked_in(planned(small()), ABSENCE_CHECKIN)
+    forecast = planning.forecast(project)
+    found = planning.threats(project, rollouts=210)
+    assert (found.day, found.seed, found.rollouts) == (forecast.day, forecast.seed, 210)
+    first = list(planning.forecast_rollouts(project.observation(), 210, forecast.seed))
+    makespans = [planning.makespan_of(state) for state in first]
+    assert float(np.mean(makespans[:200])) == forecast.mean
+    deadline = project.observation().deadline
+    assert sum(c > deadline for c in makespans[:200]) == forecast.late
+    fewer = planning.forecast_rollouts(project.observation(), 200, forecast.seed)
+    assert [planning.makespan_of(state) for state in fewer] == makespans[:200]
 
 
 def test_the_vocabularies_have_one_shape_and_english_is_the_studies() -> None:

@@ -64,7 +64,7 @@
 <section class="section" aria-labelledby="threats-title">
   <h2 id="threats-title" class="group-title">{{ t("overview.threats_title") }}</h2>
   <div class="card">
-    <div id="drivers"><p class="muted small">{{ t("overview.drivers_wait") }}</p></div>
+    <div id="drivers" aria-live="polite"><p class="muted small">{{ t("overview.drivers_wait") }}</p></div>
     {% if away or late %}
     <ul class="threats threats-more">
       {% for person in away %}

@@ -879,7 +879,7 @@ wheels = [
 
 [[package]]
 name = "sentinel"
-version = "1.2.3"
+version = "1.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

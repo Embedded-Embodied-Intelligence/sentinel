@@ -1,0 +1,30 @@
+{# What threatens the deadline (spec section 11.4), swapped in by the forecast and by its own poll
+   while the background job of the list runs. #}
+<div id="drivers" hx-swap-oob="innerHTML">
+  {% if failed | default(false) %}
+  <p class="small">{{ t("overview.threats_failed") }} <button class="btn btn-sm" hx-get="/projects/{{ id }}/threats" hx-swap="none">{{ t("common.retry") }}</button></p>
+  {% elif f is none %}
+  <p class="muted small">{{ t("overview.no_forecast") }}</p>
+  {% elif f.p_on_time is none %}
+  <p class="muted small">{{ t("overview.threats_no_deadline") }}</p>
+  {% elif f.late == 0 %}
+  <p class="none-line">{{ icon("check", 16) }}{{ t("overview.no_late") }}</p>
+  {% elif f.drivers is none %}
+  <p class="loading-line" hx-get="/projects/{{ id }}/threats{% if threats_job %}?job={{ threats_job }}{% endif %}" hx-trigger="load delay:1s" hx-swap="none"><span class="spinner" aria-hidden="true"></span>{{ t("overview.threats_calculating") }}</p>
+  {% elif threats %}
+  <ol class="threats">
+    {% for threat in threats %}
+    <li><span class="threat-mark">{{ icon("alert", 16) }}</span><span>{{ threat.text }}</span><span class="share-bar" aria-hidden="true"><span style="width: {{ threat.percent }}%"></span></span></li>
+    {% endfor %}
+  </ol>
+  {% else %}<p class="muted small">{{ t("overview.spread") }}</p>{% endif %}
+</div>
+<div id="drivers-how" hx-swap-oob="true">
+  {% if threats | default([]) %}
+  <details class="details section-sub">
+    <summary>{{ t("overview.drivers_how") }}</summary>
+    <div class="details-body"><p>{{ t("overview.drivers_note", futures=f.threat_rollouts, first=f.rollouts) }}</p></div>
+  </details>
+  {% endif %}
+</div>
+{% if polled | default(false) and chart %}<div id="gantt-area" hx-swap-oob="true">{{ chart | safe }}</div>{% endif %}

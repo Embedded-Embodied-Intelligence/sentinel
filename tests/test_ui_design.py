@@ -362,10 +362,12 @@ def test_a_threat_has_the_sentence_and_its_bar_the_strength() -> None:
     drivers = [SimpleNamespace(task=n, name=n, sensitivity=s) for n, s in (("A", 0.38), ("B", 0.2))]
     found = threats_of(SimpleNamespace(drivers=drivers), EN)  # type: ignore[arg-type]
     assert [(t.task, t.percent) for t in found] == [("A", 38), ("B", 20)]
-    assert found[0].text == (
-        "Task “A”. Most strongly affects the finish date: lengthening this task usually moves the "
-        "whole deadline."
+    assert (
+        found[0].text
+        == "Task “A”. The longer this task takes, the later the project usually finishes."
     )
+    # While its job runs there is no list, so nothing is named yet.
+    assert threats_of(SimpleNamespace(drivers=None), EN) == []  # type: ignore[arg-type]
 
 
 def test_the_chart_shows_status_deadline_window_threats_and_absence() -> None:

@@ -12,6 +12,7 @@ system libraries without root by `scripts/setup_e2e_libs.sh`, found through `e2e
 """
 
 import re
+import threading
 import time
 from collections.abc import Iterator
 from datetime import date
@@ -23,8 +24,9 @@ from app_cases import ABSENCE_CHECKIN, small
 from e2e_env import Server, chromium_env, serve
 from ui_check import problems
 
-from sentinel.app import showcase
+from sentinel.app import planning, showcase
 from sentinel.app.config import AppConfig, Limits
+from sentinel.app.live import LiveProject
 from sentinel.app.services import Services
 from sentinel.app.simulator import SimulatorSpec
 from sentinel.app.store import LOCAL_SESSION
@@ -143,6 +145,42 @@ def test_a_project_from_a_spreadsheet_to_an_approved_recommendation(
     page.get_by_role("link", name="History", exact=True).click()
     expect(page.get_by_text("You approved: Substitute: Cleo takes over")).to_be_visible()
     page.context.close()
+
+
+def test_the_threat_list_arrives_by_itself_after_the_chance(
+    browser: Any, local: Server, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Spec section 11.4: the chance is on the page while the list's job runs; the page polls for
+    the list, which then appears with its flag on the chart, without a reload."""
+    release = threading.Event()
+    real = planning.threats
+
+    def held(project: LiveProject, *, rollouts: int) -> planning.ThreatList:
+        assert release.wait(60)
+        return real(project, rollouts=rollouts)
+
+    monkeypatch.setattr(planning, "threats", held)
+    services = local.services
+    try:
+        definition = small().model_copy(update={"name": "Polled"})
+        pid = services.create(LOCAL_SESSION, definition, "en").id
+        _wait_job(services, LOCAL_SESSION, services.plan(LOCAL_SESSION, pid, "en").id)
+        page = _page(browser, local)
+        page.goto(f"{local.base}/projects/{pid}")
+        expect(page.locator("#forecast .headline-number")).to_be_visible()
+        expect(page.locator("#drivers")).to_contain_text("Working out which tasks threaten")
+        expect(page.locator("#drivers-how")).not_to_contain_text("How to read this")
+        expect(page.locator(".gantt-flag")).to_have_count(0)
+        release.set()
+        expect(page.locator("#drivers")).to_contain_text(
+            "The longer this task takes, the later the project usually finishes", timeout=30_000
+        )
+        expect(page.locator("#drivers .loading-line")).to_have_count(0)
+        expect(page.locator("#drivers-how")).to_contain_text("How to read this")
+        assert page.locator(".gantt-flag").count() >= 1
+        page.context.close()
+    finally:
+        release.set()
 
 
 def test_the_simulator_runs_to_the_end_and_compares(browser: Any, local: Server) -> None:

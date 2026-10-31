@@ -313,7 +313,7 @@ def threats_of(forecast: ForecastView, texts: Texts) -> list[Threat]:
     """The tasks shown as threats: the forecast's ranking, in words (spec section 11.4)."""
     return [
         Threat(d.task, texts("overview.driver", task=d.name), round(100 * d.sensitivity))
-        for d in forecast.drivers
+        for d in forecast.drivers or ()
     ]
 
 
@@ -758,11 +758,22 @@ def router(ui: Ui) -> APIRouter:
             checked_message="" if checked is None else checked_key(checked),
         )
 
+    def wait_for_threats(request: Request, project_id: str) -> str | None:
+        """The id of the job to wait for while the list of a project's threats is calculated (spec
+        section 11.4), None if it is known (or was just calculated, with inline jobs)."""
+        session, language = ui.session(request), ui.language(request)
+        forecast = services.forecast_now(session, project_id)
+        if forecast is None or forecast.drivers is not None:
+            return None
+        job = services.threats_job(session, project_id, language)
+        return None if job.status == "done" else job.id
+
     @routes.get("/projects/{project_id}/forecast")
     def forecast(request: Request, project_id: str) -> Response:
         """The forecast block of the overview (loaded after the page; spec section 11.4)."""
         view = live(request, project_id)
         try:
+            threats_job = wait_for_threats(request, project_id)
             summary = services.forecast_summary(
                 ui.session(request), project_id, ui.language(request)
             )
@@ -783,8 +794,37 @@ def router(ui: Ui) -> APIRouter:
             request,
             "_forecast.html",
             **forecast_values(request, view, state.project, summary),
+            threats_job=threats_job,
             nav_level="decision" if state.open is not None else level_of(summary),
             toast=toast_text(toast, summary, ui.texts(request)),
+        )
+
+    @routes.get("/projects/{project_id}/threats")
+    def threats(request: Request, project_id: str) -> Response:
+        """The list of what threatens the deadline, for the overview to poll while its job runs
+        (spec section 11.4): the list once known, or the job's failure, with a way to try again."""
+        session, language = ui.session(request), ui.language(request)
+        waited = request.query_params.get("job")
+        f = services.forecast_now(session, project_id)
+        if f is not None and f.drivers is None and waited:
+            job = services.job(session, waited, language)
+            if job.status == "failed":
+                return ui.page(request, "_threats.html", id=project_id, failed=True)
+        threats_job = wait_for_threats(request, project_id)
+        f = services.forecast_now(session, project_id)
+        found = [] if f is None else threats_of(f, ui.texts(request))
+        chart = None
+        if f is not None and found:  # the chart flags them; else it stays, scrolled as it is
+            chart = chart_html(request, services.state(session, project_id).project, f)
+        return ui.page(
+            request,
+            "_threats.html",
+            id=project_id,
+            f=f,
+            threats=found,
+            threats_job=threats_job,
+            polled=True,
+            chart=chart,
         )
 
     @routes.post("/projects/{project_id}/ask")
@@ -1058,7 +1098,8 @@ def router(ui: Ui) -> APIRouter:
             return ui.redirect(request, f"/projects/{project_id}")
         texts = ui.texts(request)
         state = services.state(session, project_id)
-        summary = services.forecast_summary(session, project_id, ui.language(request))
+        language = ui.language(request)
+        summary = services.forecast_summary(session, project_id, language, with_threats=True)
         values = forecast_values(request, view, state.project, summary)
         if summary is None:
             values["chart"] = chart_html(request, state.project)

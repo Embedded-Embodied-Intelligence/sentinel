@@ -31,7 +31,7 @@ up. From these futures come:
   200 futures),
 - the **most likely finish** and the **bad case** (one in ten finishes even later),
 - **what threatens the deadline**: the tasks whose duration goes most clearly with the finish
-  date across these futures, at most three,
+  date, at most three, read on 1,000 futures whose first 200 are these,
 - a **recommendation**: the best change, tried on the same futures as the forecast.
 
 Sentinel does not guess: every number on the screen comes from the same simulations, so "no
@@ -132,17 +132,18 @@ Further down:
 
 ![What threatens the deadline, and plan and progress](ui/en_overview_threats.png)
 
-- **What threatens the deadline**: for every unfinished task, Sentinel compares across the 200
-  futures how long the task takes, growth included, with the project's finish date (a rank
-  correlation). Listed are the tasks with a value of at least 0.2, at most three, the strongest
-  first, e.g. "Task “Product catalogue API”. Most strongly affects the finish date: lengthening
-  this task usually moves the whole deadline". The bar shows the strength. A task that varies
-  little, such as a short go-live, is rarely listed, even if it sets the finish date in most
-  futures. If no task qualifies, Sentinel says that the risk is spread across the plan. A value
-  close to 0.2 is uncertain on 200 futures, so such a task can leave the list at the next check-in
-  though nothing changed in the project; a task far above the line, such as one that has just grown
-  a lot, is the stronger signal. Below the list: who is away and which tasks have not started as
-  planned.
+- **What threatens the deadline**: for every unfinished task, Sentinel compares across 1,000
+  futures, the first 200 being those behind the chance, how long the task takes, growth included,
+  with the project's finish date (a rank correlation). Listed are the tasks with a value of at least
+  0.2, at most three, the strongest first, e.g. "Task “Product catalogue API”. The longer this task
+  takes, the later the project usually finishes". The bar shows the strength. This list is
+  calculated in the background after a check-in, so it can appear a moment after the chance, which
+  does not wait for it, and neither does a recommendation. A task that varies little, such as a short
+  go-live, is rarely listed, even if it sets the finish date in most futures. If no task qualifies,
+  Sentinel says that the risk is spread across the plan. A value close to 0.2 remains uncertain, so
+  such a task can leave the list at the next check-in though nothing changed in the project; a task
+  far above the line, such as one that has just grown a lot, is the stronger signal. Below the list:
+  who is away and which tasks have not started as planned.
 - **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
   with a dashed outline of the work left), planned (light teal) and absences (hatched), with the
   status, today, the deadline and the forecast window. Hover over or tap a task's name for its dates

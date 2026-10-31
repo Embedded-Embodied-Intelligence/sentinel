@@ -24,7 +24,7 @@ from sentinel.app.config import AppConfig, Limits
 from sentinel.app.events import Recommended
 from sentinel.app.messages import render
 from sentinel.app.models import Person, ProjectDefinition
-from sentinel.app.services import Services
+from sentinel.app.services import JobView, Services
 from sentinel.app.simulator import SimulatorSpec
 from sentinel.app.store import LOCAL_SESSION
 from sentinel.app.ui.text import Texts
@@ -58,6 +58,15 @@ def _checkin(client: TestClient, headers: dict[str, str], pid: str, body: Any) -
         headers={**headers, "content-type": "application/json"},
     )
     assert response.status_code == 200, response.text
+
+
+@pytest.fixture(scope="module", autouse=True)
+def fewer_futures() -> Iterator[None]:
+    """The pages' threat lists read fewer futures, for the default run's 90 s; the API's test
+    reads the 1000 of spec section 11.4."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(planning, "THREAT_ROLLOUTS", 50)
+        yield
 
 
 @pytest.fixture(scope="module")
@@ -519,12 +528,69 @@ def test_a_task_that_goes_with_the_finish_date_is_named(site: Site) -> None:
     """Spec sections 11.4, 11.7: the owner's sentence, word for word, with the task's name."""
     page = _get(site, f"/projects/{site.ids['open']}/forecast", "pl", htmx=True)
     assert (
-        "Zadanie „Build API”. Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle "
-        "przesuwa cały termin." in page
+        "Zadanie „Build API”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+        in page
     )
     assert "Jak to czytać" in page and "ryzyko rozkłada się" not in page
     english = _get(site, f"/projects/{site.ids['open']}/forecast", "en", htmx=True)
-    assert "Most strongly affects the finish date" in english and "How to read this" in english
+    assert (
+        "Task “Build API”. The longer this task takes, the later the project usually finishes."
+        in english
+    )
+    assert "How to read this" in english and "loading-line" not in english
+
+
+def test_the_chance_does_not_wait_for_the_threat_list(
+    site: Site, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Spec section 11.4: while its job runs, the page has the chance and says the list is being
+    calculated; it polls for the list and, if the job failed, offers to try again."""
+    project = _create(site.client, site.headers, small())
+    plan = site.client.post(f"/api/projects/{project}/plan", headers=site.headers)
+    assert plan.status_code == 202
+    running = JobView(
+        id="J", kind="threats", project=project, status="running", progress=0, message=""
+    )
+
+    def poll(**params: str) -> str:
+        response = site.client.get(
+            f"/projects/{project}/threats",
+            params={"lang": "en", **params},
+            headers={"HX-Request": "true"},
+        )
+        assert response.status_code == 200 and problems(response.text) == []
+        return response.text
+
+    monkeypatch.setattr(site.services, "threats_job", lambda *_: running)
+    monkeypatch.setattr(site.services, "job", lambda *_: running)
+    page = _get(site, f"/projects/{project}/forecast", "en", htmx=True)
+    assert "headline-number" in page and "Working out which tasks threaten the deadline" in page
+    assert f'hx-get="/projects/{project}/threats?job=J"' in page and 'class="threats"' not in page
+    polled = poll(job="J")
+    assert "loading-line" in polled and "gantt-area" not in polled
+    failed = running.model_copy(update={"status": "failed"})
+    monkeypatch.setattr(site.services, "job", lambda *_: failed)
+    broken = poll(job="J")
+    assert "could not be calculated" in broken and "loading-line" not in broken
+    assert f'hx-get="/projects/{project}/threats"' in broken  # try again: no job to look at
+    monkeypatch.undo()
+    done = poll()
+    assert '<ol class="threats">' in done and "The longer this task takes" in done
+    assert "How to read this" in done
+    assert 'id="gantt-area"' in done and "gantt-flag" in done  # the chart flags what is listed
+    # A page that travels cannot wait: a state no one has asked for yet has its list at once.
+    other = _create(site.client, site.headers, small())
+    site.client.post(f"/api/projects/{other}/plan", headers=site.headers)
+    assert "The longer this task takes" in _get(site, f"/projects/{other}/report.html", "en")
+
+
+def test_a_threat_list_outlives_what_does_not_change_a_forecast(site: Site) -> None:
+    """Spec section 11.4: kept by the state a forecast reads, or a recommendation would throw it
+    away after every check-in; an applied action changes that state."""
+    opened = site.services.state(LOCAL_SESSION, site.ids["open"])
+    assert opened.last_forecast_change < opened.last_change
+    approved = site.services.state(LOCAL_SESSION, site.ids["approved"])
+    assert approved.last_forecast_change == approved.last_change
 
 
 def test_the_forecast_says_it_assumes_the_plan_stays_as_it_is(site: Site) -> None:

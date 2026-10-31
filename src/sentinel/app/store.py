@@ -403,12 +403,13 @@ class Store:
             ).fetchone()
         return None if row is None else _job(row)
 
-    def active_jobs(self, session: str) -> int:
-        """Jobs of the session that are queued or running."""
+    def active_jobs(self, session: str, *, besides: str = "") -> int:
+        """Jobs of the session that are queued or running, without those of the kind `besides`."""
         with self._connect() as db:
             row = db.execute(
-                "SELECT COUNT(*) FROM jobs WHERE session = ? AND status IN ('queued', 'running')",
-                (session,),
+                "SELECT COUNT(*) FROM jobs WHERE session = ? AND kind != ? "
+                "AND status IN ('queued', 'running')",
+                (session, besides),
             )
             return int(row.fetchone()[0])
 
