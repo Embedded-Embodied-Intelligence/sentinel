@@ -193,7 +193,7 @@ Cztery odpowiedzi na pytania do specyfikacji i naprawa wszystkich 7 drobnych uwa
 
 **Bez zmian:** „Bez zmian” zostaje na końcu porównania, słownictwo §11.7 i napis symulatora zostają.
 
-**Skutek, który warto znać: lista jest teraz prawie zawsze pusta.** W tym samym projekcie zadania pojawiają się tylko w 1 z 9 raportów (10 września). W pozostałych strona pisze, że ryzyko rozkłada się na cały plan, nawet przy spadku 79 → 46 % po wydłużeniu jednego zadania.
+**Skutek, który warto znać: lista jest teraz prawie zawsze pusta.** W tym samym projekcie zadania pojawiają się tylko w 1 z 9 raportów (10 września). W pozostałych strona pisze, że ryzyko rozkłada się na cały plan, nawet przy spadku 79 → 46 % po wydłużeniu jednego zadania i nieobecności jednej osoby.
 
 - Największa różnica w tych ośmiu raportach to 7 pkt proc.
 - Te same zadania leżą na łańcuchu wyznaczającym koniec i gdy projekt się spóźnia, i gdy zdąża. Spóźnienie bierze się najpewniej z ich długości, a nie z tego, które to zadania.

@@ -134,7 +134,8 @@ def test_a_live_project_through_the_api(tmp_path: Path, client: Visitor) -> None
     assert types == ["created", "baseline", "checkin", "recommendation", "decision"]
     forecast = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert forecast["status"] == "done" and forecast["result"]["rollouts"] == 200
-    assert forecast["result"]["drivers"]
+    # Late futures, but T1 decides them and the on-time ones alike: the risk is spread (11.4).
+    assert forecast["result"]["late"] > 0 and forecast["result"]["drivers"] == []
     again = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert again["result"] == forecast["result"]  # deterministic for the project's seed
     csv_text = test.get(f"/api/projects/{pid}/plan.csv").text
@@ -172,7 +173,9 @@ def test_checkin_and_definition_errors_are_user_readable(tmp_path: Path, client:
     broken["tasks"][2]["predecessors"] = ["T1", "T9"]
     issues = test.post("/api/projects/validate", json=broken, headers=csrf).json()
     assert [i["code"] for i in issues] == ["unknown_predecessor"]
-    assert issues[0]["message"] == "“Test” comes after T9, which is not a task of this project."
+    assert issues[0]["message"] == (
+        "“Test” comes after a task with the id T9, but no task has that id."
+    )
     test.put(f"/api/projects/{pid}/definition", json=broken, headers=csrf)
     plan = test.post(f"/api/projects/{pid}/plan", headers=csrf)
     assert plan.status_code == 422 and plan.json()["error"]["code"] == "unknown_predecessor"
@@ -215,7 +218,7 @@ def test_csv_import_and_templates(tmp_path: Path, client: Visitor) -> None:
     )
     assert bad.status_code == 422
     assert [d["message"] for d in bad.json()["error"]["details"]] == [
-        "Wiersz 2: pole name jest wymagane.",
+        "Wiersz 2: pole nazwa (name) jest wymagane.",
         "Wiersz 2: czas trwania w dniach (duration_days) musi być liczbą całkowitą (jest „x”).",
     ]
 

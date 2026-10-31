@@ -10,6 +10,7 @@ from app_cases import ABSENCE_CHECKIN, absence_recommendation, checked_in, plann
 from sentinel.app import names, planning, showcase
 from sentinel.app.live import LiveProject
 from sentinel.app.models import Task
+from sentinel.app.views import forecast_view
 from sentinel.interpret.team import FIRST_NAMES, INITIALS, roster
 from sentinel.model import ProjectInstance
 from sentinel.wbs.narrate import ROLE_NAMES, VOCABULARY, activity_names
@@ -62,6 +63,9 @@ def test_the_last_task_is_no_threat_though_a_side_task_goes_around_it() -> None:
     assert forecast.p_on_time is not None and 0 < forecast.p_on_time < 1
     assert [d.task for d in forecast.drivers] == ["T4"]
     assert forecast.drivers[0].share - forecast.drivers[0].on_time_share >= 0.1
+    shown = forecast_view(project, forecast).drivers[0]  # what the API and the pages read
+    assert (shown.name, shown.share) == ("Docs", forecast.drivers[0].share)
+    assert shown.on_time_share == forecast.drivers[0].on_time_share
 
 
 def test_threats_leave_out_structural_and_finished_tasks() -> None:
