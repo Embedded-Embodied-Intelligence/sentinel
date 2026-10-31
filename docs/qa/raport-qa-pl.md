@@ -1,6 +1,6 @@
 # Raport QA Sentinela 1.2.0
 
-Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcje „Po raporcie: wersja 1.2.1” i „Po raporcie: wersja 1.2.2”.
+Data: 30–31 października 2026. Wersja: 1.2.0, po przebudowie wyglądu (WP10). Co zmieniło się potem: sekcje „Po raporcie: wersja 1.2.1”, „Po raporcie: wersja 1.2.2” i „Po raporcie: wersja 1.2.3”.
 
 ## Podsumowanie
 
@@ -230,6 +230,31 @@ Lista nie jest już pusta w żadnym z 9 raportów. **Dwa skutki, które warto zn
 
 - **Uruchomienie produkcyjne wraca raz.** 16 października jest pierwsze, bo leży na łańcuchu w 189 z 200 scenariuszy (94,5 %), o jeden scenariusz poniżej progu. W pozostałych ośmiu raportach to 190–195 z 200, a 10 września dokładnie 190. Próg leży w granicach losowego rozrzutu tej liczby, więc to się będzie powtarzać. Próg 93 % utrzymałby je poza listą we wszystkich 9 raportach (kolejne zadanie ma najwyżej 92 %); to jedna stała.
 - **Lista prawie się nie zmienia.** Szkolenie użytkowników i testy akceptacyjne są w każdym z 9 raportów, choć częściej decydują w scenariuszach kończących się w terminie niż w tych z opóźnieniem. Lista mówi więc, które zadania zwykle wyznaczają koniec, a nie co spóźnia projekt. 8 października, przy spadku 79 → 46 % po wydłużeniu „Logowania i kont” o 4 dni i nieobecności jednej osoby, są na niej te same dwa zadania, co 5 października, a „Logowanie i konta” leży na łańcuchu tylko w 25 % scenariuszy z opóźnieniem.
+
+## Po raporcie: wersja 1.2.3
+
+Trzecia zmiana listy „Co zagraża terminowi”. Zamiast liczyć, jak często zadanie leży na łańcuchu wyznaczającym koniec, lista mierzy teraz wrażliwość na czas trwania: dla każdego niezakończonego zadania korelację rang Spearmana, w 200 scenariuszach prognozy, między jego rzeczywistym czasem trwania (razem z wydłużeniami) a dniem zakończenia projektu. Na liście są najwyżej 3 zadania o wartości co najmniej 0,2, od najwyższej, każde ze zdaniem „Najsilniej wpływa na datę końca: wydłużenie tego zadania zwykle przesuwa cały termin”. Jeśli żadne nie spełnia warunku, strona mówi, że ryzyko rozkłada się na cały plan.
+
+Przebieg 1 jeszcze raz, ten sam zespół i te same szanse. Pogrubiona jest liczba zadań na liście, a liczba przy zadaniu to korelacja.
+
+- 10 wrz, 68 %: **1**: model danych 0,26
+- 15 wrz, 73 %: **2**: testy interfejsu 0,23, płatności w portalu 0,22
+- 21 wrz, 66 %: **3**: testy interfejsu 0,24, architektura systemu 0,22, integracja z systemem CRM 0,22
+- 25 wrz, 79 %: **1**: model danych 0,21
+- 30 wrz, 51 %: **3**: testy akceptacyjne 0,25, API profilu klienta 0,23, audyt bezpieczeństwa 0,21
+- 5 paź, 79 %: **1**: testy interfejsu 0,31
+- 8 paź, 46 %: **2**: Logowanie i konta 0,38, testy akceptacyjne 0,26
+- 13 paź, 57 %: **3**: płatności w portalu 0,25, testy API 0,25, testy akceptacyjne 0,22
+- 16 paź, 57 %: **3**: integracja płatności 0,33, testy akceptacyjne 0,29, płatności w portalu 0,24
+
+Poza raportami: na planie 3 zadania (testy akceptacyjne 0,26, API umów 0,21, API faktur 0,20), po cofnięciu z 10 września model danych, po zatwierdzeniu z 30 września żadne („ryzyko rozkłada się na cały plan”), po zatwierdzeniu z 16 października 3 (testy akceptacyjne 0,32, płatności w portalu 0,29, uruchomienie produkcyjne 0,25).
+
+**„Logowanie i konta” 8 października jest na liście, na pierwszym miejscu.** To zadanie urosło wtedy o 4 dni, a szansa spadła z 79 do 46 %; w 1.2.2 go tam nie było. Ten sygnał jest mocny: zadanie trafia na listę przy każdej z 40 innych sekwencji liczb losowych, a przy 4000 scenariuszy jego korelacja wynosi 0,41.
+
+**Dwa skutki, które warto znać:**
+
+- **Poza tym przypadkiem lista to w dużej mierze szum.** Przy 200 scenariuszach błąd standardowy korelacji to około 0,07, a większość zadań ma prawdziwą wartość około 0,1–0,2, tuż pod progiem. Z 19 nazw w 9 raportach tylko 5 ma przy 4000 scenariuszy wartość co najmniej 0,2, a w 4 z 9 raportów nie ma jej żadne zadanie, choć strona wymienia tam 1 lub 2. Ten sam stan projektu z innymi liczbami losowymi daje od 0 do 3 nazw. Lista zmienia się więc prawie w każdym raporcie, nawet gdy w projekcie nic się nie zmieniło; w 1.2.2 kłopot był odwrotny. Próg 0,3 to jedna stała: nazwy trafniejsze (69 % zamiast 33 %), a „ryzyko rozkłada się” w 6 z 9 raportów, „Logowanie i konta” zostaje.
+- **„Zwykle” nie sprawdza się akurat 8 października.** Wydłużenie „Logowania i kont” o 2 dni na tych samych 200 scenariuszach przesuwa koniec tylko w 86 z nich (43 %). Korelacja jest wysoka, bo czas tego zadania bardzo się waha (od 5,3 do 20 dni), a nie dlatego, że zwykle wyznacza koniec. Dla 17 z 19 nazw zdanie się sprawdza (co najmniej 100 z 200). Uruchomienie produkcyjne przesuwa koniec w 192 z 200, a szkolenie użytkowników w 180 z 200, ale ich czas prawie się nie waha, więc na liście ich nie ma.
 
 ## Obserwacje UX, oczami kierownika projektu
 

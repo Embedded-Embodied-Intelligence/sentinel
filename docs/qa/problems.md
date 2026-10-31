@@ -2,8 +2,8 @@
 
 Every problem found by the browser runs of 30–31 October 2026 (`scripts/qa_run.py`, Sentinel 1.2.0),
 by severity (Nielsen 1994): blocker 0, major 9, minor 12, cosmetic 3. All are fixed, the last eight
-in 1.2.1 (spec v2.1.1); in 1.2.2 (spec v2.1.2) QA-23 comes back at one check-in of run 1, see its
-entry. The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
+in 1.2.1 (spec v2.1.1); in 1.2.2 (spec v2.1.2) QA-23 comes back at one check-in of run 1, and 1.2.3
+(spec v2.1.3) replaces that rule, see its entry. The owner's reading copy is [raport-qa-pl.md](raport-qa-pl.md). Screenshots
 show the page after the fix unless marked "before".
 
 ## Major: all fixed, each with a regression test
@@ -193,5 +193,9 @@ implemented as §11.4 wrote it, so this one went to the architect (report, spec 
   of at least half of the late futures, without those on it in at least 95 % of all futures. The go-live
   stays off the list at 8 of the 9 check-ins of run 1. **On 16 October it tops the list again** ("9 of 10"):
   it is on the chain of 189 of 200 futures, one under the line. See "Follow-up 2" in the report.
-- Tests: `test_threats_decide_half_of_the_late_futures_but_not_nearly_all_futures`,
-  `test_the_last_task_is_no_threat_though_a_side_task_goes_around_it`.
+- Replaced in 1.2.3 (spec v2.1.3, §11.4) by duration sensitivity: the unfinished tasks whose realised
+  duration has a rank correlation of at least 0.2 with the finish day, at most 3. The go-live is named at
+  none of the 9 check-ins of run 1, and third (0.25) after the approval of 16 October. See "Follow-up 3" in
+  the report.
+- Tests: `test_threats_are_the_tasks_whose_duration_goes_with_the_finish_day`,
+  `test_threats_are_the_unfinished_tasks_and_need_a_late_future`.

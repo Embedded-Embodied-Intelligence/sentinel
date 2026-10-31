@@ -12,7 +12,7 @@ actions in a fixed grammar and explaining decisions, always through a record/rep
 never inside the simulation. The repository holds the formal model, the code, every committed
 result and the generated tables and figures of the article and the course report.
 
-> Status: release 1.2.2 (course project at Rzeszów University of Technology, 2026). The article
+> Status: release 1.2.3 (course project at Rzeszów University of Technology, 2026). The article
 > (English, LNCS) and the course report (Polish) are added to the release package.
 
 ## Architecture
@@ -184,7 +184,7 @@ would not return the same text, which is why the bundles are the reference.
 
 ## Release package
 
-`uv run sentinel release --version 1.2.2` writes `dist/sentinel-1.2.2.zip` from `git archive`
+`uv run sentinel release --version 1.2.3` writes `dist/sentinel-1.2.3.zip` from `git archive`
 of HEAD (tracked files only) with a generated `RELEASE.md`, refusing a dirty tree, and adds
 files given with `--include` (the final PDFs) under `docs/deliverables/`. It never tags or
 publishes; it prints the tag command.
