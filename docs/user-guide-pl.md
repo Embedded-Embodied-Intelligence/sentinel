@@ -136,7 +136,7 @@ Niżej:
 
 - **Co zagraża terminowi**: dla każdego niezakończonego zadania Sentinel porównuje w 200
   scenariuszach czas jego trwania, razem z wydłużeniami, z datą zakończenia projektu (korelacja
-  rang). Wymieniamy zadania o wartości co najmniej 0,2, najwyżej trzy, od najsilniejszego, np.
+  rang). Wymieniamy zadania o wartości co najmniej 0,2, najwyżej trzy, od najwyższej, np.
   „Zadanie „API katalogu produktów”. Najsilniej wpływa na datę końca: wydłużenie tego zadania
   zwykle przesuwa cały termin”. Pasek pokazuje siłę tego związku. Zadanie o małej zmienności, np.
   krótkie uruchomienie produkcyjne, rzadko trafia na listę, nawet jeśli w większości scenariuszy

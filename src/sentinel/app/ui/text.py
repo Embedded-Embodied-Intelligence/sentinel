@@ -801,13 +801,13 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "futures. A value close to 0.2 is uncertain on this number of futures, so such a task can "
         "leave the list at the next check-in though nothing changed in the project.",
         "Dla każdego niezakończonego zadania porównujemy w symulowanych scenariuszach czas jego "
-        "trwania, razem z wydłużeniami, z datą zakończenia projektu. Wymieniamy zadania, w których "
-        "dłuższy czas najwyraźniej idzie w parze z późniejszym końcem (korelacja rang co najmniej "
-        "0,2), najwyżej trzy, od najsilniejszego; pasek pokazuje tę siłę. Zadanie o małej "
-        "zmienności, np. krótkie uruchomienie produkcyjne, rzadko trafia na listę, nawet jeśli w "
-        "większości scenariuszy wyznacza datę zakończenia. Wartość bliska 0,2 jest przy tej "
-        "liczbie scenariuszy niepewna, więc takie zadanie może zniknąć z listy przy następnym "
-        "raporcie, choć w projekcie nic się nie zmieniło.",
+        "trwania, razem z wydłużeniami, z datą zakończenia projektu. Wymieniamy zadania, dla "
+        "których dłuższy czas trwania najwyraźniej idzie w parze z późniejszym końcem (korelacja "
+        "rang co najmniej 0,2), najwyżej trzy, od najsilniejszego związku; pasek pokazuje jego "
+        "siłę. Zadanie o małej zmienności, np. krótkie uruchomienie produkcyjne, rzadko trafia na "
+        "listę, nawet jeśli w większości scenariuszy wyznacza datę zakończenia. Wartość bliska 0,2 "
+        "jest przy tej liczbie scenariuszy niepewna, więc takie zadanie może zniknąć z listy przy "
+        "następnym raporcie, choć w projekcie nic się nie zmieniło.",
     ),
     "overview.checked_title": ("Sentinel checked the new status", "Sentinel sprawdził nowy stan"),
     "overview.checked": (

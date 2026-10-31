@@ -249,12 +249,12 @@ Przebieg 1 jeszcze raz, ten sam zespół i te same szanse. Pogrubiona jest liczb
 
 Poza raportami: na planie 3 zadania (testy akceptacyjne 0,26, API umów 0,21, API faktur 0,20), po cofnięciu z 10 września model danych, po zatwierdzeniu z 30 września żadne („ryzyko rozkłada się na cały plan”), po zatwierdzeniu z 16 października 3 (testy akceptacyjne 0,32, płatności w portalu 0,29, uruchomienie produkcyjne 0,25).
 
-**„Logowanie i konta” 8 października jest na liście, na pierwszym miejscu.** To zadanie urosło wtedy o 4 dni, a szansa spadła z 79 do 46 %; w 1.2.2 go tam nie było. Ten sygnał jest mocny: zadanie trafia na listę przy każdej z 40 innych sekwencji liczb losowych, a przy 4000 scenariuszy jego korelacja wynosi 0,41.
+**„Logowanie i konta” 8 października jest na liście, na pierwszym miejscu.** To zadanie urosło wtedy o 4 dni, a jedna osoba przestała być dostępna, i szansa spadła z 79 do 46 %; w 1.2.2 go tam nie było. Ten sygnał jest mocny: zadanie trafia na listę przy każdej z 40 innych sekwencji liczb losowych, a przy 4000 scenariuszy jego korelacja wynosi 0,41.
 
 **Dwa skutki, które warto znać:**
 
 - **Poza tym przypadkiem lista to w dużej mierze szum.** Przy 200 scenariuszach błąd standardowy korelacji to około 0,07, a większość zadań ma prawdziwą wartość około 0,1–0,2, tuż pod progiem. Z 19 nazw w 9 raportach tylko 5 ma przy 4000 scenariuszy wartość co najmniej 0,2, a w 4 z 9 raportów nie ma jej żadne zadanie, choć strona wymienia tam 1 lub 2. Ten sam stan projektu z innymi liczbami losowymi daje od 0 do 3 nazw. Lista zmienia się więc prawie w każdym raporcie, nawet gdy w projekcie nic się nie zmieniło; w 1.2.2 kłopot był odwrotny. Próg 0,3 to jedna stała: nazwy trafniejsze (69 % zamiast 33 %), a „ryzyko rozkłada się” w 6 z 9 raportów, „Logowanie i konta” zostaje.
-- **„Zwykle” nie sprawdza się akurat 8 października.** Wydłużenie „Logowania i kont” o 2 dni na tych samych 200 scenariuszach przesuwa koniec tylko w 86 z nich (43 %). Korelacja jest wysoka, bo czas tego zadania bardzo się waha (od 5,3 do 20 dni), a nie dlatego, że zwykle wyznacza koniec. Dla 17 z 19 nazw zdanie się sprawdza (co najmniej 100 z 200). Uruchomienie produkcyjne przesuwa koniec w 192 z 200, a szkolenie użytkowników w 180 z 200, ale ich czas prawie się nie waha, więc na liście ich nie ma.
+- **„Zwykle” nie sprawdza się akurat 8 października.** Wydłużenie „Logowania i kont” o 2 dni na tych samych 200 scenariuszach przesuwa koniec tylko w 86 z nich (43 %). Korelacja jest wysoka, bo czas tego zadania bardzo się waha (od 5,3 do 20 dni), a nie dlatego, że zwykle wyznacza koniec. Dla 17 z 19 nazw zdanie się sprawdza (co najmniej 100 z 200). Uruchomienie produkcyjne przesuwa koniec w 192 z 200, a szkolenie użytkowników w 180 z 200, ale ich czas prawie się nie waha, więc w żadnym z 9 raportów ich nie ma.
 
 ## Obserwacje UX, oczami kierownika projektu
 
