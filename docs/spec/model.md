@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.0.4)
+# Sentinel — formal model (v2.1.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -63,7 +63,11 @@ display and the explanation come from one comparison on the forecast's sampled w
 sentence when a later component decides (§11.5, §11.6, §11.7); §1–§10 are unchanged. v2.0.4
 (WP9d follow-up) answer to the WP9d question on how often that sentence appears: it is shown only
 when an alternative shown has a strictly higher chance, in whole per cent, than the chosen action
-(§11.5, §11.6, §11.7); §1–§10 are unchanged.
+(§11.5, §11.6, §11.7); §1–§10 are unchanged. v2.1.1 (WP10 follow-up) answers to the WP10 questions:
+the tasks that threaten the deadline are ranked by the difference between their shares of the late
+and of the on-time rollouts, and shown from 10 percentage points (§11.4); "No change" is listed last
+(§11.5); the wording of §11.7 stays; the simulator keeps its forecast and says what it assumes
+(§11.6); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -900,16 +904,19 @@ The critical chain of a completed rollout holds the activities from which tight 
 the sink: `i → j` is tight if `i` is a predecessor of `j` with `F_i = S_j`, or, for a `j`
 without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
 
-- **Threats** (v2.0.2, WP9b question 2). A task's share is the fraction of the completed late
-  rollouts (`C > D`) whose critical chain holds it; the tasks are ranked by their share, then
-  by duration (longer first) and id, and shown as "decides the deadline in `k` of 10 late
-  scenarios", `k` the share in tenths rounded half up (`k ≥ 1`; "in every late scenario" for a
-  share of 1, "in nearly every" for `k = 10` below 1). Left out are the *structural* tasks,
-  through which every source–sink path of the required tasks passes (optional tasks and dropped
-  ones are not on these paths, since they can be or were dropped), the tasks of zero duration,
-  and the tasks already done or dropped (nothing can change them any more). If no task remains,
-  the page says that the risk is spread across the plan; without a late rollout, that the
-  project is late in none of the simulated futures; without a deadline, there is no threat.
+- **Threats** (v2.1.1, WP10 question 1; v2.0.2, WP9b question 2). A task's *late share* `s_L` is
+  the fraction of the completed late rollouts (`C > D`) whose critical chain holds it, its *on-time
+  share* `s_O` the same fraction of the completed on-time rollouts (`C ≤ D`), and `s_O = 0` if no
+  rollout is on time. The threats are the tasks with `s_L − s_O ≥ 0.10`, compared exactly; they are
+  ranked by that difference, then by duration (longer first) and id, and shown as "decides the
+  deadline in `k` of 10 late scenarios", `k` the late share in tenths rounded half up ("in every
+  late scenario" for a share of 1, "in nearly every" for `k = 10` below 1). Left out are the
+  *structural* tasks, through which every source–sink path of the required tasks passes (optional
+  tasks and dropped ones are not on these paths, since they can be or were dropped; with an
+  on-time rollout such a task has a difference of 0 anyway), the tasks of zero duration, and the
+  tasks already done or dropped (nothing can change them any more). If no task remains, the page
+  says that the risk is spread across the plan; without a late rollout, that the project is late
+  in none of the simulated futures; without a deadline, there is no threat.
 
 ### §11.5 Recommendations and decisions
 
@@ -949,7 +956,8 @@ without such a predecessor, if `F_i = S_j` and `i` and `j` need a common role.
      can cite is on the page.
   6. *What is shown.* The alternatives shown are the runner-up first, then the others of the
      comparison by `min(p, θ_D)` and `T`, at most five, NOOP always among them; on the page they
-     are listed by their own figures after the runner-up. "No change" has the overview's chance on
+     are listed by their own figures after the runner-up, "No change" last, as the reference the
+     differences are read against (v2.1.1, WP10 question 2). "No change" has the overview's chance on
      the same project and day, and after an automatic action the overview shows the action's
      figures.
   7. *When an alternative shows a higher chance* (v2.0.4). The page says why the choice stands in
@@ -998,7 +1006,9 @@ seed being the world seed. Advanced to the end, the run equals `simulate` with t
 NoReaction is advanced on the same seed for a side-by-side comparison (common random numbers,
 §2.3). The simulator page says that it uses the application's settings (at least one temporary
 person per role, §11.2, and the one comparison of §11.5), not the setup of the studies, so a run
-can differ from their results (v2.0.2, WP9b question 3).
+can differ from their results (v2.0.2, WP9b question 3). The chance a run's page shows is the
+NoReaction forecast of §11.4 read at Sentinel's last deliberation, and the page says that it assumes
+the plan stays as it is, so a run can read 0 % and still finish on time (v2.1.1, WP10 question 4).
 
 - **Names** (v2.0.2). The roles, people and tasks of a simulator project, and the showcase project
   of the demo, are named in the user's language from a vocabulary file per language: the
