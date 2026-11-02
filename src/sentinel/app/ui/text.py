@@ -1084,7 +1084,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "W chwili zatwierdzenia to działanie nie było już możliwe, więc plan się nie zmienił.",
     ),
     "rec.why": ("Why this proposal", "Dlaczego ta propozycja"),
-    "rec.ai_title": ("In other words (AI):", "Innymi słowy (AI):"),
+    "rec.ai_title": ("In other words (AI):", "Innymi słowy (AI, po angielsku):"),
     "rec.badge.faithful": ("checked against the data", "sprawdzone z danymi"),
     "rec.badge.unfaithful": ("not confirmed by the data", "niepotwierdzone przez dane"),
     "rec.ai_invalid": (

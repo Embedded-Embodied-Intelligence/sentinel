@@ -83,7 +83,8 @@
       <p class="rec-eyebrow"><span class="caption">{{ t("rec.ai_title") }}</span>{% if ai.badge == "faithful" %}{{ ui.badge("good", t("rec.badge.faithful")) }}{% elif ai.badge == "unfaithful" %}{{ ui.badge("warn", t("rec.badge.unfaithful")) }}{% endif %}</p>
       {% if ai.text %}<p class="small">{{ ai.text }}</p>{% else %}<p class="small muted">{{ t("rec.ai_invalid") }}</p>{% endif %}
     </div>
-    {% elif llm %}
+    {% endif %}
+    {% if llm and not (rec.llm_explanation and rec.llm_explanation.text) %}
     <form class="section-sub-sm" hx-post="/projects/{{ view.id }}/recommendations/{{ rec.seq }}/explain" hx-target="#explain-area">
       <button class="btn btn-tertiary">{{ t("rec.ask_ai") }}</button>
     </form>

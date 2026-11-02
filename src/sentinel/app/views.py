@@ -4,7 +4,8 @@ effect, issues as messages. The views are pydantic models, so the JSON API and t
 of WP9b render the same data.
 """
 
-from collections.abc import Sequence
+import re
+from collections.abc import Mapping, Sequence
 from datetime import date, datetime
 from typing import Literal
 
@@ -548,6 +549,20 @@ def _crew_before(tracked: Tracked, day: int, applied: AppliedAction | None) -> t
 
 
 APPROVAL_REASONS = {"subst": "people", "overtime": "money", "descope": "scope"}
+# The model's labels in an AI text, in words (`plain_labels`); the AI writes English (spec 10).
+ACTIVITY_NUMBER = re.compile(r"\bactivity (\d+)\b")
+LABEL_WORDS = (
+    (re.compile(r"(?<=[A-Z)])\+(?=[A-Z])"), " and "),
+    (re.compile(r"\bNOOP\b"), "no change"),
+    (re.compile(r"\bSHIFT\b"), "moving tasks"),
+    (re.compile(r"\bRESEQ(?:-[MS])?\b"), "a new order of tasks"),
+    (re.compile(r"\b(?:OVERTIME|OT)\b(?:\([^)]*\))?"), "extra people for a time"),
+    (re.compile(r"\bSUBST-ALL\b"), "substitutes for everyone absent"),
+    (re.compile(r"\bSUBST\((\d+)\)"), r"a substitute on activity \1"),
+    (re.compile(r"\bSUBST\b"), "a substitute"),
+    (re.compile(r"\bDESCOPE\((\d+)\)"), r"dropping activity \1"),
+    (re.compile(r"\bDESCOPE\b"), "dropping an optional task"),
+)
 
 
 def approval_reasons(decision: Decision, autonomy: int) -> list[str]:
@@ -682,9 +697,32 @@ def recommendation_view(
         explanation=ExplanationView(
             text=template_explanation(recommendation.as_shown, language).summary, source="template"
         ),
-        llm_explanation=None if entry.explanation is None else llm_view(entry.explanation),
+        llm_explanation=None if entry.explanation is None else plain_view(project, entry),
         discarded=entry.discarded,
     )
+
+
+def plain_view(project: LiveProject, entry: RecommendationEntry) -> ExplanationView:
+    """An AI explanation as a recommendation's page shows it."""
+    assert entry.explanation is not None
+    keys = {j: key for key, j in project.activity_ids().items()}
+    nodes = project.nodes()
+    names = {j: nodes[key].name for j, key in keys.items() if key in nodes}
+    shown = llm_view(entry.explanation)
+    return shown.model_copy(update={"text": plain_labels(shown.text, names)})
+
+
+def plain_labels(text: str, names: Mapping[int, str]) -> str:
+    """An AI text in a manager's words (spec section 11.7): the record it explains names actions
+    by their labels and tasks by their numbers, and the model repeats them. Display only: the
+    check of its faithfulness has read the text as written, and the log keeps it."""
+
+    def task(match: re.Match[str]) -> str:
+        return names.get(int(match.group(1)), "a task")
+
+    for pattern, words in LABEL_WORDS:
+        text = pattern.sub(words, text)
+    return ACTIVITY_NUMBER.sub(task, text)
 
 
 def _alternatives(

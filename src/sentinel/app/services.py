@@ -714,26 +714,27 @@ class Services:
             raise AppError("llm_disabled", "unavailable")
 
         def work(progress: Progress) -> Mapping[str, Any]:
+            _, current = self._state(session, project_id)
+            found = current.recommendation(seq)
+            assert found is not None
+            before = [e for e in self.store.events(session, project_id) if e.seq < seq]
+            observation = replay(before).project.observation()
+            project = current.project
+            roles = project.require_model().role_names
+            record = found.recommendation.as_shown  # the page's rows and figures (11.5)
+            key = derive_seed(project.definition.settings.seed, "llm", "explain", str(seq))
+            # Without the project's lock: a model may take minutes, and nothing here changes.
+            explanation = self.llm.explain(
+                record, observation, planning.sentinel_params(project), roles, key
+            )
             with self._lock(project_id):
-                row, current = self._state(session, project_id)
-                found = current.recommendation(seq)
-                assert found is not None
-                before = [e for e in self.store.events(session, project_id) if e.seq < seq]
-                observation = replay(before).project.observation()
-                project = current.project
-                roles = project.require_model().role_names
-                record = found.recommendation.as_shown  # the page's rows and figures (11.5)
-                key = derive_seed(project.definition.settings.seed, "llm", "explain", str(seq))
-                explanation = self.llm.explain(
-                    record, observation, planning.sentinel_params(project), roles, key
-                )
                 self._append(
                     session,
-                    row,
+                    self._row(session, project_id),
                     "explanation",
                     Explained(recommendation=seq, explanation=explanation),
                 )
-                return explanation.model_dump(mode="json")
+            return explanation.model_dump(mode="json")
 
         return self._submit(session, project_id, "explain", work, language)
 

@@ -1,13 +1,15 @@
-"""When the AI fails (WP11; the live runs): limits for a person waiting, failures in plain words
-and a retry that reaches the model."""
+"""When the AI fails (WP11; the live runs): limits for a person waiting, failures in plain words,
+a retry that reaches the model, and an AI text in a manager's words."""
 
 import socket
 from pathlib import Path
 
 import pytest
+from ui_check import problems
 
 from sentinel.app.errors import AppError
 from sentinel.app.llm import OLLAMA_TIMEOUT_S, LlmSettings, RequestCache, failure, make_client
+from sentinel.app.views import plain_labels
 from sentinel.llm import (
     LlmCache,
     LlmError,
@@ -19,6 +21,24 @@ from sentinel.llm import (
 )
 from sentinel.llm.core import Reply, Request
 from sentinel.llm.http import TransportError, TransportTimeout, urllib_transport
+
+
+def test_an_ai_text_is_shown_in_a_managers_words() -> None:
+    names = {4: "Logowanie"}
+    text = "Keep the plan (NOOP) over SHIFT, RESEQ-M, OVERTIME(0,1,5) and SUBST(4) for activity 4."
+    shown = plain_labels(text, names)
+    assert problems(f"<p>{shown}</p>") == []
+    assert shown == (
+        "Keep the plan (no change) over moving tasks, a new order of tasks, extra people for a "
+        "time and a substitute on Logowanie for Logowanie."
+    )
+    assert plain_labels("DESCOPE(9), activity 7.", names) == "dropping a task, a task."
+    assert plain_labels("OTHER tasks, NOTES", names) == "OTHER tasks, NOTES"
+    both = plain_labels("SUBST-ALL+RESEQ-M or OT(Tester)+RESEQ-M", names)
+    assert both == (
+        "substitutes for everyone absent and a new order of tasks or extra people for a time and "
+        "a new order of tasks"
+    )
 
 
 def _request(text: str) -> Request:
