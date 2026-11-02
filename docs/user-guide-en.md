@@ -168,16 +168,17 @@ when something important changes. Click **New check-in**.
    so a mistyped year would block the next ones. A date before the project's start gets a note, but
    the check-in can be saved.
 2. With the AI on: **Write in your own words** ("Ada is away until Wednesday, the API needs 3 more
-   days") and click **Process the message**. Under **This is how I read it:** the AI lists what it
-   found (a task that grows also in days of work) and you untick what is wrong. Only the ticked
-   items are saved; a reason for an absence written in the message is left out and never stored.
-   If the AI cannot answer, the page says why (e.g. no connection or no answer in time) and you
-   fill in the form by hand.
+   days") and click **Process the message**. "Until Wednesday" means away through Wednesday and
+   back on Thursday; "back on Wednesday" means back that day. Under **This is how I read it:** the
+   AI lists what it found (a task that grows also in days of work) and you untick what is wrong.
+   Only the ticked items are saved; a reason for an absence written in the message is left out
+   and never stored. If the AI cannot answer, the page says why (e.g. no connection or no answer
+   in time) and you fill in the form by hand.
 3. **Tasks in progress and next**: for each, *Not started*, *In progress* with the share done
    (a slider or a number, in per cent) or *Done* with its finish date. Optionally, when the task
    started and who works on it (by default Sentinel assumes the plan and free people). Tasks you say
    nothing about stay as they are.
-4. **Absences** (**Add**): the person, from when and (if known) until when. **Only when, never
+4. **Absences** (**Add**): the person, from when and (if known) when they are back. **Only when, never
    why**: there is no place for the reason of an absence.
 5. **Tasks that grew** (**Add**): how many more working days a task in progress needs, including
    one you mark as *In progress* in this check-in.
@@ -349,3 +350,7 @@ and is never shown again):
 | Local model (Ollama) | free; a graphics card with 6 GB or more (or slower on the processor) | no; `docker compose --profile ollama up -d` and `docker compose --profile ollama exec ollama ollama pull qwen2.5:7b` |
 | Groq (cloud) | a free plan with daily limits | yes, to Groq (US); a key from console.groq.com |
 | OpenRouter (cloud) | pay per use (prices on openrouter.ai) | yes, to OpenRouter and the model's host |
+
+The cloud model (gpt-oss-120b, the default with Groq and OpenRouter) reads messages and writes
+explanations more accurately than the local one. For messages about real people's absences, use
+the local model or a provider that does not retain data.

@@ -342,6 +342,14 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Bez AI Sentinel działa normalnie; wyłączone są tylko wiadomości pisane własnymi "
         "słowami i wyjaśnienia AI.",
     ),
+    "settings.advice": (
+        "A cloud model (gpt-oss-120b with Groq or OpenRouter) reads messages and writes "
+        "explanations more accurately than the local one. For messages about real people's "
+        "absences, use the local model or a provider that does not retain data.",
+        "Model w chmurze (gpt-oss-120b przez Groq lub OpenRouter) dokładniej niż lokalny czyta "
+        "wiadomości i pisze wyjaśnienia. Do wiadomości o nieobecnościach prawdziwych osób używaj "
+        "modelu lokalnego albo dostawcy, który nie przechowuje danych.",
+    ),
     "settings.demo": (
         "In the demo the settings are fixed by the owner of the server.",
         "W wersji demonstracyjnej ustawienia ustala właściciel serwera.",

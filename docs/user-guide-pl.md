@@ -172,16 +172,17 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    pomyłka w roku zablokowałaby kolejne. Przy dacie sprzed startu projektu strona o tym
    przypomina, ale raport można zapisać.
 2. Jeśli AI jest włączone: **Napisz własnymi słowami** („Ani nie będzie do środy, API zajmie
-   jeszcze 3 dni”) i kliknij **Przetwórz wiadomość**. Pod **Tak to rozumiem:** AI wypisze, co
-   znalazło (wydłużone zadanie także w dniach pracy), a Ty odznaczysz to, co się nie zgadza.
-   Zapisują się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest pomijany i
-   nigdzie nie zostaje zapisany. Jeśli AI nie odpowie, strona powie dlaczego (np. brak połączenia
-   albo brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
+   jeszcze 3 dni”) i kliknij **Przetwórz wiadomość**. „Do środy” oznacza nieobecność przez całą
+   środę i powrót w czwartek, a „wraca w środę” — powrót tego dnia. Pod **Tak to rozumiem:** AI
+   wypisze, co znalazło (wydłużone zadanie także w dniach pracy), a Ty odznaczysz to, co się nie
+   zgadza. Zapisują się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest
+   pomijany i nigdzie nie zostaje zapisany. Jeśli AI nie odpowie, strona powie dlaczego (np. brak
+   połączenia albo brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
 3. **Zadania w toku i najbliższe** — przy każdym: *Nierozpoczęte*, *W toku* z wykonaną częścią
    (suwak albo liczba, w procentach) albo *Gotowe* z datą zakończenia. Opcjonalnie: kiedy zadanie
    się zaczęło i kto nad nim pracuje (domyślnie Sentinel przyjmuje plan i wolne osoby). Zadań, o
    których nic nie piszesz, nie trzeba ruszać.
-4. **Nieobecności** (**Dodaj**) — osoba, od kiedy i (jeśli wiadomo) do kiedy. **Tylko kiedy, nigdy
+4. **Nieobecności** (**Dodaj**) — osoba, od kiedy i (jeśli wiadomo) kiedy wraca. **Tylko kiedy, nigdy
    dlaczego**: nie ma tu miejsca na powód nieobecności.
 5. **Zadania, które urosły** (**Dodaj**) — ile dodatkowych dni roboczych potrzebuje zadanie w toku,
    także takie, które w tym raporcie oznaczasz jako *W toku*.
@@ -352,3 +353,7 @@ serwerze i nie jest więcej wyświetlany):
 | Model lokalny (Ollama) | bezpłatnie; karta graficzna od 6 GB pamięci (albo wolniej na procesorze) | nie; `docker compose --profile ollama up -d` i `docker compose --profile ollama exec ollama ollama pull qwen2.5:7b` |
 | Groq (chmura) | bezpłatny plan z dziennymi limitami | tak, do Groq (USA); klucz z console.groq.com |
 | OpenRouter (chmura) | płatność za użycie (cennik na openrouter.ai) | tak, do OpenRouter i dostawcy modelu |
+
+Model w chmurze (gpt-oss-120b, domyślny przy Groq i OpenRouter) dokładniej niż lokalny czyta
+wiadomości i pisze wyjaśnienia. Do wiadomości o nieobecnościach prawdziwych osób używaj modelu
+lokalnego albo dostawcy, który nie przechowuje danych.

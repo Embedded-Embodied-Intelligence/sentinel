@@ -28,6 +28,7 @@
     </label>
     {% endfor %}
   </fieldset>
+  <p class="small">{{ t("settings.advice") }}</p>
   <div class="field needs-model">
     <label for="model">{{ t("settings.model") }}</label>
     <input id="model" name="model" value="{{ view.model or '' }}" maxlength="200" autocomplete="off" aria-describedby="model-hint">
