@@ -66,7 +66,7 @@ def test_the_compose_file_and_the_image() -> None:
     compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
     app, ollama = compose["services"]["sentinel"], compose["services"]["ollama"]
     assert app["build"] == "." and "sentinel-data:/data" in app["volumes"]
-    assert app["ports"] == ["127.0.0.1:8000:8000"]
+    assert app["ports"] == ["127.0.0.1:${SENTINEL_PORT:-8000}:8000"]  # this host only
     assert "/api/health" in " ".join(app["healthcheck"]["test"])
     assert ollama["profiles"] == ["ollama"] and "profiles" not in app
     assert set(compose["volumes"]) == {"sentinel-data", "ollama-models"}

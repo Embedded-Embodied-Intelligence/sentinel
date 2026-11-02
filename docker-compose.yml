@@ -3,6 +3,7 @@
 # that signs people in.
 #
 #     docker compose up -d --build                  # the app on http://localhost:8000
+#     SENTINEL_PORT=8001 docker compose up -d       # on port 8001 if 8000 is taken
 #     docker compose --profile ollama up -d         # the app and a local AI model server
 #     docker compose --profile ollama exec ollama ollama pull qwen2.5:7b
 #     docker compose run --rm sentinel python /app/scripts/fetch_psplib.py --sets j30 j60 --root /data/psplib
@@ -15,7 +16,7 @@ services:
     image: sentinel:1.3.0
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8000:8000"  # this host only; a reverse proxy publishes it
+      - "127.0.0.1:${SENTINEL_PORT:-8000}:8000"  # this host only; a reverse proxy publishes it
     volumes:
       - sentinel-data:/data
     environment:
