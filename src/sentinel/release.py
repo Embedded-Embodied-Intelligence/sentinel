@@ -214,7 +214,9 @@ committed replay bundles are included.
 
 ## Install
 
-Requires [uv](https://docs.astral.sh/uv/); it installs Python 3.12 if missing.
+Requires [uv](https://docs.astral.sh/uv/), on Linux and macOS installed by
+`curl -LsSf https://astral.sh/uv/install.sh | sh` (Windows: see its page). uv installs Python
+3.12 if missing; the first `uv sync` downloads about 175 MB into an environment of about 550 MB.
 
 ```bash
 cd sentinel-{version}
@@ -225,9 +227,9 @@ uv run python scripts/fetch_psplib.py --sets j30 j60  # PSPLIB into data/psplib
 ## Test and check the results
 
 ```bash
-uv run pytest -q                    # unit tests (about 90 s); data tests skip without data/
+uv run pytest -q                    # about 90 s (the first run 100 s); data tests need data/
 uv run pytest -q -m "data or slow"  # tests that need PSPLIB and the slow ones (about 10 min)
-uv run sentinel reproduce --check   # every summary and paper/generated/ regenerated and compared
+uv run sentinel reproduce --check   # every summary and paper/generated/ compared (about 40 s)
 ```
 
 The pages in a browser (Playwright's Chromium; on Linux without root, its system libraries come

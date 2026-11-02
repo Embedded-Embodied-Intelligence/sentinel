@@ -77,6 +77,9 @@ def test_a_release_holds_the_tracked_files_its_notes_and_the_deliverables(
     assert "`docs/deliverables/report.pdf`" in notes and "reproduce --check" in notes
     assert "uv run sentinel ui" in notes and "docker compose up" in notes  # the app (WP9c)
     assert "`docs/user-guide-pl.md`" in notes and "`docs/deploy.md`" in notes
+    # What a grader needs that the WP11 install from the zip found missing.
+    assert "astral.sh/uv/install.sh" in notes and "--port 8001" in notes
+    assert "playwright install chromium" in notes and "`CHANGELOG.md`" in notes
     assert release.tag_command().startswith('git tag -a v1.0.0 -m "Sentinel 1.0.0" ')
     first = release.path.read_bytes()
     assert build("1.0.0", repo=repo, includes=[report]).path.read_bytes() == first

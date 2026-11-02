@@ -19,7 +19,7 @@ or behind a proxy that signs people in; never publish the non-demo mode on the i
 
 ```bash
 git clone https://github.com/Embedded-Embodied-Intelligence/sentinel.git && cd sentinel
-uv sync                       # Python 3.12 and the locked dependencies, about 300 MB
+uv sync                       # Python 3.12 and the locked dependencies: 175 MB down, 550 MB on disk
 uv run sentinel ui            # http://127.0.0.1:8000, Polish (EN at the top right)
 ```
 
