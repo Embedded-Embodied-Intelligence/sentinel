@@ -923,8 +923,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "checkin.was_due": ("was due to start on {date}", "miało ruszyć {date}"),
     "checkin.or_by_hand": ("or fill it in by hand:", "albo uzupełnij ręcznie:"),
     "checkin.message_placeholder": (
-        "For example: Bartek is ill until Monday, the API is 40 % done.",
-        "np. Bartek choruje do poniedziałku, API jest w 40 % gotowe.",
+        "For example: Bartek is away until Monday, the API will take 2 more days.",
+        "np. Bartka nie będzie do poniedziałku, a API zajmie jeszcze 2 dni dłużej.",
     ),
     "checkin.changes.zero": ("No changes", "Bez zmian"),
     "checkin.changes.one": ("{n} change", "{n} zmiana"),
@@ -1013,6 +1013,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "przed zapisaniem.",
     ),
     "checkin.message_read": ("Process the message", "Przetwórz wiadomość"),
+    "checkin.message_days.one": ("about {n} more day", "ok. {n} dzień więcej"),
+    "checkin.message_days.few": ("about {n} more days", "ok. {n} dni więcej"),
+    "checkin.message_days.many": ("about {n} more days", "ok. {n} dni więcej"),
+    "checkin.message_days_part": ("about {days} more days", "ok. {days} dnia więcej"),
     "checkin.message_nothing": (
         "The AI found nothing to report in this message.",
         "AI nie znalazło w tej wiadomości nic do zgłoszenia.",

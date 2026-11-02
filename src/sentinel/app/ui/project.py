@@ -26,7 +26,13 @@ from sentinel.app.events import (
     parse,
 )
 from sentinel.app.live import LiveProject, role_key
-from sentinel.app.models import CheckIn, ProjectDefinition
+from sentinel.app.models import (
+    AbsenceReport,
+    CheckIn,
+    NewTaskReport,
+    ProjectDefinition,
+    WorkIncreaseReport,
+)
 from sentinel.app.planning import half_up
 from sentinel.app.services import ChanceStep, JobView
 from sentinel.app.ui.charts import chance_points, forecast_strip, live_gantt
@@ -879,6 +885,7 @@ def router(ui: Ui) -> APIRouter:
             "errors": {},
             "issues": [],
             "confirm_date": None,
+            "message_kept": None if form is None else kept_message(ui, request, project_id, form),
         }
 
     @routes.get("/projects/{project_id}/checkin")
@@ -1155,16 +1162,45 @@ def message_review(ui: Ui, request: Request, view: JobView) -> Response:
     """The events the AI read from a check-in message, each to confirm (spec section 10.2)."""
     from sentinel.app.llm import MessageDraft
 
-    result = view.result or {}
-    found = MessageDraft.model_validate(result)
+    found = MessageDraft.model_validate(view.result or {})
     project_id = request.query_params.get("project", "")
-    state = ui.services.state(ui.session(request), project_id)
-    names = {key: node.name for key, node in state.project.nodes().items()}
-    people = {p.key: p.name for p in state.project.definition.team}
     return ui.page(
-        request,
-        "_message_review.html",
-        found=found,
-        names=names,
-        people=people,
+        request, "_message_review.html", **message_values(ui, request, project_id, found)
     )
+
+
+def message_values(ui: Ui, request: Request, project_id: str, found: Any) -> dict[str, Any]:
+    """What the review of a message shows: its events, the names of their tasks and people, and
+    a growth in days of work, which a manager can compare with the message."""
+    from sentinel.app.llm import work_left
+
+    project = ui.services.state(ui.session(request), project_id).project
+    left = work_left(project)
+
+    def extra_days(item: WorkIncreaseReport) -> float | None:
+        if item.factor is None or item.task not in left:
+            return None
+        return round(left[item.task] * (item.factor - 1), 1)
+
+    return {
+        "found": found,
+        "names": {key: node.name for key, node in project.nodes().items()},
+        "people": {p.key: p.name for p in project.definition.team},
+        "extra_days": extra_days,
+    }
+
+
+def kept_message(ui: Ui, request: Request, project_id: str, form: Form) -> dict[str, Any] | None:
+    """The events a manager confirmed from a message, for the form after a refused submit: the
+    review is shown again, while the message itself is not sent back."""
+    from sentinel.app.llm import MessageDraft
+
+    absences = tuple(AbsenceReport.model_validate_json(v) for v in form.getlist("msg_absence"))
+    increases = tuple(
+        WorkIncreaseReport.model_validate_json(v) for v in form.getlist("msg_increase")
+    )
+    new_tasks = tuple(NewTaskReport.model_validate_json(v) for v in form.getlist("msg_new"))
+    if not (absences or increases or new_tasks):
+        return None
+    found = MessageDraft(absences=absences, increases=increases, new_tasks=new_tasks)
+    return message_values(ui, request, project_id, found)

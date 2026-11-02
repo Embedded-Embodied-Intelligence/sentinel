@@ -37,8 +37,8 @@
       <textarea id="message" name="message" rows="4" maxlength="5000" placeholder="{{ t('checkin.message_placeholder') }}" aria-describedby="message-hint"></textarea>
       <p class="hint" id="message-hint">{{ t("checkin.message_hint") }}</p>
     </div>
-    <div><button type="button" class="btn" hx-post="/projects/{{ view.id }}/checkin/message" hx-include="#message, #date" hx-target="#message-result">{{ t("checkin.message_read") }}</button></div>
-    <div id="message-result" aria-live="polite"></div>
+    <div><button type="button" class="btn" hx-post="/projects/{{ view.id }}/checkin/message" hx-include="#message, #date" hx-target="#message-result" hx-swap="innerHTML">{{ t("checkin.message_read") }}</button></div>
+    <div id="message-result" aria-live="polite">{% if message_kept %}{% with found=message_kept.found, names=message_kept.names, people=message_kept.people, extra_days=message_kept.extra_days %}{% include "_message_review.html" %}{% endwith %}{% endif %}</div>
   </section>
   <p class="caption">{{ t("checkin.or_by_hand") }}</p>
   {% endif %}

@@ -11,7 +11,7 @@
     {% endfor %}
     {% for item in found.increases %}
     <li><label class="check"><input type="checkbox" name="msg_increase" value="{{ item.model_dump_json() }}" checked>
-      <span>{{ t("history.grows_factor", task=names.get(item.task, item.task), percent=((item.factor - 1) * 100) | round | int) }}</span></label></li>
+      <span>{{ t("history.grows_factor", task=names.get(item.task, item.task), percent=((item.factor - 1) * 100) | round | int) }}{% set days = extra_days(item) %}{% if days %} ({% if days == days | int %}{{ t.plural("checkin.message_days", days | int) }}{% else %}{{ t("checkin.message_days_part", days=t.decimal(days)) }}{% endif %}){% endif %}</span></label></li>
     {% endfor %}
     {% for item in found.new_tasks %}
     <li><label class="check"><input type="checkbox" name="msg_new" value="{{ item.model_dump_json() }}" checked>

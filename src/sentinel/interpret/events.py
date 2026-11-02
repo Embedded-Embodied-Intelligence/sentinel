@@ -131,6 +131,24 @@ ISSUE_KINDS: tuple[IssueKind, ...] = (
 )
 
 
+# What a repair round without the previous answer can still say (`withheld_issue`).
+WITHHELD_HINTS: dict[str, str] = {
+    "unknown_worker": "use a worker id of the roster; ",
+    "already_absent": "leave out people marked absent in the roster; ",
+    "impossible_day": "a return day is a day number after today's, or null; ",
+    "unknown_activity": "use an activity id of the list; ",
+    "not_running": "a work increase is only for a running activity; ",
+    "factor_below_one": "a factor is at least 1; ",
+    "non_positive_duration": "a duration is at least 1 day; ",
+    "unknown_role": "use the role names of the roster; ",
+    "crew_above_capacity": "a crew cannot need more people than the role has; ",
+    "name_in_use": "a new activity needs a name that is not in the list; ",
+    "invalid_placement": "a new activity's before must not have started and its after must not "
+    "come after its before; ",
+    "duplicate": "name every worker and activity once; ",
+}
+
+
 class AbsenceEvent(BaseModel):
     """D1 onset today: `worker` is absent; `return_day` is the announced earliest return day,
     None if the message gives none (L_low = 1). There is no field for a reason."""
@@ -758,10 +776,14 @@ def domain_issues(data: object, context: Context) -> list[DomainIssue]:
 
 def withheld_issue(detail: ErrorDetail) -> EventIssue:
     """An issue of an answer that a cache without prompts withheld (spec section 10), as a
-    repair round sends it: its kind and place, without the values of the answer."""
+    repair round sends it: its kind, its place and what the kind asks for, without the values of
+    the answer."""
     kind = detail.type if detail.type in ISSUE_KINDS else "invalid_field"
     where = detail.loc or "The answer"
-    message = f'{where} has the issue "{kind.replace("_", " ")}"; give the complete answer again.'
+    asked = WITHHELD_HINTS.get(kind, "")
+    message = (
+        f'{where} has the issue "{kind.replace("_", " ")}"; {asked}give the complete answer again.'
+    )
     event = re.fullmatch(r"events\[(\d+)\]", detail.loc)
     return EventIssue(kind, message, None if event is None else int(event[1]))
 

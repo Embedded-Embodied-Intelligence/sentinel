@@ -92,6 +92,17 @@ OLLAMA_TIMEOUT_S = 600.0
 CLOUD_TIMEOUT_S = 90.0
 CLOUD_RETRIES = 2
 CLOUD_MAX_WAIT_S = 60.0
+NEXT_DAYS = 5  # working days written out for a message of a check-in: every weekday once
+MORE_DAYS = (1, 2, 3, 5, 10)  # more days of work whose factor is written out for a running task
+WEEKDAY_WORDS = {
+    "pl": {
+        "Monday": "poniedziałek",
+        "Tuesday": "wtorek",
+        "Wednesday": "środa",
+        "Thursday": "czwartek",
+        "Friday": "piątek",
+    }
+}
 
 
 class LlmSettings(BaseModel):
@@ -425,6 +436,19 @@ class MessageDraft(BaseModel):
     issues: int = 0
 
 
+def work_left(project: LiveProject) -> dict[str, float]:
+    """The remaining work of the running tasks in days of a full crew (one decimal), as the
+    parser is shown it (spec section 10.2)."""
+    observation = project.observation()
+    world = nominal_world(observation)
+    left = {}
+    for key, j in project.activity_ids().items():
+        if observation.status[j] == RUNNING:
+            unit = max(1, sum(nominal_activity(observation, j)[1]))
+            left[key] = max(0.1, round(world.remaining[j] / unit, 1))
+    return left
+
+
 class LiveContext(Context):
     """The parser's context (spec section 10.2) for a live project's check-in message: the
     project's own role names, task names and team, and today the check-in date. The prompt
@@ -464,18 +488,23 @@ class LiveContext(Context):
         self.sink = observation.instance.sink_id
         self.successors = successor_lists(observation)
         self.by_name = {normalise_name(name): j for j, name in self.names.items()}
-        world = nominal_world(observation)
-        self.remaining = {}
-        for j, status in enumerate(observation.status):
-            if status == RUNNING and j in self.names:
-                unit = max(1, sum(nominal_activity(observation, j)[1]))
-                self.remaining[j] = max(0.1, round(world.remaining[j] / unit, 1))
+        left = work_left(project)
+        self.remaining = {ids[key]: days for key, days in left.items() if ids[key] in self.names}
 
     def render(self, message: TeamMessage) -> str:
-        """As `Context.render`, the author being the project manager, not a team member."""
+        """As `Context.render`, the author being the project manager, not a team member, and
+        with the next days and the factors of more work worked out: the rules of the prompt ask
+        for this arithmetic, which a small local model gets wrong (the WP11 runs: day 4 for the
+        Friday of day 14, 1.3 for 3 more of 5 days), and its repair rounds cannot see why."""
         observation, t = self.observation, self.day
+        words = WEEKDAY_WORDS.get(self.project.definition.settings.language, {})
+        coming = ", ".join(
+            f"day {d} {weekday_name(d)}"
+            + (f" ({words[weekday_name(d)]})" if weekday_name(d) in words else "")
+            for d in range(t + 1, t + NEXT_DAYS + 1)
+        )
         lines = [
-            f"Today is day {t}, a {weekday_name(t)}.",
+            f"Today is day {t}, a {weekday_name(t)}. The next working days: {coming}.",
             "",
             "Team roster (worker id and name per role; * marks people absent today):",
         ]
@@ -490,7 +519,14 @@ class LiveContext(Context):
         for j, name in self.names.items():
             entry = f'{j} "{name}": {STATUS_TEXT[observation.status[j]]}'
             if j in self.remaining:
-                entry += f", {self.remaining[j]:.1f} days of work left"
+                left = self.remaining[j]
+                factors = ", ".join(
+                    f"{d} day{'s' if d > 1 else ''} {(left + d) / left:.2f}" for d in MORE_DAYS
+                )
+                entry += (
+                    f", {left:.1f} days of work left; if it takes N days longer, the factor is: "
+                    f"{factors}"
+                )
             lines.append(entry)
         author = f"the project manager on day {t} ({weekday_name(t)})"
         lines += ["", f"Message from {author}:", message.text]
