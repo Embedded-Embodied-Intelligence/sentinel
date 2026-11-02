@@ -82,14 +82,14 @@ def write_log(path: Path, log: list[dict[str, Any]]) -> None:
 
 
 @contextmanager
-def server(data: Path, log: Path) -> Iterator[str]:
+def server(data: Path, log: Path, *extra: str) -> Iterator[str]:
     """`sentinel ui` on a free port with a fresh data directory, as a user starts it."""
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
     with log.open("w", encoding="utf-8") as output:
         process = subprocess.Popen(
-            ["uv", "run", "sentinel", "ui", "--port", str(port), "--data-dir", str(data)],
+            ["uv", "run", "sentinel", "ui", "--port", str(port), "--data-dir", str(data), *extra],
             cwd=ROOT,
             stdout=output,
             stderr=subprocess.STDOUT,
