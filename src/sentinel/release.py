@@ -249,7 +249,7 @@ of meeting the deadline, recommendations to approve and a simulator. `sentinel u
 the public demo with a sandbox per visitor.
 
 ```bash
-uv run sentinel ui                  # http://127.0.0.1:8000 on a laptop
+uv run sentinel ui                  # http://127.0.0.1:8000 on a laptop (port taken: --port 8001)
 docker compose up -d --build        # on a company server: the image of the Dockerfile
 ```
 
