@@ -933,7 +933,7 @@ def router(ui: Ui) -> APIRouter:
         job = services.read_message(
             ui.session(request), project_id, form.get("message"), day, ui.language(request)
         )
-        return job_progress(ui, request, job, "job.message", project=project_id)
+        return job_progress(ui, request, job, "job.message", project=project_id, note="job.slow_ai")
 
     # ---- recommendations
 
@@ -992,7 +992,12 @@ def router(ui: Ui) -> APIRouter:
     def explain(request: Request, project_id: str, seq: int) -> Response:
         job = services.explain(ui.session(request), project_id, seq, ui.language(request))
         return job_progress(
-            ui, request, job, "job.explain", next=f"/projects/{project_id}/recommendations/{seq}"
+            ui,
+            request,
+            job,
+            "job.explain",
+            next=f"/projects/{project_id}/recommendations/{seq}",
+            note="job.slow_ai",
         )
 
     # ---- history

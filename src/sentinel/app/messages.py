@@ -254,6 +254,15 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_disabled": "No AI model is set up.",
         "llm_cap": "The daily limit of AI requests is reached; try again tomorrow.",
         "llm_failed": "The AI did not answer; try again later.",
+        "llm_timeout": "The AI did not answer in time; try again, or fill in the form by hand.",
+        "llm_unreachable": "The AI provider cannot be reached; check its address on the Settings "
+        "page and that it is running.",
+        "llm_key": "The AI provider refused the API key; check it on the Settings page.",
+        "llm_model": "The AI provider cannot serve this model; check the model's name on the "
+        "Settings page.",
+        "llm_quota": "The AI provider's limit or credit has run out; try again later or top it up.",
+        "llm_too_long": "The text is too long for this AI model; shorten it.",
+        "settings_key_needed": "This provider needs an API key.",
         "demo_forbidden": "This is not available in the demo.",
         "settings_invalid": "The AI settings are not valid: {detail}.",
         "internal_error": "Something went wrong on the server; the error was logged.",
@@ -482,6 +491,16 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_disabled": "Nie skonfigurowano modelu AI.",
         "llm_cap": "Osiągnięto dzienny limit zapytań do AI; spróbuj jutro.",
         "llm_failed": "AI nie odpowiedziało; spróbuj później.",
+        "llm_timeout": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz "
+        "ręcznie.",
+        "llm_unreachable": "Nie można połączyć się z dostawcą AI; sprawdź jego adres w "
+        "Ustawieniach i czy usługa działa.",
+        "llm_key": "Dostawca AI odrzucił klucz API; sprawdź go w Ustawieniach.",
+        "llm_model": "Dostawca AI nie może użyć tego modelu; sprawdź nazwę modelu w Ustawieniach.",
+        "llm_quota": "Skończył się limit lub środki u dostawcy AI; spróbuj później albo doładuj "
+        "konto.",
+        "llm_too_long": "Tekst jest za długi dla tego modelu AI; skróć go.",
+        "settings_key_needed": "Ten dostawca wymaga klucza API.",
         "demo_forbidden": "Ta funkcja nie jest dostępna w wersji demonstracyjnej.",
         "settings_invalid": "Ustawienia AI są nieprawidłowe: {detail}.",
         "internal_error": "Na serwerze wystąpił błąd; został zapisany w dzienniku.",

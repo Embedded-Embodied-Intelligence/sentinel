@@ -30,7 +30,7 @@ JOB_LABELS = (
     "job.llm_test",
     "job.explain",
 )
-JOB_NOTES = ("sim.end_note.j30", "sim.end_note.j60")
+JOB_NOTES = ("sim.end_note.j30", "sim.end_note.j60", "job.slow_ai")
 
 
 @dataclass(frozen=True)

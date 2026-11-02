@@ -53,8 +53,12 @@ from sentinel.llm import (
     Message,
     OllamaClient,
     OpenRouterClient,
+    QuotaExhausted,
+    RequestTooLarge,
     Secret,
 )
+from sentinel.llm.core import WITHHELD
+from sentinel.llm.http import TransportError, TransportTimeout
 from sentinel.simulation.state import (
     RUNNING,
     Observation,
@@ -82,6 +86,12 @@ EXPLANATION = ExplainSettings(prompt_version="v1", max_tokens=2048)
 PROPOSALS = ProposalSettings(prompt_version="v1", max_tokens=2048)
 EVENTS = ParseSettings(prompt_version="v1", max_tokens=2048, max_repair_rounds=3)
 USAGE_KEY = "llm"
+# A person waits for these calls: a limit on one call of a local model (a first load, a slow CPU)
+# and of a cloud model, with fewer retries than a study's (config `llm_timeout_s`; docs/deploy.md).
+OLLAMA_TIMEOUT_S = 600.0
+CLOUD_TIMEOUT_S = 90.0
+CLOUD_RETRIES = 2
+CLOUD_MAX_WAIT_S = 60.0
 
 
 class LlmSettings(BaseModel):
@@ -121,15 +131,24 @@ class LlmSettingsUpdate(BaseModel):
 ClientFactory = Callable[[LlmSettings, LlmCache], LlmClient]
 
 
-def make_client(settings: LlmSettings, cache: LlmCache) -> LlmClient:
+def make_client(
+    settings: LlmSettings, cache: LlmCache, *, timeout_s: float | None = None
+) -> LlmClient:
     """The client of the configured provider over `cache` (`auto`: replay a cached answer, else
-    call); the key is passed as a `Secret`, never read from `.env` here."""
+    call), with the limits of a person waiting (`timeout_s` replaces the limit on one call); the
+    key is passed as a `Secret`, never read from `.env` here."""
     model = settings.model or DEFAULT_MODELS[settings.provider]
     key = Secret(settings.api_key) if settings.api_key else None
     match settings.provider:
         case "ollama":
             return OllamaClient(
-                model, num_ctx=12288, host=settings.host, cache=cache, mode="auto", env_file=None
+                model,
+                num_ctx=12288,
+                host=settings.host,
+                timeout_s=timeout_s or OLLAMA_TIMEOUT_S,
+                cache=cache,
+                mode="auto",
+                env_file=None,
             )
         case "groq":
             return GroqClient(
@@ -138,8 +157,11 @@ def make_client(settings: LlmSettings, cache: LlmCache) -> LlmClient:
                 extra=GROQ_OPTIONS,
                 api_key=key,
                 env_file=None,
+                max_retries=CLOUD_RETRIES,
                 cache=cache,
                 mode="auto",
+                timeout_s=timeout_s or CLOUD_TIMEOUT_S,
+                max_wait_s=CLOUD_MAX_WAIT_S,
             )
         case "openrouter":
             return OpenRouterClient(
@@ -148,10 +170,43 @@ def make_client(settings: LlmSettings, cache: LlmCache) -> LlmClient:
                 extra={"provider": OPENROUTER_PROVIDER, **GROQ_OPTIONS},
                 api_key=key,
                 env_file=None,
+                max_retries=CLOUD_RETRIES,
                 cache=cache,
                 mode="auto",
+                timeout_s=timeout_s or CLOUD_TIMEOUT_S,
+                max_wait_s=CLOUD_MAX_WAIT_S,
             )
     raise AppError("llm_disabled", "unavailable")
+
+
+def failure(error: LlmError) -> AppError:
+    """A failed call as a manager reads it: what went wrong and what can be done about it."""
+    code = "llm_failed"
+    if isinstance(error, QuotaExhausted):
+        code = "llm_quota"
+    elif isinstance(error, RequestTooLarge):
+        code = "llm_too_long"
+    elif isinstance(error, TransportTimeout):
+        code = "llm_timeout"
+    elif isinstance(error, TransportError):
+        code = "llm_unreachable"
+    elif error.status in (401, 403):
+        code = "llm_key"
+    elif error.status in (400, 404):
+        code = "llm_model"
+    return AppError(code, "unavailable", detail=type(error).__name__)
+
+
+class RequestCache(LlmCache):
+    """The application's cache: an answer stored as invalid (`withhold_invalid`) is known only to
+    the request that got it, so that asking again reaches the model, which a retry of a study
+    must not do. Within a request its repair rounds replay it as usual."""
+
+    def _load(self) -> None:
+        super()._load()
+        self._entries = {
+            key: entry for key, entry in self._entries.items() if WITHHELD not in entry.reply.meta
+        }
 
 
 class LlmService:
@@ -203,7 +258,7 @@ class LlmService:
         current = self.settings()
         key = current.api_key if change.api_key is None else (change.api_key or None)
         if change.provider in ("groq", "openrouter") and not key:
-            raise AppError("settings_invalid", detail="this provider needs an API key")
+            raise AppError("settings_key_needed")
         settings = LlmSettings(
             provider=change.provider,
             model=change.model or None,
@@ -234,7 +289,7 @@ class LlmService:
         if not self.store.use(USAGE_KEY, cap):
             raise AppError("llm_cap", "limit")
         settings = self.settings()
-        cache = LlmCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
+        cache = RequestCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
         return self.factory(settings, cache)
 
     def extract(self, text: str, seed: int) -> Session:
@@ -243,7 +298,7 @@ class LlmService:
         try:
             return repair(client, text, seed=seed, settings=EXTRACTION)
         except LlmError as exc:
-            raise AppError("llm_failed", "unavailable", detail=type(exc).__name__) from exc
+            raise failure(exc) from exc
 
     def propose(
         self,
@@ -281,7 +336,7 @@ class LlmService:
         try:
             response = explain(client, rendered, seed=seed, settings=EXPLANATION)
         except LlmError as exc:
-            raise AppError("llm_failed", "unavailable", detail=type(exc).__name__) from exc
+            raise failure(exc) from exc
         faith = check(response.parsed, record, rendered)
         model = getattr(client, "model", "?")
         facts = tuple(FactCheck(kind=f.kind, correct=f.correct) for f in faith.facts)
@@ -310,7 +365,7 @@ class LlmService:
         try:
             session = parse(client, message, context, seed=seed, settings=EVENTS)
         except LlmError as exc:
-            raise AppError("llm_failed", "unavailable", detail=type(exc).__name__) from exc
+            raise failure(exc) from exc
         final = session.final
         if final.response.value is None and not final.reading.events:
             detail = "no answer" if final.response.error is None else final.response.error.kind
@@ -330,7 +385,7 @@ class LlmService:
         try:
             response = client.complete(messages, schema=Ping, seed=0, max_tokens=512)
         except LlmError as exc:
-            raise AppError("llm_failed", "unavailable", detail=type(exc).__name__) from exc
+            raise failure(exc) from exc
         if response.value is None:
             reason = "no answer" if response.error is None else response.error.kind
             raise AppError("llm_failed", "unavailable", detail=reason)

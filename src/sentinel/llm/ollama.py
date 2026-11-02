@@ -141,7 +141,10 @@ class OllamaClient(BaseClient):
             timeout=timeout,
         )
         if reply.status != 200:
-            raise LlmError(f"Ollama {path} returned HTTP {reply.status}: {reply.snippet()}")
+            raise LlmError(
+                f"Ollama {path} returned HTTP {reply.status}: {reply.snippet()}",
+                status=reply.status,
+            )
         data = reply.json()
         if not isinstance(data, dict):
             raise LlmError(f"Ollama {path} returned {type(data).__name__}, expected an object")

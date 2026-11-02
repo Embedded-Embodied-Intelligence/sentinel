@@ -37,7 +37,11 @@ _ISSUE_KIND = re.compile(r"[a-z][a-z0-9_]*")  # a domain issue kind is a code, n
 
 class LlmError(RuntimeError):
     """A backend could not answer (transport, HTTP status, protocol or cache); never raised for
-    an answer that violates its schema."""
+    an answer that violates its schema. `status` is the HTTP status of a refused request."""
+
+    def __init__(self, message: str, *, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 class CacheMiss(LlmError):

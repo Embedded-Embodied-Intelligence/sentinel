@@ -256,7 +256,7 @@ def test_llm_settings_are_kept_server_side_and_never_returned(
     keyless = test.put(
         "/api/settings/llm", json={"provider": "openrouter", "api_key": ""}, headers=csrf
     )
-    assert keyless.status_code == 422 and keyless.json()["error"]["code"] == "settings_invalid"
+    assert keyless.status_code == 422 and keyless.json()["error"]["code"] == "settings_key_needed"
 
 
 EXTRACTION = {

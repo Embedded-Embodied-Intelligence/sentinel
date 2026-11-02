@@ -113,6 +113,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "job.advance": ("Simulating the next days…", "Symuluję kolejne dni…"),
     "job.simulator": ("Preparing the example project…", "Przygotowuję przykładowy projekt…"),
     "job.extract": ("The AI is reading the description…", "AI czyta opis…"),
+    "job.slow_ai": (
+        "A local model can take a few minutes; the page will update by itself.",
+        "Model lokalny może potrzebować kilku minut; strona odświeży się sama.",
+    ),
     "job.message": ("The AI is reading the message…", "AI czyta wiadomość…"),
     "job.llm_test": ("Testing the connection…", "Sprawdzam połączenie…"),
     "job.explain": ("The AI is writing an explanation…", "AI pisze wyjaśnienie…"),

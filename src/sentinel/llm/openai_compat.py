@@ -198,6 +198,7 @@ class OpenAICompatibleClient(BaseClient):
         while True:
             started = self._clock()
             status: int | None = None
+            unreachable: type[TransportError] = TransportError
             try:
                 reply: HttpReply | None = self.transport(
                     "POST", self.url, body=body, headers=headers, timeout=self.timeout_s
@@ -205,7 +206,7 @@ class OpenAICompatibleClient(BaseClient):
                 failure = f"HTTP {reply.status}: {reply.snippet()}" if reply else ""
                 status = None if reply is None else self.status_of(reply)
             except TransportError as exc:
-                reply, failure = None, str(exc)
+                reply, failure, unreachable = None, str(exc), type(exc)
             latency = self._clock() - started
             if reply is not None and status == 200:
                 result = self._reply(reply, latency, attempt)
@@ -235,7 +236,7 @@ class OpenAICompatibleClient(BaseClient):
                 raise RequestTooLarge(message)
             if reply is not None and status not in self.retryable:
                 self._stop(reply, status, message)
-                raise LlmError(message)
+                raise LlmError(message, status=status)
             wait = self._wait(reply, status, attempt)
             if status == 429 and wait > self.max_wait_s:
                 raise QuotaExhausted(
@@ -248,7 +249,10 @@ class OpenAICompatibleClient(BaseClient):
                     raise QuotaExhausted(
                         f"{message}; still rate limited after {attempt + 1} attempts", wait
                     )
-                raise LlmError(f"{message}; gave up after {attempt + 1} attempts")
+                given_up = f"{message}; gave up after {attempt + 1} attempts"
+                if reply is None:
+                    raise unreachable(given_up)
+                raise LlmError(given_up, status=status)
             attempt += 1
             self.retries += 1
             self.sleep(wait)

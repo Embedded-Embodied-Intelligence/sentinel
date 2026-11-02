@@ -6,7 +6,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveFloat, PositiveInt
 
 from sentinel.data.psplib_loader import DEFAULT_ROOT
 from sentinel.simulation.baselines import DEFAULT_CACHE_ROOT
@@ -47,6 +47,7 @@ class AppConfig(BaseModel):
     secure_cookies: bool = False
     trust_proxy: bool = False
     llm: Literal["on", "capped", "off"] = "on"
+    llm_timeout_s: PositiveFloat | None = None  # one AI call; None: by provider (`app.llm`)
     showcase: bool = True
     psplib_root: Path = DEFAULT_ROOT
     baseline_cache: Path = DEFAULT_CACHE_ROOT

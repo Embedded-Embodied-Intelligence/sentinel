@@ -17,6 +17,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from functools import partial
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, ValidationError
@@ -187,7 +188,7 @@ class Services:
             self.store,
             mode=config.llm,
             daily_cap=config.limits.llm_calls_per_day,
-            factory=llm_factory or make_client,
+            factory=llm_factory or partial(make_client, timeout_s=config.llm_timeout_s),
         )
         self._guard = threading.Lock()
         self._cancelled: set[str] = set()  # simulator jobs to stop after their current day

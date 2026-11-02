@@ -5,6 +5,7 @@ status comes back as an `HttpReply`, while an unreachable server or a timeout ra
 `TransportError`. Tests replace the transport with a scripted one, so they need no network.
 """
 
+import http.client
 import json
 import urllib.error
 import urllib.request
@@ -18,6 +19,10 @@ from sentinel.llm.core import LlmError
 
 class TransportError(LlmError):
     """The server could not be reached or did not answer in time."""
+
+
+class TransportTimeout(TransportError):
+    """The server did not answer in time."""
 
 
 @dataclass(frozen=True)
@@ -58,17 +63,19 @@ class Transport(Protocol):
 def urllib_transport(
     method: str, url: str, *, body: bytes | None, headers: Mapping[str, str], timeout: float
 ) -> HttpReply:
-    """`Transport` with `urllib.request`; the message of a TransportError has no headers."""
-    request = urllib.request.Request(url, data=body, headers=dict(headers), method=method)
+    """`Transport` with `urllib.request`; the message of a TransportError has no headers. A
+    server that is not an HTTP server and an address that is not a URL count as unreachable."""
     try:
+        request = urllib.request.Request(url, data=body, headers=dict(headers), method=method)
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return HttpReply(response.status, response.read(), _lower(response.headers))
     except urllib.error.HTTPError as exc:
         with exc:
             return HttpReply(exc.code, exc.read(), _lower(exc.headers))
-    except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+    except (OSError, http.client.HTTPException, ValueError) as exc:
         reason = getattr(exc, "reason", exc)
-        raise TransportError(f"{method} {url} failed: {reason}") from None
+        kind = TransportTimeout if isinstance(reason, TimeoutError) else TransportError
+        raise kind(f"{method} {url} failed: {reason}") from None
 
 
 def _lower(headers: EmailMessage | Mapping[str, str] | None) -> dict[str, str]:
