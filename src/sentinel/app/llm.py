@@ -497,6 +497,8 @@ class LiveContext(Context):
         for this arithmetic, which a small local model gets wrong (the WP11 runs: day 4 for the
         Friday of day 14, 1.3 for 3 more of 5 days), and its repair rounds cannot see why."""
         observation, t = self.observation, self.day
+        # SPEC-Q: is "ill until Friday" back on Friday or after it? Spec 10.2 and the prompt read a
+        # weekday as the return day; gpt-oss-120b reads Monday, qwen2.5:7b Friday (WP11 report).
         words = WEEKDAY_WORDS.get(self.project.definition.settings.language, {})
         coming = ", ".join(
             f"day {d} {weekday_name(d)}"

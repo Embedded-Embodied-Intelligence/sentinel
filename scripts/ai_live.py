@@ -364,7 +364,9 @@ def message_flow(d: Driver, project: str) -> None:
         "#message-result .review-block, #message-result .row-list-empty, #message-result .callout"
     ).first.wait_for(timeout=WAIT)
     seconds = round(time.perf_counter() - began, 1)
-    d.shot("message_read", full=True)
+    # In a full-page shot the sticky bar of the form would cover the review.
+    page.locator("#message").evaluate("e => e.scrollIntoView({block: 'start'})")
+    d.shot("message_read")
     items = [text_of(i) for i in page.locator("#message-result .confirm-list li").all()]
     values = {
         name: [
