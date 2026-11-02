@@ -196,7 +196,8 @@ def release_notes(
 
 Research prototype of a goal-driven project management agent (course project, Rzeszów
 University of Technology, 2026). This package is `git archive` of commit `{commit}`
-({stamp.date().isoformat()}) with this file added; it holds tracked files only.
+({stamp.date().isoformat()}) with this file added; it holds tracked files only. What each
+release changed: `CHANGELOG.md`.
 
 ## Contents
 
@@ -224,10 +225,17 @@ uv run python scripts/fetch_psplib.py --sets j30 j60  # PSPLIB into data/psplib
 ## Test and check the results
 
 ```bash
-uv run pytest -q                    # unit tests (about 85 s); data tests skip without data/
+uv run pytest -q                    # unit tests (about 90 s); data tests skip without data/
 uv run pytest -q -m "data or slow"  # tests that need PSPLIB and the slow ones (about 10 min)
-uv run pytest -q -m e2e             # the pages in a browser (Playwright's Chromium, about 2 min)
 uv run sentinel reproduce --check   # every summary and paper/generated/ regenerated and compared
+```
+
+The pages in a browser (Playwright's Chromium; on Linux without root, its system libraries come
+from `scripts/setup_e2e_libs.sh`, see `docs/deploy.md`, section 4):
+
+```bash
+uv run playwright install chromium  # once
+uv run pytest -q -m e2e             # about 7 min
 ```
 
 `reproduce --check` recomputes nothing and calls no LLM; `uv run sentinel reproduce --commands`
@@ -250,6 +258,8 @@ docker compose up -d --build        # on a company server: the image of the Dock
 - `docs/deploy.md`: the laptop, the company server (Docker, `docker-compose.yml` with an
   optional local AI) and the public demo behind Tailscale Funnel (`scripts/run_demo.sh`).
 - `docs/usability/`: the usability test protocol (Polish) and its results template.
+- `docs/qa/`: the QA of the pages (`raport-qa-pl.md`) and of the AI features with real models
+  (`docs/qa/ai/`, `scripts/ai_live.py`).
 
 ## Example cockpits
 

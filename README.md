@@ -1,5 +1,34 @@
 # Sentinel — AI-driven project management
 
+Sentinel tells a project manager how likely the project is to finish by its deadline, which
+tasks threaten that and which change would help most. It simulates the project's possible
+futures and tries every candidate change (moving tasks, a new order of tasks, a substitute,
+extra people for a time) on the same futures before it recommends one; the manager approves,
+rejects or postpones it. An optional AI model reads a project described in words or a status
+message and explains a recommendation, but it never decides. The pages are in Polish and
+English; the data stay on the server Sentinel runs on (a cloud AI model, if chosen, receives
+only the text it reads).
+
+![The overview of a project: the chance of meeting the deadline, the finish dates, the budget](docs/ui/en_overview.png)
+
+**Three ways to run it** (details in the [deploy guide](docs/deploy.md)):
+
+| Where | Commands | Then |
+| --- | --- | --- |
+| A laptop | install [uv](https://docs.astral.sh/uv/), then `uv sync` and `uv run sentinel ui` | open <http://127.0.0.1:8000> |
+| A company server | `docker compose up -d --build`; a local AI model too: `--profile ollama` | port 8000 of the server, published by a proxy that signs people in |
+| The public demo | `scripts/run_demo.sh start`: `sentinel ui --demo` behind Tailscale Funnel | a sandbox per visitor, deleted after 24 hours |
+
+**How to use it:** the user guides in [Polish](docs/user-guide-pl.md) and
+[English](docs/user-guide-en.md), with screenshots and a section for IT. What each release
+changed: [CHANGELOG.md](CHANGELOG.md). The release zip explains its own installation in
+`RELEASE.md`.
+
+> Status: release 1.3.0 (course project at Rzeszów University of Technology, 2026). The article
+> (English, LNCS) and the course report (Polish) are added to the release package.
+
+## Research
+
 Sentinel is a research prototype of a goal-driven agent that manages a project under
 uncertainty. It watches a project simulated on PSPLIB instances read as software projects
 (activities, a team of four IT roles, absences, work increases and new activities), forecasts
@@ -11,9 +40,6 @@ model has three narrow roles only: turning team messages into events, proposing 
 actions in a fixed grammar and explaining decisions, always through a record/replay cache and
 never inside the simulation. The repository holds the formal model, the code, every committed
 result and the generated tables and figures of the article and the course report.
-
-> Status: release 1.3.0 (course project at Rzeszów University of Technology, 2026). The article
-> (English, LNCS) and the course report (Polish) are added to the release package.
 
 ## Architecture
 

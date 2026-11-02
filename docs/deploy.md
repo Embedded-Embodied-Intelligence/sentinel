@@ -70,6 +70,16 @@ is stored server-side and never shown again.
 For a GPU in the `ollama` container, uncomment the `deploy:` block in `docker-compose.yml`
 (needs the NVIDIA Container Toolkit).
 
+A person waits for these answers, so one AI call may take at most 600 s with Ollama and 90 s
+(with two retries) with Groq or OpenRouter; `llm_timeout_s = 120` in the app's config file
+(`sentinel ui --config …`) sets one limit for every provider. Measured in WP11 on the 4-core
+server without a GPU (`docs/qa/ai/`): `qwen2.5:7b` loads in about 17 s on the first call, then
+reads a 12-task description in about 50 s, a status message in about 7 s and writes an
+explanation in about 8 s; `gpt-oss-120b` on Groq answers each in 1–5 s, and the three flows
+cost well under 0.01 USD through OpenRouter. When a call fails, the page says why (the key, the
+model's name, the address, a timeout, the provider's limit or a text too long) and the form
+keeps what was written.
+
 ### Docker in WP9c
 
 Docker was not installed on the build server, so the image was not built in the work package.
@@ -169,5 +179,8 @@ libasound2t64` does the same system-wide.
 | Visitors get "Too many requests" together | The limits see one address: run `check`; is `trust_proxy = true` in `configs/app_demo.toml`? |
 | `tailscale funnel`: Access denied | See *Once*, step 2 |
 | The simulator page says it is unavailable | The PSPLIB data are missing: `uv run python scripts/fetch_psplib.py --sets j30 j60` (Docker: see section 2) |
+| "The AI did not answer in time" | A local model on a processor: the first call loads it, a description takes about a minute. Try again; on a slow machine raise `llm_timeout_s` |
+| "The AI provider cannot be reached" | The address in **Settings**: empty for Ollama on the same machine, `http://ollama:11434` in Docker; is `ollama serve` (or the `ollama` container) running? |
+| "The AI provider refused the API key" or "cannot serve this model" | A new key, or the model's exact name (`openai/gpt-oss-120b` on OpenRouter), in **Settings**; **Test the connection** checks both |
 | The container is "unhealthy" | `docker compose logs sentinel`; the volume must be writable by the container's user (uid 10001) |
 | The e2e tests skip: "Chromium … cannot start" | Section 4 |

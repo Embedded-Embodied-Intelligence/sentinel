@@ -87,7 +87,10 @@ You can enter the tasks in three ways (three cards at the top):
 
 1. **Describe in words**: write in your own words what has to be done, by whom and for how
    long; the AI reads the tasks and the team, and you check them before using them (needs an
-   AI to be set up).
+   AI to be set up). The AI uses the role names of step 2: a role nobody in the team has is named
+   above the list and marked *(nobody in the team)* in the table, and the plan waits until you
+   change those people or add the role to the team. A local model may need a minute or two; the
+   page updates by itself.
 2. **Import a spreadsheet**: download the **tasks template (CSV)**, fill it in with Excel,
    LibreOffice or Google Sheets and upload it. One row is one task:
 
@@ -164,9 +167,12 @@ when something important changes. Click **New check-in**.
    the field. A date more than a week from today needs a confirmation: check-ins follow each other,
    so a mistyped year would block the next ones. A date before the project's start gets a note, but
    the check-in can be saved.
-2. With the AI on: **Write in your own words** ("Ada is ill until Wednesday, the API needs 3 more
+2. With the AI on: **Write in your own words** ("Ada is away until Wednesday, the API needs 3 more
    days") and click **Process the message**. Under **This is how I read it:** the AI lists what it
-   found and you untick what is wrong. Only the ticked items are saved.
+   found (a task that grows also in days of work) and you untick what is wrong. Only the ticked
+   items are saved; a reason for an absence written in the message is left out and never stored.
+   If the AI cannot answer, the page says why (e.g. no connection or no answer in time) and you
+   fill in the form by hand.
 3. **Tasks in progress and next**: for each, *Not started*, *In progress* with the share done
    (a slider or a number, in per cent) or *Done* with its finish date. Optionally, when the task
    started and who works on it (by default Sentinel assumes the plan and free people). Tasks you say
@@ -214,6 +220,11 @@ next criterion decides, e.g. how many dates change. If another option in the tab
 higher chance (in whole per cent) than the recommended one, the page explains it in one sentence,
 e.g. "Similar chance (the difference is within the uncertainty); the option that changes fewer
 dates was chosen".
+
+With the AI on, **Explain in other words (AI)** asks the model to retell the recommendation in
+its own words, in English. The text is checked against the same figures and marked *checked
+against the data* or *not confirmed by the data*; it never changes the decision. If the model
+gave no usable explanation, the button lets you ask again.
 
 A recommendation opens on its own page without the menu: the page is the review before the decision.
 You decide at the bottom: the approve button names the change (e.g. **Approve the substitute**),

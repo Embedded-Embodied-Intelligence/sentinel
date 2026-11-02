@@ -89,6 +89,10 @@ Zadania możesz wprowadzić na trzy sposoby (trzy karty u góry):
 
 1. **Opisz słowami** — napisz własnymi słowami, co trzeba zrobić, kto i jak długo; AI
    odczyta zadania i zespół, a Ty je sprawdzisz przed użyciem (wymaga skonfigurowanego AI).
+   AI używa nazw ról z kroku 2: rola, której nikt w zespole nie ma, jest wymieniona nad listą i
+   oznaczona w tabeli *(nikt w zespole)*, a plan powstanie dopiero, gdy zmienisz te osoby albo
+   dodasz rolę do zespołu. Model lokalny może potrzebować minuty lub dwóch; strona odświeży się
+   sama.
 2. **Zaimportuj arkusz** — pobierz **szablon zadań (CSV)**, wypełnij go w Excelu, LibreOffice albo
    Arkuszach Google i wgraj. Jeden wiersz to jedno zadanie:
 
@@ -167,9 +171,12 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    słownie. Data ponad tydzień od dziś wymaga potwierdzenia: raporty następują po sobie, więc
    pomyłka w roku zablokowałaby kolejne. Przy dacie sprzed startu projektu strona o tym
    przypomina, ale raport można zapisać.
-2. Jeśli AI jest włączone: **Napisz własnymi słowami** („Ania choruje do środy, API zajmie jeszcze
-   3 dni”) i kliknij **Przetwórz wiadomość**. Pod **Tak to rozumiem:** AI wypisze, co znalazło, a
-   Ty odznaczysz to, co się nie zgadza. Zapisują się tylko zaznaczone pozycje.
+2. Jeśli AI jest włączone: **Napisz własnymi słowami** („Ani nie będzie do środy, API zajmie
+   jeszcze 3 dni”) i kliknij **Przetwórz wiadomość**. Pod **Tak to rozumiem:** AI wypisze, co
+   znalazło (wydłużone zadanie także w dniach pracy), a Ty odznaczysz to, co się nie zgadza.
+   Zapisują się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest pomijany i
+   nigdzie nie zostaje zapisany. Jeśli AI nie odpowie, strona powie dlaczego (np. brak połączenia
+   albo brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
 3. **Zadania w toku i najbliższe** — przy każdym: *Nierozpoczęte*, *W toku* z wykonaną częścią
    (suwak albo liczba, w procentach) albo *Gotowe* z datą zakończenia. Opcjonalnie: kiedy zadanie
    się zaczęło i kto nad nim pracuje (domyślnie Sentinel przyjmuje plan i wolne osoby). Zadań, o
@@ -217,6 +224,11 @@ Na tych samych liczbach opiera się decyzja i oba wyjaśnienia. Gdy szanse są p
 kolejne kryterium, np. to, ile terminów się zmienia. Jeśli inna możliwość w tabeli ma wtedy wyższą
 szansę (w pełnych procentach) niż polecana, strona wyjaśnia to jednym zdaniem, np. „Podobna szansa
 (różnica w granicach niepewności); wybrano wariant, który zmienia mniej terminów”.
+
+Gdy AI jest włączone, **Wyjaśnij innymi słowami (AI)** prosi model, by opowiedział rekomendację
+własnymi słowami, po angielsku. Tekst jest sprawdzany z tymi samymi liczbami i oznaczony jako
+*sprawdzone z danymi* albo *niepotwierdzone przez dane*; nigdy nie zmienia decyzji. Jeśli model nie
+podał użytecznego wyjaśnienia, ten sam przycisk pozwala zapytać ponownie.
 
 Rekomendacja otwiera się na osobnej stronie bez menu: ta strona jest przeglądem przed decyzją.
 Decydujesz na dole: przycisk zatwierdzania nazywa zmianę (np. **Zatwierdź zastępstwo**), **Odrzuć**

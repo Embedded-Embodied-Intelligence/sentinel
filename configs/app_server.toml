@@ -5,3 +5,4 @@ data_dir = "/data"                         # projects, settings, keys and caches
 workers = 2                                # background job threads
 psplib_root = "/data/psplib"               # the simulator's example projects, fetched once
 baseline_cache = "/data/derived/baselines" # their original plans, computed on first use
+# llm_timeout_s = 120                     # one AI call at most, s (default 600 Ollama, 90 cloud)

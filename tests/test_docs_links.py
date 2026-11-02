@@ -1,5 +1,6 @@
 """The guides of WP9c point to files and sections that exist: the user guides (Polish and
-English, with their screenshots), the deployment guide, the usability protocol and the QA report."""
+English, with their screenshots), the deployment guide, the usability protocol, the QA report,
+and (WP11) the README and the changelog."""
 
 import re
 from pathlib import Path
@@ -14,6 +15,8 @@ GUIDES = (
     "docs/usability/protocol-pl.md",
     "docs/usability/results-template.md",
     "docs/qa/raport-qa-pl.md",
+    "README.md",
+    "CHANGELOG.md",
 )
 LINK = re.compile(r"(!?)\[[^\]]*\]\(([^)\s]+)\)")
 IMAGE = re.compile(r'<img src="([^"]+)"')
@@ -40,7 +43,7 @@ def test_links_and_images_exist(guide: str) -> None:
             continue
         file, _, anchor = target.partition("#")
         linked = (path.parent / file).resolve() if file else path
-        missing = not linked.is_file()
+        missing = not (linked.is_file() or (not image and linked.is_dir()))
         unknown = bool(anchor) and linked.suffix == ".md" and anchor not in _headings(linked)
         if missing or unknown or (image and linked.suffix != ".png"):
             broken.append(target)
