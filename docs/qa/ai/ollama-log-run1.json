@@ -1,0 +1,524 @@
+[
+ {
+  "kind": "settings_test",
+  "attempt": "wrong_model",
+  "text": "Dostawca AI nie może użyć tego modelu; sprawdź nazwę modelu w Ustawieniach.",
+  "seconds": 1.8
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "wrong_address",
+  "text": "Nie można połączyć się z dostawcą AI; sprawdź jego adres w Ustawieniach i czy usługa działa.",
+  "seconds": 1.7
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "right",
+  "text": "Model qwen2.5:7b odpowiedział. Połączenie działa.",
+  "seconds": 17.3
+ },
+ {
+  "kind": "extraction",
+  "label": "list",
+  "seconds": 47.8,
+  "callout": "Znalezione zadania: 12 Sprawdź, czy wszystko się zgadza; poprawisz to w tabeli.",
+  "rows": [
+   {
+    "name": "Warsztat z klientem",
+    "days": 3,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": []
+   },
+   {
+    "name": "Specyfikacja wymagań",
+    "days": 4,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "Warsztat z klientem"
+    ]
+   },
+   {
+    "name": "Model danych",
+    "days": 3,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Specyfikacja wymagań"
+    ]
+   },
+   {
+    "name": "Logowanie",
+    "days": 6,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Model danych"
+    ]
+   },
+   {
+    "name": "Profil klienta",
+    "days": 5,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Model danych"
+    ]
+   },
+   {
+    "name": "Lista faktur",
+    "days": 5,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Model danych"
+    ]
+   },
+   {
+    "name": "Płatności online",
+    "days": 7,
+    "crew": {
+     "Programista": 2
+    },
+    "after": [
+     "Logowanie",
+     "Lista faktur"
+    ]
+   },
+   {
+    "name": "Powiadomienia e-mail",
+    "days": 3,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Profil klienta"
+    ]
+   },
+   {
+    "name": "Testy integracyjne",
+    "days": 5,
+    "crew": {
+     "Programista": 1,
+     "Tester": 1
+    },
+    "after": [
+     "Płatności online",
+     "Powiadomienia e-mail"
+    ]
+   },
+   {
+    "name": "Dokumentacja użytkownika",
+    "days": 3,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "Płatności online"
+    ]
+   },
+   {
+    "name": "Szkolenie klienta",
+    "days": 2,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "Dokumentacja użytkownika"
+    ]
+   },
+   {
+    "name": "Wdrożenie produkcyjne",
+    "days": 2,
+    "crew": {
+     "Programista": 1,
+     "Tester": 1
+    },
+    "after": [
+     "Testy integracyjne",
+     "Szkolenie klienta"
+    ]
+   }
+  ],
+  "score": {
+   "stated": 12,
+   "tasks_returned": 12,
+   "found": 12,
+   "durations_right": 12,
+   "crews_right": 12,
+   "predecessors_right": 12,
+   "extra_tasks": [],
+   "differences": []
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "list plan",
+  "chance": "49 %",
+  "badge": "Termin zagrożony",
+  "delta": "",
+  "deadline": "pt. 20 lis",
+  "likely": "pon. 23 lis 1 dzień roboczy po terminie",
+  "bad": "czw. 3 gru 9 dni roboczych po terminie",
+  "budget": "0 z 73 jednostek kosztu (osobodni) Wydano 0 % Oczekiwany koszt: > 99 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "extraction",
+  "label": "prose",
+  "seconds": 52.9,
+  "callout": "Znalezione zadania: 12 Sprawdź, czy wszystko się zgadza; poprawisz to w tabeli.",
+  "rows": [
+   {
+    "name": "wywiady z serwisantami",
+    "days": 2,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": []
+   },
+   {
+    "name": "spisanie wymagania",
+    "days": 3,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "wywiady z serwisantami"
+    ]
+   },
+   {
+    "name": "przygotowanie API zleceń",
+    "days": 4,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "spisanie wymagania"
+    ]
+   },
+   {
+    "name": "robi logowanie",
+    "days": 5,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "spisanie wymagania"
+    ]
+   },
+   {
+    "name": "ekran listy zleceń",
+    "days": 5,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "przygotowanie API zleceń",
+     "robi logowanie"
+    ]
+   },
+   {
+    "name": "tryb offline",
+    "days": 4,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "przygotowanie API zleceń",
+     "robi logowanie"
+    ]
+   },
+   {
+    "name": "ekran szczegółów zlecenia",
+    "days": 3,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "ekran listy zleceń",
+     "robi logowanie"
+    ]
+   },
+   {
+    "name": "skanowanie kodów kreskowych",
+    "days": 2,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "ekran szczegółów zlecenia"
+    ]
+   },
+   {
+    "name": "integrowanie z systemem ERP",
+    "days": 3,
+    "crew": {
+     "Programista": 2
+    },
+    "after": [
+     "ekran listy zleceń",
+     "tryb offline",
+     "skanowanie kodów kreskowych"
+    ]
+   },
+   {
+    "name": "testy w terenie",
+    "days": 6,
+    "crew": {
+     "Tester": 1
+    },
+    "after": [
+     "integrowanie z systemem ERP"
+    ]
+   },
+   {
+    "name": "instrukcja dla serwisantów",
+    "days": 3,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "integrowanie z systemem ERP"
+    ]
+   },
+   {
+    "name": "publikacja w sklepie",
+    "days": 2,
+    "crew": {
+     "Programista": 1,
+     "Tester": 1
+    },
+    "after": [
+     "testy w terenie",
+     "instrukcja dla serwisantów"
+    ]
+   }
+  ],
+  "score": {
+   "stated": 12,
+   "tasks_returned": 12,
+   "found": 12,
+   "durations_right": 12,
+   "crews_right": 12,
+   "predecessors_right": 9,
+   "extra_tasks": [],
+   "differences": [
+    "ekran listy zleceń: after ['przygotowanie API zleceń', 'robi logowanie'], stated ['przygotowanie API zleceń']",
+    "tryb offline: after ['przygotowanie API zleceń', 'robi logowanie'], stated ['przygotowanie API zleceń']",
+    "integrowanie z systemem ERP: after ['ekran listy zleceń', 'tryb offline', 'skanowanie kodów kreskowych'], stated ['skanowanie kodów kreskowych', 'tryb offline']"
+   ]
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "prose plan",
+  "chance": "48 %",
+  "badge": "Termin zagrożony",
+  "delta": "",
+  "deadline": "pt. 20 lis",
+  "likely": "pon. 23 lis 1 dzień roboczy po terminie",
+  "bad": "wt. 1 gru 7 dni roboczych po terminie",
+  "budget": "0 z 55 jednostek kosztu (osobodni) Wydano 0 % Oczekiwany koszt: > 99 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „testy w terenie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „robi logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „ekran listy zleceń”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "first_checkin",
+  "reported": [
+   "Warsztat z klientem: gotowe 2026-10-07",
+   "Specyfikacja wymagań: gotowe 2026-10-13",
+   "Model danych: gotowe 2026-10-16",
+   "Logowanie: 16 %",
+   "Profil klienta: 20 %",
+   "Lista faktur: 20 %"
+  ]
+ },
+ {
+  "kind": "moment",
+  "step": "first check-in",
+  "chance": "65 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 16 punktów procentowych od planu początkowego o 16 pkt proc. od planu początkowego",
+  "deadline": "pt. 20 lis",
+  "likely": "czw. 19 lis 1 dzień roboczy przed terminem",
+  "bad": "pon. 30 lis 6 dni roboczych po terminie",
+  "budget": "13 z 73 jednostek kosztu (osobodni) Wydano 18 % Oczekiwany koszt: 95 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "message",
+  "seconds": 7.4,
+  "items": [
+   "Ania Nowak: nieobecność od śr. 21 paź, powrót pt. 23 paź",
+   "„Logowanie” potrzebuje o 60 % więcej pozostałej pracy (ok. 3 dni więcej)"
+  ],
+  "values": {
+   "msg_absence": [
+    {
+     "person": "P1",
+     "first_day": "2026-10-21",
+     "return_date": "2026-10-23"
+    }
+   ],
+   "msg_increase": [
+    {
+     "task": "T4",
+     "extra_days": null,
+     "factor": 1.6
+    }
+   ],
+   "msg_new": []
+  },
+  "running": [
+   {
+    "name": "Logowanie",
+    "percent": 16.7,
+    "duration": 6
+   },
+   {
+    "name": "Profil klienta",
+    "percent": 20.0,
+    "duration": 5
+   },
+   {
+    "name": "Lista faktur",
+    "percent": 20.0,
+    "duration": 5
+   }
+  ],
+  "result": "Tak to rozumiem: Ania Nowak: nieobecność od śr. 21 paź, powrót pt. 23 paź „Logowanie” potrzebuje o 60 % więcej pozostałej pracy (ok. 3 dni więcej) Odznacz to, co się nie zgadza; zaznaczone pozycje zapiszą się razem z raportem.",
+  "expected_return": "2026-10-23"
+ },
+ {
+  "kind": "moment",
+  "step": "message check-in",
+  "chance": "3 %",
+  "badge": "Termin zagrożony",
+  "delta": "spadek o 62 punkty procentowe od raportu z pon. 19 paź o 62 pkt proc. od raportu z pon. 19 paź",
+  "deadline": "pt. 20 lis",
+  "likely": "pon. 30 lis 6 dni roboczych po terminie",
+  "bad": "pt. 11 gru 15 dni roboczych po terminie",
+  "budget": "13 z 73 jednostek kosztu (osobodni) Wydano 18 % Oczekiwany koszt: 102 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "explanation",
+  "label": "explain_first",
+  "seconds": 8.4,
+  "recommendation": "Bez zmian — plan wciąż jest najlepszy",
+  "why": [
+   "Sentinel porównał możliwości (5) na symulowanych scenariuszach; żadna nie jest wyraźnie lepsza niż zachowanie planu, przy którym szansa na dotrzymanie terminu wynosi 3 %."
+  ],
+  "block": "Innymi słowy (AI, po angielsku): sprawdzone z danymi The project manager chose to keep the plan (no change) over replacing 1 absent crew member of Logowanie (a substitute on Logowanie), deciding on stability.",
+  "badge": "sprawdzone z danymi"
+ },
+ {
+  "kind": "moment",
+  "step": "second absence",
+  "chance": "4 %",
+  "badge": "Termin zagrożony",
+  "delta": "bez zmian od raportu z śr. 21 paź",
+  "deadline": "pt. 20 lis",
+  "likely": "pt. 27 lis 5 dni roboczych po terminie",
+  "bad": "czw. 10 gru 14 dni roboczych po terminie",
+  "budget": "13 z 73 jednostek kosztu (osobodni) Wydano 18 % Oczekiwany koszt: 102 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "explanation",
+  "label": "explain_second",
+  "seconds": 7.4,
+  "recommendation": "Bez zmian — plan wciąż jest najlepszy",
+  "why": [
+   "Sentinel porównał możliwości (5) na symulowanych scenariuszach; żadna nie jest wyraźnie lepsza niż zachowanie planu, przy którym szansa na dotrzymanie terminu wynosi 4 %."
+  ],
+  "block": "Innymi słowy (AI, po angielsku): sprawdzone z danymi The project manager chose to keep the plan over replacing a crew member for Profil klienta, deciding based on plan stability.",
+  "badge": "sprawdzone z danymi"
+ },
+ {
+  "kind": "usage",
+  "per_schema": {
+   "Ping": {
+    "calls": 1,
+    "prompt": 28,
+    "completion": 6,
+    "seconds": 16.2,
+    "cost": 0.0,
+    "providers": [
+     "None"
+    ]
+   },
+   "Extraction": {
+    "calls": 2,
+    "prompt": 1403,
+    "completion": 1220,
+    "seconds": 98.7,
+    "cost": 0.0,
+    "providers": [
+     "None"
+    ]
+   },
+   "MessageEvents": {
+    "calls": 1,
+    "prompt": 999,
+    "completion": 48,
+    "seconds": 6.6,
+    "cost": 0.0,
+    "providers": [
+     "None"
+    ]
+   },
+   "Explanation": {
+    "calls": 2,
+    "prompt": 1445,
+    "completion": 139,
+    "seconds": 14.0,
+    "cost": 0.0,
+    "providers": [
+     "None"
+    ]
+   }
+  }
+ },
+ {
+  "kind": "sweep",
+  "files_swept": 4,
+  "pages_swept": 21,
+  "matches": [],
+  "cache_records": 6,
+  "records_without_prompts": 6
+ }
+]

@@ -1,0 +1,233 @@
+[
+ {
+  "kind": "error_scenario",
+  "form": "settings",
+  "mode": "down",
+  "shown": "Nie można połączyć się z dostawcą AI; sprawdź jego adres w Ustawieniach i czy usługa działa.",
+  "alert": true,
+  "model_calls": 0,
+  "seconds": 1.6
+ },
+ {
+  "kind": "error_scenario",
+  "form": "settings",
+  "mode": "invalid",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "settings",
+  "mode": "http500",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "settings",
+  "mode": "html",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "settings",
+  "mode": "hang",
+  "shown": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz ręcznie.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 4.6
+ },
+ {
+  "kind": "error_scenario",
+  "form": "settings",
+  "mode": "ok",
+  "shown": "Model qwen2.5:7b odpowiedział. Połączenie działa.",
+  "alert": false,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "describe",
+  "mode": "down",
+  "shown": "Nie można połączyć się z dostawcą AI; sprawdź jego adres w Ustawieniach i czy usługa działa.",
+  "alert": true,
+  "model_calls": 0,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "describe",
+  "mode": "invalid",
+  "shown": "Z tekstu nie udało się odczytać użytecznego planu; opisz go inaczej albo dodaj zadania ręcznie.",
+  "alert": true,
+  "model_calls": 2,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "describe",
+  "mode": "http500",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "describe",
+  "mode": "html",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "error_scenario",
+  "form": "describe",
+  "mode": "hang",
+  "shown": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz ręcznie.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 4.5
+ },
+ {
+  "kind": "error_scenario",
+  "form": "describe",
+  "mode": "ok",
+  "shown": "Znalezione zadania: 2 Sprawdź, czy wszystko się zgadza; poprawisz to w tabeli. Zadania odczytane z opisu # Zadanie Dni Osoby Po zadaniach 1 Analiza 2 1 × Programista — 2 Budowa 2 1 × Programista Analiza Użyj tych zadań",
+  "alert": false,
+  "model_calls": 1,
+  "seconds": 1.4
+ },
+ {
+  "kind": "form_after",
+  "form": "describe",
+  "text_kept": true
+ },
+ {
+  "kind": "error_scenario",
+  "form": "message",
+  "mode": "down",
+  "shown": "Nie można połączyć się z dostawcą AI; sprawdź jego adres w Ustawieniach i czy usługa działa.",
+  "alert": true,
+  "model_calls": 0,
+  "seconds": 1.6
+ },
+ {
+  "kind": "error_scenario",
+  "form": "message",
+  "mode": "invalid",
+  "shown": "Nie udało się odczytać wiadomości; dodaj zdarzenia ręcznie.",
+  "alert": true,
+  "model_calls": 2,
+  "seconds": 1.5
+ },
+ {
+  "kind": "error_scenario",
+  "form": "message",
+  "mode": "http500",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.6
+ },
+ {
+  "kind": "error_scenario",
+  "form": "message",
+  "mode": "html",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 1.6
+ },
+ {
+  "kind": "error_scenario",
+  "form": "message",
+  "mode": "hang",
+  "shown": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz ręcznie.",
+  "alert": true,
+  "model_calls": 1,
+  "seconds": 4.7
+ },
+ {
+  "kind": "error_scenario",
+  "form": "message",
+  "mode": "ok",
+  "shown": "Tak to rozumiem: Ala: nieobecność od wt. 3 lis Odznacz to, co się nie zgadza; zaznaczone pozycje zapiszą się razem z raportem.",
+  "alert": false,
+  "model_calls": 1,
+  "seconds": 1.6
+ },
+ {
+  "kind": "form_after",
+  "form": "message",
+  "text_kept": true,
+  "items": [
+   "Ala: nieobecność od wt. 3 lis"
+  ]
+ },
+ {
+  "kind": "error_scenario",
+  "form": "explain",
+  "mode": "down",
+  "shown": "Nie można połączyć się z dostawcą AI; sprawdź jego adres w Ustawieniach i czy usługa działa.",
+  "model_calls": 0,
+  "seconds": 2.0
+ },
+ {
+  "kind": "error_scenario",
+  "form": "explain",
+  "mode": "invalid",
+  "shown": "Innymi słowy (AI, po angielsku): AI nie podało użytecznego wyjaśnienia.",
+  "model_calls": 1,
+  "seconds": 2.5
+ },
+ {
+  "kind": "error_scenario",
+  "form": "explain",
+  "mode": "http500",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "model_calls": 1,
+  "seconds": 1.9
+ },
+ {
+  "kind": "error_scenario",
+  "form": "explain",
+  "mode": "html",
+  "shown": "AI nie odpowiedziało; spróbuj później.",
+  "model_calls": 1,
+  "seconds": 1.9
+ },
+ {
+  "kind": "error_scenario",
+  "form": "explain",
+  "mode": "hang",
+  "shown": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz ręcznie.",
+  "model_calls": 1,
+  "seconds": 5.0
+ },
+ {
+  "kind": "error_scenario",
+  "form": "explain",
+  "mode": "ok",
+  "shown": "Innymi słowy (AI, po angielsku): niepotwierdzone przez dane The plan stays as it is.",
+  "model_calls": 1,
+  "seconds": 2.5
+ },
+ {
+  "kind": "sweep",
+  "files_swept": 4,
+  "pages_swept": 11,
+  "matches": [],
+  "cache_records": 10,
+  "records_without_prompts": 10
+ }
+]

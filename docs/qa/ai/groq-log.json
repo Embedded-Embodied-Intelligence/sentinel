@@ -1,0 +1,48 @@
+[
+ {
+  "kind": "settings_test",
+  "attempt": "no_key",
+  "text": "Ten dostawca wymaga klucza API."
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "wrong_key",
+  "text": "Dostawca AI odrzucił klucz API; sprawdź go w Ustawieniach.",
+  "seconds": 1.7
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "wrong_model",
+  "text": "Dostawca AI nie może użyć tego modelu; sprawdź nazwę modelu w Ustawieniach.",
+  "seconds": 1.7
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "right",
+  "text": "Model openai/gpt-oss-120b odpowiedział. Połączenie działa.",
+  "seconds": 1.7
+ },
+ {
+  "kind": "usage",
+  "per_schema": {
+   "Ping": {
+    "calls": 1,
+    "prompt": 127,
+    "completion": 31,
+    "seconds": 0.4,
+    "cost": 0.0,
+    "providers": [
+     "None"
+    ]
+   }
+  }
+ },
+ {
+  "kind": "sweep",
+  "files_swept": 4,
+  "pages_swept": 2,
+  "matches": [],
+  "cache_records": 1,
+  "records_without_prompts": 1
+ }
+]
