@@ -94,13 +94,14 @@ CLOUD_RETRIES = 2
 CLOUD_MAX_WAIT_S = 60.0
 NEXT_DAYS = 5  # working days written out for a message of a check-in: every weekday once
 MORE_DAYS = (1, 2, 3, 5, 10)  # more days of work whose factor is written out for a running task
+# A weekday in a check-in message, by the project's language: its name, "until" it, "back on" it.
 WEEKDAY_WORDS = {
     "pl": {
-        "Monday": "poniedziałek",
-        "Tuesday": "wtorek",
-        "Wednesday": "środa",
-        "Thursday": "czwartek",
-        "Friday": "piątek",
+        "Monday": ("poniedziałek", "do poniedziałku", "wraca w poniedziałek"),
+        "Tuesday": ("wtorek", "do wtorku", "wraca we wtorek"),
+        "Wednesday": ("środa", "do środy", "wraca w środę"),
+        "Thursday": ("czwartek", "do czwartku", "wraca w czwartek"),
+        "Friday": ("piątek", "do piątku", "wraca w piątek"),
     }
 }
 
@@ -493,20 +494,28 @@ class LiveContext(Context):
 
     def render(self, message: TeamMessage) -> str:
         """As `Context.render`, the author being the project manager, not a team member, and
-        with the next days and the factors of more work worked out: the rules of the prompt ask
-        for this arithmetic, which a small local model gets wrong (the WP11 runs: day 4 for the
-        Friday of day 14, 1.3 for 3 more of 5 days), and its repair rounds cannot see why."""
+        with the next days, the return days and the factors of more work worked out: the rules
+        of the prompt ask for this arithmetic, which a small local model gets wrong (the WP11
+        runs: day 4 for the Friday of day 14, 1.3 for 3 more of 5 days), and its repair rounds
+        cannot see why. A weekday reads as in the application (spec section 11.3, v2.1.5):
+        "until Friday" is absent through Friday, "back on Friday" is back that day."""
         observation, t = self.observation, self.day
-        # SPEC-Q: is "ill until Friday" back on Friday or after it? Spec 10.2 and the prompt read a
-        # weekday as the return day; gpt-oss-120b reads Monday, qwen2.5:7b Friday (WP11 report).
         words = WEEKDAY_WORDS.get(self.project.definition.settings.language, {})
-        coming = ", ".join(
-            f"day {d} {weekday_name(d)}"
-            + (f" ({words[weekday_name(d)]})" if weekday_name(d) in words else "")
-            for d in range(t + 1, t + NEXT_DAYS + 1)
+
+        def said(before: str, d: int, form: int) -> str:
+            name = weekday_name(d)
+            return f"{before} {name}" + (f" ({words[name][form]})" if name in words else "")
+
+        days = range(t + 1, t + NEXT_DAYS + 1)
+        coming = ", ".join(said(f"day {d}", d, 0) for d in days)
+        returns = "; ".join(
+            f"{said('until', d, 1)} → {d + 1}, {said('back on', d, 2)} → {d}" for d in days
         )
         lines = [
             f"Today is day {t}, a {weekday_name(t)}. The next working days: {coming}.",
+            'In these messages "until <weekday>" means absent through that day, so return_day is '
+            'the next working day; "back on <weekday>" means return_day is that day. The '
+            f"return_day by weekday: {returns}.",
             "",
             "Team roster (worker id and name per role; * marks people absent today):",
         ]

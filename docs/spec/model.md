@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.1.4)
+# Sentinel — formal model (v2.1.5)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -80,7 +80,11 @@ of a threat (§11.7); §1–§10 are unchanged. v2.1.4 (WP10 fourth follow-up) a
 measurement of a list that changed at nearly every check-in: the duration sensitivity is computed on
 1,000 rollouts whose first 200 are the forecast's worlds, in a background job after a check-in, so
 the chance and the recommendations stay on the 200 worlds; the line of 0.2, the limit of three and
-the fallback stay (§11.4); the sentence of a threat (§11.7); §1–§10 are unchanged.
+the fallback stay (§11.4); the sentence of a threat (§11.7); §1–§10 are unchanged. v2.1.5 (WP11)
+answer to the WP11 question on "until <weekday>" in a check-in message: in the application,
+"until <weekday>" ("do <weekday>") means absent through that day, so `r` is the next working day
+after it, and "back on <weekday>" ("wraca w <weekday>") gives `r` as that weekday (§11.3); the
+research runs keep §10.2, its prompt and its corpus (a weekday gives `r`); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -875,6 +879,14 @@ or before `d` (`−1` before `date(0)`).
   factor `×F`); new tasks (fields of §11.2, inserted after one task `i` and before one task `s`
   as in §10.2). Tasks not mentioned keep their state; a started task does not become unstarted
   again, nor a done task undone.
+- **Message** (v2.1.5, WP11). With an AI provider set up, the reports of a check-in dated `d` can
+  be drafted from a message of the manager: the parser of §10.2 reads it as a message of day
+  `last(d)`, and each absence, work increase and new task it reads is shown for the manager to
+  confirm before the check-in is saved. In the application a weekday reads as in everyday speech:
+  "until <weekday>" ("do <weekday>") means absent through that day, so the return day `r` is the
+  next working day after it, and "back on <weekday>" ("wraca w <weekday>") means `r` is that
+  weekday, in both cases the first such day after `last(d)` (§10.1). The research runs keep §10.2
+  (a weekday gives `r`) with its prompt and corpus.
 - **Mapping to the `Observation`** of day `t` (§3); everything not listed is as in the engine:
   - *Starts and finishes.* A done task has `S_j < F_j ≤ t`, a started one `S_j < t`; without a
     start date `S_j` is the planned start, clamped to the days since the previous check-in and
