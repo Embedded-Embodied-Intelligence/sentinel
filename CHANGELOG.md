@@ -23,8 +23,10 @@ identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
   second read of a message works.
 - An AI explanation shows action labels in words and tasks by name, says that the AI writes in
   English, can be asked again after an invalid answer and no longer holds up the project.
-- README with the application first; user guides, deploy guide, `RELEASE.md` and this
-  changelog for 1.3.0.
+- `RELEASE.md` says how to install uv, what the first sync downloads, how to start the app on
+  another port and how long each check takes; installed from the zip into a clean home
+  directory, every step of it passes.
+- README with the application first; user guides, deploy guide and this changelog for 1.3.0.
 
 ## 1.2.4 — 2026-10-31 (WP10, follow-up 4; spec v2.1.4)
 
