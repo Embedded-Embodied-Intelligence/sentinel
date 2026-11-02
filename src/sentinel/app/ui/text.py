@@ -596,6 +596,17 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "setup.describe.people": ("People", "Osoby"),
     "setup.describe.team": ("Suggested team: {people}", "Proponowany zespół: {people}"),
     "setup.describe.use": ("Use these tasks", "Użyj tych zadań"),
+    "setup.describe.outside": (
+        "Roles nobody in the team has: {roles}",
+        "Role, których nikt w zespole nie ma: {roles}",
+    ),
+    "setup.describe.outside_text": (
+        "After “Use these tasks”, change the people of these tasks in the table or add the role "
+        "to the team; the plan waits until then.",
+        "Po „Użyj tych zadań” zmień osoby przy tych zadaniach w tabeli albo dodaj rolę do zespołu; "
+        "do tego czasu plan nie powstanie.",
+    ),
+    "setup.tasks.role_outside": (" (nobody in the team)", " (nikt w zespole)"),
     "setup.import.step1": ("Download the template:", "Pobierz szablon:"),
     "setup.import.template": ("tasks template (CSV)", "szablon zadań (CSV)"),
     "setup.import.step2": (

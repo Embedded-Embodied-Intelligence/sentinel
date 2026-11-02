@@ -4,6 +4,11 @@
     <p>{{ t("setup.describe.check") }}</p>
     {% if issues %}<p>{{ t("setup.describe.issues", count=issues) }}</p>{% endif %}
   {% endcall %}
+  {% if outside %}
+  {% call ui.callout("warn", t("setup.describe.outside", roles=outside | join(", "))) %}
+    <p>{{ t("setup.describe.outside_text") }}</p>
+  {% endcall %}
+  {% endif %}
   <div class="table-wrap" tabindex="0" role="region" aria-label="{{ t('setup.describe.caption') }}">
   <table class="table">
     <caption class="vh">{{ t("setup.describe.caption") }}</caption>

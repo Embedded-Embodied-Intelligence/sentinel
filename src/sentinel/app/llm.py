@@ -292,11 +292,12 @@ class LlmService:
         cache = RequestCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
         return self.factory(settings, cache)
 
-    def extract(self, text: str, seed: int) -> Session:
-        """WP6a extraction with up to three repair rounds (spec section 10)."""
+    def extract(self, text: str, seed: int, roles: Mapping[str, int] | None = None) -> Session:
+        """WP6a extraction with up to three repair rounds (spec section 10); the roles of the
+        project's team, if it has one, follow the description."""
         client = self.client()
         try:
-            return repair(client, text, seed=seed, settings=EXTRACTION)
+            return repair(client, with_team_roles(text, roles), seed=seed, settings=EXTRACTION)
         except LlmError as exc:
             raise failure(exc) from exc
 
@@ -390,6 +391,18 @@ class LlmService:
             reason = "no answer" if response.error is None else response.error.kind
             raise AppError("llm_failed", "unavailable", detail=reason)
         return str(getattr(client, "model", "?"))
+
+
+def with_team_roles(text: str, roles: Mapping[str, int] | None) -> str:
+    """A description with the roles the project's team has, so that the answer uses their names:
+    without them a model invents its own (the WP11 runs: "analityczka", "backend developer")."""
+    if not roles:
+        return text
+    names = ", ".join(f'"{role}" ({count})' for role, count in roles.items())
+    return (
+        f"{text}\n\nThe team has these roles (people in brackets): {names}. Use exactly these "
+        'role names in "team" and "crew".'
+    )
 
 
 class Ping(BaseModel):

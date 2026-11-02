@@ -902,7 +902,7 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
   .task-table .col-days { width: 5rem; }
   .task-table .col-people { width: 22%; }
   .task-table .col-after { width: 20%; }
-  .task-table .col-opt { width: 6rem; }
+  .task-table .col-opt { width: 7rem; }
   .task-table .cell-opt { text-align: center; padding-top: 12px; }
   .task-table .col-menu { width: 3.25rem; }
   .task-table input.input-days { width: 100%; }

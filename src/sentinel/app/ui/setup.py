@@ -188,6 +188,13 @@ def router(ui: Ui) -> APIRouter:
             count = sum(c for r, c in task.crew.items() if role_key(r) == role_key(role))
             return str(count) if count else ""
 
+        def other_roles(task: Task) -> list[tuple[str, int]]:
+            """The people of a task in roles nobody in the team has."""
+            from sentinel.app.live import role_key
+
+            known = {role_key(role) for role in roles}
+            return [(r, c) for r, c in task.crew.items() if c > 0 and role_key(r) not in known]
+
         def after_numbers(task: Task) -> str:
             return ", ".join(str(numbers[p]) for p in task.predecessors if p in numbers)
 
@@ -219,6 +226,7 @@ def router(ui: Ui) -> APIRouter:
             },
             "suggestions": _suggestions(roles, language),
             "crew_of": crew_of,
+            "other_roles": other_roles,
             "after_numbers": after_numbers,
             "after_names": after_names,
             "crew_text": crew_text,
@@ -446,10 +454,12 @@ def router(ui: Ui) -> APIRouter:
 
     @routes.post("/projects/{project_id}/setup/describe")
     async def describe(request: Request, project_id: str) -> Response:
-        draft(request, project_id)
+        definition = draft(request, project_id)
         form = await Form.read(request)
-        job = services.extract(ui.session(request), form.get("text"), ui.language(request))
-        return job_progress(ui, request, job, "job.extract", project=project_id)
+        job = services.extract(
+            ui.session(request), form.get("text"), ui.language(request), team=definition.team
+        )
+        return job_progress(ui, request, job, "job.extract", project=project_id, note="job.slow_ai")
 
     @routes.post("/projects/{project_id}/setup/use-extraction")
     async def use_extraction(request: Request, project_id: str) -> Response:
@@ -525,12 +535,14 @@ def extraction_review(ui: Ui, request: Request, view: JobView) -> Response:
     def after_names(task: Task) -> str:
         return ", ".join(names.get(p, p) for p in task.predecessors) or "—"
 
-    team = [f"{p.name} ({p.role})" for p in definition.team]
+    has_team = bool(ui.services.state(ui.session(request), project_id).project.definition.team)
+    team = [] if has_team else [f"{p.name} ({p.role})" for p in definition.team]
     return ui.page(
         request,
         "_extract_review.html",
         tasks=list(definition.tasks),
         team=team,
+        outside=list(result.get("roles_outside", [])),
         issues=int(result.get("issues", 0)),
         draft=definition.model_dump_json(),
         project_id=project_id,

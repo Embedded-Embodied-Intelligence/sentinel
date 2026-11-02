@@ -271,6 +271,17 @@ def read_tasks(form: Form, roles: Sequence[str]) -> TaskRows:
                 )
             elif count > 0:
                 crew[role] = count
+        # A role outside the team (from a description or a spreadsheet) stays in the crew until
+        # the manager changes it, so that the definition's check names it (spec section 11.2).
+        counts = form.getlist(f"other_count_{key}")
+        for role, text in zip(form.getlist(f"other_role_{key}"), counts, strict=False):
+            count = parse_int(text) if text.strip() else 0
+            if count is None or count < 0:
+                errors.append(
+                    FieldError(f"other_count_{key}", "form.people_number", {"task": name or key})
+                )
+            elif count > 0:
+                crew[role] = count
         after, bad = after_keys(form.get(f"after_{key}"), keys, i)
         if bad:
             errors.append(FieldError(f"after_{key}", "form.after_numbers", {"task": name or key}))

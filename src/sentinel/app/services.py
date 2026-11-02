@@ -48,6 +48,7 @@ from sentinel.app.live import (
     LiveProject,
     build_model,
     errors,
+    role_key,
     validate_definition,
 )
 from sentinel.app.llm import ClientFactory, LlmService, make_client
@@ -81,6 +82,7 @@ from sentinel.wbs.extract import Extraction
 SIMULATIONS_KEPT = 8  # simulator projects kept in memory; others are re-simulated
 FORECASTS_KEPT = 128  # forecasts and threat lists kept in memory, by project and last change
 THREATS_JOB = "threats"  # the job of a threat list: the pages' own, outside the demo's job limit
+MIN_ROLE_STEM = 5  # letters two role names must share to count as one role (`team_role`)
 
 
 class ErrorView(BaseModel):
@@ -798,29 +800,34 @@ class Services:
             raise AppError("no_baseline")
         return io.plan_csv(project, person_names(project))
 
-    def extract(self, session: str, text: str, language: Language) -> JobView:
+    def extract(
+        self, session: str, text: str, language: Language, *, team: Sequence[Person] = ()
+    ) -> JobView:
         """Tasks and team read from a description by the LLM (WP6a extraction with repair
-        rounds); the draft is returned for review, not saved."""
+        rounds), in the role names of the project's `team` if it has one; the draft is returned
+        for review, not saved."""
         if not text.strip():
             raise AppError("text_empty")
         if not self.llm.available:
             raise AppError("llm_disabled", "unavailable")
         seed = derive_seed(2026, "llm", "extract", text)
+        roles = role_counts(team)
 
         def work(progress: Progress) -> Mapping[str, Any]:
             progress(0.05, "reading")
-            found = self.llm.extract(text, seed)
+            found = self.llm.extract(text, seed, roles)
             final = found.final
             if final.response.value is None:
                 detail = (
                     "no valid answer" if final.response.error is None else final.response.error.kind
                 )
                 raise AppError("extraction_failed", "invalid", detail=detail)
-            draft = draft_definition(final.response.value, now().date(), language)
+            draft = draft_definition(final.response.value, now().date(), language, tuple(roles))
             return {
                 "definition": draft.model_dump(mode="json"),
                 "rounds": len(found.rounds),
                 "issues": len(final.issues),
+                "roles_outside": roles_outside(draft, tuple(roles)),
             }
 
         return self._submit(session, None, "extract", work, language)
@@ -1050,9 +1057,57 @@ def _simulator_spec(events: list[tuple[str, dict[str, Any]]]) -> simulator.Simul
     return spec
 
 
-def draft_definition(extraction: Extraction, start: date, language: Language) -> ProjectDefinition:
+def role_counts(team: Sequence[Person]) -> dict[str, int]:
+    """The roles of a team, each named as it was first written, with their people."""
+    counts: dict[str, int] = {}
+    names: dict[str, str] = {}
+    for person in team:
+        if person.role.strip():
+            name = names.setdefault(role_key(person.role), person.role)
+            counts[name] = counts.get(name, 0) + 1
+    return counts
+
+
+def team_role(role: str, roles: Sequence[str]) -> str:
+    """The team's name of a role an AI wrote: the same role by `role_key`, else the one role
+    with the same stem, since a description inflects them ("analityczka", "testerka" for
+    "Analityk", "Tester"); else as written, for the manager to decide."""
+    key = role_key(role)
+    keys = {role_key(known): known for known in roles}
+    if key in keys:
+        return keys[key]
+    same = [known for other, known in keys.items() if _same_stem(key, other)]
+    return same[0] if len(same) == 1 else role
+
+
+def _same_stem(a: str, b: str) -> bool:
+    """Whether two role keys differ only in their last letters (at most three of the shorter)."""
+    shared = next(
+        (i for i, (x, y) in enumerate(zip(a, b, strict=False)) if x != y), min(len(a), len(b))
+    )
+    return shared >= MIN_ROLE_STEM and shared >= min(len(a), len(b)) - 3
+
+
+def roles_outside(definition: ProjectDefinition, roles: Sequence[str]) -> list[str]:
+    """The roles a draft's crews name that are not among the team's `roles`."""
+    if not roles:
+        return []
+    known = {role_key(role) for role in roles}
+    found = {
+        role: None
+        for task in definition.tasks
+        for role, count in task.crew.items()
+        if count > 0 and role_key(role) not in known
+    }
+    return list(found)
+
+
+def draft_definition(
+    extraction: Extraction, start: date, language: Language, roles: Sequence[str] = ()
+) -> ProjectDefinition:
     """A definition from an extraction (WP6a) for the manager to review: people named after
-    their role ("Tester 1"), tasks T1, T2, ... with predecessors by key."""
+    their role ("Tester 1"), tasks T1, T2, ... with predecessors by key and the crews in the
+    role names of the project's team (`roles`), if it has one."""
     people: list[Person] = []
     for member in extraction.team:
         for i in range(max(0, member.count)):
@@ -1065,7 +1120,7 @@ def draft_definition(extraction: Extraction, start: date, language: Language) ->
             key=keys[a.name],
             name=a.name,
             duration=a.duration_days,
-            crew=dict(a.crew),
+            crew=_merged_crew(a.crew, roles),
             predecessors=tuple(keys.get(p, p) for p in a.predecessors),
         )
         for a in extraction.activities
@@ -1073,3 +1128,12 @@ def draft_definition(extraction: Extraction, start: date, language: Language) ->
     return ProjectDefinition(
         name="", start=start, team=tuple(people), tasks=tasks, settings=Settings(language=language)
     )
+
+
+def _merged_crew(crew: Mapping[str, int], roles: Sequence[str]) -> dict[str, int]:
+    """A crew in the team's role names; two names of one role add up."""
+    merged: dict[str, int] = {}
+    for role, count in crew.items():
+        name = team_role(role, roles)
+        merged[name] = merged.get(name, 0) + count
+    return merged

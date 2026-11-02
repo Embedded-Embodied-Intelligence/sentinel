@@ -78,6 +78,9 @@
               {% for role in roles %}
               <div class="crew-row"><label for="c-{{ task.key }}-{{ loop.index0 }}">{{ role }}<span class="vh"> — {{ t("setup.tasks.people_of", role=role, n=n) }}</span></label><input id="c-{{ task.key }}-{{ loop.index0 }}" name="crew_{{ task.key }}_{{ loop.index0 }}" value="{{ crew_of(task, role) }}" inputmode="numeric" data-crew-input data-role="{{ role }}"></div>
               {% endfor %}
+              {% for role, count in other_roles(task) %}
+              <div class="crew-row"><label for="co-{{ task.key }}-{{ loop.index0 }}">{{ role }}<span class="option-note">{{ t("setup.tasks.role_outside") }}</span></label><input type="hidden" name="other_role_{{ task.key }}" value="{{ role }}"><input id="co-{{ task.key }}-{{ loop.index0 }}" name="other_count_{{ task.key }}" value="{{ count }}" inputmode="numeric" data-crew-input data-role="{{ role }}"></div>
+              {% endfor %}
             </div>
           </details>
         </td>
