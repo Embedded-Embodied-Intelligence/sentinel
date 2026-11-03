@@ -5,6 +5,23 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.4.1 — 2026-11-03 (WP13, the remote usability test)
+
+- The protocol's scenario checked in demo mode on a day after the story's Wednesday 4 November,
+  as a remote tester does it: the project from the spreadsheet and the pasted team, the status
+  report dated 4 November saved without a question, the replacement recommendation (39 % → 67 %,
+  with 11 November a holiday) and the small simulation to its end within the demo's 60-day
+  steps. Nothing broke; the protocol's expected values and `baseline-timing.json` are those of
+  1.4.1, and `tests/test_ui_usability.py` runs the demo's configuration and checks them.
+- The demo keeps a request log per sandbox for the usability test (`request_log` in
+  `configs/app_demo.toml`; ADR-0030): the time, method, route template, status, the sandbox's
+  project and whether it was an HTMX request; no address, no query, no form content, deleted
+  with the sandbox (schema version 2, migrated on start).
+- `scripts/usability_logs.py --data-dir <demo data> --code P1` writes a tester's timeline and
+  task durations with the page requests and refused forms to `docs/usability/logs/P1.md`;
+  `scripts/sus_score.py` scores the SUS answer cards; the owner's steps are in
+  `docs/usability/README.md`.
+
 ## 1.4.0 — 2026-11-03 (WP12, the fixes of the CEO/QA test)
 
 - One set of numbers: a recommendation's card shows what approving it gives, since each option is
