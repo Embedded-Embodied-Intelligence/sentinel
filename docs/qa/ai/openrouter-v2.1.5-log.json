@@ -1,0 +1,369 @@
+[
+ {
+  "kind": "settings_test",
+  "attempt": "no_key",
+  "text": "Ten dostawca wymaga klucza API."
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "wrong_key",
+  "text": "Dostawca AI odrzucił klucz API; sprawdź go w Ustawieniach.",
+  "seconds": 1.8
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "wrong_model",
+  "text": "Dostawca AI nie może użyć tego modelu; sprawdź nazwę modelu w Ustawieniach.",
+  "seconds": 1.8
+ },
+ {
+  "kind": "settings_test",
+  "attempt": "right",
+  "text": "Model openai/gpt-oss-120b odpowiedział. Połączenie działa.",
+  "seconds": 1.7
+ },
+ {
+  "kind": "extraction",
+  "label": "list",
+  "seconds": 2.6,
+  "callout": "Znalezione zadania: 12 Sprawdź, czy wszystko się zgadza; poprawisz to w tabeli.",
+  "rows": [
+   {
+    "name": "Warsztat z klientem",
+    "days": 3,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": []
+   },
+   {
+    "name": "Specyfikacja wymagań",
+    "days": 4,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "Warsztat z klientem"
+    ]
+   },
+   {
+    "name": "Model danych",
+    "days": 3,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Specyfikacja wymagań"
+    ]
+   },
+   {
+    "name": "Logowanie",
+    "days": 6,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Model danych"
+    ]
+   },
+   {
+    "name": "Profil klienta",
+    "days": 5,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Model danych"
+    ]
+   },
+   {
+    "name": "Lista faktur",
+    "days": 5,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Model danych"
+    ]
+   },
+   {
+    "name": "Płatności online",
+    "days": 7,
+    "crew": {
+     "Programista": 2
+    },
+    "after": [
+     "Logowanie",
+     "Lista faktur"
+    ]
+   },
+   {
+    "name": "Powiadomienia e-mail",
+    "days": 3,
+    "crew": {
+     "Programista": 1
+    },
+    "after": [
+     "Profil klienta"
+    ]
+   },
+   {
+    "name": "Testy integracyjne",
+    "days": 5,
+    "crew": {
+     "Programista": 1,
+     "Tester": 1
+    },
+    "after": [
+     "Płatności online",
+     "Powiadomienia e-mail"
+    ]
+   },
+   {
+    "name": "Dokumentacja użytkownika",
+    "days": 3,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "Płatności online"
+    ]
+   },
+   {
+    "name": "Szkolenie klienta",
+    "days": 2,
+    "crew": {
+     "Analityk": 1
+    },
+    "after": [
+     "Dokumentacja użytkownika"
+    ]
+   },
+   {
+    "name": "Wdrożenie produkcyjne",
+    "days": 2,
+    "crew": {
+     "Programista": 1,
+     "Tester": 1
+    },
+    "after": [
+     "Testy integracyjne",
+     "Szkolenie klienta"
+    ]
+   }
+  ],
+  "score": {
+   "stated": 12,
+   "tasks_returned": 12,
+   "found": 12,
+   "durations_right": 12,
+   "crews_right": 12,
+   "predecessors_right": 12,
+   "extra_tasks": [],
+   "differences": []
+  }
+ },
+ {
+  "kind": "moment",
+  "step": "list plan",
+  "chance": "49 %",
+  "badge": "Termin zagrożony",
+  "delta": "",
+  "deadline": "pt. 20 lis",
+  "likely": "pon. 23 lis 1 dzień roboczy po terminie",
+  "bad": "czw. 3 gru 9 dni roboczych po terminie",
+  "budget": "0 z 73 jednostek kosztu (osobodni) Wydano 0 % Oczekiwany koszt: > 99 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "first_checkin",
+  "reported": [
+   "Warsztat z klientem: gotowe 2026-10-07",
+   "Specyfikacja wymagań: gotowe 2026-10-13",
+   "Model danych: gotowe 2026-10-16",
+   "Logowanie: 16 %",
+   "Profil klienta: 20 %",
+   "Lista faktur: 20 %"
+  ]
+ },
+ {
+  "kind": "moment",
+  "step": "first check-in",
+  "chance": "65 %",
+  "badge": "Wymaga uwagi",
+  "delta": "wzrost o 16 punktów procentowych od planu początkowego o 16 pkt proc. od planu początkowego",
+  "deadline": "pt. 20 lis",
+  "likely": "czw. 19 lis 1 dzień roboczy przed terminem",
+  "bad": "pon. 30 lis 6 dni roboczych po terminie",
+  "budget": "13 z 73 jednostek kosztu (osobodni) Wydano 18 % Oczekiwany koszt: 95 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "message",
+  "seconds": 1.4,
+  "items": [
+   "Ania Nowak: nieobecność od śr. 21 paź, powrót pon. 26 paź",
+   "„Logowanie” potrzebuje o 60 % więcej pozostałej pracy (ok. 3 dni więcej)"
+  ],
+  "values": {
+   "msg_absence": [
+    {
+     "person": "P1",
+     "first_day": "2026-10-21",
+     "return_date": "2026-10-26"
+    }
+   ],
+   "msg_increase": [
+    {
+     "task": "T4",
+     "extra_days": null,
+     "factor": 1.6
+    }
+   ],
+   "msg_new": []
+  },
+  "running": [
+   {
+    "name": "Logowanie",
+    "percent": 16.7,
+    "duration": 6
+   },
+   {
+    "name": "Profil klienta",
+    "percent": 20.0,
+    "duration": 5
+   },
+   {
+    "name": "Lista faktur",
+    "percent": 20.0,
+    "duration": 5
+   }
+  ],
+  "result": "Tak to rozumiem: Ania Nowak: nieobecność od śr. 21 paź, powrót pon. 26 paź „Logowanie” potrzebuje o 60 % więcej pozostałej pracy (ok. 3 dni więcej) Odznacz to, co się nie zgadza; zaznaczone pozycje zapiszą się razem z raportem.",
+  "expected_return": "2026-10-26"
+ },
+ {
+  "kind": "moment",
+  "step": "message check-in",
+  "chance": "0 %",
+  "badge": "Termin zagrożony",
+  "delta": "spadek o 65 punktów procentowych od raportu z pon. 19 paź o 65 pkt proc. od raportu z pon. 19 paź",
+  "deadline": "pt. 20 lis",
+  "likely": "śr. 2 gru 8 dni roboczych po terminie",
+  "bad": "pon. 14 gru 16 dni roboczych po terminie",
+  "budget": "13 z 73 jednostek kosztu (osobodni) Wydano 18 % Oczekiwany koszt: 102 % budżetu Szczegóły",
+  "pending": [
+   "Zastępstwo: Filip Lis przejmuje udział osoby nieobecnej (Ania Nowak) w zadaniu „Logowanie”"
+  ],
+  "threats": [
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "explanation",
+  "label": "explain_first",
+  "seconds": 2.4,
+  "recommendation": "Zastępstwo: Filip Lis przejmuje udział osoby nieobecnej (Ania Nowak) w zadaniu „Logowanie”",
+  "why": [
+   "Bez zmian: 0 %. Z tą zmianą: 1 %.",
+   "Sentinel sprawdził możliwości: 5. Wybrano ją, ponieważ daje najmniejsze oczekiwane opóźnienie.",
+   "Oczekiwane opóźnienie w dniach roboczych: 7,8 (bez zmian: 8,9).",
+   "Następna w kolejności: Zastępstwo: Filip Lis przejmuje udział osoby nieobecnej (Ania Nowak) w zadaniu „Logowanie”, a następnie ułóż zadania na nowo, aby skończyć jak najszybciej (0 %)."
+  ],
+  "block": "Innymi słowy (AI, po angielsku): sprawdzone z danymi The agent selected a substitute on Logowanie over substitutes for everyone absent and a new order of tasks because its expected tardiness (7.80 days) was lower, despite both having near‑zero on‑time probability.",
+  "badge": "sprawdzone z danymi"
+ },
+ {
+  "kind": "moment",
+  "step": "second absence",
+  "chance": "1 %",
+  "badge": "Termin zagrożony",
+  "delta": "bez zmian od raportu z śr. 21 paź",
+  "deadline": "pt. 20 lis",
+  "likely": "śr. 2 gru 8 dni roboczych po terminie",
+  "bad": "pon. 14 gru 16 dni roboczych po terminie",
+  "budget": "13 z 73 jednostek kosztu (osobodni) Wydano 18 % Oczekiwany koszt: 102 % budżetu Szczegóły",
+  "pending": [],
+  "threats": [
+   "Zadanie „Logowanie”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt.",
+   "Zadanie „Płatności online”. Im dłużej trwa to zadanie, tym później zwykle kończy się projekt."
+  ],
+  "seconds": 0.0
+ },
+ {
+  "kind": "explanation",
+  "label": "explain_second",
+  "seconds": 1.4,
+  "recommendation": "Bez zmian — plan wciąż jest najlepszy",
+  "why": [
+   "Sentinel porównał możliwości (6) na symulowanych scenariuszach; żadna nie jest wyraźnie lepsza niż zachowanie planu, przy którym szansa na dotrzymanie terminu wynosi 1 %."
+  ],
+  "block": "Innymi słowy (AI, po angielsku): sprawdzone z danymi The agent kept the current plan (no change) because its stability matched the runner‑up and it was chosen by the stability tie‑breaker.",
+  "badge": "sprawdzone z danymi"
+ },
+ {
+  "kind": "usage",
+  "per_schema": {
+   "Ping": {
+    "calls": 1,
+    "prompt": 127,
+    "completion": 31,
+    "seconds": 0.3,
+    "cost": 3.8e-05,
+    "providers": [
+     "Groq"
+    ]
+   },
+   "Extraction": {
+    "calls": 1,
+    "prompt": 903,
+    "completion": 709,
+    "seconds": 1.8,
+    "cost": 0.000561,
+    "providers": [
+     "Groq"
+    ]
+   },
+   "MessageEvents": {
+    "calls": 1,
+    "prompt": 1443,
+    "completion": 115,
+    "seconds": 0.6,
+    "cost": 0.000285,
+    "providers": [
+     "Groq"
+    ]
+   },
+   "Explanation": {
+    "calls": 2,
+    "prompt": 1812,
+    "completion": 564,
+    "seconds": 1.8,
+    "cost": 0.00061,
+    "providers": [
+     "Groq"
+    ]
+   }
+  }
+ },
+ {
+  "kind": "sweep",
+  "files_swept": 4,
+  "pages_swept": 13,
+  "matches": [],
+  "cache_records": 5,
+  "records_without_prompts": 5
+ }
+]

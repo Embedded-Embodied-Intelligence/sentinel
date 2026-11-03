@@ -21,11 +21,21 @@ identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 - A check-in message is read with the next working days and the factors of more work worked
   out; the review shows a growth also in days; a refused check-in keeps the confirmed items; a
   second read of a message works.
+- Spec v2.1.5: in a check-in message "until Friday" ("do piątku") means away through Friday, so
+  back on Monday, and "back on Friday" ("wraca w piątek") back that day; the research runs keep
+  their reading.
+- The settings page and the user guides recommend the cloud model (`gpt-oss-120b`) for messages
+  and explanations, and the local model or a provider that does not retain data for messages
+  about real people's absences; the public demo uses `gpt-oss-120b` through OpenRouter.
 - An AI explanation shows action labels in words and tasks by name, says that the AI writes in
   English, can be asked again after an invalid answer and no longer holds up the project.
 - `RELEASE.md` says how to install uv, what the first sync downloads, how to start the app on
   another port and how long each check takes; installed from the zip into a clean home
   directory, every step of it passes.
+- The Docker image is built and run with docker compose: 653 MB on disk (156 MB compressed), the
+  app answers 4 s after `docker compose up -d`, and a project made through the pages survives a
+  restart and a recreated container (`scripts/docker_check.py`); `SENTINEL_PORT` sets the host
+  port.
 - README with the application first; user guides, deploy guide and this changelog for 1.3.0.
 
 ## 1.2.4 — 2026-10-31 (WP10, follow-up 4; spec v2.1.4)

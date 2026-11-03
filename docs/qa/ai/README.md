@@ -9,6 +9,7 @@ every step (`shots/<provider>/`). Results and their reading: `docs/reports/WP11.
 | `ollama-*` | `uv run python scripts/ai_live.py ollama` | `qwen2.5:7b` on a 4-core CPU: settings test, a 12-task list and prose, a message with two facts, two explanations |
 | `ollama-log-run1.json`, `ollama-log-run3.json` | the same, twice more | how much a small local model varies between runs of the same input |
 | `openrouter-*` | `uv run python scripts/ai_live.py openrouter` | `openai/gpt-oss-120b` on Groq through OpenRouter: the same flows, with tokens and cost |
+| `openrouter-v2.1.5-*`, `shots/openrouter-v2.1.5/` (the message's three steps) | `uv run python scripts/ai_live.py openrouter --flows list,message` | after spec v2.1.5: "chora do piątku" written on Wednesday 21 Oct is read as back on Monday 26 Oct |
 | `groq-*` | `uv run python scripts/ai_live.py groq --flows settings` | the settings page's test of Groq: no key, a wrong key, a wrong model, the right one |
 | `errors-*` | `uv run python scripts/ai_live.py errors` | a stand-in model that answers invalid JSON, HTTP 500, an HTML page, nothing in time or is down |
 

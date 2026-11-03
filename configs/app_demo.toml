@@ -5,7 +5,9 @@ demo = true
 workers = 2                # background job threads of the server
 secure_cookies = true      # the demo is served over HTTPS (Tailscale Funnel)
 trust_proxy = true         # X-Forwarded-For counts, but only from 127.0.0.1 (the funnel's proxy)
-llm = "capped"             # the server's LLM provider with a daily cap ("off": no LLM features)
+llm = "capped"             # the server's LLM provider with a daily cap ("off": no LLM features);
+                           # the demo's is OpenRouter with gpt-oss-120b, stored with its key in the
+                           # demo's settings.json (docs/deploy.md, public demo, step 3)
 showcase = true            # a seeded showcase project in every new sandbox
 
 [limits]
