@@ -50,7 +50,8 @@ Deadline: 2026-12-02.
 3. **LLM isolation.** All LLM calls go through `sentinel.llm` with record/replay caching and
    JSON-schema-validated outputs. No LLM calls in the simulation engine or in rollouts; the
    agent may call the LLM at a deliberation, through the record/replay cache (spec §10).
-   Prompts and LLM data are in **English**.
+   Prompts and LLM data are in **English**; text the application shows to a person may be
+   written by the model in the interface language (ADR-0029).
 4. **Secrets never enter git.** Keys live only in `.env` (gitignored). Never print, log or
    commit keys. `.env.example` lists variable names without values.
 5. **Data policy.** Benchmark data (PSPLIB) is downloaded by `scripts/fetch_psplib.py` into

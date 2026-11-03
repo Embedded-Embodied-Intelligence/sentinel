@@ -726,6 +726,8 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
 .gantt-note { margin: var(--space-2) 0 0; font: var(--fs-small); }
 .causes { margin-top: var(--space-3); }
 .causes-list { margin: var(--space-1) 0; padding-left: var(--space-4); }
+.task-description { display: block; color: var(--muted); }
+.is-locked td { color: var(--muted); }
 .section:has(.view-chart-radio:checked) .view-table, .section:has(.view-table-radio:checked) .view-chart,
 .section-chart:has(.view-chart-radio:checked) .view-table, .section-chart:has(.view-table-radio:checked) .view-chart { display: none; }
 @media (min-width: 768px) { .gantt-names { width: 200px; } .gantt-away-word { display: inline; } }

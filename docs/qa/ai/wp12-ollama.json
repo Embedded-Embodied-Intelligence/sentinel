@@ -1,0 +1,424 @@
+{
+  "provider": "ollama",
+  "model": "qwen2.5:7b",
+  "describe": [
+    {
+      "text": "ceo",
+      "rounds": 1,
+      "issues": 0,
+      "seconds": 46.6,
+      "max_words": 3,
+      "tasks": [
+        {
+          "name": "Zbieranie wymagań",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [],
+          "description": ""
+        },
+        {
+          "name": "Logowanie i uprawnienia",
+          "words": 3,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Zbieranie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Płatności online",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Zbieranie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Integracja z ERP",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Zbieranie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Powiadomienia SMS",
+          "words": 2,
+          "days": 2,
+          "optional": true,
+          "after": [
+            "Zbieranie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Newsletter",
+          "words": 1,
+          "days": 2,
+          "optional": true,
+          "after": [
+            "Zbieranie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Testowanie całości",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Logowanie i uprawnienia",
+            "Płatności online",
+            "Integracja z ERP"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Uruchomienie strony",
+          "words": 2,
+          "days": 1,
+          "optional": false,
+          "after": [
+            "Testowanie całości"
+          ],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "text": "wp11_list",
+      "rounds": 1,
+      "issues": 0,
+      "seconds": 53.1,
+      "max_words": 3,
+      "tasks": [
+        {
+          "name": "Warsztat z klientem",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [],
+          "description": ""
+        },
+        {
+          "name": "Specyfikacja wymagań",
+          "words": 2,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Warsztat z klientem"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Model danych",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Specyfikacja wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Logowanie",
+          "words": 1,
+          "days": 6,
+          "optional": false,
+          "after": [
+            "Model danych"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Profil klienta",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Model danych"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Lista faktur",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Model danych"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Płatności online",
+          "words": 2,
+          "days": 7,
+          "optional": false,
+          "after": [
+            "Logowanie",
+            "Lista faktur"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Powiadomienia e-mail",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Profil klienta"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Testy integracyjne",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Płatności online",
+            "Powiadomienia e-mail"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Dokumentacja użytkownika",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Płatności online"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Szkolenie klienta",
+          "words": 2,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Dokumentacja użytkownika"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Wdrożenie produkcyjne",
+          "words": 2,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Testy integracyjne",
+            "Szkolenie klienta"
+          ],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "text": "wp11_prose",
+      "rounds": 1,
+      "issues": 0,
+      "seconds": 58.2,
+      "max_words": 4,
+      "tasks": [
+        {
+          "name": "Wywiady z serwisantami",
+          "words": 3,
+          "days": 2,
+          "optional": false,
+          "after": [],
+          "description": ""
+        },
+        {
+          "name": "Spisywanie wymagań",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Wywiady z serwisantami"
+          ],
+          "description": ""
+        },
+        {
+          "name": "API zleceń",
+          "words": 2,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Spisywanie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Logowanie",
+          "words": 1,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Spisywanie wymagań"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Ekrany listy zleceń",
+          "words": 3,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "API zleceń",
+            "Logowanie"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Tryb offline",
+          "words": 2,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Ekrany listy zleceń",
+            "Logowanie"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Ekrany szczegółów zlecenia",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Ekrany listy zleceń",
+            "Logowanie"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Skanowanie kodów kreskowych",
+          "words": 3,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Ekrany szczegółów zlecenia"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Integracja z systemem ERP",
+          "words": 4,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "API zleceń",
+            "Ekrany listy zleceń",
+            "Tryb offline",
+            "Skanowanie kodów kreskowych"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Testy w terenie",
+          "words": 3,
+          "days": 6,
+          "optional": false,
+          "after": [
+            "Integracja z systemem ERP"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Instrukcja dla serwisantów",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Integracja z systemem ERP"
+          ],
+          "description": ""
+        },
+        {
+          "name": "Publikacja w sklepie",
+          "words": 3,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Testy w terenie",
+            "Instrukcja dla serwisantów"
+          ],
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "message": "Marek jest na urlopie do środy, a testy potrwają 2 dni dłużej",
+      "seconds": 13.2,
+      "absences": [
+        {
+          "person": "Tomasz Nowak",
+          "back": "2026-11-26"
+        }
+      ],
+      "growths": [],
+      "unparsed": [
+        "testy potrwają 2 dni dłużej"
+      ],
+      "questions": [
+        {
+          "kind": "ambiguous_task",
+          "clause": "testy potrwają 2 dni dłużej",
+          "candidates": [
+            "Testy integracyjne",
+            "Testy funkcjonalne"
+          ],
+          "back": null,
+          "days": 2.0,
+          "factor": null
+        }
+      ],
+      "issues": 0
+    },
+    {
+      "message": "Filip jest na urlopie od jutra do 26 listopada, a testy integracyjne potrwają 2 dni dłużej",
+      "seconds": 5.2,
+      "absences": [
+        {
+          "person": "Filip Wójcik",
+          "back": "2026-12-08"
+        }
+      ],
+      "growths": [
+        {
+          "task": "Testy integracyjne",
+          "factor": 1.4,
+          "days": null
+        }
+      ],
+      "unparsed": [],
+      "questions": [],
+      "issues": 0
+    }
+  ],
+  "explanation": {
+    "chosen": "Bez zmian — plan wciąż jest najlepszy",
+    "seconds": 12.2,
+    "text": "Została wybrana akcja 'Bez zmian — plan wciąż jest najlepszy', ponieważ planowało się ona najmniej zmienić. Akcja 'Przesuń terminy zadań bez zmiany kolejności' była drugą opcją, ale różnica była zauważalna tylko w stability.",
+    "terms": [],
+    "valid": true,
+    "fully_faithful": false,
+    "error": null
+  },
+  "usage": {
+    "calls": 6,
+    "prompt_tokens": 8242,
+    "completion_tokens": 2023,
+    "cost_usd": 0.0
+  }
+}

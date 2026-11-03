@@ -1,8 +1,16 @@
 {% import "_ui.html" as ui with context %}
+{% set correcting = locked is defined and locked is not none %}
+{% if correcting %}{% set tab = "manual" %}{% endif %}
 <div class="focus-column wide">
+  {% if correcting %}
+  <h1 class="focus-question">{{ t("setup.fix.question") }}</h1>
+  {% call ui.callout("info", t("setup.fix.title")) %}<p>{{ t("setup.fix.text") }}</p>{% endcall %}
+  {% if issues %}{% call ui.callout("bad", t("checkin.not_saved"), ' role="alert" tabindex="-1" data-focus') %}<ul>{% for issue in issues %}<li>{{ issue.message }}</li>{% endfor %}</ul>{% endcall %}{% endif %}
+  {% else %}
   <h1 class="focus-question">{{ t("setup.tasks.question") }}</h1>
   <p class="focus-helper">{{ t("setup.tasks.helper") }}</p>
-  <nav class="choices cols-3" aria-label="{{ t('setup.tasks.ways') }}">
+  {% endif %}
+  <nav class="choices cols-3" aria-label="{{ t('setup.tasks.ways') }}"{% if correcting %} hidden{% endif %}>
     {% for name in ("describe", "import", "manual") %}
     <a class="choice" href="/projects/{{ project_id }}/setup/tasks?tab={{ name }}"{% if tab == name %} aria-current="page"{% endif %}><span class="radio-mark" aria-hidden="true"></span><span><span class="choice-title">{{ t("setup.tab." ~ name) }}</span><span class="choice-text">{{ t("setup.tab." ~ name ~ ".text") }}</span></span></a>
     {% endfor %}
@@ -45,7 +53,7 @@
   {% else %}
   <form id="tasks-form" class="form-stack" hx-post="/projects/{{ project_id }}/setup/tasks" hx-target="#step" novalidate>
     <button class="vh" name="action" value="stay" tabindex="-1" aria-hidden="true"></button>
-    <div class="autosave" hx-post="/projects/{{ project_id }}/setup/tasks" hx-trigger="change delay:500ms from:#tasks-form" hx-include="#tasks-form" hx-vals='{"action": "autosave"}' hx-target="#save-status"></div>
+    {% if not correcting %}<div class="autosave" hx-post="/projects/{{ project_id }}/setup/tasks" hx-trigger="change delay:500ms from:#tasks-form" hx-include="#tasks-form" hx-vals='{"action": "autosave"}' hx-target="#save-status"></div>{% endif %}
     {% with oob=false %}{% include "_issues.html" %}{% endwith %}
     {% if cell_errors %}
     {% call ui.callout("bad", attrs=' role="alert"') %}<ul>{% for error in cell_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endcall %}
@@ -66,10 +74,22 @@
       </thead>
       <tbody>
       {% for task in tasks %}
+      {% if correcting and task.key in locked %}
+      {% set n = loop.index %}
+      <tr class="is-locked">
+        <td class="cell-no">{{ n }}<input type="hidden" name="task_key" value="{{ task.key }}"></td>
+        <td class="cell-name" data-label="{{ t('setup.tasks.name') }}">{{ task.name }} {{ ui.badge("neutral", t("setup.fix.state." ~ locked[task.key])) }}</td>
+        <td class="cell-days" data-label="{{ t('setup.tasks.days') }}">{{ task.duration }}</td>
+        <td class="cell-people" data-label="{{ t('setup.describe.people') }}">{{ crew_text(task) }}</td>
+        <td class="cell-after" data-label="{{ t('setup.tasks.after') }}">{{ after_names(task) }}</td>
+        <td class="cell-opt" data-label="{{ t('setup.tasks.optional') }}">{% if task.optional %}{{ t("common.yes") }}{% else %}–{% endif %}</td>
+        <td class="cell-menu"></td>
+      </tr>
+      {% else %}
       {% set n = loop.index %}
       <tr{% if loop.index0 in marked %} class="has-issue"{% endif %}>
         <td class="cell-no">{{ n }}<input type="hidden" name="task_key" value="{{ task.key }}"></td>
-        <td class="cell-name" data-label="{{ t('setup.tasks.name') }}"><label class="vh" for="tn-{{ task.key }}">{{ t("setup.tasks.name_of", n=n) }}</label><input id="tn-{{ task.key }}" name="task_name" value="{{ task.name }}" maxlength="120" autocomplete="off"{% if focus == task.key %} autofocus{% endif %}></td>
+        <td class="cell-name" data-label="{{ t('setup.tasks.name') }}"><label class="vh" for="tn-{{ task.key }}">{{ t("setup.tasks.name_of", n=n) }}</label><input id="tn-{{ task.key }}" name="task_name" value="{{ task.name }}" maxlength="120" autocomplete="off"{% if focus == task.key %} autofocus{% endif %}{% if task.description %} title="{{ task.description }}"{% endif %}><input type="hidden" name="description_{{ task.key }}" value="{{ task.description or '' }}">{% if task.description %}<span class="caption task-description">{{ task.description }}</span>{% endif %}</td>
         <td class="cell-days" data-label="{{ t('setup.tasks.days') }}"><label class="vh" for="td-{{ task.key }}">{{ t("setup.tasks.days_of", n=n) }}</label><input id="td-{{ task.key }}" class="input-days" name="task_days" value="{{ task.duration if task.duration else '' }}" inputmode="numeric"></td>
         <td class="cell-people" data-label="{{ t('setup.describe.people') }}">
           <details class="pop" data-empty="–">
@@ -99,6 +119,7 @@
           </details>
         </td>
       </tr>
+      {% endif %}
       {% endfor %}
       </tbody>
     </table>
@@ -106,6 +127,13 @@
     {% else %}
     <p class="row-list-empty">{{ t("setup.tasks.empty") }}</p>
     {% endif %}
+    {% if correcting %}
+    <div class="focus-foot">
+      <a class="btn btn-lg" href="/projects/{{ project_id }}">{{ t("common.cancel") }}</a>
+      <span class="grow"></span>
+      <button class="btn btn-primary btn-lg" name="action" value="correct">{{ t("setup.fix.save") }}</button>
+    </div>
+    {% else %}
     <p><button class="btn" name="action" value="add">{{ icon("plus", 16) }}{{ t("setup.tasks.add") }}</button></p>
     <div class="review-block">
       <p class="overline">{{ t("setup.review.title") }}</p>
@@ -121,6 +149,7 @@
       <span id="save-status" class="grow" aria-live="polite"></span>
       <button class="btn btn-primary btn-lg" name="action" value="finish">{{ t("setup.finish") }}</button>
     </div>
+    {% endif %}
   </form>
   {% endif %}
   {% if tab != "manual" %}

@@ -999,3 +999,32 @@ def test_a_status_report_asks_once_and_defers_as_it_says(site: Site) -> None:
     assert saved.headers["HX-Redirect"] == f"/projects/{pid}?flash=checkin_saved"
     statuses = [r["status"] for r in client.get(f"/api/projects/{pid}").json()["recommendations"]]
     assert statuses[0] == "superseded"  # the next report replaced the postponed proposal
+
+
+def test_tasks_not_started_can_be_corrected_after_the_first_check_in(site: Site) -> None:
+    """Task 16 of WP12 (top 10 #8): after the first check-in the task table corrects the tasks
+    not started yet, with a calm box instead of "something went wrong"; the started and finished
+    ones stay; the correction is a history entry and the forecast follows it."""
+    client, headers = site.client, site.headers
+    pid = _create(client, headers, small())
+    assert client.post(f"/api/projects/{pid}/plan", headers=headers).status_code == 202
+    _checkin(client, headers, pid, ABSENCE_CHECKIN)  # T1 in progress, T2 done, T3 not started
+    page = client.get(f"/projects/{pid}/setup/tasks", params={"lang": "pl"})
+    shown = visible_text(page.text)
+    assert page.status_code == 200 and problems(page.text) == []
+    assert "Śledzenie postępu już się zaczęło" in shown and "Coś poszło nie tak" not in shown
+    form = {
+        "action": "correct",
+        "task_key": ["T1", "T2", "T3"],
+        "task_name": ["", "", "Test"],
+        "task_days": ["", "", "5"],
+        "crew_T3_0": "1",
+        "crew_T3_1": "1",
+        "after_T3": "1, 2",
+    }
+    saved = client.post(f"/projects/{pid}/setup/tasks", data=form, headers=headers)
+    assert saved.headers["HX-Redirect"] == f"/projects/{pid}?flash=corrected"
+    tasks = {t["key"]: t for t in client.get(f"/api/projects/{pid}").json()["definition"]["tasks"]}
+    assert tasks["T3"]["duration"] == 5 and tasks["T1"]["duration"] == 6
+    history = visible_text(client.get(f"/projects/{pid}/history", params={"lang": "pl"}).text)
+    assert "Poprawiono „Test”: szacunek 3 → 5 dni" in history

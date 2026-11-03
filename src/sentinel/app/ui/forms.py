@@ -295,6 +295,7 @@ def read_tasks(form: Form, roles: Sequence[str]) -> TaskRows:
                 crew=crew,
                 predecessors=after,
                 optional=optional,
+                description=" ".join(form.get(f"description_{key}").split())[:500],
             )
         )
     known = {t.key for t in tasks}
@@ -442,12 +443,16 @@ def read_checkin(form: Form, current: Mapping[str, tuple[str, float | None]]) ->
                 optional=form.flag(f"new_{i}_optional"),
             )
         )
+    # A question of the AI that the manager left at "skip" sends an empty value (WP12).
     for value in form.getlist("msg_absence"):
-        absences.append(AbsenceReport.model_validate_json(value))
+        if value:
+            absences.append(AbsenceReport.model_validate_json(value))
     for value in form.getlist("msg_increase"):
-        increases.append(WorkIncreaseReport.model_validate_json(value))
+        if value:
+            increases.append(WorkIncreaseReport.model_validate_json(value))
     for value in form.getlist("msg_new"):
-        new_tasks.append(NewTaskReport.model_validate_json(value))
+        if value:
+            new_tasks.append(NewTaskReport.model_validate_json(value))
     if errors or when is None:
         return CheckinForm(None, errors)
     checkin = CheckIn(

@@ -1,0 +1,14 @@
+In this application the description comes from a project manager, and each activity has two
+more fields:
+
+- "name": a short name of at most six words, such as "Login and permissions", never the whole
+  sentence; and "description": the sentence or part of it that the activity comes from. Write
+  both in the language of the description (a Polish description gets Polish names).
+- "optional": true if the description says that the project can do without the activity ("we
+  can drop it", "if there is time", "możemy z niego zrezygnować"), else false. Nothing may
+  depend on an optional activity.
+
+Durations are in working days of a five-day week: "about a week" or "a week" is 5, "two weeks"
+10, "a month" about 20, "a few days" 3. An activity that tests, checks or accepts "everything",
+"the whole" or "the system" ("testuje całość") comes after every earlier development activity
+that is not optional, not only after the last ones.

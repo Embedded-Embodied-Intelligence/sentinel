@@ -21,7 +21,9 @@ from sentinel.app.errors import AppError
 from sentinel.app.events import (
     BaselineSet,
     CheckinDone,
+    Created,
     Decided,
+    DefinitionChanged,
     Recommended,
     Undone,
     parse,
@@ -535,6 +537,39 @@ def chance_chip(rec: RecommendationView | None, texts: Texts) -> str | None:
     )
 
 
+def definition_changes(old: ProjectDefinition, new: ProjectDefinition, texts: Texts) -> list[str]:
+    """What a change of the definition did, in words (WP12): the autonomy with its old and new
+    level, and the corrections of tasks (spec section 11.2, v2.2.0); empty for other changes."""
+    parts = []
+    if old.settings.autonomy != new.settings.autonomy:
+        parts.append(
+            texts(
+                "history.autonomy",
+                before=texts(f"autonomy.{old.settings.autonomy}"),
+                after=texts(f"autonomy.{new.settings.autonomy}"),
+            )
+        )
+    earlier = {t.key: t for t in old.tasks}
+    for task in new.tasks:
+        was = earlier.get(task.key)
+        if was is None:
+            continue
+        changes = []
+        if was.duration != task.duration:
+            changes.append(texts("history.fix.days", before=was.duration, after=task.duration))
+        if was.crew != task.crew:
+            changes.append(texts("history.fix.crew"))
+        if was.predecessors != task.predecessors:
+            changes.append(texts("history.fix.after"))
+        if was.optional != task.optional:
+            changes.append(
+                texts("history.fix.optional" if task.optional else "history.fix.required")
+            )
+        if changes:
+            parts.append(texts("history.fix", task=task.name, changes=", ".join(changes)))
+    return parts
+
+
 def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> list[HistoryItem]:
     """The project's history from its event log, newest first (spec section 11.5)."""
     texts = ui.texts(request)
@@ -547,12 +582,37 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
     titles = {r.seq: r for r in view.recommendations}
     items: list[HistoryItem] = []
     previous = ""
+    current: ProjectDefinition | None = None  # the definition as the log has it so far
+    before: ProjectDefinition | None = None  # that before a run of edits
     for row in services.store.events(session, project_id):
         stamp = texts.moment(row.created)
         day = row.created.astimezone().date()
         event = parse(row)
-        if row.type == "definition" and previous == "definition":
-            continue  # consecutive edits (autosave) are one change
+        if isinstance(event, Created):
+            current = event.definition
+        elif isinstance(event, CheckinDone) and current is not None:
+            for revision in event.effects.revisions:  # estimates revised at a check-in (11.3)
+                tasks = tuple(
+                    t.model_copy(update={"duration": revision.duration})
+                    if t.key == revision.task
+                    else t
+                    for t in current.tasks
+                )
+                current = current.model_copy(update={"tasks": tasks})
+        if isinstance(event, DefinitionChanged):
+            if previous != "definition":
+                before = current
+            current = event.definition
+            # Consecutive edits (autosave) are one change, said as what changed (WP12).
+            parts = [] if before is None else definition_changes(before, current, texts)
+            text = "; ".join(parts) if parts else texts("history.definition")
+            item = HistoryItem("change", stamp, text, day, "sliders")
+            if previous == "definition" and items:
+                items[-1] = item
+            else:
+                items.append(item)
+            previous = row.type
+            continue
         previous = row.type
         match event:
             case CheckinDone():
@@ -630,10 +690,6 @@ def history(ui: Ui, request: Request, project_id: str, view: ProjectView) -> lis
                 if row.type == "created":
                     items.append(
                         HistoryItem("change", stamp, texts("history.created"), day, "plus")
-                    )
-                elif row.type == "definition":
-                    items.append(
-                        HistoryItem("change", stamp, texts("history.definition"), day, "sliders")
                     )
                 elif row.type == "explanation":
                     items.append(
@@ -1283,9 +1339,9 @@ def message_review(ui: Ui, request: Request, view: JobView) -> Response:
 
     found = MessageDraft.model_validate(view.result or {})
     project_id = request.query_params.get("project", "")
-    return ui.page(
-        request, "_message_review.html", **message_values(ui, request, project_id, found)
-    )
+    values = message_values(ui, request, project_id, found)
+    values["clauses"] = ui.services.message_clauses(view.id)
+    return ui.page(request, "_message_review.html", **values)
 
 
 def message_values(ui: Ui, request: Request, project_id: str, found: Any) -> dict[str, Any]:
@@ -1301,11 +1357,28 @@ def message_values(ui: Ui, request: Request, project_id: str, found: Any) -> dic
             return None
         return round(left[item.task] * (item.factor - 1), 1)
 
+    def as_absence(question: Any, person: str) -> str:
+        """The absence a question about an unknown person becomes once the manager names one."""
+        report = AbsenceReport(
+            person=person, first_day=question.first_day, return_date=question.return_date
+        )
+        return report.model_dump_json()
+
+    def as_growth(question: Any, task: str) -> str:
+        """The growth a question about an ambiguous task becomes once the manager picks one."""
+        report = WorkIncreaseReport(
+            task=task, extra_days=question.extra_days, factor=question.factor
+        )
+        return report.model_dump_json()
+
     return {
         "found": found,
         "names": {key: node.name for key, node in project.nodes().items()},
         "people": {p.key: p.name for p in project.definition.team},
         "extra_days": extra_days,
+        "as_absence": as_absence,
+        "as_growth": as_growth,
+        "clauses": (),
     }
 
 
@@ -1314,11 +1387,11 @@ def kept_message(ui: Ui, request: Request, project_id: str, form: Form) -> dict[
     review is shown again, while the message itself is not sent back."""
     from sentinel.app.llm import MessageDraft
 
-    absences = tuple(AbsenceReport.model_validate_json(v) for v in form.getlist("msg_absence"))
+    absences = tuple(AbsenceReport.model_validate_json(v) for v in form.getlist("msg_absence") if v)
     increases = tuple(
-        WorkIncreaseReport.model_validate_json(v) for v in form.getlist("msg_increase")
+        WorkIncreaseReport.model_validate_json(v) for v in form.getlist("msg_increase") if v
     )
-    new_tasks = tuple(NewTaskReport.model_validate_json(v) for v in form.getlist("msg_new"))
+    new_tasks = tuple(NewTaskReport.model_validate_json(v) for v in form.getlist("msg_new") if v)
     if not (absences or increases or new_tasks):
         return None
     found = MessageDraft(absences=absences, increases=increases, new_tasks=new_tasks)

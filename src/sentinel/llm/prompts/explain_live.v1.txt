@@ -1,0 +1,5 @@
+This explanation is shown to a project manager in an application whose pages are in $language.
+Write the "summary" in $language, in plain everyday words: name the actions as the record's
+plain descriptions do, never by their labels (such as SUBST or RESEQ), and do not use the words
+of the method (rollout, makespan, deliberation, baseline, seed, component, epoch). Write numbers
+in digits with a decimal point, as in the record. The "cited_facts" stay as the format asks.

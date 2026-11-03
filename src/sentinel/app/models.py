@@ -70,6 +70,7 @@ class Task(_Frozen):
     crew: dict[str, int] = Field(default_factory=dict)
     predecessors: tuple[str, ...] = ()
     optional: bool = False
+    description: str = Field(default="", max_length=500)  # the sentence a short name came from
 
 
 class Advanced(_Frozen):

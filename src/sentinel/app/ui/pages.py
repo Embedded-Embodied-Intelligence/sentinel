@@ -1,6 +1,7 @@
 """The start page, the "how it works" page, the app settings, the language switch and the
 progress of background jobs (WP9b; ADR-0025)."""
 
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -17,6 +18,7 @@ from sentinel.app.simulator import SimulatorSpec
 from sentinel.app.ui.core import LANG_COOKIE, STATIC_DIR, Ui, chance_level, local_path, nav_rank
 from sentinel.app.ui.forms import Form
 from sentinel.app.views import ForecastSummary
+from sentinel.llm.ollama import DEFAULT_HOST, HOST_VARIABLE
 
 PROVIDERS: tuple[Provider, ...] = ("none", "ollama", "groq", "openrouter")
 REPOSITORY = "https://github.com/Embedded-Embodied-Intelligence/sentinel"
@@ -66,6 +68,12 @@ def trend(summary: ForecastSummary | None) -> int | None:
     if summary is None or summary.previous_p is None or summary.forecast.p_on_time is None:
         return None
     return round(100 * (summary.forecast.p_on_time - summary.previous_p))
+
+
+def ollama_placeholder() -> str:
+    """The Ollama address a settings page suggests: the server's own `OLLAMA_HOST` (in Docker the
+    compose file sets the container's, http://ollama:11434; the WP12 test), else the local one."""
+    return os.environ.get(HOST_VARIABLE, "").strip() or DEFAULT_HOST
 
 
 def router(ui: Ui) -> APIRouter:
@@ -179,6 +187,7 @@ def router(ui: Ui) -> APIRouter:
             issues=issues or [],
             repository=REPOSITORY,
             today=date.today(),
+            ollama_host=ollama_placeholder(),
             **values,
         )
 

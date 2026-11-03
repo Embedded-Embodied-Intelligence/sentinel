@@ -36,6 +36,9 @@
       </div>
     </div>
   </section>
+  {% if view.tracking %}
+  <p class="small"><a href="/projects/{{ view.id }}/setup/tasks">{{ t("setup.fix.question") }}</a></p>
+  {% endif %}
   <section class="card" aria-labelledby="autonomy-title">
     <h2 id="autonomy-title" class="section-title-sm group-title">{{ t("psettings.autonomy") }}</h2>
     <fieldset class="choices">

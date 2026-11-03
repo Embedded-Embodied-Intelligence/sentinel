@@ -93,3 +93,18 @@ def test_the_scripts_are_executable_bash(script: str) -> None:
     path = ROOT / "scripts" / script
     assert path.stat().st_mode & 0o111
     subprocess.run(["bash", "-n", str(path)], check=True)
+
+
+def test_the_ollama_address_suggested_in_docker_is_the_containers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Task 15 of WP12: in Docker the compose file sets OLLAMA_HOST to the ollama container, and
+    the settings page suggests that address instead of the host's own."""
+    from sentinel.app.ui.pages import ollama_placeholder
+
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
+    assert ollama_placeholder() == "http://127.0.0.1:11434"
+    monkeypatch.setenv("OLLAMA_HOST", "http://ollama:11434")
+    assert ollama_placeholder() == "http://ollama:11434"
+    compose = (Path(__file__).parents[1] / "docker-compose.yml").read_text("utf-8")
+    assert "OLLAMA_HOST: http://ollama:11434" in compose

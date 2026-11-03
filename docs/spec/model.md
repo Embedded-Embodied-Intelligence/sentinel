@@ -92,7 +92,9 @@ approval (§11.5); a card shows the most likely finish and the bad case of the s
 overview (§11.5, §11.7); the plan the pages show is the deterministic forecast from the latest
 check-in (§11.4); a move of the chance at a check-in is decomposed into its causes by
 one-at-a-time counterfactuals (§11.4); the calendar of a live project skips the Polish public
-holidays and its own days off (§11.1); §1–§10 are unchanged.
+holidays and its own days off (§11.1); a work increase of a task not started revises its estimate
+(§11.3) and such tasks can be corrected after the first check-in, with the default budget fixed
+at it (§11.2); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -880,6 +882,13 @@ or before `d` (`−1` before `date(0)`).
   structure changes only through check-ins (new tasks, more work, §11.3) and actions (§11.5);
   names, the deadline, the budget and the settings can always change, except the calendar (the
   start date, the holidays and the days off, §11.1), in which the reported days are counted.
+  A *correction* (v2.2.0, WP12) changes, after the first check-in, the estimate, the crew, the
+  predecessors or the optional flag of tasks of the definition that have not started: the team,
+  the list of tasks and the started, finished and removed tasks stay, the result is validated as
+  a definition (§11.2, the deadline before the critical path aside, since work is under way) and
+  with the tasks added at check-ins (no cycle, no optional task before one), and the instance of
+  the next observation has the corrected tasks. The default budget is fixed at the first
+  check-in, so neither a correction nor a revised estimate (§11.3) moves it.
 
 ### §11.3 Baseline plan and check-ins
 
@@ -890,7 +899,9 @@ or before `d` (`−1` before `date(0)`).
   share done `x ∈ [0, 1)` or *done* with its finish date, each started task optionally with its
   start date and its crew; reported absences (person, first day, announced return date or none;
   never a reason, invariant 7); work increases of tasks in progress (`+N` working days or a
-  factor `×F`); new tasks (fields of §11.2, inserted after one task `i` and before one task `s`
+  factor `×F`), and of tasks not started, which revise their estimate (v2.2.0, WP12: `p_j`
+  becomes `p_j + N` or `p_j F`, rounded half up to at least `p_j + 1`; the forecast then samples
+  the task around the new estimate, §2.1, and the original plan keeps the old one); new tasks (fields of §11.2, inserted after one task `i` and before one task `s`
   as in §10.2). Tasks not mentioned keep their state; a started task does not become unstarted
   again, nor a done task undone.
 - **Message** (v2.1.5, WP11). With an AI provider set up, the reports of a check-in dated `d` can
@@ -901,6 +912,13 @@ or before `d` (`−1` before `date(0)`).
   next working day after it, and "back on <weekday>" ("wraca w <weekday>") means `r` is that
   weekday, in both cases the first such day after `last(d)` (§10.1). The research runs keep §10.2
   (a weekday gives `r`) with its prompt and corpus.
+  Nothing is dropped silently (v2.2.0, WP12): the application's parser also answers the numbers
+  of the message's clauses that it turned into no event, and asks about a clause that names a
+  person who is not in the team or a growth that fits several tasks (with the candidates); the
+  answer holds clause numbers, never words of the message (invariant 7), and the review lists
+  those clauses and the questions, each answered by picking a person or a task, or skipped. The
+  prompt aids give the return day of the next working days by weekday and by date. The parser
+  of §10.2 with its prompt, schema and corpus is unchanged.
 - **Mapping to the `Observation`** of day `t` (§3); everything not listed is as in the engine:
   - *Starts and finishes.* A done task has `S_j < F_j ≤ t`, a started one `S_j < t`; without a
     start date `S_j` is the planned start, clamped to the days since the previous check-in and
@@ -1126,6 +1144,9 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | deliberation, recommendation | Sentinel's analysis, recommendation | analiza Sentinela, rekomendacja |
 | check-in, observation of day `t` | check-in, status at the end of <date> | raport statusu, stan na koniec dnia <data> |
 | baseline plan `π⁰`, plan | original plan, plan | plan początkowy, plan |
+| the makespan of the plan shown (§11.4, v2.2.0) | the plan without disruptions finishes on <date> | plan bez zakłóceń kończy się <data> |
+| the causes of a move (§11.4, v2.2.0) | Without <event> the chance would be <p> | Bez <zdarzenie> szansa byłaby <p> |
+| a recommendation asked for (§11.5) | Recalculate now | Przelicz teraz |
 | activity, worker, role, crew | task, person, role, people on the task | zadanie, osoba, rola, osoby w zadaniu |
 | temporary worker | temporary <role> <n> | osoba tymczasowa: <rola> <n> |
 | D1, D2, D3 | someone is away, a task grows, new task | nieobecność, zadanie się wydłuża, nowe zadanie |
@@ -1140,7 +1161,9 @@ operations joins its parts in operation order, the plan part last: "<part>, then
 | J30, J60 instance | small example project (30 tasks), medium example project (60 tasks) | mały przykładowy projekt (30 zadań), średni przykładowy projekt (60 zadań) |
 | LLM | AI | AI |
 
-The meaning "(person-days)" / "(osobodni)" is shown while every daily cost `c_k` is 1; with other
+Text that an AI writes for a page (§10.4) is in the page's language with the actions in the
+wording above and none of the terms below; a text with one is asked for once more and otherwise
+not shown (v2.2.0). The meaning "(person-days)" / "(osobodni)" is shown while every daily cost `c_k` is 1; with other
 daily costs a cost unit is the manager's own unit (§11.2). Plural forms follow the language (e.g.
 "1 jednostka", "3 jednostki", "5 jednostek kosztu").
 

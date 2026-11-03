@@ -51,7 +51,13 @@ from sentinel.app.live import (
     role_key,
     validate_definition,
 )
-from sentinel.app.llm import ClientFactory, LlmService, make_client
+from sentinel.app.llm import (
+    MAX_NAME_WORDS,
+    ClientFactory,
+    LlmService,
+    make_client,
+    split_clauses,
+)
 from sentinel.app.messages import render
 from sentinel.app.models import CheckIn, Language, Person, ProjectDefinition, Settings, Task
 from sentinel.app.store import (
@@ -75,6 +81,7 @@ from sentinel.app.views import (
     issue_views,
     person_names,
     project_view,
+    recommendation_view,
 )
 from sentinel.experiments.runs import derive_seed
 from sentinel.policies.sentinel import Proposer
@@ -83,6 +90,7 @@ from sentinel.wbs.extract import Extraction
 
 SIMULATIONS_KEPT = 8  # simulator projects kept in memory; others are re-simulated
 FORECASTS_KEPT = 128  # forecasts and threat lists kept in memory, by project and last change
+CLAUSES_KEPT = 64  # messages whose clauses a review may still show, kept in memory only
 THREATS_JOB = "threats"  # the job of a threat list: the pages' own, outside the demo's job limit
 MIN_ROLE_STEM = 5  # letters two role names must share to count as one role (`team_role`)
 
@@ -202,6 +210,7 @@ class Services:
         self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
         self._threats: OrderedDict[tuple[str, int], planning.ThreatList] = OrderedDict()
         self._causes: OrderedDict[tuple[str, int], planning.Causes | None] = OrderedDict()
+        self._clauses: OrderedDict[str, tuple[str, ...]] = OrderedDict()
         # set by the web layer (demo): seeds a sandbox with the showcase in a language
         self.showcase: Callable[[str, Language], None] | None = None
 
@@ -755,7 +764,20 @@ class Services:
             draft = self.llm.read_message(current.project, text, when, seed)
             return draft.model_dump(mode="json")
 
-        return self._submit(session, project_id, "message", work, language)
+        job = self._submit(session, project_id, "message", work, language)
+        # The clauses the review names by number stay in memory only: the job's result, kept in
+        # the database, holds no text of the message (invariant 7; WP12, nothing dropped silently).
+        language_of = state.project.definition.settings.language
+        with self._guard:
+            self._clauses[job.id] = split_clauses(text, language_of)
+            while len(self._clauses) > CLAUSES_KEPT:
+                self._clauses.popitem(last=False)
+        return job
+
+    def message_clauses(self, job_id: str) -> tuple[str, ...]:
+        """The clauses of the message a reading job read, while this process keeps them."""
+        with self._guard:
+            return self._clauses.get(job_id, ())
 
     def test_llm(self, session: str, language: Language) -> JobView:
         """A connection test of the configured language model in a job."""
@@ -788,8 +810,17 @@ class Services:
             record = found.recommendation.as_shown  # the page's rows and figures (11.5)
             key = derive_seed(project.definition.settings.seed, "llm", "explain", str(seq))
             # Without the project's lock: a model may take minutes, and nothing here changes.
+            shown = recommendation_view(project, found, language)
+            names = {shown.label: shown.title} | {a.label: a.title for a in shown.alternatives}
             explanation = self.llm.explain(
-                record, observation, planning.sentinel_params(project), roles, key
+                record,
+                observation,
+                planning.sentinel_params(project),
+                roles,
+                key,
+                language=language,
+                names=names,
+                reason=shown.reason_text,
             )
             with self._lock(project_id):
                 self._append(
@@ -1219,18 +1250,32 @@ def draft_definition(
                 Person(key=f"P{len(people) + 1}", name=f"{member.role} {i + 1}", role=member.role)
             )
     keys = {a.name: f"T{i + 1}" for i, a in enumerate(extraction.activities)}
-    tasks = tuple(
-        Task(
-            key=keys[a.name],
-            name=a.name,
-            duration=a.duration_days,
-            crew=_merged_crew(a.crew, roles),
-            predecessors=tuple(keys.get(p, p) for p in a.predecessors),
+    tasks = []
+    for a in extraction.activities:
+        # The application's fields (WP12): a short name, the sentence and the optional flag.
+        description = " ".join(str(getattr(a, "description", "") or "").split())
+        words = a.name.split()
+        name = a.name
+        if len(words) > MAX_NAME_WORDS:  # still long after the repair rounds: cut it here
+            name = " ".join(words[:MAX_NAME_WORDS])
+            description = description or a.name
+        tasks.append(
+            Task(
+                key=keys[a.name],
+                name=name[:120],
+                duration=a.duration_days,
+                crew=_merged_crew(a.crew, roles),
+                predecessors=tuple(keys.get(p, p) for p in a.predecessors),
+                optional=bool(getattr(a, "optional", False)),
+                description=description[:500] if description != name else "",
+            )
         )
-        for a in extraction.activities
-    )
     return ProjectDefinition(
-        name="", start=start, team=tuple(people), tasks=tasks, settings=Settings(language=language)
+        name="",
+        start=start,
+        team=tuple(people),
+        tasks=tuple(tasks),
+        settings=Settings(language=language),
     )
 
 

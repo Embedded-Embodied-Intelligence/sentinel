@@ -87,7 +87,8 @@ def answer_from(record: DecisionRecord, extra: str = "") -> str:
     assert record.needs is not None
     found = rows.get(record.chosen)
     p = record.needs.p_on_time if found is None else found.p_on_time
-    summary = f"{record.chosen} gives a {p * 100:.0f} % chance of meeting the deadline. {extra}"
+    # Plain words, as the page asks (WP12): the label is cited in the facts, not in the text.
+    summary = f"The change gives a {p * 100:.0f} % chance of meeting the deadline. {extra}"
     facts: list[dict[str, Any]] = [
         {"kind": "chosen_action", "value": record.chosen},
         {"kind": "p_on_time", "value": f"{p:.2f}"},
@@ -95,7 +96,7 @@ def answer_from(record: DecisionRecord, extra: str = "") -> str:
     ]
     if found is not None and record.runner_up is not None:
         runner = rows[record.runner_up]
-        summary += f" The next option, {runner.label}, reaches {runner.p_on_time * 100:.0f} %."
+        summary += f" The next option reaches {runner.p_on_time * 100:.0f} %."
         facts += [
             {"kind": "alternative", "value": runner.label},
             {"kind": "alternative_p_on_time", "value": f"{runner.p_on_time:.2f}"},

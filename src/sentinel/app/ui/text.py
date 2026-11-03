@@ -636,6 +636,30 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "setup.tasks.people": ("{role} (people)", "{role} (osoby)"),
     "setup.tasks.after": ("After tasks", "Po zadaniach"),
     "setup.tasks.optional": ("Optional", "Opcjonalne"),
+    "setup.fix.question": (
+        "Correct the tasks not started yet",
+        "Popraw zadania, które się jeszcze nie zaczęły",
+    ),
+    "setup.fix.title": ("Tracking has started", "Śledzenie postępu już się zaczęło"),
+    "setup.fix.text": (
+        "Tasks in progress and done stay as they are. For a task not started yet you can correct "
+        "the estimate, the people, the tasks it comes after and whether it is optional; each "
+        "correction goes into the history and the forecast is worked out again. The team and new "
+        "tasks are reported at a check-in.",
+        "Zadania w toku i gotowe zostają bez zmian. W zadaniu, które się jeszcze nie zaczęło, "
+        "możesz poprawić szacunek, osoby, zadania, po których następuje, i to, czy jest "
+        "opcjonalne; każda poprawka trafia do historii, a prognoza liczy się od nowa. Zespół i "
+        "nowe zadania zgłaszasz w raporcie statusu.",
+    ),
+    "setup.fix.save": ("Save the corrections", "Zapisz poprawki"),
+    "setup.fix.state.started": ("in progress", "w toku"),
+    "setup.fix.state.done": ("done", "gotowe"),
+    "setup.fix.state.removed": ("dropped", "usunięte z zakresu"),
+    "flash.corrected": (
+        "Corrections saved; the forecast is worked out again.",
+        "Poprawki zapisane; prognoza liczy się od nowa.",
+    ),
+    "common.yes": ("yes", "tak"),
     "setup.tasks.name_of": ("Name of task {n}", "Nazwa zadania {n}"),
     "setup.tasks.days_of": ("Working days of task {n}", "Dni robocze zadania {n}"),
     "setup.tasks.people_of": ("{role}: people in task {n}", "{role}: liczba osób w zadaniu {n}"),
@@ -1077,6 +1101,36 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "pory jako dni bez postępu.",
     ),
     "checkin.stalled_yes": ("Yes, no progress", "Tak, brak postępu"),
+    "checkin.message_nothing_sure": (
+        "The AI is not sure about anything in this message; see its questions below.",
+        "AI nie jest pewne niczego w tej wiadomości; zobacz jego pytania poniżej.",
+    ),
+    "checkin.message_questions": (
+        "The AI needs your answer",
+        "AI potrzebuje Twojej odpowiedzi",
+    ),
+    "checkin.message_unknown_person": (
+        "Nobody in the team matches {clause}. Who is it?",
+        "Nikt w zespole nie pasuje do fragmentu {clause}. Kto to jest?",
+    ),
+    "checkin.message_ambiguous_task": (
+        "Several tasks fit {clause}. Which one is it?",
+        "Do fragmentu {clause} pasuje kilka zadań. Które to?",
+    ),
+    "checkin.message_skip": ("Skip it", "Pomiń"),
+    "checkin.message_doubtful": (
+        "The message does not name this person: tick it only if it is right.",
+        "Wiadomość nie wymienia tej osoby: zaznacz tylko, jeśli to się zgadza.",
+    ),
+    "checkin.message_unparsed": (
+        "Not turned into a change",
+        "Tego nie zamieniłem na zmianę",
+    ),
+    "checkin.message_unparsed_hint": (
+        "If any of it matters, add it by hand in the sections below.",
+        "Jeśli coś z tego jest ważne, dodaj to ręcznie w częściach poniżej.",
+    ),
+    "checkin.message_clause": ("part {n} of the message", "część {n} wiadomości"),
     "checkin.saved_as": (
         "{typed} % → saved as {saved} %, {done} of {total} days: progress is kept in whole days.",
         "{typed} % → zapisze się {saved} %, {done} z {total} dni: postęp liczy się w pełnych "
@@ -1201,7 +1255,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "W chwili zatwierdzenia to działanie nie było już możliwe, więc plan się nie zmienił.",
     ),
     "rec.why": ("Why this proposal", "Dlaczego ta propozycja"),
-    "rec.ai_title": ("In other words (AI):", "Innymi słowy (AI, po angielsku):"),
+    "rec.ai_title": ("In other words (AI):", "Innymi słowy (AI):"),
     "rec.badge.faithful": ("checked against the data", "sprawdzone z danymi"),
     "rec.badge.unfaithful": ("not confirmed by the data", "niepotwierdzone przez dane"),
     "rec.ai_invalid": (
@@ -1377,6 +1431,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "history.created": ("Project created", "Utworzono projekt"),
     "history.definition": ("Project details changed", "Zmieniono dane projektu"),
+    "history.autonomy": (
+        "What Sentinel may do alone: “{before}” → “{after}”",
+        "Co Sentinel może robić sam: „{before}” → „{after}”",
+    ),
+    "history.fix": ("Corrected “{task}”: {changes}", "Poprawiono „{task}”: {changes}"),
+    "history.fix.days": ("estimate {before} → {after} days", "szacunek {before} → {after} dni"),
+    "history.fix.crew": ("people", "osoby"),
+    "history.fix.after": ("the tasks it comes after", "zadania, po których następuje"),
+    "history.fix.optional": ("now optional", "teraz opcjonalne"),
+    "history.fix.required": ("no longer optional", "już nie opcjonalne"),
     "history.explanation": ("AI explanation added", "Dodano wyjaśnienie AI"),
     "history.checkin": ("Check-in for {date}", "Raport statusu za {date}"),
     "history.task_done": ("“{task}” done on {date}", "„{task}” gotowe {date}"),

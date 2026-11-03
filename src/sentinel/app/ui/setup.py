@@ -155,6 +155,18 @@ def router(ui: Ui) -> APIRouter:
             raise AppError("structure_frozen", "conflict")
         return state.project.definition
 
+    def locked_tasks(request: Request, project_id: str) -> dict[str, str] | None:
+        """The tasks a correction may not change, by key with their state, once tracking has
+        started (spec section 11.2, v2.2.0); None before."""
+        project = services.state(ui.session(request), project_id).project
+        if not project.tracking:
+            return None
+        return {
+            key: tracked.state
+            for key, tracked in project.tasks.items()
+            if tracked.state != "unstarted"
+        }
+
     def save(request: Request, project_id: str, definition: ProjectDefinition) -> None:
         current = draft(request, project_id)
         if definition != current:
@@ -292,6 +304,12 @@ def router(ui: Ui) -> APIRouter:
     def show(request: Request, project_id: str, step: str) -> Response:
         if step not in STEPS:
             raise AppError("not_found", "not_found")
+        locked = locked_tasks(request, project_id)
+        if locked is not None:
+            # After the first check-in: the corrections of tasks not started, with a calm box
+            # instead of an error for the rest (the WP12 test, top 10 #8).
+            definition = services.state(ui.session(request), project_id).project.definition
+            return render_step(request, "tasks", definition, project_id, locked=locked)
         definition = draft(request, project_id)
         tab = request.query_params.get("tab", "manual")
         return render_step(
@@ -369,6 +387,9 @@ def router(ui: Ui) -> APIRouter:
 
     @routes.post("/projects/{project_id}/setup/tasks")
     async def save_tasks(request: Request, project_id: str) -> Response:
+        locked = locked_tasks(request, project_id)
+        if locked is not None:
+            return await save_corrections(request, project_id, locked)
         definition = draft(request, project_id)
         form = await Form.read(request)
         action = form.get("action", "autosave")
@@ -430,6 +451,52 @@ def router(ui: Ui) -> APIRouter:
             focus=focus,
             cell_errors=cell_errors,
         )
+
+    async def save_corrections(
+        request: Request, project_id: str, locked: dict[str, str]
+    ) -> Response:
+        """Corrections of the tasks not started yet (spec section 11.2, v2.2.0): the started and
+        finished ones keep their definition, whatever the form says; one history entry each."""
+        definition = services.state(ui.session(request), project_id).project.definition
+        form = await Form.read(request)
+        rows = read_tasks(form, team_roles(definition.team))
+        typed = {t.key: t for t in rows.tasks}
+        tasks = tuple(
+            task if task.key in locked else typed.get(task.key, task) for task in definition.tasks
+        )
+        changed = definition.model_copy(update={"tasks": tasks})
+        texts = ui.texts(request)
+        cell_errors = [texts(e.key, **e.values) for e in rows.errors]
+        if form.get("action") != "correct" or rows.errors:
+            return render_step(
+                request,
+                "tasks",
+                changed,
+                project_id,
+                422 if rows.errors else 200,
+                locked=locked,
+                cell_errors=cell_errors,
+            )
+        if changed != definition:
+            try:
+                services.update_definition(
+                    ui.session(request), project_id, changed, ui.language(request)
+                )
+            except AppError as exc:
+                return render_step(
+                    request,
+                    "tasks",
+                    changed,
+                    project_id,
+                    422,
+                    locked=locked,
+                    issues=[
+                        IssueView(
+                            code=exc.code, message=texts.error(exc), where=None, severity="error"
+                        )
+                    ],
+                )
+        return ui.redirect(request, f"/projects/{project_id}", flash="corrected")
 
     def autosave_status(
         request: Request,

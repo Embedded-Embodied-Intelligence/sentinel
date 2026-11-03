@@ -189,6 +189,44 @@
     // Since WP12 a task not started may grow too (a new estimate): every task listed is accepted.
   }
 
+  // ---- a form not saved yet keeps what was typed across the language switch (WP12, B1): the
+  // fields go to this tab's session storage on the switch and come back once, on the next page
+  const KEPT = "sentinel.kept-form";
+  document.addEventListener("click", function (event) {
+    const link = event.target.closest && event.target.closest('a[href^="/lang/"]');
+    const form = document.querySelector("form[data-keep-on-language]");
+    if (!link || !form) return;
+    const values = {};
+    form.querySelectorAll("input, select, textarea").forEach(function (field) {
+      if (!field.name || field.type === "hidden" || field.type === "file") return;
+      values[field.name] = field.type === "checkbox" || field.type === "radio" ? field.checked : field.value;
+    });
+    try {
+      sessionStorage.setItem(KEPT, JSON.stringify({ form: form.id, values: values }));
+    } catch (error) {
+      // without storage the form starts empty, as before
+    }
+  });
+
+  function restoreKept() {
+    let kept = null;
+    try {
+      kept = JSON.parse(sessionStorage.getItem(KEPT) || "null");
+      sessionStorage.removeItem(KEPT);
+    } catch (error) {
+      return;
+    }
+    const form = kept && document.getElementById(kept.form);
+    if (!form) return;
+    form.querySelectorAll("input, select, textarea").forEach(function (field) {
+      if (!(field.name in kept.values) || field.type === "hidden") return;
+      if (field.type === "checkbox" || field.type === "radio") field.checked = kept.values[field.name];
+      else field.value = kept.values[field.name];
+    });
+    const more = form.querySelector("details");
+    if (more && Object.keys(kept.values).length) more.open = more.open || more.querySelector("input:not([type=hidden])") !== null && Array.from(more.querySelectorAll("input")).some(function (f) { return f.value && f.value !== f.defaultValue; });
+  }
+
   // ---- Enter in a field presses its own button, not the form's first one (WP12, B11: Enter in
   // the role field pressed "fewer" of the first role and cleared the field)
   document.addEventListener("keydown", function (event) {
@@ -553,5 +591,6 @@
   document.addEventListener("htmx:oobAfterSwap", function (event) {
     if (event.detail.target && event.detail.target.querySelectorAll) scrollGantt(event.detail.target);
   });
+  restoreKept();
   arrive(document);
 })();

@@ -1,0 +1,339 @@
+{
+  "provider": "openrouter",
+  "model": "openai/gpt-oss-120b",
+  "describe": [
+    {
+      "text": "ceo",
+      "rounds": 4,
+      "issues": 1,
+      "failed": true,
+      "seconds": 6.9
+    },
+    {
+      "text": "wp11_list",
+      "rounds": 1,
+      "issues": 0,
+      "seconds": 3.0,
+      "max_words": 3,
+      "tasks": [
+        {
+          "name": "Warsztat z klientem",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [],
+          "description": "Warsztat z klientem: 3 dni, 1 analityk, bez poprzedników."
+        },
+        {
+          "name": "Specyfikacja wymagań",
+          "words": 2,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Warsztat z klientem"
+          ],
+          "description": "Specyfikacja wymagań: 4 dni, 1 analityk, po zadaniu \"Warsztat z klientem\"."
+        },
+        {
+          "name": "Model danych",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Specyfikacja wymagań"
+          ],
+          "description": "Model danych: 3 dni, 1 programista, po zadaniu \"Specyfikacja wymagań\"."
+        },
+        {
+          "name": "Logowanie",
+          "words": 1,
+          "days": 6,
+          "optional": false,
+          "after": [
+            "Model danych"
+          ],
+          "description": "Logowanie: 6 dni, 1 programista, po zadaniu \"Model danych\"."
+        },
+        {
+          "name": "Profil klienta",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Model danych"
+          ],
+          "description": "Profil klienta: 5 dni, 1 programista, po zadaniu \"Model danych\"."
+        },
+        {
+          "name": "Lista faktur",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Model danych"
+          ],
+          "description": "Lista faktur: 5 dni, 1 programista, po zadaniu \"Model danych\"."
+        },
+        {
+          "name": "Płatności online",
+          "words": 2,
+          "days": 7,
+          "optional": false,
+          "after": [
+            "Logowanie",
+            "Lista faktur"
+          ],
+          "description": "Płatności online: 7 dni, 2 programistów, po zadaniach \"Logowanie\" i \"Lista faktur\"."
+        },
+        {
+          "name": "Powiadomienia e-mail",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Profil klienta"
+          ],
+          "description": "Powiadomienia e-mail: 3 dni, 1 programista, po zadaniu \"Profil klienta\"."
+        },
+        {
+          "name": "Testy integracyjne",
+          "words": 2,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Płatności online",
+            "Powiadomienia e-mail"
+          ],
+          "description": "Testy integracyjne: 5 dni, 1 programista i 1 tester, po zadaniach \"Płatności online\" i \"Powiadomienia e-mail\"."
+        },
+        {
+          "name": "Dokumentacja użytkownika",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Płatności online"
+          ],
+          "description": "Dokumentacja użytkownika: 3 dni, 1 analityk, po zadaniu \"Płatności online\"."
+        },
+        {
+          "name": "Szkolenie klienta",
+          "words": 2,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Dokumentacja użytkownika"
+          ],
+          "description": "Szkolenie klienta: 2 dni, 1 analityk, po zadaniu \"Dokumentacja użytkownika\"."
+        },
+        {
+          "name": "Wdrożenie produkcyjne",
+          "words": 2,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Testy integracyjne",
+            "Szkolenie klienta"
+          ],
+          "description": "Wdrożenie produkcyjne: 2 dni, 1 programista i 1 tester, po zadaniach \"Testy integracyjne\" i \"Szkolenie klienta\"."
+        }
+      ]
+    },
+    {
+      "text": "wp11_prose",
+      "rounds": 1,
+      "issues": 0,
+      "seconds": 4.2,
+      "max_words": 4,
+      "tasks": [
+        {
+          "name": "Wywiady z serwisantami",
+          "words": 3,
+          "days": 2,
+          "optional": false,
+          "after": [],
+          "description": "analityczka przez dwa dni prowadzi wywiady z serwisantami"
+        },
+        {
+          "name": "Spisanie wymagań",
+          "words": 2,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Wywiady z serwisantami"
+          ],
+          "description": "analityczka przez trzy dni spisuje wymagania"
+        },
+        {
+          "name": "Przygotowanie API zleceń",
+          "words": 3,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Spisanie wymagań"
+          ],
+          "description": "jeden programista przez cztery dni przygotowuje API zleceń"
+        },
+        {
+          "name": "Logowanie",
+          "words": 1,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Spisanie wymagań"
+          ],
+          "description": "drugi programista przez pięć dni robi logowanie"
+        },
+        {
+          "name": "Ekran listy zleceń",
+          "words": 3,
+          "days": 5,
+          "optional": false,
+          "after": [
+            "Przygotowanie API zleceń"
+          ],
+          "description": "jedna osoba programująca przez pięć dni tworzy ekran listy zleceń"
+        },
+        {
+          "name": "Tryb offline",
+          "words": 2,
+          "days": 4,
+          "optional": false,
+          "after": [
+            "Przygotowanie API zleceń"
+          ],
+          "description": "inna osoba programująca przez cztery dni tworzy tryb offline"
+        },
+        {
+          "name": "Ekran szczegółów zlecenia",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Ekran listy zleceń",
+            "Logowanie"
+          ],
+          "description": "ekran szczegółów zlecenia zajmuje trzy dni jednemu programiście i może się zacząć po ekranie listy zleceń i po logowaniu"
+        },
+        {
+          "name": "Skanowanie kodów kreskowych",
+          "words": 3,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Ekran szczegółów zlecenia"
+          ],
+          "description": "skanowanie kodów kreskowych to dwa dni pracy jednego programisty po ekranie szczegółów"
+        },
+        {
+          "name": "Integracja z ERP",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Tryb offline",
+            "Skanowanie kodów kreskowych"
+          ],
+          "description": "dwóch programistów przez trzy dni integruje całość z systemem ERP po trybie offline i skanowaniu"
+        },
+        {
+          "name": "Testy w terenie",
+          "words": 3,
+          "days": 6,
+          "optional": false,
+          "after": [
+            "Integracja z ERP"
+          ],
+          "description": "testerka przez sześć dni prowadzi testy w terenie po integracji"
+        },
+        {
+          "name": "Instrukcja dla serwisantów",
+          "words": 3,
+          "days": 3,
+          "optional": false,
+          "after": [
+            "Integracja z ERP"
+          ],
+          "description": "analityczka w tym samym czasie, trzy dni, pisze instrukcję dla serwisantów po integracji"
+        },
+        {
+          "name": "Publikacja aplikacji w sklepie",
+          "words": 4,
+          "days": 2,
+          "optional": false,
+          "after": [
+            "Testy w terenie",
+            "Instrukcja dla serwisantów"
+          ],
+          "description": "jeden programista razem z testerką przez dwa dni publikuje aplikację w sklepie po testach i po instrukcji"
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "message": "Marek jest na urlopie do środy, a testy potrwają 2 dni dłużej",
+      "seconds": 0.9,
+      "absences": [],
+      "growths": [],
+      "unparsed": [],
+      "questions": [
+        {
+          "kind": "unknown_person",
+          "clause": "Marek jest na urlopie do środy",
+          "candidates": [],
+          "back": "2026-11-19",
+          "days": null,
+          "factor": null
+        },
+        {
+          "kind": "ambiguous_task",
+          "clause": "testy potrwają 2 dni dłużej",
+          "candidates": [
+            "Testy integracyjne",
+            "Testy funkcjonalne"
+          ],
+          "back": null,
+          "days": 2.0,
+          "factor": null
+        }
+      ],
+      "issues": 0
+    },
+    {
+      "message": "Filip jest na urlopie od jutra do 26 listopada, a testy integracyjne potrwają 2 dni dłużej",
+      "seconds": 0.8,
+      "absences": [
+        {
+          "person": "Filip Wójcik",
+          "back": "2026-11-27"
+        }
+      ],
+      "growths": [
+        {
+          "task": "Testy integracyjne",
+          "factor": 1.8,
+          "days": null
+        }
+      ],
+      "unparsed": [],
+      "questions": [],
+      "issues": 0
+    }
+  ],
+  "explanation": {
+    "chosen": "Bez zmian — plan wciąż jest najlepszy",
+    "seconds": 1.2,
+    "text": "Wybrano opcję Bez zmian — plan wciąż jest najlepszy, ponieważ przy porównaniu z innymi działaniami jedynie stabilność planu rozstrzygnęła wybór; inne opcje nie zwiększają szansy na terminowe zakończenie.",
+    "terms": [],
+    "valid": true,
+    "fully_faithful": false,
+    "error": null
+  },
+  "usage": {
+    "calls": 7,
+    "prompt_tokens": 10435,
+    "completion_tokens": 6312,
+    "cost_usd": 0.004949
+  }
+}

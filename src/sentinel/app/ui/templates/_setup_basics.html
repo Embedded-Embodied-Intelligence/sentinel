@@ -1,5 +1,5 @@
 {% import "_ui.html" as ui with context %}
-<form id="basics-form" class="focus-column form-stack" hx-post="{{ action }}" hx-target="#step" novalidate>
+<form id="basics-form" class="focus-column form-stack" hx-post="{{ action }}" hx-target="#step" novalidate data-keep-on-language>
   <div>
     <h1 class="focus-question">{{ t("setup.basics.question") }}</h1>
     <p class="focus-helper">{{ t("setup.basics.helper") }}</p>

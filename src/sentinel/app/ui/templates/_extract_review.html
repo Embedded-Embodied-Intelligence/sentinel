@@ -12,10 +12,10 @@
   <div class="table-wrap" tabindex="0" role="region" aria-label="{{ t('setup.describe.caption') }}">
   <table class="table">
     <caption class="vh">{{ t("setup.describe.caption") }}</caption>
-    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t("setup.tasks.name") }}</th><th scope="col" class="num">{{ t("setup.tasks.days") }}</th><th scope="col">{{ t("setup.describe.people") }}</th><th scope="col">{{ t("setup.tasks.after") }}</th></tr></thead>
+    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t("setup.tasks.name") }}</th><th scope="col" class="num">{{ t("setup.tasks.days") }}</th><th scope="col">{{ t("setup.describe.people") }}</th><th scope="col">{{ t("setup.tasks.after") }}</th><th scope="col">{{ t("setup.tasks.optional") }}</th></tr></thead>
     <tbody>
     {% for task in tasks %}
-    <tr><td class="num">{{ loop.index }}</td><td>{{ task.name }}</td><td class="num">{{ task.duration }}</td><td>{{ crew_text(task) }}</td><td>{{ after_names(task) }}</td></tr>
+    <tr><td class="num">{{ loop.index }}</td><td>{{ task.name }}{% if task.description %}<span class="caption task-description">{{ task.description }}</span>{% endif %}</td><td class="num">{{ task.duration }}</td><td>{{ crew_text(task) }}</td><td>{{ after_names(task) }}</td><td>{% if task.optional %}{{ t("common.yes") }}{% else %}–{% endif %}</td></tr>
     {% endfor %}
     </tbody>
   </table>

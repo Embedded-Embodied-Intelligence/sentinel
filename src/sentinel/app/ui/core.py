@@ -33,6 +33,7 @@ HTMX_CONFIG = (
     '"includeIndicatorStyles":false,"allowScriptTags":false,"historyCacheSize":0}'
 )
 FLASHES = (
+    "corrected",
     "checkin_saved",
     "approved",
     "rejected",
@@ -45,7 +46,7 @@ FLASHES = (
     "no_change",
     "imported",
 )
-FLASH_TO_HISTORY = ("checkin_saved", "approved", "rejected", "later", "undone")
+FLASH_TO_HISTORY = ("checkin_saved", "approved", "rejected", "later", "undone", "corrected")
 NAV_PROJECTS = 5  # the sidebar's "your projects" group (docs/design/brief.md, section 3.1)
 
 
