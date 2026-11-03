@@ -832,7 +832,7 @@ def router(ui: Ui) -> APIRouter:
         values: dict[str, Any] = {}
         if f is not None:
             dated = [
-                (view.as_of, texts("strip.today")),
+                (view.as_of, texts("strip.today", date=texts.day_month(view.as_of))),
                 (f.p50, texts("strip.likely", date=texts.day_month(f.p50))),
             ]
             if f.deadline is not None:

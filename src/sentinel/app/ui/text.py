@@ -802,7 +802,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.days.one": ("{n} working day", "{n} dzień roboczy"),
     "overview.days.few": ("{n} working days", "{n} dni robocze"),
     "overview.days.many": ("{n} working days", "{n} dni roboczych"),
-    "strip.today": ("today", "dziś"),
+    "strip.today": ("status at {date}", "stan na {date}"),  # the report's date, not today (WP12)
     "strip.likely": ("most likely {date}", "najbardziej prawdopodobny koniec {date}"),
     "strip.deadline": ("deadline {date}", "termin {date}"),
     "strip.bad": ("bad case {date}", "zły scenariusz {date}"),

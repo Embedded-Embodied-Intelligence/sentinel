@@ -28,6 +28,7 @@
   {% endif %}
 </div>
 <div id="causes" hx-swap-oob="innerHTML">
+  {% set f = f | default(none) %}
   {% if f and f.causes %}
   {% set c = f.causes %}
   <div class="causes">

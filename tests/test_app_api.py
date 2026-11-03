@@ -145,7 +145,10 @@ def test_a_live_project_through_the_api(tmp_path: Path, client: Visitor) -> None
     again = test.post(f"/api/projects/{pid}/forecast", headers=csrf).json()
     assert again["result"] == forecast["result"]  # deterministic for the project's seed
     csv_text = test.get(f"/api/projects/{pid}/plan.csv").text
-    assert csv_text.splitlines()[1].startswith("T1,Build API,started,,,2026-11-02,")
+    # The current plan, the original plan, what was done (WP12, B2).
+    assert csv_text.splitlines()[1].startswith(
+        "T1,Build API,started,2026-11-02,2026-11-11,2026-11-02,2026-11-09,2026-11-02,,"
+    )
     cockpit = test.post(f"/api/projects/{pid}/cockpit", headers=csrf).json()
     assert cockpit["status"] == "done"
     page = test.get(cockpit["result"]["html"])
@@ -196,9 +199,13 @@ def test_checkin_and_definition_errors_are_user_readable(tmp_path: Path, client:
         f"/api/projects/{pid}/definition", json=_definition(name="Renamed"), headers=csrf
     )
     assert frozen.status_code == 200 and frozen.json()["name"] == "Renamed"
+    # WP12: a task not started may be corrected after the first check-in; the team may not.
     longer = _definition()
     longer["tasks"][0]["duration"] = 7
-    refused = test.put(f"/api/projects/{pid}/definition", json=longer, headers=csrf)
+    corrected = test.put(f"/api/projects/{pid}/definition", json=longer, headers=csrf)
+    assert corrected.status_code == 200
+    other_team = {**longer, "team": longer["team"][:-1]}
+    refused = test.put(f"/api/projects/{pid}/definition", json=other_team, headers=csrf)
     assert refused.status_code == 422 and refused.json()["error"]["code"] == "structure_frozen"
 
 
