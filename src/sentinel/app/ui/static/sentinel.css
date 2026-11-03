@@ -723,6 +723,7 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
   background: var(--toast-bg); color: var(--toast-ink); border-radius: var(--radius); font: var(--fs-caption); box-shadow: var(--shadow-2);
 }
 .gantt-tip[hidden] { display: none; }
+.gantt-note { margin: var(--space-2) 0 0; font: var(--fs-small); }
 .section:has(.view-chart-radio:checked) .view-table, .section:has(.view-table-radio:checked) .view-chart,
 .section-chart:has(.view-chart-radio:checked) .view-table, .section-chart:has(.view-table-radio:checked) .view-chart { display: none; }
 @media (min-width: 768px) { .gantt-names { width: 200px; } .gantt-away-word { display: inline; } }

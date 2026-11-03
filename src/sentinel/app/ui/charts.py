@@ -10,6 +10,7 @@ dark mode); every series also differs by shape and is named in the legend (docs/
 section 3.15), and a table of the same facts goes with the chart.
 """
 
+import dataclasses
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -17,6 +18,7 @@ from datetime import date
 
 from sentinel.app.calendar import WorkCalendar
 from sentinel.app.live import LiveProject
+from sentinel.app.planning import ResidualPlan, residual_plan
 from sentinel.app.simulator import PolicyRun
 from sentinel.app.ui.text import Texts
 from sentinel.simulation.state import DONE, PAUSED, REMOVED, RUNNING
@@ -107,6 +109,7 @@ class Gantt:
     min_width: int
     open_at: float  # where a small screen opens the plot: a week before the status line
     tiers: int
+    note: str | None = None  # the gap between the plan's end and the forecast window
 
 
 def flags_in_tiers(lines: Sequence[Line], min_width: int, percent: float = 100.0) -> list[Line]:
@@ -222,9 +225,14 @@ def _bars(row: ChartRow, y: float, x: object) -> list[Bar]:
 
 
 def rows_of(
-    project: LiveProject, texts: Texts, threats: Mapping[str, str] | None = None
+    project: LiveProject,
+    texts: Texts,
+    threats: Mapping[str, str] | None = None,
+    current: ResidualPlan | None = None,
 ) -> list[ChartRow]:
-    """The chart's rows: one per person with absences, then the tasks by start date."""
+    """The chart's rows: one per person with absences, then the tasks by start date in the
+    current plan (`residual_plan`)."""
+    current = current or residual_plan(project)
     calendar = project.calendar
     t = project.day
     baseline = project.baseline
@@ -295,7 +303,8 @@ def rows_of(
             total = duration * factor
             done = tracked.work / max(1, node.unit)
             rest = max(1, math.ceil(total - done - 1e-9))
-            planned = (actual[1], actual[1] + rest)
+            ends = current.finishes.get(key, actual[1] + rest)
+            planned = (actual[1], max(actual[1] + 1, ends))
             percent = round(100 * min(0.99, done / total)) if total > 0 else 0
             tip = texts(
                 "chart.tip_running",
@@ -306,14 +315,15 @@ def rows_of(
             sort = (tracked.start, order)
         else:
             state = "planned"
-            planned = (tracked.planned, tracked.planned + node.duration)
+            begin = current.starts.get(key, tracked.planned)  # the current plan (B2, WP12)
+            planned = (begin, current.finishes.get(key, begin + node.duration))
             tip = texts(
                 "chart.tip_planned",
                 task=name,
-                start=texts.date(calendar.date_of(tracked.planned)),
-                finish=texts.date(calendar.finish_date(tracked.planned + max(1, node.duration))),
+                start=texts.date(calendar.date_of(begin)),
+                finish=texts.date(calendar.finish_date(max(planned[1], begin + 1))),
             )
-            sort = (tracked.planned, order)
+            sort = (begin, order)
         crew_names = [names.get(member, member) for member in tracked.crew]
         if crew_names:
             tip = f"{tip} · {', '.join(crew_names)}"
@@ -334,12 +344,11 @@ def rows_of(
 def status_lines(
     calendar: WorkCalendar, t: int, status: date, today: date | None, texts: Texts
 ) -> list[tuple[int, str, str]]:
-    """The status line and, when it differs and has come, today's date."""
+    """The status line, "status at <the report's date>", and when it is another day and has
+    come, today's date (the WP12 test: a line read "today" at the date of the last report)."""
     now = None if today is None or today < calendar.date_of(0) else calendar.first(today)
-    if now == t:
-        return [(t, "line-today", texts("chart.flag.today", date=texts.day_month(status)))]
     lines = [(t, "line-today", texts("chart.flag.status", date=texts.day_month(status)))]
-    if now is not None and today is not None:
+    if now is not None and now != t and today is not None:
         lines.append((now, "line-now", texts("chart.flag.today", date=texts.day_month(today))))
     return lines
 
@@ -353,7 +362,8 @@ def live_gantt(
 ) -> Gantt:
     """The chart of a live project; `window` is the forecast's most likely and bad-case finish."""
     calendar = project.calendar
-    rows = rows_of(project, texts, threats)
+    current = residual_plan(project)
+    rows = rows_of(project, texts, threats, current)
     model = project.require_model()
     t = project.day
     status = project.checkins[-1][0] if project.checkins else calendar.date_of(0)
@@ -389,10 +399,16 @@ def live_gantt(
         planned=counts["planned"],
         status=texts.date(calendar.date_of(t)),
     )
-    ends = [project.sink_plan]
+    ends = [current.end]
     if project.baseline is not None:
         ends.append(project.baseline.makespan)
-    return layout(rows, calendar, t, lines, days, texts("chart.title"), desc, texts, ends)
+    gantt = layout(rows, calendar, t, lines, days, texts("chart.title"), desc, texts, ends)
+    if window is not None and calendar.finish_date(current.end) < window[0]:
+        # One line on the gap between the plan's end and the forecast window (WP12 test).
+        end = texts.date(calendar.finish_date(current.end))
+        gap = texts("chart.gap", plan=end, likely=texts.date(window[0]))
+        gantt = dataclasses.replace(gantt, note=gap)
+    return gantt
 
 
 def sim_gantt(run: PolicyRun, names: Mapping[int, str], texts: Texts) -> Gantt:

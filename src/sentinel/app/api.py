@@ -453,7 +453,7 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
 
     @app.get("/api/projects/{project_id}/plan.csv")
     def plan_csv(request: Request, project_id: str) -> Response:
-        text = services.plan_csv(sid(request), project_id)
+        text = services.plan_csv(sid(request), project_id, lang(request))
         headers = {"Content-Disposition": 'attachment; filename="plan.csv"'}
         return Response(text, media_type="text/csv; charset=utf-8", headers=headers)
 

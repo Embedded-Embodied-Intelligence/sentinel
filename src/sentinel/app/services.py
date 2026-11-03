@@ -599,7 +599,8 @@ class Services:
             before = replay([row for row in rows if row.seq < checkins[-1]])
             if _forecastable(before.project) and before.project.definition.deadline is not None:
                 previous = self._forecast(project_id, before).p_on_time
-        return ForecastSummary(forecast=current, previous_p=previous)
+        note = promise_note(rows, state, result)
+        return ForecastSummary(forecast=current, previous_p=previous, promise_note=note)
 
     def chance_history(
         self, session: str, project_id: str
@@ -794,12 +795,12 @@ class Services:
         row = self._row(session, project_id)
         return io.export_project(row.kind, row.name, self.store.events(session, project_id))
 
-    def plan_csv(self, session: str, project_id: str) -> str:
+    def plan_csv(self, session: str, project_id: str, language: Language = "en") -> str:
         _, state = self._state(session, project_id)
         project = state.project
         if project.baseline is None:
             raise AppError("no_baseline")
-        return io.plan_csv(project, person_names(project))
+        return io.plan_csv(project, person_names(project), language)
 
     def extract(
         self, session: str, text: str, language: Language, *, team: Sequence[Person] = ()
@@ -1004,6 +1005,45 @@ class Services:
 
 def _validate(definition: ProjectDefinition) -> list[Issue]:
     return validate_definition(definition)
+
+
+def promise_note(
+    rows: Sequence[EventRow], state: LiveState, result: planning.ForecastResult
+) -> str | None:
+    """Why the forecast after an approval differs from what its card promised (spec section
+    11.5, v2.2.0; B3 of the WP12 test): None if the latest change of the forecast is not an
+    approval or the figures are those shown on the card (chance in whole per cent, the most
+    likely and the bad finish, the expected cost in whole per cent of the budget), else what
+    changed between the recommendation and the approval."""
+    last = next((row for row in rows if row.seq == state.last_forecast_change), None)
+    if last is None or last.type != "decision":
+        return None
+    entry = state.recommendation(Decided.model_validate(last.payload).recommendation)
+    comparison = None if entry is None else entry.recommendation.comparison
+    if entry is None or entry.status != "approved" or comparison is None:
+        return None
+    promised = comparison.impacts[0]
+    if promised.quantiles is None:  # stored before v2.2.0
+        return None
+    budget = state.project.require_model().budget or 1.0
+    if (
+        planning.shown_chance(promised.p_on_time) == planning.shown_chance(result.p_on_time or 0)
+        and promised.quantiles[1:] == result.quantiles[1:]
+        and planning.half_up(100 * promised.mean_cost / budget)
+        == planning.half_up(100 * result.mean_cost / budget)
+    ):
+        return None
+    then = replay([row for row in rows if row.seq <= entry.seq]).project.definition
+    now = state.project.definition
+    if then.deadline != now.deadline:
+        return "deadline"
+    if then.budget != now.budget:
+        return "budget"
+    if then.settings.model_copy(update={"autonomy": 0}) != now.settings.model_copy(
+        update={"autonomy": 0}
+    ):
+        return "settings"
+    return "replanned"
 
 
 def _forecastable(project: LiveProject) -> bool:

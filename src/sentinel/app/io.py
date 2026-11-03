@@ -30,7 +30,8 @@ from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
 from sentinel.app.events import Created
 from sentinel.app.live import Issue, LiveProject, issue
-from sentinel.app.models import Person, ProjectDefinition, Settings, Task
+from sentinel.app.models import Language, Person, ProjectDefinition, Settings, Task
+from sentinel.app.planning import residual_plan
 from sentinel.app.store import EventRow
 
 EXPORT_FORMAT = "sentinel-project"
@@ -297,39 +298,69 @@ def read_export(data: Any) -> tuple[str, str, list[tuple[str, dict[str, Any]]]]:
     return str(kind), str(name or "project"), parsed
 
 
-def plan_csv(project: LiveProject, names: dict[str, str]) -> str:
-    """The plan and the progress of every task as CSV (dates ISO 8601)."""
+PLAN_COLUMNS = {
+    "en": (
+        "id",
+        "name",
+        "status",
+        "planned_start",
+        "planned_finish",
+        "original_start",
+        "original_finish",
+        "start",
+        "finish",
+        "work_done_days",
+        "crew",
+    ),
+    "pl": (
+        "id",
+        "nazwa",
+        "stan",
+        "plan_start",
+        "plan_koniec",
+        "plan_poczatkowy_start",
+        "plan_poczatkowy_koniec",
+        "start",
+        "koniec",
+        "wykonane_dni",
+        "osoby",
+    ),
+}
+
+
+def plan_csv(project: LiveProject, names: dict[str, str], language: Language = "en") -> str:
+    """The plan and the progress of every task as CSV (dates ISO 8601, headers in `language`):
+    the planned dates of the current plan (`residual_plan`, checked there by
+    `validate_residual`; B2 of the WP12 test), those of the original plan, and what was done."""
     calendar: WorkCalendar = project.calendar
+    current = residual_plan(project)
+    original = {} if project.baseline is None else project.baseline.starts
     out = io.StringIO()
     writer = csv.writer(out, lineterminator="\n")
-    writer.writerow(
-        [
-            "id",
-            "name",
-            "status",
-            "planned_start",
-            "planned_finish",
-            "start",
-            "finish",
-            "work_done_days",
-            "crew",
-        ]
-    )
+    writer.writerow(PLAN_COLUMNS[language])
     nodes = project.nodes()
+
+    def day(value: int | None) -> str:
+        return "" if value is None else calendar.date_of(value).isoformat()
+
+    def finish(value: int | None) -> str:
+        return "" if value is None else calendar.finish_date(value).isoformat()
+
     for key, tracked in project.tasks.items():
         node = nodes[key]
-        planned = tracked.planned if tracked.state == "unstarted" else None
+        planned = key in current.starts and tracked.state in ("unstarted", "started")
+        first = original.get(key)
         writer.writerow(
             [
                 key,
                 node.name,
                 tracked.state,
-                "" if planned is None else calendar.date_of(planned).isoformat(),
-                ""
-                if planned is None
-                else calendar.finish_date(planned + node.duration).isoformat(),
-                "" if tracked.start is None else calendar.date_of(tracked.start).isoformat(),
-                "" if tracked.finish is None else calendar.finish_date(tracked.finish).isoformat(),
+                day(current.starts[key]) if planned else "",
+                finish(current.finishes[key]) if planned else "",
+                day(first),
+                "" if first is None else finish(first + node.duration),
+                day(tracked.start),
+                finish(tracked.finish),
                 f"{tracked.work / node.unit:g}",
                 " ".join(names.get(member, member) for member in tracked.crew),
             ]

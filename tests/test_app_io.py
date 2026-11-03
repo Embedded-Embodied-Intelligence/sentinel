@@ -92,3 +92,35 @@ def test_json_exports_are_checked_on_import() -> None:
             io.read_export(data)
         assert error.value.params["detail"] == detail
         assert "Sentinel" in render(error.value.code, "en", error.value.params)
+
+
+def test_the_plan_shown_is_the_current_plan() -> None:
+    """B2 of the WP12 test: after a check-in without progress that adds a task before "Test",
+    the CSV and the chart show the current plan: no unfinished task in the past, the new task
+    finished before "Test" starts (checked by `validate_residual` in `residual_plan`), the
+    original plan in its own columns."""
+    from app_cases import DEV, checked_in, planned, small
+
+    from sentinel.app.models import CheckIn, NewTaskReport
+    from sentinel.app.ui.charts import rows_of
+    from sentinel.app.ui.text import Texts
+
+    added = NewTaskReport(key="N1", name="Privacy banner", duration=2, crew={DEV: 1}, after="T2")
+    project = checked_in(
+        planned(small()),
+        CheckIn(date=date(2026, 11, 6), new_tasks=(added.model_copy(update={"before": "T3"}),)),
+    )
+    t = project.day
+    lines = io.plan_csv(project, {}, "pl").splitlines()
+    assert lines[0].startswith("id,nazwa,stan,plan_start,plan_koniec,plan_poczatkowy_start")
+    rows = {row.split(",")[0]: row.split(",") for row in lines[1:]}
+    status = project.checkins[-1][0].isoformat()
+    for key, row in rows.items():
+        if project.tasks[key].state != "done":
+            assert row[4] > status, key  # finishes after the status date
+    assert rows["N1"][4] < rows["T3"][3]  # the new task ends before "Test" starts
+    assert rows["T3"][5] != "" and rows["N1"][5] == ""  # original plan: not for new tasks
+    chart = {row.key: row for row in rows_of(project, Texts("pl")) if row.key in project.tasks}
+    assert all(row.planned is None or row.planned[0] >= t for row in chart.values())
+    assert chart["N1"].planned is not None and chart["T3"].planned is not None
+    assert chart["N1"].planned[1] <= chart["T3"].planned[0]

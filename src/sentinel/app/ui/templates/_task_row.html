@@ -2,7 +2,7 @@
 {% set started = task.state in ("in_progress", "paused") %}
 {% set status = fv("status_" ~ task.key, "in_progress" if started else "not_started") %}
 <fieldset class="task-row{% if errors.get('percent_' ~ task.key) or errors.get('finish_' ~ task.key) %} has-issue{% endif %}">
-  <legend><span class="task-name">{{ task.name }}</span> <span class="task-state">{{ task.state_text }}{% if task.percent is not none %}, {{ t("checkin.done_share", percent=task.percent | round | int) }}{% endif %}{% if task.state == "not_started" and task.planned_start %}{% if task.late %} · {{ t("checkin.was_due", date=t.date(task.planned_start)) }}{% else %} · {{ t("checkin.planned", date=t.date(task.planned_start)) }}{% endif %}{% endif %}</span></legend>
+  <legend><span class="task-name">{{ task.name }}</span> <span class="task-state">{{ task.state_text }}{% if task.percent is not none %}, {{ t("checkin.done_share", percent=task.percent | round | int) }}{% endif %}{% if task.state == "not_started" and task.planned_start %}{% if task.late %} · {{ t("checkin.was_due", date=t.date(task.due)) }}{% else %} · {{ t("checkin.planned", date=t.date(task.planned_start)) }}{% endif %}{% endif %}</span></legend>
   <input type="hidden" name="shown" value="{{ task.key }}">
   <div class="segmented">
     <label><input type="radio" name="status_{{ task.key }}" value="not_started"{% if status == "not_started" %} checked{% endif %}{% if started %} disabled{% endif %}>{{ t("checkin.status.not_started") }}</label>

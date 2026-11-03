@@ -49,7 +49,7 @@ from sentinel.app.store import LOCAL_SESSION
 from sentinel.app.ui.project import why_text
 from sentinel.app.ui.sim import timeline
 from sentinel.app.ui.text import NBSP, Texts
-from sentinel.app.views import recommendation_view
+from sentinel.app.views import forecast_view, recommendation_view
 from sentinel.dashboard.explain import _percent, checkable, template_explanation
 from sentinel.experiments.runs import derive_seed
 from sentinel.interpret.explain import check, explain, render_record
@@ -516,7 +516,8 @@ def test_the_showcase_shows_one_comparison(tmp_path: Path, language: Language) -
             before = replay([r for r in rows if r.seq < entry.seq]).project
             observation = before.observation()
             params = planning.sentinel_params(before)
-            evaluator = Evaluator(observation, comparison.seed, params)
+            # A live project's comparison applies each action now, as approving it (v2.2.0).
+            evaluator = planning.ApprovalEvaluator(before, observation, comparison.seed, params)
             evaluator.extend(noop(observation), 200)
             for c in record.candidates:
                 if not c.dropped:  # evaluated again, independently of the deliberation
@@ -541,16 +542,22 @@ def test_the_showcase_shows_one_comparison(tmp_path: Path, language: Language) -
                 assert texts("why.reason", reason=reason) in shown
             for impact in comparison.impacts:
                 assert texts.pct(impact.p_on_time) in shown
-        assert later_seen == 1  # the substitution beats the re-plan on plan stability
-        # The same recommendation with another option shown higher: now the page says why.
+        # Applied now, the substitution has the highest chance (v2.2.0; before it the re-plan
+        # tied with it and plan stability decided).
+        assert later_seen == 0
+        # The same recommendation decided by plan stability with another option shown higher:
+        # now the page says why.
         latest = state.recommendations[-1].recommendation
         comparison = latest.comparison
-        assert comparison is not None
+        assert comparison is not None and latest.record.reason == "on_time"
         first, second, *rest = comparison.impacts
         higher = second.model_copy(update={"p_on_time": first.p_on_time + 0.02})
         impacts = (first, higher, *rest)
         changed = latest.model_copy(
-            update={"comparison": comparison.model_copy(update={"impacts": impacts})}
+            update={
+                "comparison": comparison.model_copy(update={"impacts": impacts}),
+                "record": latest.record.model_copy(update={"reason": "stability"}),
+            }
         )
         event = Recommended(recommendation=changed).model_dump(mode="json")
         seq = services.store.append(LOCAL_SESSION, pid, "recommendation", event)
@@ -600,3 +607,53 @@ def test_a_recommendation_survives_the_event_log() -> None:
     again = Recommended.model_validate(event.model_dump(mode="json")).recommendation
     assert again.comparison is not None and again.comparison.decides
     assert again.as_shown == recommendation.as_shown
+
+
+# --------------------------------------------------------------------------- promise = result
+
+
+def approve_now(project: LiveProject, recommendation: Recommendation) -> planning.ForecastResult:
+    """Approve the recommended action as the page does (`Services.decide`) and forecast."""
+    approved, rejection = planning.approval(project, recommendation)
+    assert rejection is None
+    outcome = project.resolve_action(approved.decision, approved.label, approved.kind)
+    assert not isinstance(outcome, str)
+    project.apply_action(outcome)
+    return planning.forecast(project)
+
+
+def check_promise(project: LiveProject, recommendation: Recommendation) -> None:
+    """The overview after the approval shows what the card promised: the chance, the most likely
+    finish and the bad case, the expected cost (spec 11.5, v2.2.0)."""
+    assert recommendation.comparison is not None
+    assert recommendation.record.gate in ("escalated", "deferred")  # waits for the manager
+    promised = recommendation.comparison.impacts[0]
+    entry = RecommendationEntry(seq=1, recommendation=recommendation, status="open")
+    card = recommendation_view(project, entry, "pl").with_action
+    shown = approve_now(project, recommendation)
+    assert (shown.p_on_time, shown.quantiles) == (promised.p_on_time, promised.quantiles)
+    assert shown.mean_cost == promised.mean_cost
+    overview = forecast_view(project, shown)
+    assert card is not None and (card.likely_finish, card.bad_finish) == (
+        overview.p50,
+        overview.p90,
+    )
+    assert card.expected_cost == overview.expected_cost
+
+
+def test_approving_shows_what_the_card_promised() -> None:
+    """B3 of the WP12 test: a substitute for an absent developer."""
+    check_promise(absence_project(), absence_recommendation())
+
+
+def test_approving_after_a_task_grew_shows_what_the_card_promised() -> None:
+    """B3 of the WP12 test, its second example: in the showcase, the task that grew by 150 %
+    and then stopped with its developer away gets a substitute; the card promised 55 % and
+    109 % of the budget, the overview showed 46 % and 113 %."""
+    spec = showcase.definition("pl")
+    project = planned(spec)
+    for checkin in showcase.checkins("pl")[:2]:
+        project.apply_checkin(project.resolve_checkin(checkin))
+    recommendation = planning.recommend(project)
+    assert recommendation.record.chosen == "SUBST(3)"
+    check_promise(project, recommendation)

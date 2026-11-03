@@ -190,10 +190,18 @@ def _rec(**values: Any) -> Any:
         "options": 3,
         "compared": True,
         "without": SimpleNamespace(
-            p_on_time=0.39, tardiness=3.0, expected_cost=91.0, expected_finish=None
+            p_on_time=0.39,
+            tardiness=3.0,
+            expected_cost=91.0,
+            expected_finish=None,
+            likely_finish=None,
         ),
         "with_action": SimpleNamespace(
-            p_on_time=0.55, tardiness=2.0, expected_cost=92.0, expected_finish=None
+            p_on_time=0.55,
+            tardiness=2.0,
+            expected_cost=92.0,
+            expected_finish=None,
+            likely_finish=None,
         ),
         "alternatives": [],
         "changes": [],

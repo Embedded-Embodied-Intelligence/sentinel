@@ -43,6 +43,7 @@ from sentinel.app.ui.text import Texts
 from sentinel.app.views import (
     ForecastSummary,
     ForecastView,
+    OutcomeView,
     ProjectView,
     RecommendationView,
     TaskView,
@@ -220,6 +221,16 @@ class Chip:
     tone: str = "neutral"  # good, bad, neutral
 
 
+def finish_of(outcome: OutcomeView) -> date | None:
+    """The finish date a card shows: the most likely finish, the overview's (v2.2.0, B4 of the
+    WP12 test), or the expected finish of a recommendation stored before it."""
+    return outcome.likely_finish or outcome.expected_finish
+
+
+def finish_label(outcome: OutcomeView, texts: Texts) -> str:
+    return texts("chip.likely" if outcome.likely_finish is not None else "chip.finish")
+
+
 def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
     """The effect of the action against no change (spec section 11.5): the chance of meeting
     the deadline, the expected finish date, the expected cost and the tasks whose dates move."""
@@ -229,8 +240,8 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
         return chips
     if after is None or not rec.acts:
         chips.append(Chip(texts("chip.chance"), texts.pct(before.p_on_time)))
-        if before.expected_finish is not None:
-            chips.append(Chip(texts("chip.finish"), texts.date(before.expected_finish)))
+        if finish_of(before) is not None:
+            chips.append(Chip(finish_label(before, texts), texts.date(finish_of(before))))
         return chips
     delta = after.p_on_time - before.p_on_time
     tone = "good" if delta > 0.005 else "bad" if delta < -0.005 else "neutral"
@@ -243,18 +254,21 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
             tone,
         )
     )
-    if before.expected_finish is not None and after.expected_finish is not None:
-        moved = (after.expected_finish - before.expected_finish).days
+    first, then = finish_of(before), finish_of(after)
+    if first is not None and then is not None:
+        moved = (then - first).days
         tone = "good" if moved < 0 else "bad" if moved > 0 else "neutral"
-        text = texts(
-            "chip.from_to",
-            before=texts.date(before.expected_finish),
-            after=texts.date(after.expected_finish),
-        )
-        chips.append(Chip(texts("chip.finish"), text, tone))
+        text = texts("chip.from_to", before=texts.date(first), after=texts.date(then))
+        chips.append(Chip(finish_label(after, texts), text, tone))
     cost = after.expected_cost - before.expected_cost
     tone = "bad" if cost > 0.5 else "good" if cost < -0.5 else "neutral"
-    chips.append(Chip(texts("chip.cost"), texts.cost_change(cost, rec.budget), tone))
+    value = texts.cost_change(cost, rec.budget)
+    if rec.budget:  # as the overview shows the expected cost (B3 of the WP12 test)
+        change = texts.cost_change(cost, None)
+        before_share = texts.share(before.expected_cost / rec.budget)
+        after_share = texts.share(after.expected_cost / rec.budget)
+        value = texts("chip.cost_shares", before=before_share, after=after_share, change=change)
+    chips.append(Chip(texts("chip.cost"), value, tone))
     moved_tasks = len(rec.changes)
     chips.append(
         Chip(texts("chip.moved"), texts.plural("chip.tasks", moved_tasks) if moved_tasks else "–")

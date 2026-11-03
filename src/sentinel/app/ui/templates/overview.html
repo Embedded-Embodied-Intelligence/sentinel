@@ -72,7 +72,7 @@
       <li><span class="threat-mark neutral">{{ icon("person-off", 16) }}</span><span>{% if absence and absence.return_date %}{{ t("overview.away_back", person=person.name, date=t.date(absence.return_date)) }}{% else %}{{ t("overview.away_open", person=person.name) }}{% endif %}</span></li>
       {% endfor %}
       {% for task in late %}
-      <li><span class="threat-mark neutral">{{ icon("clock", 16) }}</span><span>{{ t("overview.late", task=task.name, date=t.date(task.planned_start)) }}</span></li>
+      <li><span class="threat-mark neutral">{{ icon("clock", 16) }}</span><span>{{ t("overview.late", task=task.name, date=t.date(task.due)) }}</span></li>
       {% endfor %}
     </ul>
     {% endif %}

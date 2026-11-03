@@ -793,6 +793,23 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.likely": ("Most likely finish", "Najbardziej prawdopodobny koniec"),
     "overview.bad_case": ("Bad case (1 in 10 later)", "Zły scenariusz (1 na 10 później)"),
     "overview.expected_cost": ("Expected total cost", "Oczekiwany koszt całkowity"),
+    "overview.promise.deadline": (
+        "The deadline changed after the recommendation, so these figures differ from its card.",
+        "Termin zmieniono po rekomendacji, więc te liczby różnią się od obiecanych na karcie.",
+    ),
+    "overview.promise.budget": (
+        "The budget changed after the recommendation, so these figures differ from its card.",
+        "Budżet zmieniono po rekomendacji, więc te liczby różnią się od obiecanych na karcie.",
+    ),
+    "overview.promise.settings": (
+        "The settings changed after the recommendation, so these figures differ from its card.",
+        "Ustawienia zmieniono po rekomendacji, więc te liczby różnią się od obiecanych na karcie.",
+    ),
+    "overview.promise.replanned": (
+        "The plan was made again when you approved, so these figures differ from the card.",
+        "Przy zatwierdzeniu plan ułożono ponownie, więc te liczby różnią się od obiecanych "
+        "na karcie.",
+    ),
     "overview.within_budget": (
         "Chance of staying within the budget: {p}",
         "Szansa na zmieszczenie się w budżecie: {p}",
@@ -874,7 +891,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "chart.new": ("(new)", "(nowe)"),
     "chart.flag.today": ("Today · {date}", "Dziś · {date}"),
-    "chart.flag.status": ("Status · {date}", "Stan · {date}"),
+    "chart.flag.status": ("Status at {date}", "Stan na {date}"),
     "chart.flag.deadline": ("Deadline · {date}", "Termin · {date}"),
     "chart.flag.likely": (
         "Most likely finish · {date}",
@@ -885,6 +902,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chart.view.chart": ("Chart", "Wykres"),
     "chart.view.table": ("Table", "Tabela"),
     "chart.legend.window": ("Forecast window", "Okno prognozy"),
+    "chart.gap": (
+        "Without disruptions the plan finishes on {plan}; the forecast window starts later "
+        "(most likely finish {likely}) because it counts on the usual overruns and absences.",
+        "Plan bez zakłóceń kończy się {plan}; okno prognozy zaczyna się później (najbardziej "
+        "prawdopodobny koniec {likely}), bo uwzględnia typowe wydłużenia zadań i nieobecności.",
+    ),
     "chart.legend.deadline": ("Deadline", "Termin"),
     "chart.col.people": ("People", "Osoby"),
     "chart.legend": ("Legend", "Legenda"),
@@ -1133,7 +1156,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chip.chance": ("Chance", "Szansa"),
     "chip.from_to": ("{before} → {after}", "{before} → {after}"),
     "chip.finish": ("Finish", "Koniec"),
+    "chip.likely": ("Most likely finish", "Najbardziej prawdopodobny koniec"),
     "chip.cost": ("Cost", "Koszt"),
+    "chip.cost_shares": (
+        "{before} → {after} of the budget ({change})",
+        "{before} → {after} budżetu ({change})",
+    ),
     "chip.moved": ("Tasks moved", "Przesunięte zadania"),
     "chip.delay": ("Expected delay (working days)", "Oczekiwane opóźnienie (dni robocze)"),
     "chip.better": ("better", "lepiej"),
@@ -1248,7 +1276,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "history.verdict.reject": ("You rejected: {title}", "Odrzucono: {title}"),
     "history.verdict.later": ("You postponed: {title}", "Odłożono: {title}"),
     "history.undone": ("Automatic change undone: {title}", "Cofnięto automatyczną zmianę: {title}"),
-    "history.plan": ("Plan created: finish on {date}", "Utworzono plan: zakończenie {date}"),
+    "history.plan": (
+        "Plan created: without disruptions it finishes on {date}",
+        "Utworzono plan: bez zakłóceń kończy się {date}",
+    ),
     "history.created": ("Project created", "Utworzono projekt"),
     "history.definition": ("Project details changed", "Zmieniono dane projektu"),
     "history.explanation": ("AI explanation added", "Dodano wyjaśnienie AI"),
@@ -1450,7 +1481,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "sim.name.j60": ("Example project (medium)", "Przykładowy projekt (średni)"),
     "sim.managed_by": ("managed by: {manager}", "zarządza: {manager}"),
     "sim.state_title": ("Status on {date}", "Stan na {date}"),
-    "sim.original_finish": ("Original plan finishes", "Koniec według planu początkowego"),
+    "sim.original_finish": (
+        "Original plan without disruptions finishes",
+        "Plan początkowy bez zakłóceń kończy się",
+    ),
     "sim.cost_so_far": ("Cost: {cost} ({share} of the budget)", "Koszt: {cost} ({share} budżetu)"),
     "sim.advance_by": ("Move on:", "Przewiń:"),
     "sim.days.1": ("+1 day", "+1 dzień"),
@@ -1706,6 +1740,11 @@ class Texts:
         if value < 1 and percent == 100:
             return f">{NBSP}99{NBSP}%"
         return f"{percent}{NBSP}%"
+
+    def share(self, value: float) -> str:
+        """A share of the budget as a whole percentage, half up; unlike a chance it may read
+        0 %, 100 % or more (the overview and a card show the same, B3 of the WP12 test)."""
+        return f"{int(half_up(100 * value))}{NBSP}%"
 
     def decimal(self, value: float) -> str:
         """A number with at most one decimal, half up (a decimal comma in Polish)."""

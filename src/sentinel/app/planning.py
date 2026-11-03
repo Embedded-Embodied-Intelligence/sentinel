@@ -43,9 +43,16 @@ from sentinel.policies.no_reaction import NoReaction
 from sentinel.policies.sentinel import Proposer, Sentinel
 from sentinel.scheduling.cpsat import solve_cpsat
 from sentinel.scheduling.priority_rules import lft_priorities
+from sentinel.scheduling.residual import planning_view, validate_residual
 from sentinel.scheduling.sgs import serial_sgs
 from sentinel.simulation.engine import Run
-from sentinel.simulation.state import EngineState, Observation, state_from_observation
+from sentinel.simulation.events import DisruptionParams
+from sentinel.simulation.state import (
+    EngineState,
+    Observation,
+    nominal_world,
+    state_from_observation,
+)
 
 T_CP = 0.1  # deterministic seconds of CP-SAT per plan (spec section 8)
 CP_SEED = 0  # CP-SAT seed, as in the policies (spec section 7)
@@ -152,17 +159,16 @@ def forecast(project: LiveProject, *, rollouts: int = FORECAST_ROLLOUTS) -> Fore
     makespans = [makespan_of(state) for state in states]
     deadline, budget = observation.deadline, observation.budget
     costs = [state.cost for state in states]
-    q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
     return ForecastResult(
         day=observation.day,
         seed=seed,
         rollouts=rollouts,
         p_on_time=None if deadline is None else sum(c <= deadline for c in makespans) / rollouts,
-        quantiles=(q10, q50, q90),
+        quantiles=makespan_quantiles(makespans),
         mean=float(np.mean(makespans)),
         truncated=sum(state.start[state.sink] is None for state in states),
         late=0 if deadline is None else sum(c > deadline for c in makespans),
-        mean_cost=float(np.mean(costs)),
+        mean_cost=math.fsum(costs) / rollouts,
         p_within_budget=None if budget is None else sum(c <= budget for c in costs) / rollouts,
         wall_time_s=time.perf_counter() - began,
     )
@@ -249,16 +255,64 @@ def forecast_rollouts(observation: Observation, rollouts: int, seed: int) -> Ite
     """The final states of the forecaster's rollouts, one at a time (spec 5.1; ADR-0009): rollout
     i has the same worlds however many there are."""
     belief = Belief(observation)
-    plan = Schedule(starts=observation.plan)
-    params = observation.disruptions
     for i in range(rollouts):
-        root = np.random.SeedSequence(derive_seed(seed, "rollout", str(i)))
-        belief_seq, future_seq = root.spawn(2)
-        world = belief.sample(np.random.Generator(np.random.PCG64(belief_seq)))
-        state = state_from_observation(observation, world, plan=plan.starts)
-        streams = rollout_streams(observation, world, params, future_seq)
-        Run(state, streams, NoReaction(), review_period=REVIEW_PERIOD, record_events=False).resume()
-        yield state
+        yield forecast_rollout(observation, belief, seed, i)
+
+
+def forecast_rollout(observation: Observation, belief: Belief, seed: int, i: int) -> EngineState:
+    """The final state of rollout i of the forecaster from `observation` (`belief` its belief):
+    world i of the seed's layout, then NoReaction to the end (spec 5.1 and 11.4)."""
+    root = np.random.SeedSequence(derive_seed(seed, "rollout", str(i)))
+    belief_seq, future_seq = root.spawn(2)
+    world = belief.sample(np.random.Generator(np.random.PCG64(belief_seq)))
+    state = state_from_observation(
+        observation, world, plan=Schedule(starts=observation.plan).starts
+    )
+    streams = rollout_streams(observation, world, observation.disruptions, future_seq)
+    Run(state, streams, NoReaction(), review_period=REVIEW_PERIOD, record_events=False).resume()
+    return state
+
+
+class ResidualPlan(_Frozen):
+    """The current plan as the pages show it (spec sections 5.2 and 11.4, v2.2.0; B2 of the
+    WP12 test): the deterministic forecast from the latest check-in, i.e. the plan without
+    further disruptions, with the start and the finish F of every task by key (those finished
+    as reported) and its end, the makespan."""
+
+    starts: dict[str, int]
+    finishes: dict[str, int]
+    end: int
+
+
+def residual_plan(project: LiveProject) -> ResidualPlan:
+    """One NoReaction run from the observation with the nominal hidden state and no
+    disruptions (`deterministic_forecast`, spec 5.2), its unstarted part checked by
+    `validate_residual` (spec 4.1, invariant 6): no unfinished task lies in the past and every
+    dependency holds, those of tasks added at check-ins included."""
+    observation = project.observation()
+    world = nominal_world(observation)
+    state = state_from_observation(observation, world, plan=observation.plan)
+    quiet = DisruptionParams.none()
+    streams = rollout_streams(observation, world, quiet, np.random.SeedSequence(0))
+    Run(state, streams, NoReaction(), review_period=REVIEW_PERIOD, record_events=False).resume()
+    problem = planning_view(observation)
+    plan = {j: start for j in problem.activities if (start := state.start[j]) is not None}
+    if state.start[state.sink] is not None:  # a run cut at its limit leaves tasks without dates
+        violations = validate_residual(problem, plan)
+        if violations:
+            raise ValueError(f"the residual plan is infeasible: {violations[0].detail}")
+    starts, finishes = {}, {}
+    for key, j in project.activity_ids().items():
+        start, finish = state.start[j], state.finish[j]
+        if start is not None and finish is not None:
+            starts[key], finishes[key] = start, finish
+    return ResidualPlan(starts=starts, finishes=finishes, end=makespan_of(state))
+
+
+def makespan_quantiles(makespans: Sequence[int]) -> tuple[int, int, int]:
+    """The 10, 50 and 90 % quantiles of the makespans (inverted CDF, spec 5.2 and 11.4)."""
+    q10, q50, q90 = (int(np.quantile(makespans, q, method="inverted_cdf")) for q in QUANTILES)
+    return q10, q50, q90
 
 
 def makespan_of(state: EngineState) -> int:
@@ -272,7 +326,8 @@ def makespan_of(state: EngineState) -> int:
 
 class Impact(_Frozen):
     """A candidate's statistics on its rollouts (spec sections 5 and 11.5): p, T, the expected
-    total cost z and the overrun o, and the mean makespan C-bar (None if not computed)."""
+    total cost z and the overrun o, the mean makespan C-bar and the 10/50/90 % quantiles of C
+    (None if not computed: stored before v2.0.2 and v2.2.0)."""
 
     label: str
     kind: str
@@ -282,6 +337,7 @@ class Impact(_Frozen):
     overrun: float
     rollouts: int
     mean_makespan: float | None = None
+    quantiles: tuple[int, int, int] | None = None  # of C, as the forecast's (v2.2.0)
 
 
 class PlanChange(_Frozen):
@@ -453,6 +509,54 @@ def _candidate_records(
     ]
 
 
+class ApprovalEvaluator(Evaluator):
+    """The comparison of a live project (spec section 11.5, v2.2.0): every candidate is applied
+    at once on day t as approving it applies it (`approve`, then mapped onto the project by
+    `LiveProject.resolve_action`), and its rollouts are those of the forecast (`forecast_rollout`)
+    from the observation that leaves, on the forecast's worlds. The figures a recommendation
+    promises are thus those the overview shows after the approval (B3 of the WP12 test: the
+    rollouts of section 6 imagine the approval delta_h days later and apply the action to each
+    sampled world, while a live approval applies it now and the next forecast samples the worlds
+    of the new observation). The simulator keeps `Evaluator`: its simulated human approves
+    delta_h days later (section 11.6)."""
+
+    def __init__(
+        self, project: LiveProject, observation: Observation, seed: int, params: SentinelParams
+    ) -> None:
+        super().__init__(observation, seed, params)
+        self.project = project
+        self.after: dict[str, tuple[Observation, Belief]] = {}
+
+    def approved(self, candidate: Candidate) -> Observation:
+        """The observation after approving `candidate` now: the current one for NOOP and for an
+        action the approval would discard."""
+        decision = candidate.decision
+        if all(op.kind == "noop" for op in decision.operations):
+            return self.observation
+        if self.params.needs_approval(decision):
+            prepared = approve(self.observation, candidate, self.params, self.plans)
+            self.replan_solves += prepared.solves
+            self.replans_reused += prepared.reused
+            if prepared.rejection is not None:
+                return self.observation
+            decision = prepared.decision
+        trial = self.project.copy()
+        outcome = trial.resolve_action(decision, candidate.label, candidate.kind)
+        if isinstance(outcome, str):
+            return self.observation
+        trial.apply_action(outcome)
+        return trial.observation()
+
+    def rollout(self, candidate: Candidate, i: int) -> tuple[int, bool, float]:
+        found = self.after.get(candidate.label)
+        if found is None:
+            observation = self.approved(candidate)
+            found = self.after[candidate.label] = (observation, Belief(observation))
+        state = forecast_rollout(*found, self.seed, i)
+        finish = state.start[state.sink]
+        return (state.max_days, True, state.cost) if finish is None else (finish, False, state.cost)
+
+
 class AppSentinel(Sentinel):
     """Sentinel in the application (spec section 11.5, v2.0.3): a deliberation decides on one
     comparison, the rest (epochs, approvals, the permission gate) is that of `Sentinel`, whose own
@@ -469,9 +573,11 @@ class AppSentinel(Sentinel):
         seed: int = 0,
         keep_records: bool = True,
         proposer: Proposer | None = None,
+        project: LiveProject | None = None,
     ) -> None:
         super().__init__(params, seed=seed, keep_records=keep_records, proposer=proposer)
         self.comparisons: dict[int, Comparison] = {}
+        self.project = project  # a live project's comparison applies actions now (v2.2.0)
 
     def deliberate(self, observation: Observation, discarded: str | None = None) -> DecisionRecord:
         """Needs gate, candidates, stage 1, the comparison, the rule and the permission gate at
@@ -480,7 +586,12 @@ class AppSentinel(Sentinel):
         params, stats = self.params, self.stats
         t = observation.day
         stats.deliberations += 1
-        comparing = Evaluator(observation, derive_seed(self.seed, "forecast", str(t)), params)
+        forecast = derive_seed(self.seed, "forecast", str(t))
+        comparing = (
+            Evaluator(observation, forecast, params)
+            if self.project is None
+            else ApprovalEvaluator(self.project, observation, forecast, params)
+        )
         # SPEC-Q: "stage 1 stays as in section 6": also its worlds, the deliberation's seed.
         racing = Evaluator(observation, derive_seed(self.seed, "sentinel", str(t)), params)
         racing.plans = comparing.plans  # a plan part depends on its objective and view only
@@ -597,7 +708,9 @@ def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Reco
         raise LiveError([issue("project_finished")])
     params = sentinel_params(project)
     seed = project.definition.settings.seed
-    sentinel = AppSentinel(params, seed=seed, keep_records=False, proposer=proposer)
+    sentinel = AppSentinel(
+        params, seed=seed, keep_records=False, proposer=proposer, project=project
+    )
     record = sentinel.deliberate(observation)
     chosen = next((c for c in record.candidates if c.label == record.chosen), None)
     return Recommendation(
@@ -645,6 +758,7 @@ def compare(record: DecisionRecord, evaluator: Evaluator) -> Comparison:
                 overrun=evaluator.overrun(mean_cost),
                 rollouts=rollouts,
                 mean_makespan=float(np.mean(outcomes.makespan[:rollouts])),
+                quantiles=makespan_quantiles(outcomes.makespan[:rollouts]),
             )
         )
     chosen, *others = impacts

@@ -17,6 +17,7 @@
       {{ ui.badge(level, t("chance.level." ~ level)) }}
     </div>
     {% if delta is not none %}{{ ui.delta(t, delta, since) }}{% endif %}
+    {% if summary.promise_note %}<p class="muted">{{ t("overview.promise." ~ summary.promise_note) }}</p>{% endif %}
     {% else %}
     <p class="lead">{{ t("overview.no_deadline") }} <a href="/projects/{{ view.id }}/settings">{{ t("overview.set_deadline") }}</a></p>
     {% endif %}
@@ -47,7 +48,7 @@
     <span class="kpi-value">{{ parts[0] }}</span> <span class="kpi-unit">{{ parts[1] }}{% if view.person_days %} {{ t("cost.person_days") }}{% endif %}</span>
     <span class="kpi-bar" aria-hidden="true"><span style="width: {{ [100, 100 * (view.cost_so_far or 0) / f.budget] | min | round(1) }}%"></span></span>
     <span class="kpi-sub">{{ t("overview.spent_share", share=t.pct((view.cost_so_far or 0) / f.budget)) }}</span>
-    {% if f.expected_cost is not none %}<span class="kpi-sub{% if over_budget %} warn{% endif %}">{% if over_budget %}{{ icon("alert", 14) }}{% endif %}{{ t("overview.expected_share", share=t.pct(f.expected_cost / f.budget)) }}</span>{% endif %}
+    {% if f.expected_cost is not none %}<span class="kpi-sub{% if over_budget %} warn{% endif %}">{% if over_budget %}{{ icon("alert", 14) }}{% endif %}{{ t("overview.expected_share", share=t.share(f.expected_cost / f.budget)) }}</span>{% endif %}
     <details class="details kpi-details">
       <summary>{{ t("overview.details") }}</summary>
       <div class="details-body">

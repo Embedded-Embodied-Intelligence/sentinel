@@ -22,6 +22,7 @@ from sentinel.app.planning import (
     Impact,
     ThreatList,
     Tie,
+    residual_plan,
     sentinel_params,
     tie_kind,
 )
@@ -57,7 +58,9 @@ ProgressState = Literal["not_started", "in_progress", "paused", "done", "removed
 
 
 class TaskView(View):
-    """A task as the manager sees it: its definition, its progress and its plan."""
+    """A task as the manager sees it: its definition, its progress and its plan; the planned
+    dates are those of the current plan (`residual_plan`, B2 of the WP12 test), the original
+    plan's are kept apart."""
 
     key: str
     name: str
@@ -75,6 +78,10 @@ class TaskView(View):
     planned_finish: date | None
     crew_names: list[str]
     late: bool
+    expected_finish: date | None = None  # of a started task, in the current plan (v2.2.0)
+    due: date | None = None  # the planned start a late task has missed
+    baseline_start: date | None = None  # in the original plan
+    baseline_finish: date | None = None
 
 
 class AbsenceView(View):
@@ -105,7 +112,9 @@ class CheckinView(View):
 
 
 class OutcomeView(View):
-    """A candidate's effect: P(on time), expected finish date, expected cost and overrun."""
+    """A candidate's effect: P(on time), the expected finish date (of the mean makespan), the
+    most likely finish and the bad case (the 50 and 90 % quantiles, as the overview shows them;
+    None for a recommendation stored before v2.2.0), expected cost and overrun."""
 
     p_on_time: float
     expected_finish: date | None
@@ -113,6 +122,8 @@ class OutcomeView(View):
     expected_cost: float
     overrun: float
     rollouts: int
+    likely_finish: date | None = None
+    bad_finish: date | None = None
 
 
 class ChangeView(View):
@@ -250,10 +261,13 @@ class ForecastView(View):
 
 class ForecastSummary(View):
     """The forecast now and the chance of meeting the deadline before the latest check-in (the
-    trend shown with it; None without an earlier forecastable state or a deadline)."""
+    trend shown with it; None without an earlier forecastable state or a deadline); after an
+    approval whose figures it does not show, what changed since the recommendation ("deadline",
+    "budget", "settings" or "replanned", spec section 11.5)."""
 
     forecast: ForecastView
     previous_p: float | None
+    promise_note: str | None = None  # why it differs from an approved card's figures (v2.2.0)
 
 
 # --------------------------------------------------------------------------- builders
@@ -340,6 +354,8 @@ def task_views(
     ids = project.activity_ids()
     by_key = {task.key: task for task in definition.tasks}
     added = {task.key: task for task in project.inserted}
+    current = residual_plan(project)
+    original = {} if project.baseline is None else project.baseline.starts
     for key, tracked in project.tasks.items():
         node = nodes[key]
         j = ids[key]
@@ -366,7 +382,10 @@ def task_views(
         definition_task = by_key.get(key)
         crew = dict(definition_task.crew) if definition_task else dict(added[key].crew)
         predecessors = list(node.predecessors)
-        planned = tracked.planned if state == "not_started" else None
+        planned = current.starts.get(key) if state == "not_started" else None
+        ends = current.finishes.get(key) if state in ("in_progress", "paused") else None
+        first = original.get(key)
+        late = state == "not_started" and tracked.planned < observation.day
         rows.append(
             TaskView(
                 key=key,
@@ -386,7 +405,13 @@ def task_views(
                 if planned is None
                 else calendar.finish_date(planned + node.duration),
                 crew_names=[names.get(member, member) for member in tracked.crew],
-                late=planned is not None and planned < observation.day,
+                late=late,
+                due=calendar.date_of(tracked.planned) if late else None,
+                expected_finish=None if ends is None else calendar.finish_date(ends),
+                baseline_start=None if first is None else calendar.date_of(first),
+                baseline_finish=None
+                if first is None
+                else calendar.finish_date(first + node.duration),
             )
         )
     return rows
@@ -582,9 +607,11 @@ def approval_reasons(decision: Decision, autonomy: int) -> list[str]:
 def _outcome(impact: Impact | None, calendar: WorkCalendar) -> OutcomeView | None:
     if impact is None:
         return None
-    finish = None
+    finish = likely = bad = None
     if impact.mean_makespan is not None:
         finish = calendar.finish_date(int(impact.mean_makespan + 0.5))
+    if impact.quantiles is not None:
+        likely, bad = (calendar.finish_date(q) for q in impact.quantiles[1:])
     return OutcomeView(
         p_on_time=impact.p_on_time,
         expected_finish=finish,
@@ -592,6 +619,8 @@ def _outcome(impact: Impact | None, calendar: WorkCalendar) -> OutcomeView | Non
         expected_cost=impact.mean_cost,
         overrun=impact.overrun,
         rollouts=impact.rollouts,
+        likely_finish=likely,
+        bad_finish=bad,
     )
 
 

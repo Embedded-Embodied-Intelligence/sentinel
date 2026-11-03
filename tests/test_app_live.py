@@ -351,7 +351,10 @@ def test_recommendation_is_the_app_decision_on_the_equivalent_observation() -> N
     assert project.observation() == hand
     state_from_observation(hand, nominal_world(hand))
     recommendation = absence_recommendation()
-    direct = AppSentinel(SentinelParams(autonomy=2), seed=2026, keep_records=False).deliberate(hand)
+    sentinel = AppSentinel(
+        SentinelParams(autonomy=2), seed=2026, keep_records=False, project=project
+    )
+    direct = sentinel.deliberate(hand)
     timing = {"generation_s", "evaluation_s", "wall_time_s"}
     assert recommendation.record.model_dump(exclude=timing) == direct.model_dump(exclude=timing)
     assert recommendation.record.chosen == "SUBST(1)" and recommendation.record.gate == "escalated"
