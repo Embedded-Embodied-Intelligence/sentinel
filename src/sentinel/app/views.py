@@ -238,6 +238,27 @@ class DriverView(View):
     sensitivity: float
 
 
+class CauseView(View):
+    """One cause of a move of the chance (spec section 11.4, v2.2.0): "absence", "growth",
+    "new_task" or "progress", the person's or the task's name, and the chance without it."""
+
+    kind: str
+    name: str
+    p_without: float
+
+
+class CausesView(View):
+    """Why the chance moved at the latest check-in, dated `reported` (spec section 11.4, v2.2.0):
+    the chance before and after it and at most three causes; `since` is the status date before
+    the check-in, from which the progress is compared with the plan."""
+
+    reported: date
+    since: date
+    p_before: float
+    p_after: float
+    lines: list[CauseView]
+
+
 class ForecastView(View):
     """A forecast as shown (spec section 11.4); `drivers` is None until the list is calculated,
     and `threat_rollouts` the futures it reads."""
@@ -257,6 +278,8 @@ class ForecastView(View):
     expected_cost: float | None = None
     budget: float | None = None
     p_within_budget: float | None = None
+    causes: CausesView | None = None  # why the chance moved at the latest check-in (v2.2.0)
+    causes_pending: bool = False  # the background job has not calculated them yet
 
 
 class ForecastSummary(View):

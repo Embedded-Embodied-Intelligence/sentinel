@@ -34,6 +34,7 @@ from sentinel.agent.evaluate import (
 )
 from sentinel.agent.params import SentinelParams
 from sentinel.app.live import Baseline, LiveError, LiveProject, Model, Node, issue
+from sentinel.app.models import CheckIn, TaskReport
 from sentinel.experiments.runs import derive_seed
 from sentinel.forecasting.beliefs import Belief
 from sentinel.forecasting.forecast import QUANTILES, REVIEW_PERIOD, rollout_streams
@@ -307,6 +308,124 @@ def residual_plan(project: LiveProject) -> ResidualPlan:
         if start is not None and finish is not None:
             starts[key], finishes[key] = start, finish
     return ResidualPlan(starts=starts, finishes=finishes, end=makespan_of(state))
+
+
+CAUSE_MOVE = 0.05  # a move of the chance decomposed into its causes, at least (11.4, v2.2.0)
+CAUSES_SHOWN = 3  # causes shown, at most
+CAUSE_EFFECT = 0.005  # an effect below half a percentage point is not a cause shown
+
+
+class Cause(_Frozen):
+    """One event of a check-in and the chance without it (spec section 11.4, v2.2.0): an
+    absence (`name` the person's), a growth or a new task (the task's), or the progress against
+    the plan ("progress", no name)."""
+
+    kind: Literal["absence", "growth", "new_task", "progress"]
+    name: str = ""
+    p_without: float
+
+
+class Causes(_Frozen):
+    """Why the chance moved at a check-in (spec section 11.4, v2.2.0): the chance before and
+    after it and the causes by the size of their effect, at most three, none for a move below
+    five percentage points; each the chance of the check-in without that one event, on the same
+    200 worlds (one-at-a-time counterfactuals), so the effects do not add up exactly."""
+
+    p_before: float
+    p_after: float
+    causes: tuple[Cause, ...] = ()
+
+
+def causes(project: LiveProject, checkin: CheckIn, p_before: float, p_after: float) -> Causes:
+    """The causes of the move from `p_before` (the project before `checkin`) to `p_after`: each
+    absence, growth and new task of the check-in left out in turn, and its task reports replaced
+    by the progress the plan expected since the previous check-in (`planned_reports`); every
+    variant forecast on the worlds of the check-in's day (spec 11.4). A variant the check-in's
+    rules reject (e.g. a growth of a task that the plan has finished) is no cause."""
+    if abs(p_after - p_before) < CAUSE_MOVE:
+        return Causes(p_before=p_before, p_after=p_after)
+    variants: list[tuple[Cause, CheckIn]] = []
+    people = {person.key: person.name for person in project.definition.team}
+    nodes = project.nodes()
+    for i, absence in enumerate(checkin.absences):
+        rest = checkin.absences[:i] + checkin.absences[i + 1 :]
+        name = people.get(absence.person, absence.person)
+        cause = Cause(kind="absence", name=name, p_without=0.0)
+        variants.append((cause, checkin.model_copy(update={"absences": rest})))
+    for i, growth in enumerate(checkin.increases):
+        grown = checkin.increases[:i] + checkin.increases[i + 1 :]
+        node = nodes.get(growth.task)
+        cause = Cause(kind="growth", name=growth.task if node is None else node.name, p_without=0.0)
+        variants.append((cause, checkin.model_copy(update={"increases": grown})))
+    for i, added in enumerate(checkin.new_tasks):
+        others = checkin.new_tasks[:i] + checkin.new_tasks[i + 1 :]
+        cause = Cause(kind="new_task", name=added.name, p_without=0.0)
+        variants.append((cause, checkin.model_copy(update={"new_tasks": others})))
+    day = project.require_model().calendar.checkin_day(checkin.date)
+    if day > project.day:
+        planned = planned_reports(project, day)
+        if planned is not None:
+            variants.append(
+                (
+                    Cause(kind="progress", p_without=0.0),
+                    checkin.model_copy(update={"tasks": planned}),
+                )
+            )
+    found: list[Cause] = []
+    for cause, variant in variants:
+        trial = project.copy()
+        try:
+            trial.apply_checkin(trial.resolve_checkin(variant))
+        except LiveError:
+            continue
+        p = forecast(trial).p_on_time
+        if p is not None and abs(p - p_after) >= CAUSE_EFFECT:
+            found.append(cause.model_copy(update={"p_without": p}))
+    found.sort(key=lambda c: -abs(c.p_without - p_after))
+    return Causes(p_before=p_before, p_after=p_after, causes=tuple(found[:CAUSES_SHOWN]))
+
+
+def planned_reports(project: LiveProject, day: int) -> tuple[TaskReport, ...] | None:
+    """The task reports of a check-in of `day` had every task progressed as the plan expected:
+    the deterministic run from the latest check-in (`residual_plan`) up to that day (spec 11.4,
+    v2.2.0); None if the run ends before it."""
+    observation = project.observation()
+    world = nominal_world(observation)
+    state = state_from_observation(observation, world, plan=observation.plan)
+    quiet = DisruptionParams.none()
+    streams = rollout_streams(observation, world, quiet, np.random.SeedSequence(0))
+    run = Run(state, streams, NoReaction(), review_period=REVIEW_PERIOD, record_events=False)
+    if not run.resume_to(day):
+        return None
+    calendar = project.calendar
+    nodes = project.nodes()
+    factors: dict[str, float] = {}
+    for shock in project.shocks:
+        factors[shock.task] = factors.get(shock.task, 1.0) * shock.factor
+    reports = []
+    for key, j in project.activity_ids().items():
+        if project.tasks[key].state in ("done", "removed"):
+            continue
+        start, finish = state.start[j], state.finish[j]
+        if start is None:
+            continue
+        if finish is not None:
+            report = TaskReport(
+                task=key,
+                status="done",
+                start=calendar.date_of(start),
+                finish=calendar.finish_date(finish),
+            )
+        else:
+            node = nodes[key]
+            total = node.duration * factors.get(key, 1.0)
+            done = state.done[j] / state.unit[j]  # e_j in full-crew days
+            percent = min(99.0, 100 * done / total) if total > 0 else 0.0
+            report = TaskReport(
+                task=key, status="in_progress", percent=percent, start=calendar.date_of(start)
+            )
+        reports.append(report)
+    return tuple(reports)
 
 
 def makespan_quantiles(makespans: Sequence[int]) -> tuple[int, int, int]:

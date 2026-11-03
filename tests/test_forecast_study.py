@@ -304,6 +304,7 @@ def test_smoke_run_writes_all_outputs_and_reproduces_wp2b(
     assert len(by_checkpoint) == 24
 
 
+@pytest.mark.slow  # 3-5 s: out of the default run since WP12 (90 s budget), in -m slow
 def test_summaries_can_be_regenerated_through_the_cli(
     fake_forecasts: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

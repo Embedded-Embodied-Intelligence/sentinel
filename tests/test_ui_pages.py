@@ -948,3 +948,17 @@ def test_the_simulator_pages(tmp_path: Path, psplib_root: Path) -> None:
             assert not shown & (first[other] - first[language])
         start = client.get("/", params={"lang": "en"})
         assert "Days simulated: 10" in start.text and problems(start.text) == []
+
+
+def test_the_overview_says_what_moved_the_chance(site: Site) -> None:
+    """Task 4 of WP12: after a check-in that moved the chance by 5 points or more, the overview
+    names its causes, each with the chance without it on the same futures (spec 11.4, v2.2.0),
+    and says that they do not add up exactly."""
+    # The copy of the open project with its recommendation approved: its latest check-in moved
+    # the chance from 77 % to 10 % (the approval after it does not change what moved it).
+    page = site.client.get(f"/projects/{site.ids['approved']}/forecast", params={"lang": "pl"})
+    shown = visible_text(page.text)
+    assert page.status_code == 200 and problems(page.text) == []
+    assert "Co zmieniło szansę w raporcie z" in shown
+    assert "Bez nieobecności osoby Ada szansa byłaby" in shown
+    assert "skutki nie sumują się dokładnie" in shown

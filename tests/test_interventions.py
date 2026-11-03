@@ -380,6 +380,7 @@ def world(instance: ProjectInstance, plan: Schedule, seed: int, policy: object) 
     return Run(state, streams, policy, review_period=3, debug=True)  # type: ignore[arg-type]
 
 
+@pytest.mark.slow  # 3-5 s: out of the default run since WP12 (90 s budget), in -m slow
 def test_preview_shows_the_state_the_engine_leaves(build: Builder) -> None:
     """At every epoch of FullResolve(subst=True) runs, `preview` of the observation and the
     decision equals what the engine shows after applying that decision."""

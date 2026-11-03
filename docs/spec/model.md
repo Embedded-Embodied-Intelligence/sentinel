@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.1.5)
+# Sentinel — formal model (v2.2.0)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -85,6 +85,13 @@ answer to the WP11 question on "until <weekday>" in a check-in message: in the a
 "until <weekday>" ("do <weekday>") means absent through that day, so `r` is the next working day
 after it, and "back on <weekday>" ("wraca w <weekday>") gives `r` as that weekday (§11.3); the
 research runs keep §10.2, its prompt and its corpus (a weekday gives `r`); §1–§10 are unchanged.
+v2.2.0 (WP12) answers to the CEO/QA test of the application: in a live project the comparison
+applies every candidate at once on day `t`, as an approval does, and its figures are those of the
+forecast from the observation that leaves, so a card promises what the overview shows after the
+approval (§11.5); a card shows the most likely finish and the bad case of the same worlds as the
+overview (§11.5, §11.7); the plan the pages show is the deterministic forecast from the latest
+check-in (§11.4); a move of the chance at a check-in is decomposed into its causes by
+one-at-a-time counterfactuals (§11.4); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -941,6 +948,24 @@ of the 10 %, 50 % and 90 % quantiles of `C` (§5.2). The *tasks that threaten th
   duration, has no sensitivity, and no task has one if `C` does not vary. If no task remains, the page
   says that the risk is spread across the plan; without a late rollout among the forecast's `N`, that
   the project is late in none of the simulated futures; without a deadline, there is no threat.
+- **Plan shown** (v2.2.0, WP12). The plan the pages show (the chart, the task list, the plan CSV,
+  the report) is the deterministic forecast of §5.2 from the latest observation: one NoReaction
+  run with the nominal hidden state and no future disruptions, giving every task its start and
+  finish, so no unfinished task lies before day `t` and every dependency holds, those of tasks
+  added at check-ins included; its unstarted part is checked against the planning view of §4.1
+  (`validate_residual`, the residual form of §1.3). Its makespan is the *plan without
+  disruptions*, worded apart from the forecast's dates (§11.7); the original plan `π⁰` is shown
+  beside it. A run cut at its limit (§3.1 f) leaves the tasks it did not reach without dates.
+- **Causes of a move** (v2.2.0, WP12). When the chance of a check-in dated `d` differs from the
+  chance before it by at least 5 percentage points, the page names at most three causes: for
+  each absence, work increase and new task of the check-in, the chance of the same check-in
+  without it, and for its task reports, the chance had every task progressed as the plan expected
+  since the previous check-in (the deterministic forecast above, from the observation before the
+  check-in, read at day `t`). Each variant is forecast like the check-in itself, on the `N` worlds
+  of day `t` (one-at-a-time counterfactuals on common random numbers); a variant that the
+  check-in's rules reject is no cause, nor one whose chance is within half a percentage point of
+  the check-in's. The causes are ranked by the size of that difference, are computed in the
+  background job of the threats, and the page says that their effects do not add up exactly.
 - **When** (v2.1.4). The `M` rollouts run in a background job after a check-in, and when a page needs
   the list of a state that has none yet (the plan before the first check-in, an approval, an undo, a
   change of the settings); the list is kept with the state, as the forecast is. The chance, the
@@ -955,9 +980,10 @@ of the 10 %, 50 % and 90 % quantiles of `C` (§5.2). The *tasks that threaten th
   LLM proposals of §10.3 are off by default), DESCOPE candidates if the project has optional
   tasks, and the parameters of §8. One follows every check-in; the manager may ask for one at any
   time. It shows the chosen action in plain language, its effect against
-  NOOP (`p̂`, the expected finish date `date(C̄ − 1)` with `C̄` the mean makespan of its
-  rollouts rounded half up, the expected cost `ẑ`, the plan changes), the alternatives, the
-  runner-up and the explanation of §10.4.
+  NOOP (`p̂`, the most likely finish and the bad case `date(q₅₀ − 1)` and `date(q₉₀ − 1)` with
+  `q₅₀`, `q₉₀` the 50 and 90 % quantiles of `C` over its rollouts as in §11.4 (v2.2.0; before it
+  the expected finish `date(C̄ − 1)` of the mean makespan), the expected cost `ẑ` also as a share
+  of `B`, the plan changes), the alternatives, the runner-up and the explanation of §10.4.
 - **One comparison** (v2.0.3, WP9c questions 3 and 4; project and simulator modes only, the
   research semantics of §6 are unchanged). The decision, the display and the explanation come from
   one comparison, so that a manager never sees an alternative ranked above the recommended action
@@ -969,8 +995,13 @@ of the 10 %, 50 % and 90 % quantiles of `C` (§5.2). The *tasks that threaten th
   2. *Racing stage 1* stays as in §6: every candidate on `N₁` rollouts with the seed
      `derive_seed(project seed, "sentinel", t)`, the same criterion for dropping a candidate.
   3. *The comparison* replaces stage 2. The survivors of stage 1 and every candidate the page can
-     show are evaluated on the 200 worlds of step 1, each applied as in the rollouts of §6 (an
-     action that needs approval is approved `δ_h` days later in each world). The candidates the
+     show are evaluated on the 200 worlds of step 1. In the simulator each is applied as in the
+     rollouts of §6 (an action that needs approval is approved `δ_h` days later in each world, as
+     its simulated human approves). In a live project (v2.2.0, WP12) each is applied at once on
+     day `t` as approving it applies it (*Approve* below; an automatic action as it is applied),
+     and its rollouts are those of the forecast (§11.4) from the observation this leaves, on the
+     same seed and layout: the figures a card promises are those the overview shows after the
+     approval, as long as nothing else changes. The candidates the
      page can show are NOOP and, while fewer than six candidates are in the comparison, the best
      of those dropped (largest `min(p, θ_D)`, then smallest `T` of stage 1, then candidate order).
      DESCOPE candidates (§6) are generated from the figures of this comparison and join stage 1
@@ -1004,15 +1035,17 @@ of the 10 %, 50 % and 90 % quantiles of `C` (§5.2). The *tasks that threaten th
   other chosen action waits for the manager, who takes the place of the simulated human of §4:
   there is no deferral, and the action applies when the manager approves it; the urgency `τ_t`
   (§5) is shown, and an action with `τ_t > τ_def` *can wait*. The deliberation itself is that of
-  §6 with the parameters of §8, so its rollouts still imagine the approval delay `δ_h` of an
-  action that needs approval.
+  §6 with the parameters of §8, so racing's stage 1 still imagines the approval delay `δ_h` of an
+  action that needs approval; the comparison of a live project applies it at once (item 3).
 - **Approve** applies the action to the current observation as on an approval day (§4): its
   SUBST, OVERTIME and DESCOPE operations unchanged and re-validated, its plan part planned again
   on the planning view they leave, all or nothing. The project then has the new plan, the named
   substitutes in the crews (the replaced members leave them, §4), the temporary workers
   "Temporary <role> 1, 2, …" hired from that day for `H` days (§4 OVERTIME) and the removed
   optional task. An action that is no longer valid is discarded with its reason, and a fresh
-  recommendation follows. **Reject** records the rejection; **later** leaves the recommendation
+  recommendation follows. After an approval the overview shows the figures of the card; if they
+  differ, because the deadline, the budget or the settings changed between the recommendation and
+  the approval or the plan part was planned differently, it says which in one sentence (v2.2.0). **Reject** records the rejection; **later** leaves the recommendation
   open until the next check-in or recommendation replaces it.
 - **Undo.** An action applied automatically that changes only the plan (SHIFT or RESEQ, without
   SUBST, OVERTIME or DESCOPE) can be undone while no later check-in, recommendation, decision or

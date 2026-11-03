@@ -862,6 +862,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "No change is needed: the plan is still the best.",
         "Zmiana nie jest potrzebna: plan wciąż jest najlepszy.",
     ),
+    "overview.checked_none_helps": (
+        "Sentinel checked {n} options; none of them helps enough, so the plan stays.",
+        "Sentinel sprawdził {n} możliwości; żadna nie pomaga wystarczająco, więc plan pozostaje.",
+    ),
     "overview.checked_no_better": (
         "No option checked is clearly better than the current plan, so the plan stays.",
         "Żadna sprawdzona możliwość nie jest wyraźnie lepsza od obecnego planu, więc plan "
@@ -902,6 +906,33 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chart.view.chart": ("Chart", "Wykres"),
     "chart.view.table": ("Table", "Tabela"),
     "chart.legend.window": ("Forecast window", "Okno prognozy"),
+    "causes.title": (
+        "What moved the chance at the check-in of {date}: {before} → {after}",
+        "Co zmieniło szansę w raporcie z {date}: {before} → {after}",
+    ),
+    "causes.absence": (
+        "Without the absence of {name} the chance would be {p}.",
+        "Bez nieobecności osoby {name} szansa byłaby {p}.",
+    ),
+    "causes.growth": (
+        "Had the task {name} not grown, the chance would be {p}.",
+        "Gdyby zadanie „{name}” się nie wydłużyło, szansa byłaby {p}.",
+    ),
+    "causes.new_task": (
+        "Without the new task {name} the chance would be {p}.",
+        "Bez nowego zadania „{name}” szansa byłaby {p}.",
+    ),
+    "causes.progress": (
+        "Had the work progressed as planned since {date}, the chance would be {p}.",
+        "Gdyby od {date} prace posuwały się zgodnie z planem, szansa byłaby {p}.",
+    ),
+    "causes.note": (
+        "Each line changes one thing on the same simulated futures, so the effects do not add up "
+        "exactly.",
+        "Każda linia zmienia jedną rzecz na tych samych symulowanych scenariuszach, więc skutki "
+        "nie sumują się dokładnie.",
+    ),
+    "causes.calculating": ("Finding what moved the chance…", "Ustalam, co zmieniło szansę…"),
     "chart.gap": (
         "Without disruptions the plan finishes on {plan}; the forecast window starts later "
         "(most likely finish {likely}) because it counts on the usual overruns and absences.",
@@ -1078,6 +1109,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "rec.how": ("How we calculated this", "Jak to policzyliśmy"),
     "rec.more": ("More", "Więcej"),
     "rec.baseline_note": ("reference point", "punkt odniesienia"),
+    "rec.worse": ("worse than no change", "gorsze niż bez zmian"),
     "rec.points": ("{sign}{n} pts", "{sign}{n} pkt"),
     "rec.approve.subst": ("Approve the substitute", "Zatwierdź zastępstwo"),
     "rec.approve.overtime": ("Approve the extra person", "Zatwierdź dodatkową osobę"),
@@ -1157,6 +1189,15 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "chip.from_to": ("{before} → {after}", "{before} → {after}"),
     "chip.finish": ("Finish", "Koniec"),
     "chip.likely": ("Most likely finish", "Najbardziej prawdopodobny koniec"),
+    "chip.gain": ("What improves", "Co się poprawia"),
+    "chip.gain.tardiness": (
+        "expected delay {before} → {after} working days",
+        "oczekiwane opóźnienie {before} → {after} dni roboczych",
+    ),
+    "chip.gain.budget": (
+        "expected budget overrun {before} → {after}",
+        "oczekiwane przekroczenie budżetu {before} → {after}",
+    ),
     "chip.cost": ("Cost", "Koszt"),
     "chip.cost_shares": (
         "{before} → {after} of the budget ({change})",

@@ -6,6 +6,7 @@ the project's last change), the recommendation of spec section 11.5 with the fig
 simulated futures, and the event log for the history.
 """
 
+import dataclasses
 import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -116,6 +117,7 @@ class OptionRow:
     base: bool = False
     diff: str = ""
     note: str = ""  # a recommendation stored before v2.0.2: racing set this option aside early
+    worse: bool = False  # worse than no change: a lower chance, or as likely and later (WP12)
 
 
 LONG_OPTION = 60  # characters of an option's name before the rest folds behind "More"
@@ -126,6 +128,26 @@ def short_name(title: str) -> str | None:
     if len(title) <= LONG_OPTION:
         return None
     return title[:LONG_OPTION].rsplit(" ", 1)[0].rstrip(",:(") + "…"
+
+
+def head_and_tail(title: str) -> str:
+    """An option's name cut in the middle: its start and its end, which tell apart two options
+    whose starts are the same (the WP12 test: two substitutions cut to the same words)."""
+    half = LONG_OPTION // 2
+    head = title[:half].rsplit(" ", 1)[0].rstrip(",:(")
+    tail = title[-half:].split(" ", 1)[-1]
+    return f"{head} … {tail}"
+
+
+def distinct_shorts(rows: list[OptionRow]) -> list[OptionRow]:
+    """The rows with every short name that appears twice replaced by its head and tail."""
+    seen = [row.short for row in rows if row.short is not None]
+    return [
+        dataclasses.replace(row, short=head_and_tail(row.title))
+        if row.short is not None and seen.count(row.short) > 1
+        else row
+        for row in rows
+    ]
 
 
 def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
@@ -148,6 +170,14 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
         sign = "+" if change > 0 else "\u2212"
         return texts("rec.points", sign=sign, n=abs(change))
 
+    def worse(p: float, delay: float) -> bool:
+        """Worse than no change as the table shows it: a lower chance, or the same chance and a
+        longer expected delay."""
+        if base is None:
+            return False
+        lower = _whole_percent(p) - _whole_percent(base.p_on_time)
+        return lower < 0 or (lower == 0 and half_up(delay, 1) > half_up(base.tardiness, 1))
+
     rows = []
     if after is not None and rec.acts:
         rows.append(
@@ -160,6 +190,7 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
                 texts.cost_short(after.expected_cost),
                 chosen=True,
                 diff=diff(after.p_on_time),
+                worse=worse(after.p_on_time, after.tardiness),
             )
         )
     others = [a for a in rec.alternatives if a.label != "NOOP"]
@@ -174,6 +205,7 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
                 texts.cost_short(alt.expected_cost),
                 diff=diff(alt.p_on_time),
                 note=texts("rec.dropped") if alt.dropped and not rec.compared else "",
+                worse=worse(alt.p_on_time, alt.tardiness),
             )
         )
     if base is not None:
@@ -188,7 +220,7 @@ def option_rows(rec: RecommendationView, texts: Texts) -> list[OptionRow]:
                 base=True,
             )
         )
-    return rows
+    return distinct_shorts(rows)
 
 
 def _whole_percent(p: float) -> int:
@@ -231,6 +263,30 @@ def finish_label(outcome: OutcomeView, texts: Texts) -> str:
     return texts("chip.likely" if outcome.likely_finish is not None else "chip.finish")
 
 
+def gain_chip(
+    rec: RecommendationView, before: OutcomeView, after: OutcomeView, texts: Texts
+) -> Chip:
+    """What the action improves when the chance shown does not move ("0 % → 0 %", the WP12
+    test): the component that decided (spec section 6) in words, with its figures where it has
+    them; the expected delay when the chance itself decided within its rounding."""
+    reason = rec.reason
+    if reason in ("on_time", "tardiness", "only_candidate"):
+        text = texts(
+            "chip.gain.tardiness",
+            before=texts.decimal(before.tardiness),
+            after=texts.decimal(after.tardiness),
+        )
+    elif reason == "budget":
+        text = texts(
+            "chip.gain.budget",
+            before=texts.share(before.overrun),
+            after=texts.share(after.overrun),
+        )
+    else:
+        text = rec.reason_text
+    return Chip(texts("chip.gain"), text, "good")
+
+
 def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
     """The effect of the action against no change (spec section 11.5): the chance of meeting
     the deadline, the expected finish date, the expected cost and the tasks whose dates move."""
@@ -254,6 +310,8 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
             tone,
         )
     )
+    if texts.pct(after.p_on_time) == texts.pct(before.p_on_time):
+        chips.append(gain_chip(rec, before, after, texts))
     first, then = finish_of(before), finish_of(after)
     if first is not None and then is not None:
         moved = (then - first).days
@@ -365,7 +423,9 @@ def checked_key(rec: RecommendationView) -> str:
     while the deadline is on track; otherwise no option was clearly better, another message."""
     chance = None if rec.without is None else rec.without.p_on_time
     on_track = rec.reason == "needs_met" or chance is None or chance_level(chance) == "good"
-    return "overview.checked" if on_track else "overview.checked_no_better"
+    if on_track:
+        return "overview.checked"
+    return "overview.checked_none_helps" if rec.options > 1 else "overview.checked_no_better"
 
 
 def needs_date_confirmation(day: date, confirmed: bool, today: date | None = None) -> bool:
@@ -754,7 +814,9 @@ def router(ui: Ui) -> APIRouter:
         if latest is not None and latest.status == "auto":
             auto = latest
         if latest is not None and latest.status == "none" and view.checkins:
-            checked = latest if latest.date > view.checkins[-1].date else None
+            # After a check-in, said only when the chance is low and no option helps (WP12 test).
+            low = checked_key(latest) != "overview.checked"
+            checked = latest if low or latest.date > view.checkins[-1].date else None
         away = [p for p in view.people if p.absent]
         late = [t for t in view.tasks if t.late]
         return ui.page(
@@ -779,11 +841,12 @@ def router(ui: Ui) -> APIRouter:
         )
 
     def wait_for_threats(request: Request, project_id: str) -> str | None:
-        """The id of the job to wait for while the list of a project's threats is calculated (spec
-        section 11.4), None if it is known (or was just calculated, with inline jobs)."""
+        """The id of the job to wait for while the list of a project's threats or the causes of
+        the latest move of its chance are calculated (spec section 11.4), None if they are known
+        (or were just calculated, with inline jobs)."""
         session, language = ui.session(request), ui.language(request)
         forecast = services.forecast_now(session, project_id)
-        if forecast is None or forecast.drivers is not None:
+        if forecast is None or (forecast.drivers is not None and not forecast.causes_pending):
             return None
         job = services.threats_job(session, project_id, language)
         return None if job.status == "done" else job.id

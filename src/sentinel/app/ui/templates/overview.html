@@ -21,6 +21,7 @@
     <form hx-post="/projects/{{ view.id }}/ask" hx-target="#ask-area"><button class="btn">{{ t("overview.ask") }}</button></form>
   </div>
   <div id="ask-area" aria-live="polite"></div>
+  <div id="causes" aria-live="polite"></div>
   <div id="kpis"></div>
   {% endif %}
 </section>
@@ -46,7 +47,7 @@
   {% with label=t("job.recommend"), query="label=job.recommend&next=" ~ (after_job | urlencode) %}{% include "_job.html" %}{% endwith %}
   {% endif %}
   {% if checked %}
-  <p class="none-line section-sub">{{ icon("check-circle", 16) }}<span>{{ t("overview.checked_title") }}. {{ t(checked_message) }} <a href="/projects/{{ view.id }}/recommendations/{{ checked.seq }}">{{ t("overview.details") }}</a></span></p>
+  <p class="none-line section-sub">{{ icon("check-circle", 16) }}<span>{{ t("overview.checked_title") }}. {{ t(checked_message, n=checked.options) }} <a href="/projects/{{ view.id }}/recommendations/{{ checked.seq }}">{{ t("overview.details") }}</a></span></p>
   {% endif %}
   {% if auto %}
   <div class="card rec-card section-sub">

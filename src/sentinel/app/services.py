@@ -64,6 +64,8 @@ from sentinel.app.store import (
     now,
 )
 from sentinel.app.views import (
+    CausesView,
+    CauseView,
     ForecastSummary,
     ForecastView,
     IssueView,
@@ -199,6 +201,7 @@ class Services:
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
         self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
         self._threats: OrderedDict[tuple[str, int], planning.ThreatList] = OrderedDict()
+        self._causes: OrderedDict[tuple[str, int], planning.Causes | None] = OrderedDict()
         # set by the web layer (demo): seeds a sandbox with the showcase in a language
         self.showcase: Callable[[str, Language], None] | None = None
 
@@ -425,6 +428,7 @@ class Services:
             if not _forecastable(current.project):
                 return {}
             progress(0.05, "simulating")
+            self._cause_list(project_id, self.store.events(session, project_id))
             if not self._forecast(project_id, current).late:
                 return {}
             return self._threat_list(project_id, current).model_dump(mode="json")
@@ -572,9 +576,10 @@ class Services:
         _, state = self._state(session, project_id)
         if not _forecastable(state.project):
             return None
-        return forecast_view(
+        view = forecast_view(
             state.project, self._forecast(project_id, state), self._known_threats(project_id, state)
         )
+        return self._with_causes(view, project_id, state, self.store.events(session, project_id))
 
     def forecast_summary(
         self, session: str, project_id: str, language: Language, *, with_threats: bool = False
@@ -591,9 +596,11 @@ class Services:
         threats = self._known_threats(project_id, state)
         if with_threats and result.late and threats is None:
             threats = self._threat_list(project_id, state)
-        current = forecast_view(state.project, result, threats)
-        previous = None
         rows = self.store.events(session, project_id)
+        current = self._with_causes(
+            forecast_view(state.project, result, threats), project_id, state, rows
+        )
+        previous = None
         checkins = [row.seq for row in rows if row.type == "checkin"]
         if checkins and current.p_on_time is not None:
             before = replay([row for row in rows if row.seq < checkins[-1]])
@@ -651,6 +658,62 @@ class Services:
             self._forecasts[key] = result
             while len(self._forecasts) > FORECASTS_KEPT:
                 self._forecasts.popitem(last=False)
+        return result
+
+    def _with_causes(
+        self, view: ForecastView, project_id: str, state: LiveState, rows: Sequence[EventRow]
+    ) -> ForecastView:
+        """The forecast with the causes of the move at the latest check-in, if known, or a mark
+        that its background job is still calculating them (spec section 11.4, v2.2.0)."""
+        checkins = [row for row in rows if row.type == "checkin"]
+        if not checkins or view.p_on_time is None:
+            return view
+        key = (project_id, checkins[-1].seq)
+        with self._guard:
+            if key not in self._causes:
+                return view.model_copy(update={"causes_pending": True})
+            found = self._causes[key]
+        if found is None or not found.causes:
+            return view
+        project = state.project
+        dates = [day for day, _ in project.checkins]
+        since = dates[-2] if len(dates) > 1 else project.calendar.date_of(0)
+        causes = CausesView(
+            reported=dates[-1],
+            since=since,
+            p_before=found.p_before,
+            p_after=found.p_after,
+            lines=[
+                CauseView(kind=c.kind, name=c.name, p_without=c.p_without) for c in found.causes
+            ],
+        )
+        return view.model_copy(update={"causes": causes})
+
+    def _cause_list(self, project_id: str, rows: Sequence[EventRow]) -> planning.Causes | None:
+        """The causes of the move of the chance at the latest check-in (spec section 11.4,
+        v2.2.0), deterministic for the log up to it and kept; None without a check-in or a
+        chance before and after it."""
+        checkins = [row for row in rows if row.type == "checkin"]
+        if not checkins:
+            return None
+        seq = checkins[-1].seq
+        key = (project_id, seq)
+        with self._guard:
+            if key in self._causes:
+                return self._causes[key]
+        before = replay([row for row in rows if row.seq < seq])
+        after = replay([row for row in rows if row.seq <= seq])
+        result = None
+        if _forecastable(before.project) and _forecastable(after.project):
+            p_before = self._forecast(project_id, before).p_on_time
+            p_after = self._forecast(project_id, after).p_on_time
+            if p_before is not None and p_after is not None:
+                checkin = CheckinDone.model_validate(checkins[-1].payload).checkin
+                result = planning.causes(before.project, checkin, p_before, p_after)
+        with self._guard:
+            self._causes[key] = result
+            while len(self._causes) > FORECASTS_KEPT:
+                self._causes.popitem(last=False)
         return result
 
     def _known_threats(self, project_id: str, state: LiveState) -> planning.ThreatList | None:

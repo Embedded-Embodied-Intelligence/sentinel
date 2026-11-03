@@ -27,4 +27,18 @@
   </details>
   {% endif %}
 </div>
+<div id="causes" hx-swap-oob="innerHTML">
+  {% if f and f.causes %}
+  {% set c = f.causes %}
+  <div class="causes">
+    <p class="small"><strong>{{ t("causes.title", date=t.date(c.reported), before=t.pct(c.p_before), after=t.pct(c.p_after)) }}</strong></p>
+    <ul class="causes-list small">
+      {% for line in c.lines %}<li>{{ t("causes." ~ line.kind, name=line.name, p=t.pct(line.p_without), date=t.date(c.since)) }}</li>{% endfor %}
+    </ul>
+    <p class="caption">{{ t("causes.note") }}</p>
+  </div>
+  {% elif f and f.causes_pending and f.drivers is not none %}
+  <p class="loading-line small" hx-get="/projects/{{ id }}/threats{% if threats_job %}?job={{ threats_job }}{% endif %}" hx-trigger="load delay:1s" hx-swap="none"><span class="spinner" aria-hidden="true"></span>{{ t("causes.calculating") }}</p>
+  {% endif %}
+</div>
 {% if polled | default(false) and chart %}<div id="gantt-area" hx-swap-oob="true">{{ chart | safe }}</div>{% endif %}

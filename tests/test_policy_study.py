@@ -97,6 +97,7 @@ def test_configs_reject_unknown_policies_and_a_missing_reference(fake_study: Pat
         PolicyStudyConfig.model_validate({**raw, "scenarios": scenarios})
 
 
+@pytest.mark.slow  # 3-5 s: out of the default run since WP12 (90 s budget), in -m slow
 def test_runner_on_tiny_writes_every_output(
     fake_study: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -28,6 +28,7 @@ from sentinel.app.ui.project import (
     checked_key,
     effect_rows,
     finish_gap,
+    impact_chips,
     needs_date_confirmation,
     option_rows,
     over_budget,
@@ -224,7 +225,9 @@ def test_keeping_the_plan_says_no_change_is_needed_only_if_the_goals_are_met() -
     high = SimpleNamespace(p_on_time=0.9)
     assert checked_key(_rec(reason="idle_events", without=high)) == "overview.checked"
     for reason in ("stability", "tardiness", "on_time"):
-        assert checked_key(_rec(reason=reason)) == "overview.checked_no_better"
+        # The WP12 test: at a low chance, how many options were checked and none helps enough.
+        assert checked_key(_rec(reason=reason)) == "overview.checked_none_helps"
+        assert checked_key(_rec(reason=reason, options=1)) == "overview.checked_no_better"
 
 
 def test_a_recommendation_shows_what_it_gains_when_the_chance_does_not_move() -> None:
@@ -483,3 +486,44 @@ def test_formats_of_the_new_components() -> None:
     assert EN.cost_of_parts(1200, 1500) == ("1,200 of 1,500", "cost units")
     assert EN.reasons(["people", "money"]) == "affects people, costs money"
     assert len(PL.weekdays.split(",")) == 7 and len(EN.months.split(",")) == 12
+
+
+def test_a_card_says_what_improves_when_the_chance_does_not_move() -> None:
+    """The WP12 test: "0 % → 0 %" with nothing else said; the deciding component is named."""
+    rec = _rec()
+    same = SimpleNamespace(**{**vars(rec.with_action), "p_on_time": rec.without.p_on_time})
+    chips = impact_chips(_rec(with_action=same), PL)
+    gain = next(chip for chip in chips if chip.label == PL("chip.gain"))
+    assert gain.text == "oczekiwane opóźnienie 3 → 2 dni roboczych" and gain.tone == "good"
+    assert all(chip.label != PL("chip.gain") for chip in impact_chips(rec, PL))
+
+
+def test_options_worse_than_no_change_are_marked_and_names_told_apart() -> None:
+    """The WP12 test: an option below "no change" looked like any other, and two substitutions
+    were cut to the same words."""
+
+    def alternative(label: str, title: str, p: float, delay: float = 1.0) -> Any:
+        return SimpleNamespace(
+            label=label,
+            title=title,
+            p_on_time=p,
+            tardiness=delay,
+            expected_cost=90.0,
+            runner_up=False,
+            dropped=False,
+        )
+
+    long = "Zastępstwo: Paulina Lis przejmuje udział osoby nieobecnej (Tomasz Nowak) w zadaniu "
+    rec = _rec(
+        alternatives=[
+            alternative("A", long + "Migracja treści", 0.53),
+            alternative("B", long + "Testy funkcjonalne", 0.36),
+            alternative("C", "Dodatkowa osoba (tymczasowo): backend na 10 dni", 0.39, 2.0),
+            alternative("NOOP", "Bez zmian", 0.39),
+        ]
+    )
+    rows = {row.title: row for row in option_rows(rec, PL)}
+    assert not rows[long + "Migracja treści"].worse and rows[long + "Testy funkcjonalne"].worse
+    assert rows["Dodatkowa osoba (tymczasowo): backend na 10 dni"].worse  # as likely, later
+    shorts = [rows[long + "Migracja treści"].short, rows[long + "Testy funkcjonalne"].short]
+    assert shorts[0] != shorts[1] and all(s is not None and "…" in s for s in shorts)

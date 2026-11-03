@@ -217,6 +217,7 @@ def test_estimated_finishes_are_those_of_the_deterministic_forecast(build: Build
     assert checked > 100 and handovers > 0, (checked, handovers)
 
 
+@pytest.mark.slow  # 3-5 s: out of the default run since WP12 (90 s budget), in -m slow
 def test_residual_plans_are_feasible_on_random_views(build: Builder, tiny: ProjectInstance) -> None:
     """At least 50 planning views of tiny.sm and random-instance runs: the residual SGS and both
     CP-SAT objectives give feasible plans, CP-SAT is never longer than the SGS, the stable plan

@@ -432,3 +432,20 @@ def test_actions_below_the_autonomy_level_apply_automatically() -> None:
     shown = recommendation.impact(chosen.label)
     assert shown is not None
     assert planning.forecast(state.project).p_on_time == shown.p_on_time
+
+
+def test_a_move_of_the_chance_is_decomposed_into_its_causes() -> None:
+    """Task 4 of WP12 (spec 11.4, v2.2.0): each event of the check-in left out in turn, on the
+    worlds of its day; a move below 5 points has no causes."""
+    project = planned(small())
+    before = planning.forecast(project).p_on_time
+    after_project = checked_in(project.copy(), ABSENCE_CHECKIN)
+    after = planning.forecast(after_project).p_on_time
+    assert before is not None and after is not None and before - after >= 0.05
+    found = planning.causes(project, ABSENCE_CHECKIN, before, after)
+    kinds = [cause.kind for cause in found.causes]
+    assert "absence" in kinds and len(kinds) <= 3
+    absence = next(cause for cause in found.causes if cause.kind == "absence")
+    without = checked_in(project.copy(), ABSENCE_CHECKIN.model_copy(update={"absences": ()}))
+    assert absence.name == "Ada" and absence.p_without == planning.forecast(without).p_on_time
+    assert planning.causes(project, ABSENCE_CHECKIN, after + 0.04, after).causes == ()
