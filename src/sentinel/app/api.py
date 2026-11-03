@@ -22,7 +22,7 @@ import secrets
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, datetime
 from importlib.metadata import PackageNotFoundError, version
 from typing import Annotated, Any, Literal
 
@@ -32,6 +32,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.responses import Response as FastResponse
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from sentinel.app.config import AppConfig, Limits
@@ -65,8 +66,8 @@ from sentinel.app.services import (
     error_view,
 )
 from sentinel.app.simulator import SimulatorSpec, SimulatorView
-from sentinel.app.store import LOCAL_SESSION
-from sentinel.app.ui.core import LANG_COOKIE, STATIC_PREFIX, Ui
+from sentinel.app.store import LOCAL_SESSION, now
+from sentinel.app.ui.core import LANG_COOKIE, STATIC_PREFIX, Ui, is_htmx
 from sentinel.app.views import IssueView, ProjectSummary, ProjectView
 
 LOG = logging.getLogger("sentinel.app")
@@ -198,6 +199,25 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         request.state.language = language
         return ui.error(request, render(code, language), status)
 
+    log_requests = config.demo and config.request_log
+
+    async def log_request(request: Request, session: str, arrived: datetime, status: int) -> None:
+        """Log a sandbox's request (ADR-0030): its route's path template and the project it
+        names, never the address, the path's other values, the query or the form; written in
+        a worker thread, so the event loop does not wait for the database."""
+        route = request.scope.get("route")
+        project = request.path_params.get("project_id")
+        await run_in_threadpool(
+            services.store.log_request,
+            session,
+            arrived,
+            request.method,
+            str(getattr(route, "path", "")),
+            None if project is None else str(project),
+            is_htmx(request),
+            status,
+        )
+
     @app.middleware("http")
     async def guard(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
@@ -215,9 +235,9 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
             return await call_next(request)
         new_session = None
         if config.demo:
-            now = time.monotonic()
-            if now - last_expiry[0] > EXPIRY_CHECK_S:
-                last_expiry[0] = now
+            tick = time.monotonic()
+            if tick - last_expiry[0] > EXPIRY_CHECK_S:
+                last_expiry[0] = tick
                 services.expire_sandboxes()
             session_id = unsign(key, request.cookies.get(SESSION_COOKIE))
             session = None if session_id is None else services.store.session(session_id)
@@ -236,7 +256,16 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         request.state.session = session_id
         request.state.language = language
         request.state.csrf = csrf_token(key, session_id)
-        response = await call_next(request)
+        if not log_requests:
+            response = await call_next(request)
+        else:
+            arrived = now()
+            try:
+                response = await call_next(request)
+            except Exception:
+                await log_request(request, session_id, arrived, 500)
+                raise
+            await log_request(request, session_id, arrived, response.status_code)
         if new_session is not None:
             response.set_cookie(
                 SESSION_COOKIE,

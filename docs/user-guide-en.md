@@ -324,7 +324,9 @@ theirs. One run is one possible fate of the project; chance plays a part, so try
   cloud models (Groq, OpenRouter) receive only the text they read. AI answers on real projects
   are remembered without the messages.
 - The public demo: every visitor gets an own sandbox that nobody else sees; it is deleted with
-  its projects after 24 hours.
+  its projects after 24 hours. For the usability test the demo also notes in the sandbox which
+  pages were opened and when, and whether a form was refused (never an address or what a form
+  held); the note goes with the sandbox.
 
 ## 8. Frequently asked questions
 

@@ -328,7 +328,10 @@ przebieg to jeden możliwy los projektu; przypadek też ma znaczenie, więc wart
   zewnątrz; modele w chmurze (Groq, OpenRouter) otrzymują tylko tekst, który odczytują.
   Odpowiedzi AI z prawdziwych projektów są zapamiętywane bez treści wiadomości.
 - Wersja demonstracyjna w internecie: każdy odwiedzający dostaje własną piaskownicę, której nikt
-  inny nie widzi; po 24 godzinach jest usuwana razem z projektami.
+  inny nie widzi; po 24 godzinach jest usuwana razem z projektami. Na potrzeby testu
+  użyteczności wersja demonstracyjna zapisuje też w piaskownicy, które strony i kiedy otwarto
+  oraz czy formularz został odrzucony (nigdy adresu ani treści formularza); zapis znika razem z
+  piaskownicą.
 
 ## 8. Najczęstsze pytania
 

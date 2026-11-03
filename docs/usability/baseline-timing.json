@@ -4,7 +4,7 @@
     "name": "Utwórz projekt z szablonu CSV",
     "clicks": 9,
     "fields": 4,
-    "seconds": 2.3,
+    "seconds": 2.7,
     "done": true
   },
   {
@@ -20,7 +20,7 @@
     "name": "Zgłoś nieobecność",
     "clicks": 6,
     "fields": 5,
-    "seconds": 1.0,
+    "seconds": 1.7,
     "done": true
   },
   {
@@ -28,7 +28,7 @@
     "name": "Zdecyduj o rekomendacji",
     "clicks": 2,
     "fields": 0,
-    "seconds": 2.7,
+    "seconds": 2.8,
     "done": true
   },
   {
@@ -36,7 +36,7 @@
     "name": "Symulator do końca: kto poradził sobie lepiej?",
     "clicks": 3,
     "fields": 0,
-    "seconds": 57.8,
+    "seconds": 58.1,
     "done": true
   }
 ]

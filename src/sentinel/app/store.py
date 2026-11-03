@@ -1,5 +1,6 @@
 """SQLite store of the application (stdlib `sqlite3`; ADR-0023): sessions, projects with their
-append-only event log, background jobs and daily usage counters.
+append-only event log, background jobs, daily usage counters and the demo sandboxes' request log
+(ADR-0030).
 
 A project is its event log: every change (definition, baseline plan, check-in, recommendation,
 decision, simulator advance) is one event with a sequence number, and the project's state is
@@ -77,6 +78,21 @@ MIGRATIONS: tuple[str, ...] = (
         PRIMARY KEY (day, key)
     );
     """,
+    # WP13 (ADR-0030): the demo's per-sandbox request log for the usability test; no address,
+    # no query, no form content; it goes with its sandbox.
+    """
+    CREATE TABLE requests (
+        id INTEGER PRIMARY KEY,
+        session TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        at TEXT NOT NULL,
+        method TEXT NOT NULL,
+        path TEXT NOT NULL,
+        project TEXT,
+        partial INTEGER NOT NULL,
+        status INTEGER NOT NULL
+    );
+    CREATE INDEX requests_session ON requests(session);
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 LOCAL_SESSION = "local"  # the one session of a local (non-demo) app
@@ -129,6 +145,20 @@ class EventRow:
     type: str
     payload: dict[str, Any]
     created: datetime
+
+
+@dataclass(frozen=True)
+class RequestRow:
+    """A request of a demo sandbox: when it came, its method, its route's path template (no
+    ids, no query), the project it named, whether it was an HTMX request, the status answered."""
+
+    session: str
+    at: datetime
+    method: str
+    path: str
+    project: str | None
+    partial: bool
+    status: int
 
 
 @dataclass(frozen=True)
@@ -451,6 +481,57 @@ class Store:
                 (today, key),
             )
             return True
+
+    # ---- request log (demo sandboxes, ADR-0030)
+
+    def log_request(
+        self,
+        session: str,
+        at: datetime,
+        method: str,
+        path: str,
+        project: str | None,
+        partial: bool,
+        status: int,
+    ) -> None:
+        """Log a request of a live sandbox; `project` is kept only if it is one of the
+        sandbox's projects (a path can name anything)."""
+        with self._write() as db:
+            db.execute(
+                "INSERT INTO requests (session, at, method, path, project, partial, status) "
+                "SELECT ?, ?, ?, ?, (SELECT id FROM projects WHERE id = ? AND session = ?), ?, ? "
+                "WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ?)",
+                (
+                    session,
+                    _stamp(at),
+                    method,
+                    path,
+                    project,
+                    session,
+                    int(partial),
+                    status,
+                    session,
+                ),
+            )
+
+    def requests(self, session: str) -> list[RequestRow]:
+        """The session's logged requests in the order they came."""
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT * FROM requests WHERE session = ? ORDER BY id", (session,)
+            ).fetchall()
+        return [
+            RequestRow(
+                row["session"],
+                _parse(row["at"]),
+                row["method"],
+                row["path"],
+                row["project"],
+                bool(row["partial"]),
+                int(row["status"]),
+            )
+            for row in rows
+        ]
 
 
 def _statements(script: str) -> list[str]:

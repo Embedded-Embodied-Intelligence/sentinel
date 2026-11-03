@@ -9,6 +9,9 @@ llm = "capped"             # the server's LLM provider with a daily cap ("off": 
                            # the demo's is OpenRouter with gpt-oss-120b, stored with its key in the
                            # demo's settings.json (docs/deploy.md, public demo, step 3)
 showcase = true            # a seeded showcase project in every new sandbox
+request_log = true         # each sandbox's requests (time, method, path template, status; no
+                           # address, no form content) for the usability test's log export
+                           # (docs/usability/README.md); deleted with the sandbox
 
 [limits]
 projects_per_session = 5

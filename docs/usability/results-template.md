@@ -1,7 +1,9 @@
 # Wyniki testu użyteczności — szablon
 
-Wypełnia moderator po każdym uczestniku ([protokół](protocol-pl.md)). Skopiuj plik jako
-`docs/usability/results-<rrrr-mm-dd>.md`; nie wpisuj imion ani nazwisk, tylko kody P1–P5.
+Wypełnia moderator po każdym uczestniku ([protokół](protocol-pl.md)); w teście zdalnym bez
+moderatora prowadzący, z karty odpowiedzi i logu uczestnika (`docs/usability/logs/P1.md`; jak:
+[README](README.md)). Skopiuj plik jako `docs/usability/results-<rrrr-mm-dd>.md`; nie wpisuj imion
+ani nazwisk, tylko kody P1–P5.
 
 ## Dane testu
 
@@ -9,7 +11,7 @@ Wypełnia moderator po każdym uczestniku ([protokół](protocol-pl.md)). Skopiu
 | --- | --- |
 | Daty sesji | |
 | Moderator | |
-| Wersja Sentinela | 1.4.0 (`uv run sentinel ui`, wersja na dole menu po lewej) |
+| Wersja Sentinela | 1.4.1 (wersja na dole menu po lewej; w teście zdalnym wersja demonstracyjna) |
 | Komputer, przeglądarka, rozdzielczość | |
 | Liczba uczestników | |
 | Odstępstwa od protokołu | |

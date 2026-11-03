@@ -49,6 +49,7 @@ class AppConfig(BaseModel):
     llm: Literal["on", "capped", "off"] = "on"
     llm_timeout_s: PositiveFloat | None = None  # one AI call; None: by provider (`app.llm`)
     showcase: bool = True
+    request_log: bool = False  # demo only: each sandbox's requests for the usability test
     psplib_root: Path = DEFAULT_ROOT
     baseline_cache: Path = DEFAULT_CACHE_ROOT
     inline_jobs: bool = False

@@ -4,7 +4,14 @@ Moderowany test z głośnym myśleniem dla 3–5 uczestników, bez szkolenia (WP
 osoba prowadząca projekty potrafi bez pomocy: założyć projekt z arkusza, odczytać prognozę,
 zgłosić nieobecność, podjąć decyzję o rekomendacji i skorzystać z symulatora. Wyniki wpisuje
 się do [szablonu wyników](results-template.md); punktem odniesienia jest skryptowy przebieg tych
-samych zadań (`tests/test_ui_usability.py`, [baseline-timing.json](baseline-timing.json)).
+samych zadań w wersji demonstracyjnej (`tests/test_ui_usability.py`,
+[baseline-timing.json](baseline-timing.json), wersja 1.4.1).
+
+**Wariant zdalny bez moderatora** (WP13): uczestnicy wykonują te same zadania w wersji
+demonstracyjnej w internecie według pisemnej instrukcji i odsyłają kartę odpowiedzi (godziny
+początku i końca zadań, odpowiedzi, łatwość 1–5, SUS); projekt nazywają swoim kodem, np. „P1
+Aplikacja rezerwacji wizyt”. Kroki prowadzącego, eksport logu uczestnika i liczenie SUS:
+[README](README.md).
 
 ## 1. Uczestnicy
 
@@ -63,7 +70,10 @@ osiągnięcia kryterium sukcesu albo do limitu czasu.
 ## 5. Zadania
 
 Każdą kartę czyta uczestnik; moderator nie dodaje wyjaśnień. Dzisiejszą datą w scenariuszu
-jest środa 4 listopada 2026.
+jest środa 4 listopada 2026, także gdy test odbywa się później (raport statusu ma wtedy datę z
+przeszłości i zapisuje się bez pytań). Kalendarz projektu ma polskie święta (11 listopada jest
+wolny). Wartości oczekiwane poniżej pochodzą ze skryptowego przebiegu wersji 1.4.1 w trybie
+demonstracyjnym; są takie same w każdym dniu testu, poza datami symulatora (zadanie 5).
 
 ### Zadanie 1. Załóż projekt z arkusza (limit 6 minut)
 
@@ -76,8 +86,9 @@ jest środa 4 listopada 2026.
   zadań.
 - **Częściowy sukces:** projekt powstał, ale z pomocą moderatora albo z błędem poprawionym po
   podpowiedzi (np. inna data, brak osoby).
-- **Obserwuj:** czy uczestnik znajduje *Wklej listę osób* i kartę *Zaimportuj arkusz*; czy
-  rozumie, co oznacza budżet i czy zagląda do *Więcej ustawień*; reakcję na wypisane problemy.
+- **Obserwuj:** czy uczestnik znajduje *Nowy projekt* (w wersji demonstracyjnej obok projektu
+  przykładowego), *Wklej listę osób* i kartę *Zaimportuj arkusz*; czy rozumie, co oznacza budżet
+  i czy zagląda do *Więcej ustawień*; reakcję na wypisane problemy.
 - **Punkt odniesienia (skrypt):** 9 kliknięć, 4 pola.
 
 ### Zadanie 2. Kiedy projekt najprawdopodobniej się skończy? (limit 1 minuta)
@@ -86,7 +97,8 @@ jest środa 4 listopada 2026.
 > terminem. Co mu odpowiesz?
 
 - **Sukces:** uczestnik podaje datę z pola *Najbardziej prawdopodobny koniec* i szansę na
-  dotrzymanie terminu (np. „75 %, raczej zdążymy, ale to zagrożone”).
+  dotrzymanie terminu: **środa 2 grudnia** (2 dni robocze przed terminem) i **69 %** („Wymaga
+  uwagi”), np. „najpewniej 2 grudnia, zdążymy na 69 %, ale w złym scenariuszu 11 grudnia”.
 - **Częściowy sukces:** podaje tylko jedno z dwóch albo myli datę zakończenia z terminem.
 - **Obserwuj:** jak rozumie „zły scenariusz (1 na 10 później)” i jednostki kosztu.
 - **Punkt odniesienia:** 0 kliknięć (wszystko jest na przeglądzie).
@@ -97,12 +109,14 @@ jest środa 4 listopada 2026.
 > 3 listopada). „Baza danych i API” jest w toku, zrobiono około 15 %. Bartosz Kowalski od jutra
 > jest nieobecny, wraca w poniedziałek 16 listopada. Przekaż to Sentinelowi.
 
-- **Sukces:** raport zapisany: warsztat gotowy 3 listopada, API w toku (10–20 %), nieobecność
-  Bartosza od 5 do 16 listopada.
+- **Sukces:** raport zapisany: warsztat gotowy 3 listopada, API w toku (10–20 %; 15 % zapisuje
+  się jako 17 %, bo postęp liczy się w pełnych dniach: 1 z 6), nieobecność Bartosza od 5 do
+  16 listopada.
 - **Częściowy sukces:** zapisany z jednym błędem (np. data powrotu jako ostatni dzień
   nieobecności, brak postępu API).
 - **Obserwuj:** czy szuka miejsca na powód nieobecności (nie ma go — to celowe); jak rozumie
-  „Stan na koniec dnia” i „Powrót (jeśli wiadomo)”; czy zauważa licznik zmian na dole.
+  „Stan na koniec dnia” (formularz podpowiada dzisiejszą datę, a raport jest na 4 listopada) i
+  „Powrót (jeśli wiadomo)”; czy zauważa licznik zmian na dole.
 - **Punkt odniesienia:** 6 kliknięć, 5 pól.
 
 ### Zadanie 4. Zdecyduj o rekomendacji (limit 3 minuty)
@@ -110,13 +124,16 @@ jest środa 4 listopada 2026.
 > Sentinel coś proponuje. Sprawdź, co i dlaczego, i podejmij decyzję tak, jak w prawdziwym
 > projekcie. Powiedz na głos, co zdecydowałeś i dlaczego.
 
-- **Sukces:** uczestnik otwiera rekomendację (zastępstwo: Celina Wiśniewska za Bartosza
-  Kowalskiego), własnymi słowami podaje jej efekt (szansa przed → po) i ją zatwierdza albo
-  odrzuca z uzasadnieniem. Obie decyzje są sukcesem, jeśli uzasadnienie opiera się na tym, co
-  pokazuje ekran.
+- **Sukces:** uczestnik otwiera rekomendację *Zastępstwo: Celina Wiśniewska przejmuje udział
+  osoby nieobecnej (Bartosz Kowalski) w zadaniu „Baza danych i API”* (oznaczoną „może
+  poczekać”), własnymi słowami podaje jej efekt (szansa **39 % → 67 %**; najbardziej
+  prawdopodobny koniec pon. 7 gru → śr. 2 gru; koszt 100 % → 102 % budżetu) i ją zatwierdza
+  albo odrzuca z uzasadnieniem. Obie decyzje są sukcesem, jeśli uzasadnienie opiera się na tym,
+  co pokazuje ekran.
 - **Częściowy sukces:** decyzja bez zrozumienia efektu albo efekt bez decyzji.
 - **Obserwuj:** czy rozumie „Wymaga Twojej zgody: dotyczy ludzi”, czy otwiera *Porównaj wszystkie
-  możliwości* i czy widzi, że „Bez zmian” ma tę samą szansę co przegląd.
+  możliwości* i czy widzi, że „Bez zmian” ma tę samą szansę co przegląd (39 %); jak odbiera
+  zdanie o drugiej możliwości z szansą 68 % („podobna szansa … zmienia mniej terminów”).
 - **Punkt odniesienia:** 2 kliknięcia.
 
 ### Zadanie 5. Symulator: kto poradził sobie lepiej? (limit 4 minuty)
@@ -127,11 +144,14 @@ jest środa 4 listopada 2026.
 
 - **Sukces:** widoczna tabela *Jak się skończyło*; uczestnik poprawnie wskazuje, który
   przebieg skończył się wcześniej lub z mniejszym opóźnieniem, i podaje kryterium (data,
-  opóźnienie, koszt).
+  opóźnienie, koszt): Sentinel kończy **10 dni roboczych wcześniej** niż „Nikt nie reaguje”
+  (po terminie 8 zamiast 18 dni roboczych), za to drożej o 10 jedn. (103 % zamiast 102 %
+  budżetu). Daty zależą od dnia testu (symulacja startuje dziś).
 - **Częściowy sukces:** symulacja zakończona, ale wniosek niepełny albo oparty na jednej liczbie
   bez zrozumienia.
-- **Obserwuj:** czy czeka na koniec symulacji (ok. 30 s); jak czyta oś czasu.
-- **Punkt odniesienia:** 3 kliknięcia; czas zależy od symulacji (poniżej minuty).
+- **Obserwuj:** czy czeka na koniec symulacji (około minuty; w wersji demonstracyjnej
+  symulacja biegnie odcinkami po 60 dni i strona sama ją kontynuuje); jak czyta oś czasu.
+- **Punkt odniesienia:** 3 kliknięcia; około minuty (58 s w skrypcie).
 
 ## 6. Głośne myślenie i zasady moderatora
 

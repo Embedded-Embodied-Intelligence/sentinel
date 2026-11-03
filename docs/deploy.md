@@ -37,7 +37,7 @@ reverse proxy.
 ```bash
 docker compose up -d --build                    # build and start (the first build took 57 s)
 docker compose ps                               # STATUS shows "(healthy)" after about 8 s
-curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.4.0","demo":false}
+curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.4.1","demo":false}
 docker compose logs -f sentinel                 # the log
 docker compose down                             # stop; the data stay in the volume
 ```
@@ -147,6 +147,19 @@ would and expects that address back. With the funnel on, open
 tailnet): `"address"` must be the phone's public address and `"trusted": true`. The endpoint
 answers only requests that reach the app from 127.0.0.1 (a request from elsewhere gets 404) and
 shows nothing but the requester's own address.
+
+### The request log for the usability test
+
+With `request_log = true` in `configs/app_demo.toml` (the default there; ADR-0030) every sandbox
+also keeps one row per request in the demo's database: the time, the method, the route's path
+template (e.g. `/projects/{project_id}/checkin`: no real path, no query), the project if it is one
+of the sandbox's own, whether it was an HTMX request, and the status answered. It never holds an
+address, a cookie or what a form held, and it is deleted with the sandbox after 24 hours. Static
+files, `/api/health` and requests without a sandbox are not logged. The owner exports one
+tester's timeline and task durations with `scripts/usability_logs.py`
+([docs/usability/README.md](usability/README.md)); the export reads the database read-only, so
+the demo keeps running. After the test set `request_log = false` and restart the demo; outside
+the demo the flag does nothing.
 
 ### Stop
 
