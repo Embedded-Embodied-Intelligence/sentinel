@@ -410,7 +410,8 @@ def router(ui: Ui) -> APIRouter:
         save(request, project_id, changed)
         cell_errors = [texts(e.key, **e.values) for e in rows.errors]
         if action == "autosave":
-            return autosave_status(request, changed, "tasks", cell_errors)
+            typing = bool(form.getlist("task_key")) and not tasks
+            return autosave_status(request, changed, "tasks", cell_errors, typing=typing)
         if action == "back":
             return ui.redirect(request, f"/projects/{project_id}/setup/team")
         if action == "exit":
@@ -503,8 +504,12 @@ def router(ui: Ui) -> APIRouter:
         definition: ProjectDefinition,
         step: str,
         cell_errors: Sequence[str] = (),
+        *,
+        typing: bool = False,
     ) -> Response:
         issues = services.validate(definition, ui.language(request))
+        if typing:  # the first row is being filled in: "no tasks yet" is no news (WP12 test)
+            issues = [i for i in issues if i.code != "no_tasks"]
         shown, _ = step_issues(issues, step, ui.texts(request))
         extra = [
             IssueView(code="cell", message=e, where=None, severity="error") for e in cell_errors

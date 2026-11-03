@@ -124,3 +124,18 @@ def test_the_plan_shown_is_the_current_plan() -> None:
     assert all(row.planned is None or row.planned[0] >= t for row in chart.values())
     assert chart["N1"].planned is not None and chart["T3"].planned is not None
     assert chart["N1"].planned[1] <= chart["T3"].planned[0]
+
+
+def test_a_polish_spreadsheet_imports_as_an_english_one() -> None:
+    """The WP12 test: CSV headers in the page's language; the import reads both."""
+    from sentinel.app.io import TASKS_TEMPLATE_PL, TEAM_TEMPLATE_PL
+
+    tasks, found = io.parse_tasks(TASKS_TEMPLATE_PL.encode("utf-8"))
+    people, team_found = io.parse_team(TEAM_TEMPLATE_PL.encode("utf-8"))
+    assert found == [] and team_found == []
+    assert [(t.key, t.duration, t.predecessors) for t in tasks] == [
+        ("T1", 3, ()),
+        ("T2", 5, ("T1",)),
+        ("T3", 2, ("T2",)),
+    ]
+    assert tasks[1].crew == {"Programista backend": 2} and people[2].role == "Tester"

@@ -33,7 +33,7 @@ PX_PER_DAY = 9  # the plot's least width per working day: it scrolls in its card
 MIN_PLOT = 480
 SIM_PX_PER_DAY = 5  # the simulator's chart shares its row with the timeline
 SIM_MIN_PLOT = 360
-FLAG_CHAR = 6.8  # the estimated width of a flag's character at 12 px, in px
+FLAG_CHAR = 7.4  # a flag character at 12 px semibold, in px: at most this wide (B22, WP12)
 FLAG_PAD = 8
 WEEK = 5
 

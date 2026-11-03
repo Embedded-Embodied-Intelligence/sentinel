@@ -4,6 +4,7 @@
   <div role="status" aria-live="polite">
     <p class="job-label"><span class="spinner" aria-hidden="true"></span>{{ label }}</p>
     {% if note | default("") %}<p class="job-note">{{ note }}</p>{% endif %}
+    {% if counter | default("") %}<p class="job-note">{{ counter }}</p>{% endif %}
   </div>
   <progress max="100" value="{{ (job.progress * 100) | round | int }}" aria-label="{{ label }}">{{ (job.progress * 100) | round | int }} %</progress>
   {% if cancel | default("") %}<div><button type="button" class="btn btn-sm" hx-post="{{ cancel }}" hx-target="closest .job">{{ t("common.cancel") }}</button></div>{% endif %}

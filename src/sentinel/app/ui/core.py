@@ -34,6 +34,10 @@ HTMX_CONFIG = (
 )
 FLASHES = (
     "corrected",
+    "autonomy_0",
+    "autonomy_1",
+    "autonomy_2",
+    "autonomy_3",
     "checkin_saved",
     "approved",
     "rejected",
@@ -122,8 +126,8 @@ class Ui:
         sidebar never takes a page down: an error here leaves the group out."""
         try:
             session = self.session(request)
-            found: list[tuple[tuple[int, float], NavProject]] = []
-            for summary in self.services.projects(session):
+            found: list[tuple[tuple[int, int], NavProject]] = []
+            for order, summary in enumerate(self.services.projects(session)):
                 if summary.kind != "live":
                     continue
                 state = self.services.state(session, summary.id)
@@ -132,7 +136,9 @@ class Ui:
                 chance = self.services.known_chance(summary.id, state)
                 level = "decision" if state.open is not None else chance_level(chance)
                 item = NavProject(summary.id, summary.name, level)
-                found.append((nav_rank(level, chance), item))
+                # A decision waiting first, then the order of creation: a chance is known on
+                # one screen and not yet on another, so it must not move a project (B19).
+                found.append(((0 if level == "decision" else 1, order), item))
         except Exception:
             LOG.exception("the sidebar's projects could not be read")
             return []

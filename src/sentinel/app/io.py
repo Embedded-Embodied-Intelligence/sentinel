@@ -50,6 +50,26 @@ TASKS_TEMPLATE = (
     "T3,Test the payment API,2,T2,no,0,1\n"
 )
 TEAM_TEMPLATE = "id,name,role\nP1,Ada,Backend developer\nP2,Ben,Backend developer\nP3,Cleo,Tester\n"
+# The same in Polish (the WP12 test: English headers under a Polish page); both are read.
+TASKS_TEMPLATE_PL = (
+    "id,nazwa,dni,poprzedniki,opcjonalne,osoby:Programista backend,osoby:Tester\n"
+    "T1,Projekt API płatności,3,,nie,1,0\n"
+    "T2,API płatności,5,T1,nie,2,0\n"
+    "T3,Testy API płatności,2,T2,nie,0,1\n"
+)
+TEAM_TEMPLATE_PL = (
+    "id,nazwa,rola\nP1,Ada,Programista backend\nP2,Ben,Programista backend\nP3,Cleo,Tester\n"
+)
+HEADER_ALIASES = {  # Polish column names and the English ones they stand for
+    "nazwa": "name",
+    "imię i nazwisko": "name",
+    "rola": "role",
+    "dni": "duration_days",
+    "czas_dni": "duration_days",
+    "poprzedniki": "predecessors",
+    "opcjonalne": "optional",
+}
+CREW_PREFIXES = ("crew:", "osoby:")
 
 
 def _decode(data: bytes) -> str:
@@ -81,7 +101,13 @@ def _rows(data: bytes) -> tuple[list[str], list[dict[str, str]]]:
 
 
 def _lower(header: Sequence[str]) -> dict[str, str]:
-    return {name.casefold(): name for name in header}
+    """The columns by their English name in lower case, a Polish one read as its English one."""
+    columns = {name.casefold(): name for name in header}
+    for name in header:
+        alias = HEADER_ALIASES.get(name.casefold())
+        if alias is not None:
+            columns.setdefault(alias, name)
+    return columns
 
 
 def parse_team(data: bytes) -> tuple[list[Person], list[Issue]]:
@@ -126,7 +152,7 @@ def parse_tasks(data: bytes) -> tuple[list[Task], list[Issue]]:
     crew_columns = {
         name: name.split(":", 1)[1].strip()
         for name in header
-        if name.casefold().startswith("crew:") and name.split(":", 1)[1].strip()
+        if name.casefold().startswith(CREW_PREFIXES) and name.split(":", 1)[1].strip()
     }
     tasks = []
     for i, row in enumerate(rows):

@@ -1,5 +1,5 @@
 <svg class="chance-chart" width="100%" height="140" role="img" aria-label="{{ t('history.chance_desc', first=points[0].value, last=points[-1].value) }}">
-  {% for mark in (0, 50, 100) %}<line class="grid" x1="0" x2="100%" y1="{{ (6 + (100 - mark) * 0.74) | round(2) }}%" y2="{{ (6 + (100 - mark) * 0.74) | round(2) }}%"/>{% endfor %}
+  {% for mark in (0, 50, 100) %}<line class="grid" x1="0" x2="100%" y1="{{ (6 + (100 - mark) * 0.74) | round(2) }}%" y2="{{ (6 + (100 - mark) * 0.74) | round(2) }}%"/><text class="tick axis-y" x="100%" y="{{ (6 + (100 - mark) * 0.74) | round(2) }}%" dy="-3" text-anchor="end">{{ mark }}{{ " " }}%</text>{% endfor %}
   <line class="target" x1="0" x2="100%" y1="{{ (6 + 20 * 0.74) | round(2) }}%" y2="{{ (6 + 20 * 0.74) | round(2) }}%"/>
   {% for point in points %}
   {% if not loop.first %}<line class="line" x1="{{ loop.previtem.x }}%" y1="{{ loop.previtem.y }}%" x2="{{ point.x }}%" y2="{{ point.y }}%"/>{% endif %}

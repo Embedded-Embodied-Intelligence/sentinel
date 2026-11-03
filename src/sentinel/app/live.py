@@ -1160,9 +1160,13 @@ class LiveProject:
                     and before in self.tasks
                     and (after == before or after in _descendants(nodes, before))
                 ):
+                    # The WP12 test (B17): the same task as both ends read "X depends on X".
+                    code = (
+                        "new_task_after_is_before" if after == before else "new_task_after_invalid"
+                    )
                     found.append(
                         issue(
-                            "new_task_after_invalid",
+                            code,
                             f"{where}.after",
                             name=label,
                             after=nodes[after].name,

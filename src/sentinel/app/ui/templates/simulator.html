@@ -28,15 +28,8 @@
       </label>
       {% endfor %}
     </fieldset>
-    <fieldset class="choices cols-2">
-      <legend>{{ t("sim.manager") }}</legend>
-      {% for value in ("sentinel", "no_reaction") %}
-      <label class="choice">
-        <input type="radio" name="policy" value="{{ value }}"{% if value == "sentinel" %} checked{% endif %}>
-        <span><span class="choice-title">{{ t("sim.manager." ~ value) }}</span><span class="choice-text">{{ t("sim.manager." ~ value ~ ".hint") }}</span></span>
-      </label>
-      {% endfor %}
-    </fieldset>
+    {# The WP12 test: "who manages the project?" was asked although the result shows both. #}
+    <input type="hidden" name="policy" value="sentinel">
     <div id="sim-start" aria-live="polite"></div>
     <div class="btn-row"><button class="btn btn-primary btn-lg">{{ t("sim.start") }}</button></div>
     <details class="details">

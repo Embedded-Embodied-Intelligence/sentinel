@@ -53,6 +53,7 @@
       <summary>{{ t("overview.details") }}</summary>
       <div class="details-body">
         <p>{{ t("overview.expected_cost") }}: {{ t.cost(f.expected_cost) }}</p>
+        {% if view.definition.budget is none %}<p>{{ t("overview.budget_default") }}</p>{% endif %}
         {% if f.p_within_budget is not none %}<p>{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</p>{% endif %}
       </div>
     </details>

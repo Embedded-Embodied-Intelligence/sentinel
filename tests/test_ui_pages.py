@@ -792,7 +792,8 @@ def test_language_switch_ask_settings_report_and_delete(site: Site) -> None:
     assert re.fullmatch(rf"/projects/{pid}/recommendations/\d+", done.headers["HX-Redirect"])
     form = {"name": "Calm project", "deadline": "2026-12-18", "autonomy": "1", "cost_0": "2"}
     saved = client.post(f"/projects/{pid}/settings", data=form, headers=headers)
-    assert saved.headers["HX-Redirect"].endswith("flash=settings_saved")
+    # The autonomy changed, so the toast says what Sentinel now does alone (WP12 test).
+    assert saved.headers["HX-Redirect"].endswith("flash=autonomy_1")
     definition = client.get(f"/api/projects/{pid}").json()["definition"]
     assert definition["name"] == "Calm project" and definition["settings"]["autonomy"] == 1
     assert definition["roles"] == [{"role": "Developer", "daily_cost": 2.0}]

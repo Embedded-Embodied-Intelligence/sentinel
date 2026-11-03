@@ -1238,7 +1238,7 @@ def router(ui: Ui) -> APIRouter:
             "tab": "settings",
             "roles": roles,
             "cost_of": cost_lookup(view.definition),
-            "version": settings_version(view.definition),
+            "settings_version": settings_version(view.definition),  # not the footer's (B23)
             "changed_elsewhere": False,
             "errors": {},
         }
@@ -1257,7 +1257,7 @@ def router(ui: Ui) -> APIRouter:
         if read.definition is None:
             values["errors"] = {e.name: texts(e.key, **e.values) for e in read.errors}
             return ui.page(request, "project_settings.html", 422, **values)
-        if form.get("seen_version", values["version"]) != values["version"]:
+        if form.get("seen_version", values["settings_version"]) != values["settings_version"]:
             # QA-18: saved from elsewhere since this form was opened: ask before replacing that.
             values["view"] = view.model_copy(update={"definition": read.definition})
             values["cost_of"] = cost_lookup(read.definition)
@@ -1266,6 +1266,12 @@ def router(ui: Ui) -> APIRouter:
         services.update_definition(
             ui.session(request), project_id, read.definition, ui.language(request)
         )
+        level = read.definition.settings.autonomy
+        if level != view.definition.settings.autonomy:
+            # The WP12 test: "Settings saved" alone did not say what Sentinel now does by itself.
+            return ui.redirect(
+                request, f"/projects/{project_id}/settings", flash=f"autonomy_{level}"
+            )
         return ui.redirect(request, f"/projects/{project_id}/settings", flash="settings_saved")
 
     @routes.get("/projects/{project_id}/report.html")

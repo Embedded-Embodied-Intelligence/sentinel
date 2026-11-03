@@ -275,7 +275,7 @@ def test_every_form_says_when_the_model_fails_and_works_again(
     if waiting.count():
         waiting.first.click()
     else:
-        page.get_by_role("button", name="Zapytaj Sentinela").first.click()
+        page.get_by_role("button", name="Przelicz teraz").first.click()
     page.wait_for_url("**/recommendations/**", timeout=WAIT)
     ask = page.get_by_role("button", name="Wyjaśnij innymi słowami (AI)")
     model.fail = LlmError("no", status=401)

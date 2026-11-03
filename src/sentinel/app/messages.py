@@ -116,6 +116,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "new_task_key_used": "The task id {key} is used already.",
         "new_task_before_started": "“{name}” cannot come before “{before}”, which has already "
         "started.",
+        "new_task_after_is_before": "“{name}” cannot come both after and before “{after}”: "
+        "choose another task for one of the two.",
         "new_task_after_invalid": "“{name}” cannot come after “{after}”, which itself depends on "
         "“{before}”.",
         "new_task_optional_before": "“{name}” is optional, so it cannot come before another task.",
@@ -363,6 +365,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "new_task_key_used": "Identyfikator zadania {key} jest już zajęty.",
         "new_task_before_started": "„{name}” nie może poprzedzać zadania „{before}”, które już "
         "się rozpoczęło.",
+        "new_task_after_is_before": "„{name}” nie może być jednocześnie po i przed „{after}”: "
+        "wybierz inne zadanie w jednym z tych pól.",
         "new_task_after_invalid": "„{name}” nie może następować po „{after}”, które samo zależy "
         "od „{before}”.",
         "new_task_optional_before": "„{name}” jest opcjonalne, więc nie może poprzedzać innego "

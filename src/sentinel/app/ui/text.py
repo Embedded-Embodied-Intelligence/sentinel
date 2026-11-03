@@ -536,19 +536,20 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "preset.disruptions.calm": ("Calm", "Spokojny"),
     "preset.disruptions.calm.hint": (
-        "A person is away about once a year.",
-        "Osoba jest nieobecna mniej więcej raz w roku.",
+        "A person is away about once a year, for 3 working days on average.",
+        "Osoba jest nieobecna mniej więcej raz w roku, średnio przez 3 dni robocze.",
     ),
     "preset.disruptions.typical": ("Usual", "Typowy"),
     "preset.disruptions.typical.hint": (
-        "A person is away about twice a year; now and then a task grows or a new one comes up.",
-        "Osoba jest nieobecna mniej więcej dwa razy w roku; od czasu do czasu zadanie się "
-        "wydłuża lub pojawia się nowe.",
+        "A person is away about twice a year, for 3 working days on average; now and then a "
+        "task grows or a new one comes up.",
+        "Osoba jest nieobecna mniej więcej dwa razy w roku, średnio przez 3 dni robocze; od "
+        "czasu do czasu zadanie się wydłuża lub pojawia się nowe.",
     ),
     "preset.disruptions.turbulent": ("Turbulent", "Burzliwy"),
     "preset.disruptions.turbulent.hint": (
-        "A person is away about five times a year.",
-        "Osoba jest nieobecna mniej więcej pięć razy w roku.",
+        "A person is away about five times a year, for 3 working days on average.",
+        "Osoba jest nieobecna mniej więcej pięć razy w roku, średnio przez 3 dni robocze.",
     ),
     "setup.back": ("Back", "Wstecz"),
     "setup.finish": ("Create the plan and calculate the chance", "Utwórz plan i policz szansę"),
@@ -655,6 +656,30 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "setup.fix.state.started": ("in progress", "w toku"),
     "setup.fix.state.done": ("done", "gotowe"),
     "setup.fix.state.removed": ("dropped", "usunięte z zakresu"),
+    "flash.autonomy_0": (
+        "Saved. From the next analysis Sentinel only advises: it changes nothing by itself and "
+        "asks you about every change.",
+        "Zapisano. Od następnej analizy Sentinel tylko doradza: sam nic nie zmienia i pyta Cię "
+        "o każdą zmianę.",
+    ),
+    "flash.autonomy_1": (
+        "Saved. From the next analysis Sentinel moves task dates by itself and asks you about "
+        "everything else.",
+        "Zapisano. Od następnej analizy Sentinel sam przesuwa daty zadań, a o wszystko inne "
+        "pyta Ciebie.",
+    ),
+    "flash.autonomy_2": (
+        "Saved. From the next analysis Sentinel changes task dates and order by itself and asks "
+        "you about people, budget and scope.",
+        "Zapisano. Od następnej analizy Sentinel sam zmienia daty i kolejność zadań, a o ludzi, "
+        "budżet i zakres pyta Ciebie.",
+    ),
+    "flash.autonomy_3": (
+        "Saved. From the next analysis Sentinel also arranges substitutes and temporary people "
+        "by itself and asks you only before dropping a task.",
+        "Zapisano. Od następnej analizy Sentinel sam ustala też zastępstwa i osoby tymczasowe, "
+        "a pyta Cię tylko przed rezygnacją z zadania.",
+    ),
     "flash.corrected": (
         "Corrections saved; the forecast is worked out again.",
         "Poprawki zapisane; prognoza liczy się od nowa.",
@@ -749,7 +774,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Calculating the forecast… usually a few seconds.",
         "Liczę prognozę… zwykle kilka sekund.",
     ),
-    "overview.ask": ("Ask Sentinel", "Zapytaj Sentinela"),
+    "overview.ask": ("Recalculate now", "Przelicz teraz"),
     "overview.checkin": ("New check-in", "Nowy raport statusu"),
     "overview.pending_title": ("Waiting for your decision", "Czeka na Twoją decyzję"),
     "overview.nothing_pending": (
@@ -761,6 +786,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "overview.drivers_how": ("How to read this", "Jak to czytać"),
     "overview.budget": ("Budget", "Budżet"),
     "overview.spent_share": ("Spent {share}", "Wydano {share}"),
+    "overview.budget_default": (
+        "The budget is the tasks' estimated cost with a 10 % reserve. The expected cost also "
+        "counts the usual overruns and new tasks, so it uses most of the reserve.",
+        "Budżet to szacowany koszt zadań z rezerwą 10 %. Oczekiwany koszt uwzględnia też typowe "
+        "wydłużenia i nowe zadania, więc zużywa większość tej rezerwy.",
+    ),
     "overview.expected_share": (
         "Expected cost: {share} of the budget",
         "Oczekiwany koszt: {share} budżetu",
@@ -1214,6 +1245,11 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Śledzenie postępu już się zaczęło: zgłoszone dni liczone są w tym kalendarzu, więc "
         "zostaje bez zmian.",
     ),
+    "form.counter": ("{n} of {max} characters", "{n} z {max} znaków"),
+    "form.counter_full": (
+        "{max} of {max} characters: the rest is not kept",
+        "{max} z {max} znaków: reszta się nie zapisze",
+    ),
     "form.days_off_invalid": (
         "“{value}” is not a date (YYYY-MM-DD).",
         "„{value}” nie jest datą (RRRR-MM-DD).",
@@ -1353,7 +1389,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Oczekiwane opóźnienie w dniach roboczych: {days} (bez zmian: {before}).",
     ),
     "why.reason": ("It was chosen because {reason}.", "Wybrano ją, ponieważ {reason}."),
-    "why.runner": ("Next best: {title} ({p}).", "Następna w kolejności: {title} ({p})."),
+    "why.runner": (
+        "The second best option, with a chance of {p}: {title}.",
+        "Druga najlepsza możliwość, z szansą {p}: {title}.",
+    ),
     "why.tie.similar": (
         "Similar chance (the difference is within the uncertainty); {part}.",
         "Podobna szansa (różnica w granicach niepewności); {part}.",

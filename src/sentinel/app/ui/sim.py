@@ -18,7 +18,7 @@ from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
 from sentinel.app.messages import render
 from sentinel.app.services import JobView
-from sentinel.app.simulator import PolicyRun, SimSide, Simulation, SimulatorSpec
+from sentinel.app.simulator import PolicyRun, SimSide, Simulation, SimulatorSpec, SimulatorView
 from sentinel.app.ui.charts import Gantt, sim_gantt
 from sentinel.app.ui.core import STATIC_DIR, Ui, chance_level
 from sentinel.app.ui.forms import Form
@@ -477,6 +477,12 @@ def simulation_report(ui: Ui, request: Request, project_id: str) -> Response:
     )
 
 
+def total_days_of(view: SimulatorView) -> int:
+    """The length a run reads as "of about": the original plan's days, or the days run if more."""
+    calendar = WorkCalendar(view.spec.start)
+    return max(calendar.last(view.baseline_finish) + 1, view.days, 1)
+
+
 def router(ui: Ui) -> APIRouter:
     routes = APIRouter()
     services = ui.services
@@ -533,8 +539,19 @@ def router(ui: Ui) -> APIRouter:
         job = services.advance(ui.session(request), project_id, days, ui.language(request))
         if choice != "end":
             return job_progress(ui, request, job, "job.advance", next=target)
-        spec = services.simulator(ui.session(request), project_id, ui.language(request)).spec
-        note = f"sim.end_note.{spec.set_name}"
-        return job_progress(ui, request, job, "job.advance", next=target, note=note, cancel="1")
+        view = services.simulator(ui.session(request), project_id, ui.language(request))
+        note = f"sim.end_note.{view.spec.set_name}"
+        return job_progress(
+            ui,
+            request,
+            job,
+            "job.advance",
+            next=target,
+            note=note,
+            cancel="1",
+            from_day=str(view.days),
+            days=str(days),
+            total=str(total_days_of(view)),
+        )
 
     return routes

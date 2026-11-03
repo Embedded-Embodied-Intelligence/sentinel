@@ -242,7 +242,7 @@ def router(ui: Ui) -> APIRouter:
         label = label if label in JOB_LABELS else "job.plan"
         target = local_path(request.query_params.get("next"), "")
         if view.status in ("queued", "running"):
-            kept = ("next", "project", "note", "cancel")
+            kept = ("next", "project", "note", "cancel", "from_day", "days", "total")
             passed = {k: v for k, v in request.query_params.items() if k in kept}
             return job_progress(ui, request, view, label, **passed)
         if view.status == "failed":
@@ -289,6 +289,12 @@ def job_progress(ui: Ui, request: Request, job: JobView, label: str, **query: st
     texts = ui.texts(request)
     values = {"label": label} | query
     note = query.get("note", "")
+    counter = ""
+    if query.get("total", "").isdigit() and query.get("days", "").isdigit():
+        # A run to the end counts its days (the WP12 test: 40 s without a word of progress).
+        start, days = int(query.get("from_day", "0") or 0), int(query["days"])
+        day = min(int(query["total"]), start + round(job.progress * days))
+        counter = texts("sim.day_of", day=day, total=query["total"])
     return ui.page(
         request,
         "_job.html",
@@ -297,4 +303,5 @@ def job_progress(ui: Ui, request: Request, job: JobView, label: str, **query: st
         query=urlencode(values),
         note=texts(note) if note in JOB_NOTES else "",
         cancel=f"/jobs/{job.id}/cancel" if query.get("cancel") else "",
+        counter=counter,
     )

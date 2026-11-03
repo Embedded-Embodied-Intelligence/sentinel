@@ -242,7 +242,8 @@ def test_new_task_is_inserted_as_a_d3_activity() -> None:
             )
         )
     codes = [i.code for i in invalid.value.issues]
-    assert codes == ["new_task_name_used", "new_task_before_started", "new_task_after_invalid"]
+    # The same task at both ends has its own message (B17 of the WP12 test).
+    assert codes == ["new_task_name_used", "new_task_before_started", "new_task_after_is_before"]
 
 
 def test_crews_follow_the_dispatch_rule_unless_named() -> None:

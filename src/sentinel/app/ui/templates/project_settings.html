@@ -6,7 +6,7 @@
 {% set d = view.definition %}
 <div class="form-column stacked">
 <form class="stacked" hx-post="/projects/{{ view.id }}/settings" hx-target="main" hx-select="main" hx-swap="outerHTML" novalidate>
-  <input type="hidden" name="seen_version" value="{{ version }}">
+  <input type="hidden" name="seen_version" value="{{ settings_version }}">
   {% if changed_elsewhere %}
   {% call ui.callout("warn", t("psettings.changed_title"), ' role="alert" tabindex="-1" data-focus') %}
     <p>{{ t("psettings.changed_text") }}</p>

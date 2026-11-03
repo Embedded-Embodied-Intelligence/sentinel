@@ -37,7 +37,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from sentinel.app.config import AppConfig, Limits
 from sentinel.app.errors import AppError, ErrorKind
 from sentinel.app.events import Verdict
-from sentinel.app.io import TASKS_TEMPLATE, TEAM_TEMPLATE
+from sentinel.app.io import TASKS_TEMPLATE, TASKS_TEMPLATE_PL, TEAM_TEMPLATE, TEAM_TEMPLATE_PL
 from sentinel.app.live import LiveError
 from sentinel.app.llm import LlmSettingsUpdate, LlmSettingsView
 from sentinel.app.messages import language_of, render
@@ -508,8 +508,12 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         return services.import_json(sid(request), parsed, lang(request))
 
     @app.get("/api/templates/{name}")
-    def template(name: Literal["tasks.csv", "team.csv"]) -> PlainTextResponse:
-        text = TASKS_TEMPLATE if name == "tasks.csv" else TEAM_TEMPLATE
+    def template(request: Request, name: Literal["tasks.csv", "team.csv"]) -> PlainTextResponse:
+        polish = lang(request) == "pl"  # the headers in the page's language (WP12 test)
+        if name == "tasks.csv":
+            text = TASKS_TEMPLATE_PL if polish else TASKS_TEMPLATE
+        else:
+            text = TEAM_TEMPLATE_PL if polish else TEAM_TEMPLATE
         headers = {"Content-Disposition": f'attachment; filename="{name}"'}
         return PlainTextResponse(text, media_type="text/csv; charset=utf-8", headers=headers)
 

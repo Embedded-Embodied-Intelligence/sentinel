@@ -227,6 +227,36 @@
     if (more && Object.keys(kept.values).length) more.open = more.open || more.querySelector("input:not([type=hidden])") !== null && Array.from(more.querySelectorAll("input")).some(function (f) { return f.value && f.value !== f.defaultValue; });
   }
 
+  // ---- a name near its length limit says how much fits (WP12, B18: names were cut silently)
+  function countCharacters(input) {
+    const max = Number(input.getAttribute("maxlength"));
+    if (!max || max < 60 || input.type === "hidden") return;
+    let note = input.nextElementSibling;
+    if (!note || !note.matches("[data-char-count]")) {
+      note = document.createElement("span");
+      note.className = "caption char-count";
+      note.setAttribute("data-char-count", "");
+      note.setAttribute("aria-live", "polite");
+      input.insertAdjacentElement("afterend", note);
+    }
+    const n = input.value.length;
+    note.hidden = n < max - 20;
+    const template = n >= max ? root.dataset.counterFull : root.dataset.counter;
+    note.textContent = (template || "{n}/{max}").split("{n}").join(n).split("{max}").join(max);
+  }
+
+  document.addEventListener("input", function (event) {
+    const field = event.target;
+    if (!field.matches) return;
+    if (field.matches("input[maxlength]")) countCharacters(field);
+    // A field's error goes once it is filled in (WP12, B21: "Podaj nazwę projektu" stayed).
+    if (field.matches("[aria-invalid=true]") && field.value.trim()) {
+      field.removeAttribute("aria-invalid");
+      const error = field.id && document.getElementById(field.id + "-error");
+      if (error) error.hidden = true;
+    }
+  });
+
   // ---- Enter in a field presses its own button, not the form's first one (WP12, B11: Enter in
   // the role field pressed "fewer" of the first role and cleared the field)
   document.addEventListener("keydown", function (event) {
@@ -572,7 +602,10 @@
   function arrive(scope) {
     if (scope !== document) {
       const alert = scope.querySelector && scope.querySelector("[data-focus]");
+      // A row just added takes the focus (WP12 test: the new row of the task table did not).
+      const added = !alert && scope.querySelector && scope.querySelector("[autofocus]");
       if (alert) alert.focus();
+      else if (added) added.focus();
     }
     if (scope.querySelectorAll) {
       scope.querySelectorAll("[data-toast]").forEach(startToast);
