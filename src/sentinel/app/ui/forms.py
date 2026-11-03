@@ -15,6 +15,7 @@ from starlette.datastructures import FormData
 from starlette.requests import Request
 
 from sentinel.app.models import (
+    MAX_DAYS_OFF,
     AbsenceReport,
     CheckIn,
     NewTaskReport,
@@ -493,6 +494,20 @@ def read_settings(form: Form, definition: ProjectDefinition, roles: Sequence[str
         autonomy = definition.settings.autonomy
     estimation = form.get("estimation", definition.settings.estimation)
     disruptions = form.get("disruptions", definition.settings.disruptions)
+    days_off = list(definition.settings.days_off)
+    if "days_off" in form.names():  # the calendar's fields (spec section 11.1, v2.2.0)
+        days_off = []
+        for word in re.split(r"[\s,;]+", form.get("days_off").strip()):
+            if not word:
+                continue
+            day = parse_date(word)
+            if day is None:
+                errors.append(FieldError("days_off", "form.days_off_invalid", {"value": word}))
+                break
+            days_off.append(day)
+    holidays = definition.settings.holidays
+    if "calendar_shown" in form.names():
+        holidays = "pl" if form.flag("holidays") else "none"
     costs: list[RoleCost] = []
     for k, role in enumerate(roles):
         text = form.get(f"cost_{k}").strip()
@@ -512,6 +527,8 @@ def read_settings(form: Form, definition: ProjectDefinition, roles: Sequence[str
             "disruptions": disruptions if disruptions in DISRUPTIONS else "typical",
             "llm_explanations": form.flag("llm_explanations"),
             "llm_proposals": form.flag("llm_proposals"),
+            "holidays": holidays,
+            "days_off": tuple(sorted(set(days_off)))[:MAX_DAYS_OFF],
         }
     )
     changed = definition.model_copy(

@@ -43,7 +43,7 @@ from sentinel.interpret.events import (
     parse,
 )
 from sentinel.interpret.explain import ExplainSettings, check, explain, render_record
-from sentinel.interpret.team import Member, weekday_name
+from sentinel.interpret.team import WEEKDAYS, Member
 from sentinel.llm import (
     BaseClient,
     GroqClient,
@@ -492,6 +492,11 @@ class LiveContext(Context):
         left = work_left(project)
         self.remaining = {ids[key]: days for key, days in left.items() if ids[key] in self.names}
 
+    def weekday_name(self, d: int) -> str:
+        """The weekday of the prompt's day `d` in the project's calendar (spec section 11.1,
+        v2.2.0): after a holiday it is not `d mod 5` of section 10.1."""
+        return WEEKDAYS[self.project.calendar.date_of(d - self.offset).weekday()]
+
     def render(self, message: TeamMessage) -> str:
         """As `Context.render`, the author being the project manager, not a team member, and
         with the next days, the return days and the factors of more work worked out: the rules
@@ -501,6 +506,7 @@ class LiveContext(Context):
         "until Friday" is absent through Friday, "back on Friday" is back that day."""
         observation, t = self.observation, self.day
         words = WEEKDAY_WORDS.get(self.project.definition.settings.language, {})
+        weekday_name = self.weekday_name
 
         def said(before: str, d: int, form: int) -> str:
             name = weekday_name(d)

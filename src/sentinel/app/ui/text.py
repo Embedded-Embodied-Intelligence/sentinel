@@ -1110,6 +1110,27 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "rec.more": ("More", "Więcej"),
     "rec.baseline_note": ("reference point", "punkt odniesienia"),
     "rec.worse": ("worse than no change", "gorsze niż bez zmian"),
+    "psettings.calendar": ("Calendar", "Kalendarz"),
+    "psettings.holidays": (
+        "Polish public holidays are days off (24–26 December, Easter Monday, Corpus Christi…)",
+        "Polskie święta ustawowe są dniami wolnymi (24–26 grudnia, Poniedziałek Wielkanocny, "
+        "Boże Ciało…)",
+    ),
+    "psettings.days_off": ("Company days off", "Dni wolne firmy"),
+    "psettings.days_off_hint": (
+        "Dates as YYYY-MM-DD, one per line. Nobody works on them, so plans skip them.",
+        "Daty w formacie RRRR-MM-DD, każda w osobnym wierszu. Nikt wtedy nie pracuje, więc plan "
+        "je pomija.",
+    ),
+    "psettings.days_off_locked": (
+        "Tracking has started: the reported days are counted in this calendar, so it stays.",
+        "Śledzenie postępu już się zaczęło: zgłoszone dni liczone są w tym kalendarzu, więc "
+        "zostaje bez zmian.",
+    ),
+    "form.days_off_invalid": (
+        "“{value}” is not a date (YYYY-MM-DD).",
+        "„{value}” nie jest datą (RRRR-MM-DD).",
+    ),
     "rec.points": ("{sign}{n} pts", "{sign}{n} pkt"),
     "rec.approve.subst": ("Approve the substitute", "Zatwierdź zastępstwo"),
     "rec.approve.overtime": ("Approve the extra person", "Zatwierdź dodatkową osobę"),

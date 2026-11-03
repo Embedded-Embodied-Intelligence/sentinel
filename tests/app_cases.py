@@ -43,7 +43,8 @@ def small(deadline: date | None = date(2026, 11, 17), autonomy: int = 2) -> Proj
         deadline=deadline,
         team=team,
         tasks=tasks,
-        settings=Settings(autonomy=autonomy),
+        # Monday to Friday, as the hand-made observations below count (11 November included).
+        settings=Settings(autonomy=autonomy, holidays="none"),
     )
 
 

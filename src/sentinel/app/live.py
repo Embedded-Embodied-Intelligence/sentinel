@@ -431,7 +431,7 @@ def build_model(definition: ProjectDefinition, *, validate: bool = True) -> Mode
         key = role_key(cost.role)
         if key in role_ids:
             costs[role_ids[key]] = cost.daily_cost
-    calendar = WorkCalendar(definition.start)
+    calendar = calendar_of(definition)
     deadline = None if definition.deadline is None else calendar.deadline(definition.deadline)
     budget = definition.budget
     if budget is None:
@@ -643,6 +643,8 @@ class LiveProject:
         started, only names, the deadline, the budget and the settings may change."""
         if self.tracking and definition.structure() != self.definition.structure():
             raise LiveError([issue("structure_frozen")])
+        if self.tracking and _calendar_key(definition) != _calendar_key(self.definition):
+            raise LiveError([issue("calendar_frozen")])
         dropped = definition.structure() != self.definition.structure()
         self.definition = definition
         self.model = None
@@ -670,7 +672,7 @@ class LiveProject:
 
     @property
     def calendar(self) -> WorkCalendar:
-        return WorkCalendar(self.definition.start)
+        return calendar_of(self.definition)
 
     @property
     def finished(self) -> bool:
@@ -1219,6 +1221,19 @@ class LiveProject:
         observation = self.observation()
         state_from_observation(observation, nominal_world(observation))
         planning_view(observation)
+
+
+def calendar_of(definition: ProjectDefinition) -> WorkCalendar:
+    """The working days of a live project (spec section 11.1, v2.2.0): Monday to Friday without
+    the Polish public holidays (unless the project was stored before them) and its days off."""
+    settings = definition.settings
+    return WorkCalendar(definition.start, holidays=settings.holidays, days_off=settings.days_off)
+
+
+def _calendar_key(definition: ProjectDefinition) -> tuple[object, ...]:
+    """What the calendar depends on: it maps the stored days onto dates, so it is fixed once
+    tracking has started, as the structure is."""
+    return definition.start, definition.settings.holidays, frozenset(definition.settings.days_off)
 
 
 def _overlap(a: AbsenceRecord, b: AbsenceRecord) -> bool:

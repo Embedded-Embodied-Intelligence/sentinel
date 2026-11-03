@@ -69,6 +69,18 @@
       {% for value in ("calm", "typical", "turbulent") %}<p class="hint hint-option hint-{{ value }}">{{ t("preset.disruptions." ~ value ~ ".hint") }}</p>{% endfor %}
     </fieldset>
   </section>
+  <section class="card form-stack" aria-labelledby="calendar-title">
+    <h2 id="calendar-title" class="section-title-sm">{{ t("psettings.calendar") }}</h2>
+    {% set locked = view.tracking %}
+    {% if not locked %}<input type="hidden" name="calendar_shown" value="1">{% endif %}
+    <label class="check"><input type="checkbox" name="holidays"{% if d.settings.holidays == "pl" %} checked{% endif %}{% if locked %} disabled{% endif %}><span>{{ t("psettings.holidays") }}</span></label>
+    <div class="field">
+      <label for="days-off">{{ t("psettings.days_off") }} <span class="optional">{{ t("common.optional") }}</span></label>
+      <textarea id="days-off" name="{{ 'days_off_shown' if locked else 'days_off' }}" rows="3" aria-describedby="days-off-hint"{% if locked %} disabled{% endif %}{% if errors.get('days_off') %} aria-invalid="true"{% endif %}>{% for day in d.settings.days_off %}{{ day.isoformat() }}
+{% endfor %}</textarea>
+      <p class="hint" id="days-off-hint">{{ t("psettings.days_off_locked" if locked else "psettings.days_off_hint") }}</p>
+    </div>
+  </section>
   {% if roles %}
   <section class="card form-stack" aria-labelledby="costs-title">
     <h2 id="costs-title" class="section-title-sm">{{ t("psettings.costs") }}</h2>

@@ -91,7 +91,8 @@ forecast from the observation that leaves, so a card promises what the overview 
 approval (§11.5); a card shows the most likely finish and the bad case of the same worlds as the
 overview (§11.5, §11.7); the plan the pages show is the deterministic forecast from the latest
 check-in (§11.4); a move of the chance at a check-in is decomposed into its causes by
-one-at-a-time counterfactuals (§11.4); §1–§10 are unchanged.
+one-at-a-time counterfactuals (§11.4); the calendar of a live project skips the Polish public
+holidays and its own days off (§11.1); §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -820,8 +821,13 @@ its one comparison (§11.5) applies in the application only, not in the research
 ### §11.1 Calendar
 
 A project has a start date `d₀`. Working days are Monday to Friday without holidays (§10.1);
-model day `t` is the `t`-th working day on or after `d₀` (`t = 0` the first), `date(t)` its
-calendar date, and every date shown to users is a calendar date. For a date `d`, `first(d)` is
+in a live project (v2.2.0, WP12) also without the Polish public holidays that can fall on a
+weekday (1 and 6 January, Easter Monday, 1 and 3 May, Corpus Christi, 15 August, 1 and 11
+November, 24 December from 2025, 25 and 26 December; Easter by the Gregorian computus) and without
+the project's own days off, a list of dates; a project stored before v2.2.0 keeps Monday to
+Friday, and the simulator and the research runs keep §10.1. Model day `t` is the `t`-th working
+day on or after `d₀` (`t = 0` the first), `date(t)` its calendar date, and every date shown to
+users is a calendar date, from this one function. For a date `d`, `first(d)` is
 the day of the first working day on or after `d` and `last(d)` that of the last working day on
 or before `d` (`−1` before `date(0)`).
 
@@ -872,7 +878,8 @@ or before `d` (`−1` before `date(0)`).
 - **Structure.** The team, the tasks, their estimates, crews and dependencies can change until
   the first check-in, and a change asks for a new baseline plan. From then on the plan's
   structure changes only through check-ins (new tasks, more work, §11.3) and actions (§11.5);
-  names, the deadline, the budget and the settings can always change.
+  names, the deadline, the budget and the settings can always change, except the calendar (the
+  start date, the holidays and the days off, §11.1), in which the reported days are counted.
 
 ### §11.3 Baseline plan and check-ins
 

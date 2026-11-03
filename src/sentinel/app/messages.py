@@ -61,6 +61,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "possible finish date, {earliest}.",
         "structure_frozen": "Tracking has started, so the team, the tasks, their estimates, crews "
         "and dependencies can no longer change; report changes at a check-in.",
+        "calendar_frozen": "Tracking has started, so the start date, the holidays and the days "
+        "off can no longer change: the reported days are counted in them.",
         # baseline plan and check-ins (spec section 11.3)
         "no_baseline": "Build the plan first.",
         "project_finished": "All tasks are done: the project is finished.",
@@ -299,6 +301,8 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "structure_frozen": "Śledzenie postępu już się zaczęło, więc zespołu, zadań, ich "
         "szacunków, składów i zależności nie można już zmieniać; zmiany zgłaszaj w raporcie "
         "statusu.",
+        "calendar_frozen": "Śledzenie postępu już się zaczęło, więc daty startu, świąt i dni "
+        "wolnych nie można już zmieniać: według nich liczone są zgłoszone dni.",
         "no_baseline": "Najpierw zbuduj plan.",
         "project_finished": "Wszystkie zadania są gotowe: projekt jest zakończony.",
         "no_deadline": "Ustaw termin, aby zobaczyć szansę na zakończenie w terminie i otrzymywać "

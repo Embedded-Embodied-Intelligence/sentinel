@@ -11,7 +11,7 @@ holds its `simulator` spec and the days it was advanced (`advance`).
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -171,7 +171,20 @@ def parse(row: EventRow) -> _Event:
     kind = EVENTS.get(row.type)
     if kind is None:
         raise ValueError(f"unknown event type {row.type!r} at {row.seq}")
-    return kind.model_validate(row.payload)
+    return kind.model_validate(stored_calendar(row.payload))
+
+
+def stored_calendar(payload: dict[str, Any]) -> dict[str, Any]:
+    """A definition stored before v2.2.0 has no holidays in its settings: its days were counted
+    Monday to Friday, so it keeps that calendar (spec section 11.1) instead of the default."""
+    definition = payload.get("definition")
+    if not isinstance(definition, dict):
+        return payload
+    settings = definition.get("settings", {})
+    if not isinstance(settings, dict) or "holidays" in settings:
+        return payload
+    settings = {**settings, "holidays": "none"}
+    return {**payload, "definition": {**definition, "settings": settings}}
 
 
 def replay(rows: Sequence[EventRow]) -> LiveState:

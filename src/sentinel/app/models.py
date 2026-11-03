@@ -11,6 +11,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from sentinel.app.calendar import Holidays
 from sentinel.simulation.events import DisruptionParams
 from sentinel.simulation.uncertainty import PertParams
 
@@ -37,6 +38,7 @@ LAMBDA_N = 0.02
 MEAN_ABSENCE = 3.0
 DEFAULT_SEED = 2026
 BUDGET_RESERVE = 0.10  # beta of the default budget (spec section 1.2)
+MAX_DAYS_OFF = 366  # company days off a project may list
 OVERTIME_FLOOR = 1  # u_min: temporary workers a live or simulator project may always hire (11.2)
 
 
@@ -94,6 +96,10 @@ class Settings(_Frozen):
     llm_explanations: bool = False
     llm_proposals: bool = False
     language: Language = "en"
+    # The calendar (spec section 11.1, v2.2.0): Polish public holidays and the company's own days
+    # off are not working days; a project stored before v2.2.0 reads "none" (`events.parse`).
+    holidays: Holidays = "pl"
+    days_off: tuple[date, ...] = Field(default=(), max_length=MAX_DAYS_OFF)
 
     def pert(self) -> PertParams:
         """The PERT multiplier of the estimation preset with the advanced overrides."""
