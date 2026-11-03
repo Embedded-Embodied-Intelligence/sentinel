@@ -575,16 +575,16 @@ def test_the_check_in_counts_its_changes_and_its_button_says_so(
     expect(note).to_be_visible()
     page.locator("#date").fill("2026-11-03")
     expect(note).to_be_hidden()
-    # QA-21: the task marked as in progress above can grow in this check-in; the others cannot.
+    # QA-21 and B15 of the WP12 test: every task not started is listed under its own label (its
+    # growth is a new estimate, or more work if it starts in this check-in), none that is done.
     add = page.get_by_role("button", name="Add a task that grew")
     expect(add).to_be_visible()
     add.click()
     choice = page.locator("#grow-list select")
-    assert choice.locator("option:not([disabled])").all_inner_texts()[1:] == ["Build API"]
+    assert choice.locator("optgroup").get_attribute("label") == "Not started: a new estimate"
+    assert choice.locator("option").all_inner_texts()[1:] == ["Build API", "Build UI", "Test"]
     choice.select_option(label="Build API")
-    page.locator("fieldset.task-row", has_text="Build API").get_by_label("Not started").check()
-    assert choice.input_value() == ""
-    expect(add).to_be_hidden()
+    assert choice.input_value() == "T1"
     page.context.close()
 
 

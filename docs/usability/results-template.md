@@ -9,7 +9,7 @@ Wypełnia moderator po każdym uczestniku ([protokół](protocol-pl.md)). Skopiu
 | --- | --- |
 | Daty sesji | |
 | Moderator | |
-| Wersja Sentinela | 1.3.0 (`uv run sentinel ui`, wersja na dole menu po lewej) |
+| Wersja Sentinela | 1.4.0 (`uv run sentinel ui`, wersja na dole menu po lewej) |
 | Komputer, przeglądarka, rozdzielczość | |
 | Liczba uczestników | |
 | Odstępstwa od protokołu | |

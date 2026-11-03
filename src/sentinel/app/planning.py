@@ -361,15 +361,21 @@ def causes(project: LiveProject, checkin: CheckIn, p_before: float, p_after: flo
         others = checkin.new_tasks[:i] + checkin.new_tasks[i + 1 :]
         cause = Cause(kind="new_task", name=added.name, p_without=0.0)
         variants.append((cause, checkin.model_copy(update={"new_tasks": others})))
-    day = project.require_model().calendar.checkin_day(checkin.date)
+    calendar = project.require_model().calendar
+    day = calendar.checkin_day(checkin.date)
     if day > project.day:
         planned = planned_reports(project, day)
         if planned is not None:
+            # Work as planned had its people: an absence reported here counts from day t on.
+            start = calendar.date_of(day)
+            ahead = tuple(
+                a.model_copy(update={"first_day": max(a.first_day, start)})
+                for a in checkin.absences
+                if a.return_date is None or calendar.first(a.return_date) > day
+            )
+            update = {"tasks": planned, "absences": ahead}
             variants.append(
-                (
-                    Cause(kind="progress", p_without=0.0),
-                    checkin.model_copy(update={"tasks": planned}),
-                )
+                (Cause(kind="progress", p_without=0.0), checkin.model_copy(update=update))
             )
     found: list[Cause] = []
     for cause, variant in variants:
@@ -660,6 +666,9 @@ class ApprovalEvaluator(Evaluator):
                 return self.observation
             decision = prepared.decision
         trial = self.project.copy()
+        # SPEC-Q: a growth reported at a check-in and a substitute approved later at the same work
+        # done are replayed handover first (spec 5.1: step 3 precedes step 5), so the onboarding
+        # grows with the factor (2 -> 5 crew-member days in B3); keep their order instead?
         outcome = trial.resolve_action(decision, candidate.label, candidate.kind)
         if isinstance(outcome, str):
             return self.observation

@@ -187,6 +187,7 @@ def test_an_absence_of_somebody_the_message_does_not_name_is_left_to_check() -> 
     unticked, with a note, since the message does not name its person."""
     from sentinel.app.llm import named_in
 
-    assert named_in("Tomasz Nowak", "Tomasza nie będzie do piątku")
+    assert named_in("Tomasz Nowak", "Tomka nie będzie do piątku")
+    assert named_in("Ania Nowak", "Ani nie będzie, logowanie potrwa dłużej.")
     assert named_in("Filip Wójcik", "Filip jest na urlopie")
     assert not named_in("Tomasz Nowak", "Marek jest na urlopie do środy")

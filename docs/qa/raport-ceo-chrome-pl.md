@@ -184,3 +184,66 @@ Wolne ekrany:
 - Zapis raportu: 2–3 s, potem „Sentinel analizuje projekt…” jeszcze ok. 5 s.
 - Symulator: +1 dzień ok. 1 s, +5 dni 6–8 s, +10 dni ok. 10 s, „Do końca” ok. 40 s, bez licznika dni w trakcie.
 - Szybkie: utworzenie planu < 2 s, eksport CSV 113 ms, pozostałe ekrany < 1 s.
+
+## Status po WP12 (wersja 1.4.0)
+
+Legenda: **naprawione**, **zmienione** (inaczej, niż proponowano), **odrzucone** (z powodem).
+Powtórzenie kroków B1–B19 w przeglądarce: `tests/test_ui_regression_e2e.py`.
+
+### Błędy
+
+- **B1 naprawione.** PL/EN w kreatorze zachowuje wpisane pola.
+- **B2 naprawione.** Gantt, CSV i raport HTML pokazują bieżący plan: nic niegotowego w przeszłości, zależności (także nowych zadań) spełnione, sprawdzane `validate_residual`. Plan początkowy w osobnych kolumnach.
+- **B3 naprawione.** Karta liczy opcję tak, jak zatwierdzenie ją stosuje (od razu, te same scenariusze), więc przegląd po zatwierdzeniu pokazuje dokładnie obiecaną szansę, daty i koszt. Przyczyny różnicy: rozpatrywanie zgody z jednodniowym opóźnieniem oraz powtórne losowanie scenariuszy, które wydłużało wdrożenie zastępcy razem z wcześniejszym wzrostem zadania. Gdy coś zmieni się po rekomendacji (termin, budżet, ustawienia), przegląd mówi to jednym zdaniem.
+- **B4 naprawione.** Jedna funkcja dat. Karta pokazuje „najbardziej prawdopodobny koniec” z tych samych scenariuszy co przegląd. Data planu ma osobną etykietę „plan bez zakłóceń”, a Gantt jednym zdaniem wyjaśnia lukę do okna prognozy.
+- **B5 naprawione.** Polskie święta (24–26 grudnia, Wielkanoc, Boże Ciało i pozostałe) oraz dni wolne firmy nie są dniami pracy. Projekty zapisane przed 1.4.0 zachowują swój kalendarz.
+- **B6 naprawione.** Przegląd wiadomości pokazuje części, z których AI nic nie zrobiło. Pyta o osobę spoza zespołu i o zadanie pasujące do kilku. Nieobecność osoby, której wiadomość nie wymienia, jest odznaczona i opisana.
+- **B7 naprawione.** Wyjaśnienie AI jest po polsku i prostymi słowami. Tekst z pojęciami wewnętrznymi zostaje poprawiony raz, a potem pominięty (ADR-0029).
+- **B8 naprawione.** „Około tygodnia” to 5 dni roboczych. AI rozpoznaje zadania opcjonalne (w podglądzie jest kolumna „Opcjonalne”), nadaje krótkie nazwy z zachowanym zdaniem, a „testuje całość” następuje po wszystkich zadaniach programistycznych. Sprawdzone na obu modelach: `docs/qa/ai/wp12-*.json`.
+- **B9 naprawione.** Raport bez postępu zadań w toku pyta: „Czy od <data> nic się nie posunęło?”.
+- **B10 naprawione.** Opuszczenie strony w trakcie zapisu wywołuje ostrzeżenie przeglądarki.
+- **B11 naprawione.** Enter w polu „Rola” dodaje rolę.
+- **B12 naprawione.** Licznik zmian porównuje z zapisanym stanem, także po odrzuconym zapisie.
+- **B13 naprawione.** Przy suwaku widać, co się zapisze: „60 % → zapisze się 67 %, 2 z 3 dni”.
+- **B14 zmienione.** Komunikat mówi prawdę: propozycja czeka w „Czeka na Twoją decyzję” do następnego raportu, który liczy wszystko od nowa.
+- **B15 naprawione.** Wzrost nierozpoczętego zadania jest nowym szacunkiem. Listy są pogrupowane i bez zadań gotowych.
+- **B16 naprawione.** „Zakończone dnia” podąża za datą raportu.
+- **B17 naprawione.** To samo zadanie jako „po” i „przed” ma własny, jasny komunikat.
+- **B18 naprawione.** Przy limicie 120 znaków widać licznik.
+- **B19 naprawione.** Kolejność projektów w panelu jest stała: najpierw czekające na decyzję, potem kolejność utworzenia.
+- **B20 odrzucone: nie odtworzono.** Jedna próba w Playwright (wiersz 12, zaznaczenia, Esc): zaznaczenia zostają.
+- **B21 naprawione.** Komunikat błędu pola znika po wpisaniu wartości.
+- **B22 naprawione.** Etykiety na Gantcie nie nachodzą na siebie. Wykres w Historii ma oś Y.
+- **B23 naprawione.** Stopka zawsze pokazuje wersję. Hash ustawień nie zasłania już numeru wersji.
+- **B24 naprawione.** Tekst w symulatorze się zawija, a układ nie przeskakuje.
+
+### Tarcia UX
+
+- **Nieobecność „raz w roku”: naprawione.** Opis mówi „średnio przez 3 dni robocze”.
+- **Budżet „> 99 %”: zmienione.** Udział kosztu pokazujemy bez zaokrąglania do „> 99 %”. W szczegółach jest zdanie, że budżet to szacunek z rezerwą 10 %, którą typowe wydłużenia w większości zużywają.
+- **Nowy wiersz tabeli bez fokusu: naprawione.**
+- **„Projekt nie ma jeszcze zadań” w trakcie wpisywania: naprawione.**
+- **Okienko „Osoby” przesunięte: odłożone.** Raport nie podaje kroków ani rozmiaru okna, więc w WP12 tego nie badano. Sprawdzimy to w teście z użytkownikami.
+- **Brak rekomendacji przy złej szansie: naprawione.** „Sentinel sprawdził N możliwości; żadna nie pomaga wystarczająco” z linkiem do porównania.
+- **Luka między planem a oknem prognozy: naprawione.** Jedno zdanie pod Gantem.
+- **Oś „dziś”: naprawione.** Linia brzmi „Stan na <data raportu>”, a osobna linia „Dziś” pojawia się, gdy to inny dzień.
+- **Skok bez wyjaśnienia: naprawione.** Przy zmianie o co najmniej 5 pkt przegląd podaje do 3 przyczyn. Każda to szansa bez jednego zdarzenia, policzona na tych samych scenariuszach, z uwagą, że skutki się nie sumują.
+- **Rekomendacja „0 % → 0 %”: naprawione.** Karta mówi, co się poprawia, np. oczekiwane opóźnienie.
+- **Opcja gorsza niż „bez zmian”: naprawione.** W porównaniu ma etykietę „gorsze niż bez zmian”.
+- **Identyczne ucięte nazwy: naprawione.** Skrót pokazuje początek i koniec nazwy.
+- **„Następna w kolejności…”: naprawione.** Teraz: „Druga najlepsza możliwość, z szansą X: …”.
+- **Data z przyszłości po każdym błędzie: naprawione.** Potwierdzenie raz na raport.
+- **Blokada edycji po starcie: naprawione.** Spokojna informacja zamiast „Coś poszło nie tak”. Nierozpoczęte zadania można poprawić (szacunek, osoby, zależności, opcjonalność), a poprawka trafia do historii.
+- **„Zapytaj Sentinela”: zmienione** na „Przelicz teraz”.
+- **Zmiana autonomii: naprawione.** Komunikat mówi, co Sentinel od następnej analizy zrobi sam, a o co zapyta. Historia zapisuje stary i nowy poziom.
+- **„Kto zarządza projektem?” w symulatorze: naprawione.** Pytanie usunięte, wynik nadal pokazuje oba warianty. Bieg „Do końca” liczy dni.
+- **CSV po angielsku: naprawione.** Eksport i szablony w języku strony, import czyta oba języki.
+
+### Top 10
+
+- **#1, #2, #3, #5, #6: naprawione** (wyżej: B3/B4, B2, B5, skoki szansy, B9).
+- **#4: naprawione** (B6, B7, B15).
+- **#7: naprawione w części** (potwierdzenie daty raz, licznik, Enter). Domyślna data raportu zostaje „dziś”: zmiana jest odrzucona, bo raport opisuje stan na koniec dnia.
+- **#8: naprawione** (korekty po starcie).
+- **#9: naprawione** (B8, B1).
+- **#10: naprawione** (autonomia, „Przelicz teraz”).

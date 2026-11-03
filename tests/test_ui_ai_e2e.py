@@ -78,7 +78,7 @@ class Model:
         record = re.search(r"Chosen action: (\S+)", user)
         return json.dumps(
             {
-                "summary": "The plan stays (NOOP).",
+                "summary": "The plan stays as it is.",  # plain words: labels are refused (WP12)
                 "cited_facts": [
                     {"kind": "chosen_action", "value": record[1] if record else "NOOP"},
                     {"kind": "deciding_component", "value": "on_time"},
@@ -238,6 +238,8 @@ def test_a_message_is_read_twice_refused_with_its_items_kept_and_saved(
     row = page.locator("fieldset.task-row", has_text="Testy").first
     row.get_by_label("Nierozpoczęte").check()
     page.locator("button.btn-primary").click()
+    # No task in progress moved since the last report, so the page asks first (B9 of WP12).
+    page.get_by_role("button", name="Tak, brak postępu").click()
     page.wait_for_url(re.compile(r"flash=checkin_saved"))
     page.goto(f"{local.base}/projects/{project}/history")
     expect(page.locator("main")).to_contain_text("Ania Nowak")
@@ -286,6 +288,6 @@ def test_every_form_says_when_the_model_fails_and_works_again(
     expect(page.locator(".review-block")).to_contain_text("nie podało użytecznego wyjaśnienia")
     model.invalid = False
     page.get_by_role("button", name="Wyjaśnij innymi słowami (AI)").click()
-    expect(page.locator(".review-block")).to_contain_text("The plan stays (no change).")
+    expect(page.locator(".review-block")).to_contain_text("The plan stays as it is.")
     expect(page.locator(".review-block .badge")).to_be_visible()
     page.context.close()

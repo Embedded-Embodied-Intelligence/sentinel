@@ -731,13 +731,13 @@ CONJUNCTIONS = {
 }
 
 
-NAME_STEM = 4  # letters of a name a message must contain, so that "Tomka" names Tomasz
+NAME_STEM = 3  # letters of a name a word must start with: "Ani" names Ania, "Tomka" Tomasz
 
 
 def named_in(name: str, text: str) -> bool:
     """Whether a message names a person: a word of it starts as a part of the name does (its
-    first four letters, so that Polish case endings match); WP12: a small model gave Marek's
-    absence to Tomasz, and the review now shows such an absence as one to check."""
+    first three letters, so that Polish case forms match: "Ani", "Tomka"); WP12: a small model gave
+    Marek's absence to Tomasz, and the review now shows such an absence as one to check."""
     words = [w.casefold() for w in re.findall(r"\w+", text)]
     stems = [part.casefold()[:NAME_STEM] for part in name.split() if len(part) >= 2]
     return any(word.startswith(stem) for stem in stems for word in words)

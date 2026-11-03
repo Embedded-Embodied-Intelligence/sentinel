@@ -151,14 +151,31 @@ Niżej:
   choć w projekcie nic się nie zmieniło; zadanie wyraźnie powyżej tej wartości, np. takie, które
   właśnie mocno się wydłużyło, to mocniejszy sygnał. Pod listą: kto jest nieobecny i które zadania
   nie zaczęły się zgodnie z planem.
+- **Skąd ta zmiana** (od wersji 1.4.0): gdy raport zmienił szansę o co najmniej 5 punktów, pod
+  szansą pojawiają się do trzech przyczyn, np. „Bez nieobecności osoby Tomasz Lis szansa byłaby
+  41 %” albo „Gdyby od 20 lis prace posuwały się zgodnie z planem, szansa byłaby 44 %”. Każda
+  przyczyna to szansa tego samego raportu bez jednego zdarzenia, policzona na tych samych
+  scenariuszach. Dlatego skutki nie sumują się dokładnie.
 - **Plan i postęp**: plan początkowy (cienka szara linia), gotowe (szare), w toku (ciemny morski,
   z przerywanym obrysem pozostałej pracy), zaplanowane (jasny morski) i nieobecności (kreskowanie),
-  ze stanem, dzisiejszym dniem, terminem i oknem prognozy. Po najechaniu albo dotknięciu nazwy
+  ze stanem na dzień raportu, dzisiejszym dniem, terminem i oknem prognozy. Zaplanowane daty to
+  bieżący plan bez zakłóceń, liczony od ostatniego raportu z zachowaniem wszystkich zależności.
+  Jego koniec jest zwykle wcześniejszy niż okno prognozy, bo prognoza uwzględnia typowe wydłużenia
+  i nieobecności, co wyjaśnia zdanie pod wykresem. Ten sam plan trafia do eksportu CSV i raportu HTML. Po najechaniu albo dotknięciu nazwy
   zadania widać jego daty i osoby. Przełącznik **Wykres | Tabela** pokazuje to samo w tabeli; na
   telefonie wykres przewija się w bok, a nazwy zadań zostają na miejscu.
 
-Przycisk **Zapytaj Sentinela** uruchamia nową analizę w dowolnej chwili (np. po zmianie
-terminu w ustawieniach).
+Przycisk **Przelicz teraz** uruchamia nową analizę w dowolnej chwili (np. po zmianie terminu w
+ustawieniach).
+
+**Kalendarz.** Dni robocze to poniedziałek–piątek bez polskich świąt ustawowych (m.in. 24–26
+grudnia, Poniedziałek Wielkanocny, Boże Ciało) i bez dni wolnych firmy, które podasz w
+ustawieniach projektu. Po pierwszym raporcie kalendarza nie można już zmieniać.
+
+**Poprawki po starcie.** Po pierwszym raporcie zespół i zadania rozpoczęte lub gotowe zostają bez
+zmian. W zadaniu, które się jeszcze nie zaczęło, możesz poprawić szacunek, osoby, zależności i to,
+czy jest opcjonalne: **Ustawienia projektu → Popraw zadania, które się jeszcze nie zaczęły**. Każda
+poprawka trafia do historii, a prognoza liczy się od nowa.
 
 ## 4. Raport statusu
 
@@ -175,23 +192,31 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    jeszcze 3 dni”) i kliknij **Przetwórz wiadomość**. „Do środy” oznacza nieobecność przez całą
    środę i powrót w czwartek, a „wraca w środę” — powrót tego dnia. Pod **Tak to rozumiem:** AI
    wypisze, co znalazło (wydłużone zadanie także w dniach pracy), a Ty odznaczysz to, co się nie
-   zgadza. Zapisują się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest
+   zgadza. Pokaże też części wiadomości, z których nic nie zrobiło („Tego nie zamieniłem na
+   zmianę”), i zapyta, gdy osoby nie ma w zespole albo do opisu pasuje kilka zadań. Wtedy
+   wybierz osobę lub zadanie albo **Pomiń**. Nieobecność osoby, której wiadomość nie wymienia, jest
+   odznaczona. Zapisują się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest
    pomijany i nigdzie nie zostaje zapisany. Jeśli AI nie odpowie, strona powie dlaczego (np. brak
    połączenia albo brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
 3. **Zadania w toku i najbliższe** — przy każdym: *Nierozpoczęte*, *W toku* z wykonaną częścią
-   (suwak albo liczba, w procentach) albo *Gotowe* z datą zakończenia. Opcjonalnie: kiedy zadanie
+   (suwak albo liczba, w procentach) albo *Gotowe* z datą zakończenia. Postęp zapisuje się w
+   pełnych dniach pracy, więc przy suwaku widać, co się zapisze, np. „60 % → zapisze się 67 %, 2 z
+   3 dni”. Data zakończenia podąża za datą raportu, dopóki jej nie zmienisz. Opcjonalnie: kiedy zadanie
    się zaczęło i kto nad nim pracuje (domyślnie Sentinel przyjmuje plan i wolne osoby). Zadań, o
    których nic nie piszesz, nie trzeba ruszać.
 4. **Nieobecności** (**Dodaj**) — osoba, od kiedy i (jeśli wiadomo) kiedy wraca. **Tylko kiedy, nigdy
    dlaczego**: nie ma tu miejsca na powód nieobecności.
 5. **Zadania, które urosły** (**Dodaj**) — ile dodatkowych dni roboczych potrzebuje zadanie w toku,
-   także takie, które w tym raporcie oznaczasz jako *W toku*.
+   także takie, które w tym raporcie oznaczasz jako *W toku*. Dla zadania nierozpoczętego to nowy,
+   większy szacunek. Budżet domyślny zostaje bez zmian.
 6. **Nowe zadanie** (**Dodaj**) — nazwa, dni robocze, po czym następuje i przed czym musi być
    gotowe.
 
 Na dole widać liczbę zmian. Kliknij **Zapisz raport** (bez żadnej zmiany przycisk mówi **Zapisz
 raport (bez zmian)** — taki raport też ma sens: znaczy, że nic się nie zmieniło). Po kilku sekundach
-przegląd pokazuje nową szansę, a jeśli potrzebna jest zmiana — rekomendację. Gdy wyjdziesz z
+przegląd pokazuje nową szansę, a jeśli potrzebna jest zmiana — rekomendację. Raport, w którym
+żadne zadanie w toku nie ma postępu, najpierw pyta: „Czy od <data> nic się nie posunęło?”.
+Odpowiedz **Tak, brak postępu** albo **Uzupełnij postęp**. Gdy wyjdziesz z
 nieskończonego raportu (zakładka, menu, zmiana języka), przeglądarka najpierw zapyta, czy na pewno.
 
 > **Dobra rada:** jeśli zastępca przejął zadanie, część jego czasu idzie na wdrożenie się.
@@ -210,14 +235,19 @@ plan. Rekomendacja pokazuje:
   nieobecnej (Bartosz Kowalski) w zadaniu „API katalogu produktów””; nad nim dzień, którego stan
   czyta (*stan na koniec dnia* z raportu), a pod **Co się zmieni** pierwszy dzień, który zmiana
   obejmuje,
-- **efekt** w porównaniu z brakiem zmian: szansa („39 % → 55 %”), a pod **Co się zmieni**: koniec,
-  oczekiwane opóźnienie, koszt („+2 jedn., +2 % budżetu”) i liczba zadań, których terminy się
-  przesuwają,
+- **efekt** w porównaniu z brakiem zmian: szansa („39 % → 46 %”), a pod **Co się zmieni**:
+  najbardziej prawdopodobny koniec, oczekiwane opóźnienie, koszt („107 % → 113 % budżetu (+5
+  jedn.)”) i liczba zadań, których terminy się przesuwają. Od wersji 1.4.0 każda możliwość jest
+  liczona tak, jak zastosuje ją zatwierdzenie: od razu i na tych samych scenariuszach. Po
+  zatwierdzeniu przegląd pokazuje więc dokładnie obiecaną szansę, daty i koszt. Jeśli coś zmieniło
+  się po rekomendacji (np. termin), przegląd mówi to jednym zdaniem. Gdy szansa się nie zmienia,
+  karta mówi, co się poprawia, np. oczekiwane opóźnienie,
 - **czy potrzebna jest Twoja zgoda** (*dotyczy ludzi*, *kosztuje*, *zmienia zakres* albo *zmienia
   plan bardziej, niż pozwala Twoje ustawienie*) i **dlaczego ta propozycja**,
 - pod **Porównaj wszystkie możliwości**: tabela, w której polecana jest pierwsza, a „Bez zmian” jest
   ostatnie jako punkt odniesienia. Każda możliwość jest sprawdzona na tych samych 200 scenariuszach
-  co prognoza na przeglądzie, więc „Bez zmian” ma dokładnie szansę z przeglądu:
+  co prognoza na przeglądzie, więc „Bez zmian” ma dokładnie szansę z przeglądu. Możliwość gorsza
+  niż „bez zmian” ma taką etykietę:
 
 ![Porównane możliwości](ui/pl_recommendation_options.png)
 
@@ -227,18 +257,23 @@ szansę (w pełnych procentach) niż polecana, strona wyjaśnia to jednym zdanie
 (różnica w granicach niepewności); wybrano wariant, który zmienia mniej terminów”.
 
 Gdy AI jest włączone, **Wyjaśnij innymi słowami (AI)** prosi model, by opowiedział rekomendację
-własnymi słowami, po angielsku. Tekst jest sprawdzany z tymi samymi liczbami i oznaczony jako
+własnymi słowami, po polsku i bez żargonu. Tekst z pojęciami wewnętrznymi AI poprawia raz, a jeśli
+nadal je zawiera, strona pokazuje tylko wyjaśnienie powyżej. Tekst jest sprawdzany z tymi samymi
+liczbami i oznaczony jako
 *sprawdzone z danymi* albo *niepotwierdzone przez dane*; nigdy nie zmienia decyzji. Jeśli model nie
 podał użytecznego wyjaśnienia, ten sam przycisk pozwala zapytać ponownie.
 
 Rekomendacja otwiera się na osobnej stronie bez menu: ta strona jest przeglądem przed decyzją.
 Decydujesz na dole: przycisk zatwierdzania nazywa zmianę (np. **Zatwierdź zastępstwo**), **Odrzuć**
-pyta jeszcze o potwierdzenie, a **Zdecyduj później** zostawia propozycję do następnego raportu.
+pyta jeszcze o potwierdzenie, a **Zdecyduj później** zostawia propozycję w części „Czeka na Twoją
+decyzję” do następnego raportu, który liczy wszystko od nowa.
 Zatwierdzona zmiana od razu trafia do planu (np. zastępca do zespołu zadania, osoba tymczasowa na
 wskazaną liczbę dni). Oznaczenie **może poczekać** znaczy, że do realnego ryzyka zostało jeszcze
 kilka dni. Rekomendacja „Bez zmian — plan wciąż jest najlepszy” znaczy, że żadna sprawdzona zmiana
-nie pomaga wyraźnie bardziej niż obecny plan; przegląd mówi wtedy wprost, czy zmiana nie jest
-potrzebna, czy tylko żadna możliwość nie jest wyraźnie lepsza.
+nie pomaga wyraźnie bardziej niż obecny plan. Przegląd mówi wtedy wprost, czy zmiana nie jest
+potrzebna, czy też Sentinel sprawdził N możliwości i żadna nie pomaga wystarczająco (z linkiem do
+porównania). Po zmianie autonomii komunikat mówi, co Sentinel od następnej analizy zrobi sam, a o
+co zapyta, a Historia zapisuje stary i nowy poziom.
 
 **Autonomia.** W **Ustawieniach** projektu wybierasz, **co Sentinel może robić sam**:
 

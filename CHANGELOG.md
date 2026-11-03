@@ -5,6 +5,34 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.4.0 — 2026-11-03 (WP12, the fixes of the CEO/QA test)
+
+- One set of numbers: a recommendation's card shows what approving it gives, since each option is
+  worked out as the approval applies it (at once, on the forecast's worlds), so the overview after
+  an approval shows exactly the promised chance, most likely finish, bad case and cost; the card
+  shows the most likely finish of the same worlds as the overview; the plan without disruptions is
+  labelled apart from the forecast's dates (spec v2.2.0, section 11.5).
+- The chart, the task list, the plan CSV and the HTML report show the current plan from the latest
+  check-in, checked against the dependencies (those of new tasks too) with `validate_residual`, the
+  original plan in its own columns; a line explains the gap to the forecast window (11.4).
+- After a check-in that moved the chance by 5 points or more, the overview names up to three causes
+  (each absence, growth and new task, and the progress against the plan), each the chance without
+  it on the same futures (11.4).
+- Polish public holidays and company days off are not working days in a live project (11.1).
+- Status reports: a report without progress asks first; a date ahead is confirmed once; the change
+  counter, Enter in the role field, leaving during a save and "finished on" behave; progress says
+  what whole days it is saved as; a task not started that grows gets a new estimate (11.3); the
+  pickers are grouped; "decide later" says what it does.
+- The AI: the message review lists what it did not turn into a change and asks about unknown
+  people and ambiguous tasks (clause numbers only, no message text stored); explanations in the
+  page's language without internal terms (ADR-0029); a description gives short names, optional
+  tasks, five working days for "about a week" and the right dependencies of a final test.
+- Tasks not started can be corrected after the first check-in, each correction in the history
+  (11.2); the cards say what improves when the chance does not move, mark options worse than no
+  change and tell apart names cut alike; "Recalculate now"; an autonomy change says what Sentinel
+  will do alone; CSV in both languages; the small items B1–B24 of `docs/qa/raport-ceo-chrome-pl.md`
+  (status after WP12 at its end).
+
 ## 1.3.0 — 2026-11-02 (WP11, release readiness)
 
 - The AI features run end to end with real models through the browser

@@ -147,14 +147,31 @@ Further down:
   such a task can leave the list at the next check-in though nothing changed in the project; a task
   far above the line, such as one that has just grown a lot, is the stronger signal. Below the list:
   who is away and which tasks have not started as planned.
+- **What moved the chance** (since 1.4.0): when a check-in moved the chance by 5 points or more, up
+  to three causes appear under it, e.g. "Without the absence of Tom Lee the chance would be 41 %"
+  or "Had the work progressed as planned since 20 Nov, the chance would be 44 %". Each is the chance
+  of the same check-in without that one event, on the same futures, so the effects do not add up
+  exactly.
 - **Plan and progress**: the original plan (a thin grey line), done (grey), in progress (dark teal,
   with a dashed outline of the work left), planned (light teal) and absences (hatched), with the
-  status, today, the deadline and the forecast window. Hover over or tap a task's name for its dates
+  status at the check-in's date, today, the deadline and the forecast window. The planned dates are
+  the current plan without disruptions, from the latest check-in with every dependency kept. Its
+  end is usually before the forecast window, which counts on the usual overruns and absences, and a
+  line under the chart says so. The same plan goes into the CSV export and the HTML report. Hover over or tap a task's name for its dates
   and people. **Chart | Table** shows the same as a table; on a phone the chart scrolls sideways and
   the names stay in place.
 
-**Ask Sentinel** starts a new analysis at any time (e.g. after you changed the deadline in the
+**Recalculate now** starts a new analysis at any time (e.g. after you changed the deadline in the
 settings).
+
+**Calendar.** Working days are Monday to Friday without the Polish public holidays (24–26 December,
+Easter Monday, Corpus Christi and the others) and without the company days off you list in the
+project settings. After the first check-in the calendar stays as it is.
+
+**Corrections after the start.** After the first check-in the team and the started or finished
+tasks stay as they are. For a task not started yet you can correct the estimate, the people, its
+dependencies and whether it is optional: **Project settings → Correct the tasks not started yet**.
+Each correction goes into the history and the forecast is worked out again.
 
 ## 4. Check-ins
 
@@ -171,23 +188,31 @@ when something important changes. Click **New check-in**.
    days") and click **Process the message**. "Until Wednesday" means away through Wednesday and
    back on Thursday; "back on Wednesday" means back that day. Under **This is how I read it:** the
    AI lists what it found (a task that grows also in days of work) and you untick what is wrong.
-   Only the ticked items are saved; a reason for an absence written in the message is left out
+   It also shows the parts of the message it turned into nothing ("Not turned into a change"),
+   and it asks when a person is not in the team or several tasks fit. Pick the person or the task,
+   or **Skip it**. An absence of somebody the message does not name is left unticked. Only the
+   ticked items are saved; a reason for an absence written in the message is left out
    and never stored. If the AI cannot answer, the page says why (e.g. no connection or no answer
    in time) and you fill in the form by hand.
 3. **Tasks in progress and next**: for each, *Not started*, *In progress* with the share done
-   (a slider or a number, in per cent) or *Done* with its finish date. Optionally, when the task
+   (a slider or a number, in per cent) or *Done* with its finish date. Progress is kept in whole
+   days of work, so the slider says what is saved, e.g. "60 % → saved as 67 %, 2 of 3 days". The
+   finish date follows the check-in's date until you change it. Optionally, when the task
    started and who works on it (by default Sentinel assumes the plan and free people). Tasks you say
    nothing about stay as they are.
 4. **Absences** (**Add**): the person, from when and (if known) when they are back. **Only when, never
    why**: there is no place for the reason of an absence.
 5. **Tasks that grew** (**Add**): how many more working days a task in progress needs, including
-   one you mark as *In progress* in this check-in.
+   one you mark as *In progress* in this check-in. For a task not started yet it is a new, larger
+   estimate. The default budget stays as it was.
 6. **New task** (**Add**): its name, working days, what it comes after and what it must be done
    before.
 
 The bar at the bottom counts the changes. Click **Save the check-in** (with no change the button says
 **Save the check-in (no changes)**, which is a useful report too). After a few seconds the overview
-shows the new chance and, if a change is needed, a recommendation. If you leave an unfinished
+shows the new chance and, if a change is needed, a recommendation. A check-in with no progress on
+any task in progress asks first: "Has nothing moved on since <date>?". Answer **Yes, no progress**
+or **Add the progress**. If you leave an unfinished
 check-in (a tab, the menu, the language), the browser asks first.
 
 > **Tip:** when a substitute takes over a task, part of their time goes into getting up to
@@ -205,14 +230,18 @@ recommendation shows:
 - the **action** in plain words, e.g. "Substitute: Cyrus Hill takes over Ben Carter's part in
   “Product catalogue API”"; above it the day whose status it reads (*status at the end of*, from the
   check-in), and under **What changes** the first day the change applies to,
-- its **effect** compared with no change: the chance ("39 % → 55 %") and, under **What changes**, the
-  finish, the expected delay, the cost ("+2 units, +2 % of the budget") and how many tasks have
-  their dates moved,
+- its **effect** compared with no change: the chance ("39 % → 46 %") and, under **What changes**, the
+  most likely finish, the expected delay, the cost ("107 % → 113 % of the budget (+5 units)") and how
+  many tasks have their dates moved. Since 1.4.0 every option is worked out as approving it applies
+  it, at once and on the same futures. After an approval the overview therefore shows exactly the
+  promised chance, dates and cost. If something changed after the recommendation (e.g. the
+  deadline), the overview says so in one sentence. When the chance does not move, the card says
+  what improves, e.g. the expected delay,
 - **whether it needs your approval** (*affects people*, *costs money*, *changes scope* or *changes
   the plan more than your setting allows*) and **why this proposal**,
 - under **Compare all the options**: a table with the recommended one first and "No change" last as
   the reference point. Each is tried on the same 200 futures as the forecast on the overview, so "No
-  change" has exactly the overview's chance:
+  change" has exactly the overview's chance. An option worse than "no change" is labelled so:
 
 ![The options compared](ui/en_recommendation_options.png)
 
@@ -223,17 +252,23 @@ e.g. "Similar chance (the difference is within the uncertainty); the option that
 dates was chosen".
 
 With the AI on, **Explain in other words (AI)** asks the model to retell the recommendation in
-its own words, in English. The text is checked against the same figures and marked *checked
+its own words, in the page's language and in plain words. A text with an internal term is asked for
+once more, and if it still has one, the page shows the explanation above alone. The text is
+checked against the same figures and marked *checked
 against the data* or *not confirmed by the data*; it never changes the decision. If the model
 gave no usable explanation, the button lets you ask again.
 
 A recommendation opens on its own page without the menu: the page is the review before the decision.
 You decide at the bottom: the approve button names the change (e.g. **Approve the substitute**),
-**Reject** asks once more, and **Decide later** leaves the proposal until the next check-in. An
+**Reject** asks once more, and **Decide later** keeps the proposal under "Waiting for your
+decision" until the next check-in, which works everything out again. An
 approved change goes into the plan at once (e.g. the substitute joins the task, a temporary person is
 hired for the stated number of days). **Can wait** means there are still a few days before the risk
 becomes real. "No change — the plan is still the best" means no change checked helps clearly more
-than the current plan; the overview says whether no change is needed or just none is clearly better.
+than the current plan. The overview says whether no change is needed or Sentinel checked N options
+and none helps enough (with a link to the comparison). After a change of the autonomy the message
+says what Sentinel will do alone from the next analysis and what it will ask about, and the history
+records the old and the new level.
 
 **Autonomy.** In the project's **Settings** you choose **what Sentinel may do on its own**:
 

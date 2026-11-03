@@ -986,7 +986,8 @@ of the 10 %, 50 % and 90 % quantiles of `C` (§5.2). The *tasks that threaten th
   each absence, work increase and new task of the check-in, the chance of the same check-in
   without it, and for its task reports, the chance had every task progressed as the plan expected
   since the previous check-in (the deterministic forecast above, from the observation before the
-  check-in, read at day `t`). Each variant is forecast like the check-in itself, on the `N` worlds
+  check-in, read at day `t`; the check-in's absences then count from day `t` on, since work as
+  planned had its people). Each variant is forecast like the check-in itself, on the `N` worlds
   of day `t` (one-at-a-time counterfactuals on common random numbers); a variant that the
   check-in's rules reject is no cause, nor one whose chance is within half a percentage point of
   the check-in's. The causes are ranked by the size of that difference, are computed in the
