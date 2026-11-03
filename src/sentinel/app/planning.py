@@ -642,8 +642,8 @@ class ApprovalEvaluator(Evaluator):
     promises are thus those the overview shows after the approval (B3 of the WP12 test: the
     rollouts of section 6 imagine the approval delta_h days later and apply the action to each
     sampled world, while a live approval applies it now and the next forecast samples the worlds
-    of the new observation). The simulator keeps `Evaluator`: its simulated human approves
-    delta_h days later (section 11.6)."""
+    of the new observation, whose handover keeps its place after an earlier growth, v2.2.1). The
+    simulator keeps `Evaluator`: its simulated human approves delta_h days later (11.6)."""
 
     def __init__(
         self, project: LiveProject, observation: Observation, seed: int, params: SentinelParams
@@ -666,9 +666,6 @@ class ApprovalEvaluator(Evaluator):
                 return self.observation
             decision = prepared.decision
         trial = self.project.copy()
-        # SPEC-Q: a growth reported at a check-in and a substitute approved later at the same work
-        # done are replayed handover first (spec 5.1: step 3 precedes step 5), so the onboarding
-        # grows with the factor (2 -> 5 crew-member days in B3); keep their order instead?
         outcome = trial.resolve_action(decision, candidate.label, candidate.kind)
         if isinstance(outcome, str):
             return self.observation

@@ -11,7 +11,9 @@ identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
   worked out as the approval applies it (at once, on the forecast's worlds), so the overview after
   an approval shows exactly the promised chance, most likely finish, bad case and cost; the card
   shows the most likely finish of the same worlds as the overview; the plan without disruptions is
-  labelled apart from the forecast's dates (spec v2.2.0, section 11.5).
+  labelled apart from the forecast's dates (spec v2.2.0, section 11.5). A substitute approved after
+  a growth reported at the same work done keeps that order, so the growth no longer multiplies its
+  onboarding (spec v2.2.1, section 5.1; research observations unchanged).
 - The chart, the task list, the plan CSV and the HTML report show the current plan from the latest
   check-in, checked against the dependencies (those of new tasks too) with `validate_residual`, the
   original plan in its own columns; a line explains the gap to the forecast window (11.4).

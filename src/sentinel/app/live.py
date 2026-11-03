@@ -645,6 +645,7 @@ class LiveProject:
         self.absences: list[AbsenceRecord] = []
         self.shocks: list[ShockRecord] = []
         self.handovers: list[HandoverRecord] = []
+        self.handover_after: list[int] = []  # work increases reported before each handover
         self.actions: list[AppliedAction] = []
         self.budget_pin: float | None = None  # the default budget, fixed at the first check-in
 
@@ -939,6 +940,7 @@ class LiveProject:
             handovers=tuple(
                 (ids[h.task], h.work / nodes[h.task].unit, h.added) for h in self.handovers
             ),
+            handover_positions=self.handover_positions(),
             temporary=tuple(temporary),
             budget=model.budget,
             costs=model.costs,
@@ -1302,6 +1304,8 @@ class LiveProject:
         for key, crew in action.crews.items():
             self.tasks[key].crew = crew
             self.tasks[key].crews.append((action.day, crew))
+        # Each handover comes after the work increases reported so far (spec 5.1, v2.2.1).
+        self.handover_after += [len(self.shocks)] * len(action.handovers)
         self.handovers += action.handovers
         for key in action.removed:
             self.tasks[key].state = "removed"
@@ -1313,6 +1317,16 @@ class LiveProject:
 
     def copy(self) -> "LiveProject":
         return copy.deepcopy(self)
+
+    def handover_positions(self) -> tuple[int, ...]:
+        """The handovers' positions among the work increases (spec sections 5.1 and 11.3,
+        v2.2.1), reported when a handover follows a work increase of its task at the same work
+        done (a growth reported at a check-in, then a substitute approved), so that the growth
+        does not multiply the substitute's onboarding; () otherwise, the engine's own order."""
+        for h, k in zip(self.handovers, self.handover_after, strict=True):
+            if any(s.task == h.task and s.work == h.work for s in self.shocks[:k]):
+                return tuple(self.handover_after)
+        return ()
 
     def revise(self, key: str, duration: int) -> None:
         """A task not started yet gets the estimate `duration` (spec section 11.3, v2.2.0): in

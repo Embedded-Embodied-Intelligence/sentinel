@@ -9,6 +9,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 from app_cases import (
     ABSENCE_CHECKIN,
@@ -52,11 +53,14 @@ from sentinel.app.ui.text import NBSP, Texts
 from sentinel.app.views import forecast_view, recommendation_view
 from sentinel.dashboard.explain import _percent, checkable, template_explanation
 from sentinel.experiments.runs import derive_seed
+from sentinel.forecasting.beliefs import Belief
 from sentinel.interpret.explain import check, explain, render_record
 from sentinel.llm import FakeLlmClient
 from sentinel.model import ProjectInstance
 from sentinel.policies.base import Decision
-from sentinel.simulation.state import Observation
+from sentinel.policies.no_reaction import NoReaction
+from sentinel.simulation.engine import Run
+from sentinel.simulation.state import Observation, state_from_observation, work_history
 
 LANGUAGES: tuple[Language, ...] = ("pl", "en")
 START = date(2026, 11, 2)
@@ -642,18 +646,52 @@ def check_promise(project: LiveProject, recommendation: Recommendation) -> None:
 
 
 def test_approving_shows_what_the_card_promised() -> None:
-    """B3 of the WP12 test: a substitute for an absent developer."""
-    check_promise(absence_project(), absence_recommendation())
+    """B3 of the WP12 test: a substitute for an absent developer (a fresh project: approving
+    changes it, and `absence_project` is shared)."""
+    check_promise(checked_in(planned(small()), ABSENCE_CHECKIN), absence_recommendation())
 
 
 def test_approving_after_a_task_grew_shows_what_the_card_promised() -> None:
     """B3 of the WP12 test, its second example: in the showcase, the task that grew by 150 %
     and then stopped with its developer away gets a substitute; the card promised 55 % and
-    109 % of the budget, the overview showed 46 % and 113 %."""
+    109 % of the budget, the overview showed 46 % and 113 %. Since v2.2.1 the growth reported
+    before the substitute does not multiply the onboarding: it stays 2 crew-member days (it read
+    5), and every world rebuilt after the approval is the one the card applied the action to."""
     spec = showcase.definition("pl")
     project = planned(spec)
     for checkin in showcase.checkins("pl")[:2]:
         project.apply_checkin(project.resolve_checkin(checkin))
     recommendation = planning.recommend(project)
     assert recommendation.record.chosen == "SUBST(3)"
+    before = project.observation()
+    approved, _ = planning.approval(project, recommendation)
     check_promise(project, recommendation)
+    after = project.observation()
+    ((j, _, added),) = after.handovers
+    assert added == 2 and after.handover_positions == (1,)  # after the growth reported (5.1)
+    assert work_history(after)[j][-1] == (work_history(before)[j][-1][0], 1.0, 2.0)
+    seed = planning.forecast_seed(project, before.day)
+    evaluator = Evaluator(before, seed, planning.sentinel_params(project))
+    belief = Belief(after)
+    for i in range(3):
+        evaluator.world(i)
+        applied = evaluator.templates[i].copy()
+        streams = evaluator.streams[i]
+        streams.rewind()
+        Run(applied, streams, NoReaction(), record_events=False, check_plans=False).apply(
+            approved.decision
+        )
+        belief_seq, _ = np.random.SeedSequence(derive_seed(seed, "rollout", str(i))).spawn(2)
+        world = belief.sample(np.random.Generator(np.random.PCG64(belief_seq)))
+        rebuilt = state_from_observation(after, world, plan=after.plan)
+        assert rebuilt.remaining[j] == applied.remaining[j]  # the onboarding added once, as 2
+
+
+def test_a_handover_without_an_earlier_growth_keeps_the_engines_order() -> None:
+    """Spec 5.1 (v2.2.1): with no work increase before it at its work done, a handover's position
+    is not reported, so such an observation, as every research one, is as it was."""
+    project = checked_in(planned(small()), ABSENCE_CHECKIN)
+    approve_now(project, absence_recommendation())
+    after = project.observation()
+    assert after.handovers and after.handover_positions == ()
+    assert "handover_positions" not in after.model_dump()

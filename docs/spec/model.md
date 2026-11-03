@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.2.0)
+# Sentinel — formal model (v2.2.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -94,7 +94,11 @@ check-in (§11.4); a move of the chance at a check-in is decomposed into its cau
 one-at-a-time counterfactuals (§11.4); the calendar of a live project skips the Polish public
 holidays and its own days off (§11.1); a work increase of a task not started revises its estimate
 (§11.3) and such tasks can be corrected after the first check-in, with the default budget fixed
-at it (§11.2); §1–§10 are unchanged.
+at it (§11.2); §1–§10 are unchanged. v2.2.1 (WP12, the answer to its question on §5.1) an
+observation may give each SUBST handover's position among the observed shocks, so that a
+handover keeps its real order after a shock at the same work done (a growth reported at a
+check-in, then a substitute approved) and the growth does not multiply the onboarding (§5.1,
+§11.3); research observations carry no position, so the research runs are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -438,7 +442,13 @@ The rollouts of §5 start from a state sampled from the belief given the observa
   SUBST handovers `(e_i, h_i)` (work done at the handover, `h_j` of §3) are replayed with the
   shocks in order of work done, a handover before a shock at equal work (step 3 precedes step
   5): `R_i = R_{i−1} − (e_i − e_{i−1}) + h_i`, requiring `R_{i−1} − (e_i − e_{i−1}) > 0` (the
-  activity had not finished before the handover).
+  activity had not finished before the handover). An observation may instead give each
+  handover's position, the number of shocks observed before it (v2.2.1, WP12): at equal work done
+  a handover then keeps its real place among the shocks, so a shock observed before a handover
+  never multiplies its onboarding. The position is given only when the rule above would misplace
+  a handover, i.e. after a shock of its activity at the same work done; a research run never has
+  that (a shock is drawn in step 5 of a day on which the activity progresses), so its
+  observations carry no position and replay as above.
   Unstarted original activities sample `P_j` from the unconditional pmf; inserted activities use
   their nominal duration as `p_j`.
 - **Absences.** For an absent worker with absence start `s`, announced bound `L_low` and today
@@ -945,6 +955,9 @@ or before `d` (`−1` before `date(0)`).
   - *Work increases.* `×F` with `F > 1` is used as given; `+N` working days (`N > 0`) gives
     `F = (R + N) / R`, with `R` the deterministic remaining work of §5.2 in full-crew days after
     the check-in's progress. The shock `(j, e_j, F)` is appended to the observed shocks (§3).
+    A handover of an approved action comes after the shocks reported before it; when one of them
+    is of its task at the same work done, the observation gives the handovers' positions (§5.1,
+    v2.2.1), so the substitute's onboarding is not grown by the earlier factor.
   - *New tasks* get the next ids `n + 2, …`, status unstarted and the planned start of §3.1 (e).
   - *Cost so far*: the work done of every started task, `e_j` full-crew days at the daily cost of
     its crew's people (temporary workers excluded), plus the pay `c_OT_k` of each temporary

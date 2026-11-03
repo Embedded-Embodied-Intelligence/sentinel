@@ -235,8 +235,8 @@ plan. Rekomendacja pokazuje:
   nieobecnej (Bartosz Kowalski) w zadaniu „API katalogu produktów””; nad nim dzień, którego stan
   czyta (*stan na koniec dnia* z raportu), a pod **Co się zmieni** pierwszy dzień, który zmiana
   obejmuje,
-- **efekt** w porównaniu z brakiem zmian: szansa („39 % → 46 %”), a pod **Co się zmieni**:
-  najbardziej prawdopodobny koniec, oczekiwane opóźnienie, koszt („107 % → 113 % budżetu (+5
+- **efekt** w porównaniu z brakiem zmian: szansa („39 % → 57 %”), a pod **Co się zmieni**:
+  najbardziej prawdopodobny koniec, oczekiwane opóźnienie, koszt („109 % → 111 % budżetu (+2
   jedn.)”) i liczba zadań, których terminy się przesuwają. Od wersji 1.4.0 każda możliwość jest
   liczona tak, jak zastosuje ją zatwierdzenie: od razu i na tych samych scenariuszach. Po
   zatwierdzeniu przegląd pokazuje więc dokładnie obiecaną szansę, daty i koszt. Jeśli coś zmieniło

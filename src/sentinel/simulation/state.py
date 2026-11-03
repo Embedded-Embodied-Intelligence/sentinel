@@ -111,7 +111,12 @@ class Observation(BaseModel):
     members included (spec section 3.1 a); a member replaced by SUBST has left it (spec section
     4). `work_increases` lists every observed D2 shock as (activity, e_j before the shock,
     factor F), and `handovers` every SUBST handover as (activity, e_j at the handover, work
-    added m_j o_j in crew-member days, i.e. h_j M_j; spec section 3). `budget` is B (spec
+    added m_j o_j in crew-member days, i.e. h_j M_j; spec section 3). `handover_positions`, if
+    not empty, gives for each handover the number of work increases observed before it, so that
+    a handover keeps its real place among the work increases at equal work done (spec section
+    5.1, v2.2.1); it is reported only when the rule of the engine's own order (a handover before
+    every work increase at its work done, step 3 before step 5) would misplace one, which a
+    research run never does, so research observations leave it out. `budget` is B (spec
     section 1.2), `costs` the daily costs c_k and `overtime_costs` the c_OT_k of temporary
     workers (spec section 4); the engine always reports them. `optional` lists the optional
     activities O that DESCOPE may remove; an activity it removed has the status "removed" (spec
@@ -139,6 +144,7 @@ class Observation(BaseModel):
     pert: PertParams
     disruptions: DisruptionParams
     handovers: tuple[tuple[int, float, int], ...] = Field(default=(), exclude_if=_unset)
+    handover_positions: tuple[NonNegativeInt, ...] = Field(default=(), exclude_if=_unset)
     temporary: tuple[TemporaryWorker, ...] = Field(default=(), exclude_if=_unset)
     budget: float | None = None
     costs: tuple[float, ...] = ()
@@ -191,6 +197,7 @@ class EngineState:
         "finish",
         "first_temporary",
         "handover_factor",
+        "handover_positions",
         "handovers",
         "hired",
         "idle",
@@ -304,6 +311,7 @@ class EngineState:
         self.inserted: list[InsertedActivity] = []
         self.work_increases: list[tuple[int, float, float]] = []
         self.handovers: list[tuple[int, float, int]] = []
+        self.handover_positions: list[int] = []  # work increases before each handover (5.1)
 
         self.first_temporary = n_workers
         self.temporary: list[TemporaryWorker] = []  # by id - first_temporary
@@ -441,6 +449,22 @@ class EngineState:
         """
         return SampledWorld(tuple(self.remaining), tuple(self.return_day))
 
+    def reported_positions(self) -> tuple[int, ...]:
+        """The handovers' positions among the work increases if the engine's order (a handover
+        before every work increase at its work done) would misplace one, else () (spec section
+        5.1, v2.2.1): only a work increase observed before a handover at the same work done,
+        which a research run never has (its growth is drawn in step 5 of a day of progress)."""
+        positions = self.handover_positions
+        for h, (j, work, _) in enumerate(self.handovers):
+            unit = self.unit[j]
+            at = crew_member_days(work, unit)
+            if any(
+                a == j and crew_member_days(e, unit) == at
+                for a, e, _ in self.work_increases[: positions[h]]
+            ):
+                return tuple(positions)
+        return ()
+
     def observe(self) -> Observation:
         """The agent's view of the current day (spec section 3); hidden fields are left out."""
         # The engine maintains the invariants, so validation is skipped for speed.
@@ -463,6 +487,7 @@ class EngineState:
             pert=self.pert,
             disruptions=self.disruptions,
             handovers=tuple(self.handovers),
+            handover_positions=self.reported_positions(),
             temporary=tuple(self.temporary),
             budget=self.budget,
             costs=self.role_costs,
@@ -584,6 +609,7 @@ def state_from_observation(
     state.inserted = list(observation.inserted)
     state.work_increases = list(observation.work_increases)
     state.handovers = list(observation.handovers)
+    state.handover_positions = list(handover_positions(observation))
     status = state.status = list(observation.status)
     state.start = list(observation.start)
     state.finish = list(observation.finish)
@@ -660,22 +686,41 @@ def work_history(observation: Observation) -> dict[int, list[tuple[int, float, f
 
     A D2 shock multiplies the remaining work by F and adds nothing; a SUBST handover adds its
     m_j o_j = h_j M_j crew-member days with factor 1. At equal work done a handover (step 3)
-    comes before a shock (step 5 of the same day, before any progress); shocks and handovers keep
-    their observed order (spec section 5.1).
+    comes before a shock (step 5 of the same day, before any progress), unless the observation
+    places it after earlier work increases (`handover_positions`: a growth reported at a
+    check-in, then a substitute; v2.2.1); shocks and handovers keep their observed order (spec
+    section 5.1).
     """
-    changes: dict[int, list[tuple[int, int, int, float, float]]] = {}
+    changes: dict[int, list[tuple[int, int, int, int, float, float]]] = {}
+    # At equal work done, by position among the work increases: a handover's (the work increases
+    # observed before it, `handover_positions`; by default none, the engine's order) or a work
+    # increase's own index, a handover before the work increase of its position.
     for i, (j, work_done, factor) in enumerate(observation.work_increases):
         unit = max(1, sum(nominal_activity(observation, j)[1]))
-        entry = (crew_member_days(work_done, unit), 1, i, factor, 0.0)
+        entry = (crew_member_days(work_done, unit), i, 1, i, factor, 0.0)
         changes.setdefault(j, []).append(entry)
+    positions = handover_positions(observation)
     for i, (j, work_done, added) in enumerate(observation.handovers):
         unit = max(1, sum(nominal_activity(observation, j)[1]))
-        entry = (crew_member_days(work_done, unit), 0, i, 1.0, float(added))
+        entry = (crew_member_days(work_done, unit), positions[i], 0, i, 1.0, float(added))
         changes.setdefault(j, []).append(entry)
     return {
-        j: [(at, factor, added) for at, _, _, factor, added in sorted(entries)]
+        j: [(at, factor, added) for at, _, _, _, factor, added in sorted(entries)]
         for j, entries in changes.items()
     }
+
+
+def handover_positions(observation: Observation) -> tuple[int, ...]:
+    """The number of work increases observed before each handover (spec section 5.1, v2.2.1):
+    the observation's own, else none before any, the engine's order."""
+    positions = observation.handover_positions
+    if not positions:
+        return (0,) * len(observation.handovers)
+    if len(positions) != len(observation.handovers) or any(
+        k > len(observation.work_increases) for k in positions
+    ):
+        raise ValueError("handover_positions must give one count of work increases per handover")
+    return positions
 
 
 def nominal_world(observation: Observation) -> SampledWorld:

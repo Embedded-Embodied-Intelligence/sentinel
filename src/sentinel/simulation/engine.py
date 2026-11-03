@@ -845,6 +845,7 @@ def _substitute(state: EngineState, op: Subst, t: int) -> Substitution | str:
         idle[role[new]].remove(new)
     state.assigned[j] = tuple(replaced.get(w, w) for w in crew)
     state.handovers.append((j, work, added))
+    state.handover_positions.append(len(state.work_increases))  # after those seen (5.1)
     _update_crew(state, j, t)
     return Substitution(
         day=t,

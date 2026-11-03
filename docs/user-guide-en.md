@@ -230,8 +230,8 @@ recommendation shows:
 - the **action** in plain words, e.g. "Substitute: Cyrus Hill takes over Ben Carter's part in
   “Product catalogue API”"; above it the day whose status it reads (*status at the end of*, from the
   check-in), and under **What changes** the first day the change applies to,
-- its **effect** compared with no change: the chance ("39 % → 46 %") and, under **What changes**, the
-  most likely finish, the expected delay, the cost ("107 % → 113 % of the budget (+5 units)") and how
+- its **effect** compared with no change: the chance ("39 % → 57 %") and, under **What changes**, the
+  most likely finish, the expected delay, the cost ("109 % → 111 % of the budget (+2 units)") and how
   many tasks have their dates moved. Since 1.4.0 every option is worked out as approving it applies
   it, at once and on the same futures. After an approval the overview therefore shows exactly the
   promised chance, dates and cost. If something changed after the recommendation (e.g. the
