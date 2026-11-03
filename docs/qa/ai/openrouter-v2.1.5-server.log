@@ -1,0 +1,100 @@
+INFO:     Started server process [469731]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:54163 (Press CTRL+C to quit)
+data directory: /tmp/sentinel-ai-openrouter-_dzmqxyw
+INFO:     127.0.0.1:48676 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48692 - "GET /static/htmx-2.0.11.min.js?v=1.3.0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48676 - "GET /static/sentinel.css?v=1.3.0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /static/sentinel.js?v=1.3.0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /settings/test HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:48708 - "POST /settings/test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/7KDC5D6dyBGMqSl1?label=job.llm_test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /settings/test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/0xWYKccKs9hSNZRu?label=job.llm_test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /settings/test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/WLllGaFfPuDibujC?label=job.llm_test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /settings?flash=settings_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /new HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /new HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/setup/team HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/setup/team HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/setup/team HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/setup/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/setup/tasks?tab=describe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/setup/describe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/KrMt_rYPaOxuKkj_?label=job.extract&project=T2p8PgAxUcN8xNh7&note=job.slow_ai HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/KrMt_rYPaOxuKkj_?label=job.extract&project=T2p8PgAxUcN8xNh7&note=job.slow_ai HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/setup/use-extraction HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/setup/tasks?tab=manual HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/setup/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/SMC8NmE2KP25b9Nk?label=job.plan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=plan_ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/threats?job=6ftJKVm5D3FYUqSt HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60808 - "GET /api/projects/T2p8PgAxUcN8xNh7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast?toast=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/nB-zYI0jPi7b1SEx?label=job.recommend&next=/projects/T2p8PgAxUcN8xNh7%3Fflash%3Dcheckin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/threats?job=V3NtP-fmZsWJemhp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/nB-zYI0jPi7b1SEx?label=job.recommend&next=%2Fprojects%2FT2p8PgAxUcN8xNh7%3Fflash%3Dcheckin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast?toast=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/checkin/message HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/eHOL1RHzlBd5HqE9?label=job.message&project=T2p8PgAxUcN8xNh7&note=job.slow_ai HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60810 - "GET /api/projects/T2p8PgAxUcN8xNh7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast?toast=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/RPqBqWN37O0KA2v5?label=job.recommend&next=/projects/T2p8PgAxUcN8xNh7%3Fflash%3Dcheckin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/threats?job=olEPgO-wTeW4xMOL HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/RPqBqWN37O0KA2v5?label=job.recommend&next=%2Fprojects%2FT2p8PgAxUcN8xNh7%3Fflash%3Dcheckin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast?toast=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/recommendations/8/explain HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/iFmDuvBUdgvuukVT?label=job.explain&next=%2Fprojects%2FT2p8PgAxUcN8xNh7%2Frecommendations%2F8&note=job.slow_ai HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/iFmDuvBUdgvuukVT?label=job.explain&next=%2Fprojects%2FT2p8PgAxUcN8xNh7%2Frecommendations%2F8&note=job.slow_ai HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast?toast=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/yY6eVlyUZKkt6CyI?label=job.recommend&next=/projects/T2p8PgAxUcN8xNh7%3Fflash%3Dcheckin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/threats?job=vAQHC3NwgW79_QC9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/yY6eVlyUZKkt6CyI?label=job.recommend&next=%2Fprojects%2FT2p8PgAxUcN8xNh7%3Fflash%3Dcheckin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7?flash=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/forecast?toast=checkin_saved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/s0aw6XlTUf91_AOL?label=job.recommend HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /projects/T2p8PgAxUcN8xNh7/recommendations/12/explain HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /jobs/HSbB6OlGEmfaNUqM?label=job.explain&next=%2Fprojects%2FT2p8PgAxUcN8xNh7%2Frecommendations%2F12&note=job.slow_ai HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /api/projects/T2p8PgAxUcN8xNh7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/checkin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/report.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /api/projects/T2p8PgAxUcN8xNh7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /api/projects/T2p8PgAxUcN8xNh7/export.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/11 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39898 - "GET /projects/T2p8PgAxUcN8xNh7/recommendations/12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "POST /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48708 - "GET /settings?flash=settings_saved HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [469731]
