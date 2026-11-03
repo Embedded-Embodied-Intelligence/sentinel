@@ -10,6 +10,17 @@
     <p>{{ t("checkin.future_text") }}</p>
     <label class="check"><input type="checkbox" name="confirm_date"><span>{{ t("checkin.future_confirm") }}</span></label>
   {% endcall %}
+  {% elif confirmed_date %}<input type="hidden" name="confirmed_date" value="{{ confirmed_date }}">
+  {% endif %}
+  {% if no_progress %}<input type="hidden" name="no_progress" value="1">{% endif %}
+  {% if confirm_progress %}
+  {% call ui.callout("warn", t("checkin.stalled_title", date=t.date(confirm_progress)), ' role="alert" tabindex="-1" data-focus') %}
+    <p>{{ t("checkin.stalled_text") }}</p>
+    <div class="btn-row">
+      <button class="btn btn-sm" name="no_progress" value="1">{{ t("checkin.stalled_yes") }}</button>
+      <a class="btn btn-sm btn-tertiary" href="#tasks-title">{{ t("checkin.stalled_fill") }}</a>
+    </div>
+  {% endcall %}
   {% endif %}
   <div class="checkin-when">
     <p class="lead">{% if last %}{{ t("checkin.since", date=t.date(last)) }}{% else %}{{ t("checkin.since_start") }}{% endif %}</p>
@@ -71,11 +82,10 @@
   <section class="card" aria-labelledby="grow-title">
     <div class="checkin-section-head">
       <h2 id="grow-title"><span class="step-number" aria-hidden="true">3</span>{{ t("checkin.grow_title") }} <span class="count" id="grow-count">({{ fl("grow_rows") | length }})</span></h2>
-      {% if running or startable %}<button type="button" class="btn btn-sm" data-add-row="grow"{% if not running %} hidden{% endif %}>{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.grow_add") }}</span></button>{% endif %}
+      {% if running or startable %}<button type="button" class="btn btn-sm" data-add-row="grow">{{ icon("plus", 16) }}{{ t("checkin.add") }}<span class="vh"> {{ t("checkin.grow_add") }}</span></button>{% endif %}
     </div>
     {% if running or startable %}
-    <p class="hint section-hint" data-grow-hint{% if not running %} hidden{% endif %}>{{ t("checkin.grow_hint") }}</p>
-    <p class="hint section-hint" data-grow-none{% if running %} hidden{% endif %}>{{ t("checkin.grow_none") }}</p>
+    <p class="hint section-hint" data-grow-hint>{{ t("checkin.grow_hint") }}</p>
     <div id="grow-list">{% for i in fl("grow_rows") %}{% include "_grow_row.html" %}{% endfor %}</div>
     <template id="grow-template">{% with i="__i__" %}{% include "_grow_row.html" %}{% endwith %}</template>
     {% else %}<p class="hint section-hint">{{ t("checkin.grow_none") }}</p>{% endif %}

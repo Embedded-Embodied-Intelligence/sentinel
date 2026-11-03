@@ -89,8 +89,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Odrzucone. Plan pozostaje bez zmian.",
     ),
     "flash.later": (
-        "Postponed. We will come back to it at the next check-in.",
-        "Propozycja odłożona. Wrócimy do niej przy następnym raporcie.",
+        "Postponed. The proposal stays under “Waiting for your decision” until the next "
+        "check-in, which works everything out again.",
+        "Propozycja odłożona. Zostaje w części „Czeka na Twoją decyzję” do następnego raportu "
+        "statusu, który przeliczy wszystko od nowa.",
     ),
     "flash.undone": ("The automatic change was undone.", "Automatyczna zmiana została cofnięta."),
     "flash.deleted": ("The project was deleted.", "Projekt został usunięty."),
@@ -1043,14 +1045,45 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "checkin.away.back": ("Back on (if known)", "Powrót (jeśli wiadomo)"),
     "checkin.grow_title": ("Tasks that grew", "Zadania, które urosły"),
     "checkin.grow_hint": (
-        "A task in progress needs more working days than planned.",
-        "Zadanie w toku potrzebuje więcej dni roboczych, niż planowano.",
+        "A task in progress needs more working days than planned, or a task not started yet "
+        "will take longer: its estimate grows by these days.",
+        "Zadanie w toku potrzebuje więcej dni roboczych, niż planowano, albo zadanie jeszcze "
+        "nierozpoczęte potrwa dłużej: jego szacunek rośnie o te dni.",
     ),
     "checkin.grow_add": ("a task that grew", "zadanie, które urosło"),
     "checkin.grow.task": ("Task", "Zadanie"),
-    "checkin.grow.choose": ("Choose a task in progress", "Wybierz zadanie w toku"),
+    "checkin.grow.choose": ("Choose a task", "Wybierz zadanie"),
+    "checkin.grow.group_running": ("In progress: more work", "W toku: więcej pracy"),
+    "checkin.grow.group_unstarted": (
+        "Not started: a new estimate",
+        "Nierozpoczęte: nowy szacunek",
+    ),
+    "checkin.group.done": ("Done", "Gotowe"),
+    "checkin.group.in_progress": ("In progress", "W toku"),
+    "checkin.group.not_started": ("Not started", "Nierozpoczęte"),
     "checkin.grow.days": ("Extra working days", "Dodatkowe dni robocze"),
-    "checkin.grow_none": ("No task is in progress.", "Żadne zadanie nie jest w toku."),
+    "checkin.grow_none": (
+        "No task is in progress or waiting to start.",
+        "Żadne zadanie nie jest w toku ani nie czeka na start.",
+    ),
+    "checkin.stalled_title": (
+        "Has nothing moved on since {date}?",
+        "Czy od {date} nic się nie posunęło?",
+    ),
+    "checkin.stalled_text": (
+        "No task in progress has more work done in this report, so the forecast will count the "
+        "days since then as days without progress.",
+        "W tym raporcie żadne zadanie w toku nie ma postępu, więc prognoza policzy dni od tamtej "
+        "pory jako dni bez postępu.",
+    ),
+    "checkin.stalled_yes": ("Yes, no progress", "Tak, brak postępu"),
+    "checkin.saved_as": (
+        "{typed} % → saved as {saved} %, {done} of {total} days: progress is kept in whole days.",
+        "{typed} % → zapisze się {saved} %, {done} z {total} dni: postęp liczy się w pełnych "
+        "dniach.",
+    ),
+    "checkin.saved_days": ("{done} of {total} days", "{done} z {total} dni"),
+    "checkin.stalled_fill": ("Add the progress", "Uzupełnij postęp"),
     "checkin.new_title": ("New task", "Nowe zadanie"),
     "checkin.new_add": ("a new task", "nowe zadanie"),
     "checkin.new.name": ("Task name", "Nazwa zadania"),

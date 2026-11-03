@@ -154,13 +154,17 @@
     if (target.matches("input[type=range]")) {
       const number = document.getElementById(target.id + "-num");
       if (number) number.value = target.value;
+      savedAs(target.closest("fieldset.task-row"));
     } else if (target.matches("input[data-range-for]")) {
       const range = document.getElementById(target.dataset.rangeFor);
       if (range) range.value = Math.min(99, Math.max(0, Number(target.value) || 0));
+      savedAs(target.closest("fieldset.task-row"));
     } else if (target.matches("input[type=date]")) {
       echoDate(target);
       checkRule();
       noteBeforeStart(target);
+      if (target.id === "date") followDate(target);
+      if (target.matches("[data-follow-date]")) target.dataset.edited = "1";
     } else if (target.matches("[data-crew-input]")) {
       summariseCrew(target.closest("details"));
     }
@@ -182,33 +186,67 @@
 
   // ---- growth: a task marked as in progress in this check-in can grow too (QA-21)
   function syncGrowth() {
-    const form = document.getElementById("checkin-form");
-    const template = document.getElementById("grow-template");
-    if (!form || !template) return;
-    const started = function (option) {
-      return form.querySelector('input[name="status_' + option.value + '"][value="in_progress"]:checked') !== null;
-    };
-    form.querySelectorAll("#grow-list option[data-starts]").forEach(function (option) {
-      const on = started(option);
-      option.hidden = !on;
-      option.disabled = !on;
-      if (!on && option.selected) option.closest("select").value = "";
-    });
-    const any = Array.from(template.content.querySelectorAll("option")).some(function (option) {
-      return option.value && (!option.hasAttribute("data-starts") || started(option));
-    });
-    form.querySelector('[data-add-row="grow"]').hidden = !any;
-    form.querySelector("[data-grow-hint]").hidden = !any;
-    form.querySelector("[data-grow-none]").hidden = any;
+    // Since WP12 a task not started may grow too (a new estimate): every task listed is accepted.
   }
 
-  // ---- the check-in's count of changes and the label of its button
+  // ---- Enter in a field presses its own button, not the form's first one (WP12, B11: Enter in
+  // the role field pressed "fewer" of the first role and cleared the field)
+  document.addEventListener("keydown", function (event) {
+    const field = event.target;
+    if (event.key !== "Enter" || !field.matches || !field.matches("input[data-enter]")) return;
+    const button = field.form && field.form.querySelector('button[value="' + field.dataset.enter + '"]');
+    if (!button) return;
+    event.preventDefault();
+    button.click();
+  });
+
+  // ---- progress is kept in whole days: what a share will be saved as (WP12, B13)
+  function savedAs(row) {
+    if (!row || !row.dataset.units) return;
+    const hint = row.querySelector("[data-saved-as]");
+    const range = row.querySelector("input[type=range]");
+    if (!hint || !range) return;
+    const total = Number(row.dataset.units);
+    const unit = Number(row.dataset.unit) || 1;
+    const typed = Number(range.value);
+    const units = Math.floor((typed / 100) * total + 0.5 + 1e-9);
+    const saved = Math.round((100 * units) / total);
+    const number = function (value) {
+      return (Math.round(value * 10) / 10).toLocaleString(root.lang || "en");
+    };
+    const text = saved === typed ? hint.dataset.plain : hint.dataset.template;
+    hint.textContent = text
+      .replace("{typed}", typed)
+      .replace("{saved}", saved)
+      .replace("{done}", number(units / unit))
+      .replace("{total}", number(total / unit));
+  }
+
+  // ---- "finished on" follows the report's date until it is changed by hand (WP12, B16)
+  function followDate(input) {
+    const form = input.closest("form");
+    if (!form || !input.value) return;
+    form.querySelectorAll("input[data-follow-date]").forEach(function (finish) {
+      if (finish.dataset.edited !== "1") finish.value = input.value;
+    });
+  }
+
+  // ---- the check-in's count of changes and the label of its button: a task row counts when it
+  // differs from the saved state, which a page shown again after a refused save keeps (B12)
   function changeCount(form) {
     let changes = form.querySelectorAll("#away-list [data-row], #grow-list [data-row], #new-list [data-row]").length;
     form.querySelectorAll("input[name^=msg_]:checked").forEach(function () {
       changes += 1;
     });
     form.querySelectorAll("fieldset.task-row").forEach(function (row) {
+      const status = row.querySelector("input[type=radio]:checked");
+      const range = row.querySelector("input[type=range]");
+      if (row.dataset.savedStatus !== undefined && status) {
+        const moved = status.value !== row.dataset.savedStatus ||
+          (status.value === "in_progress" && range && range.value !== row.dataset.savedPercent);
+        if (moved) changes += 1;
+        return;
+      }
       const inputs = row.querySelectorAll("input[type=radio], input[type=range]");
       for (const input of inputs) {
         const moved = input.type === "radio" ? input.checked !== input.defaultChecked : input.value !== input.defaultValue;
@@ -249,8 +287,20 @@
     return changeCount(form) > 0 || Boolean(form.querySelector("[data-focus]")) || Boolean(message && message.value.trim());
   }
 
+  // A report being saved is not left without a word (WP12, B10): Back during the request.
+  let saving = false;
+  document.addEventListener("htmx:beforeRequest", function (event) {
+    if (event.target.id === "checkin-form") saving = true;
+  });
+  document.addEventListener("htmx:afterRequest", function (event) {
+    if (event.target.id !== "checkin-form") return;
+    saving = false;
+    const xhr = event.detail && event.detail.xhr;
+    if (xhr && (xhr.getResponseHeader("HX-Redirect") || xhr.getResponseHeader("HX-Location"))) leaving = true;
+  });
+
   window.addEventListener("beforeunload", function (event) {
-    if (leaving || !hasUnsaved()) return;
+    if (leaving || (!saving && !hasUnsaved())) return;
     event.preventDefault();
     event.returnValue = "";
   });
@@ -489,6 +539,7 @@
     if (scope.querySelectorAll) {
       scope.querySelectorAll("[data-toast]").forEach(startToast);
       scope.querySelectorAll("input[type=date]").forEach(echoDate);
+      scope.querySelectorAll("fieldset.task-row").forEach(savedAs);
       scrollGantt(scope);
     }
     checkRule();

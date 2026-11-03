@@ -290,8 +290,8 @@ def test_checkin_problems_are_reported_in_plain_language() -> None:
         "unknown_person": CheckIn(
             date=date(2026, 11, 5), absences=(AbsenceReport(person="zed", first_day=MONDAY),)
         ),
-        "increase_not_in_progress": CheckIn(
-            date=date(2026, 11, 5), increases=(WorkIncreaseReport(task="T3", factor=1.5),)
+        "increase_not_in_progress": CheckIn(  # T2 is done; a task not started may grow
+            date=date(2026, 11, 5), increases=(WorkIncreaseReport(task="T2", factor=1.5),)
         ),
     }
     for code, checkin in cases.items():
@@ -449,3 +449,26 @@ def test_a_move_of_the_chance_is_decomposed_into_its_causes() -> None:
     without = checked_in(project.copy(), ABSENCE_CHECKIN.model_copy(update={"absences": ()}))
     assert absence.name == "Ada" and absence.p_without == planning.forecast(without).p_on_time
     assert planning.causes(project, ABSENCE_CHECKIN, after + 0.04, after).causes == ()
+
+
+def test_a_task_not_started_that_grows_gets_a_revised_estimate() -> None:
+    """B6 and B15 of the WP12 test (spec 11.3, v2.2.0): "+2 days" of a task not started yet is
+    a revised estimate, kept in the definition, and the default budget stays as it was."""
+    project = checked_in(planned(small()), ABSENCE_CHECKIN)
+    budget = project.require_model().budget
+    before = planning.forecast(project).quantiles
+    grown = CheckIn(
+        date=date(2026, 11, 5),
+        increases=(
+            WorkIncreaseReport(task="T3", extra_days=2),
+            WorkIncreaseReport(task="T3", factor=1.2),  # a second one sees the first: 5 * 1.2
+        ),
+    )
+    effects = project.resolve_checkin(grown)
+    assert [(r.task, r.previous, r.duration) for r in effects.revisions] == [("T3", 3, 6)]
+    assert effects.shocks == ()
+    project.apply_checkin(effects)
+    assert project.nodes()["T3"].duration == 6
+    assert next(t for t in project.definition.tasks if t.key == "T3").duration == 6
+    assert project.require_model().budget == budget
+    assert planning.forecast(project).quantiles > before

@@ -428,6 +428,26 @@ def checked_key(rec: RecommendationView) -> str:
     return "overview.checked_none_helps" if rec.options > 1 else "overview.checked_no_better"
 
 
+def stalled(view: ProjectView, checkin: CheckIn) -> bool:
+    """Whether a check-in moves the date forward with no progress on any task in progress (the
+    WP12 test, B9: a report of a message alone silently meant a week without progress), so the
+    page asks first."""
+    running = {task.key: task.percent or 0.0 for task in view.tasks if task.state == "in_progress"}
+    if not running:
+        return False
+    last = view.checkins[-1].date if view.checkins else view.definition.start
+    if checkin.date <= last:
+        return False
+    for report in checkin.tasks:
+        if report.task not in running:
+            continue
+        if report.status == "done":
+            return False
+        if report.status == "in_progress" and (report.percent or 0.0) > running[report.task] + 0.5:
+            return False
+    return True
+
+
 def needs_date_confirmation(day: date, confirmed: bool, today: date | None = None) -> bool:
     """Whether a check-in's date is too far ahead to save without asking (QA-06): the log is
     append-only and check-ins follow in date order, so a mistyped year would block every later
@@ -929,6 +949,15 @@ def router(ui: Ui) -> APIRouter:
             """The value the manager entered (after a refused submit), else `fallback`."""
             return form.get(name, str(fallback)) if form is not None else fallback
 
+        # What was confirmed stays confirmed while the report is not saved (the WP12 test).
+        typed = None if form is None else form.get("date")
+        confirmed_date = (
+            typed
+            if form is not None
+            and (form.flag("confirm_date") or form.get("confirmed_date") == typed)
+            else None
+        )
+
         def fl(name: str) -> list[str]:
             return form.getlist(name) if form is not None else []
 
@@ -957,11 +986,15 @@ def router(ui: Ui) -> APIRouter:
             "startable": [t for t in (*first, *rest) if t.state not in ("in_progress", "paused")],
             "open_tasks": [t for t in view.tasks if t.state not in ("done", "removed")],
             "default_date": default,
+            "report_date": fv("date", default),  # a task's finish date follows it (B16)
             "last": last,
             "form": form,
             "errors": {},
             "issues": [],
             "confirm_date": None,
+            "confirmed_date": confirmed_date,
+            "confirm_progress": None,
+            "no_progress": form is not None and form.flag("no_progress"),
             "message_kept": None if form is None else kept_message(ui, request, project_id, form),
         }
 
@@ -986,9 +1019,18 @@ def router(ui: Ui) -> APIRouter:
             values = checkin_values(request, project_id, form)
             values["errors"] = {e.name: texts(e.key, **e.values) for e in read.errors}
             return checkin_form(request, values, 422)
-        if needs_date_confirmation(read.checkin.date, form.flag("confirm_date")):
+        confirmed = form.flag("confirm_date") or form.get("confirmed_date") == str(
+            read.checkin.date
+        )
+        if needs_date_confirmation(read.checkin.date, confirmed):
             values = checkin_values(request, project_id, form)
             values["confirm_date"] = read.checkin.date
+            return checkin_form(request, values, 422)
+        if not form.flag("no_progress") and stalled(view, read.checkin):
+            # The WP12 test (B9): a report of a message alone meant no progress, silently.
+            values = checkin_values(request, project_id, form)
+            last = view.checkins[-1].date if view.checkins else view.definition.start
+            values["confirm_progress"] = last
             return checkin_form(request, values, 422)
         try:
             result = services.checkin(

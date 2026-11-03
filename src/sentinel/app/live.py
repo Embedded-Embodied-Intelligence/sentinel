@@ -29,6 +29,7 @@ from sentinel.app.models import (
     CheckIn,
     NewTaskReport,
     ProjectDefinition,
+    Task,
     TaskReport,
 )
 from sentinel.model.instance import Activity, ProjectInstance, Role, Worker
@@ -375,8 +376,12 @@ class Model:
     budget: float
 
 
-def build_model(definition: ProjectDefinition, *, validate: bool = True) -> Model:
-    """The model of a definition; with `validate`, a definition with errors raises LiveError."""
+def build_model(
+    definition: ProjectDefinition, *, validate: bool = True, budget: float | None = None
+) -> Model:
+    """The model of a definition; with `validate`, a definition with errors raises LiveError.
+    `budget` is the default budget when the definition sets none (pinned once tracking starts,
+    so that a revised estimate does not move it; spec section 11.2, v2.2.0)."""
     if validate:
         found = errors(validate_definition(definition))
         if found:
@@ -433,8 +438,9 @@ def build_model(definition: ProjectDefinition, *, validate: bool = True) -> Mode
             costs[role_ids[key]] = cost.daily_cost
     calendar = calendar_of(definition)
     deadline = None if definition.deadline is None else calendar.deadline(definition.deadline)
-    budget = definition.budget
-    if budget is None:
+    if definition.budget is not None:
+        budget = definition.budget
+    elif budget is None:
         pert = definition.settings.pert()
         budget = derive_budget(instance, BUDGET_RESERVE, costs, pert)
     return Model(
@@ -516,6 +522,15 @@ class HandoverRecord(_Record):
     day: int
 
 
+class Revision(_Record):
+    """An estimate revised at a check-in (spec section 11.3, v2.2.0): a task that has not
+    started grew, so its duration is `duration` working days instead of `previous`."""
+
+    task: str
+    previous: int = Field(ge=1)
+    duration: int = Field(ge=1)
+
+
 class InsertedTask(_Record):
     """A task added at a check-in: inserted after `after` and before `before` (None: the source
     or the sink, spec section 10.2), on `day`, planned to start on `planned` (3.1 e)."""
@@ -550,6 +565,7 @@ class CheckinEffects(_Record):
     absences: tuple[AbsenceRecord, ...] = ()
     shocks: tuple[ShockRecord, ...] = ()
     inserted: tuple[InsertedTask, ...] = ()
+    revisions: tuple[Revision, ...] = ()  # v2.2.0
 
 
 class AppliedAction(_Record):
@@ -630,6 +646,7 @@ class LiveProject:
         self.shocks: list[ShockRecord] = []
         self.handovers: list[HandoverRecord] = []
         self.actions: list[AppliedAction] = []
+        self.budget_pin: float | None = None  # the default budget, fixed at the first check-in
 
     # ---- definition and baseline
 
@@ -640,11 +657,19 @@ class LiveProject:
 
     def set_definition(self, definition: ProjectDefinition) -> bool:
         """Replace the definition; returns whether the baseline plan was dropped. Once tracking
-        started, only names, the deadline, the budget and the settings may change."""
-        if self.tracking and definition.structure() != self.definition.structure():
-            raise LiveError([issue("structure_frozen")])
+        started, the names, the deadline, the budget and the settings may change, and so may the
+        estimate, the crew, the dependencies and the optional flag of a task not started yet (a
+        correction, spec section 11.2, v2.2.0); the team, the list of tasks, the started and
+        finished tasks and the calendar stay."""
         if self.tracking and _calendar_key(definition) != _calendar_key(self.definition):
             raise LiveError([issue("calendar_frozen")])
+        if self.tracking and definition.structure() != self.definition.structure():
+            found = self.correction_issues(definition)
+            if found:
+                raise LiveError(found)
+            self.definition = definition
+            self.model = None
+            return False
         dropped = definition.structure() != self.definition.structure()
         self.definition = definition
         self.model = None
@@ -656,8 +681,44 @@ class LiveProject:
 
     def require_model(self) -> Model:
         if self.model is None:
-            self.model = build_model(self.definition)
+            # Once tracking started, the deadline may lie before the critical path of day 0.
+            self.model = build_model(
+                self.definition, validate=not self.tracking, budget=self.budget_pin
+            )
         return self.model
+
+    def correction_issues(self, definition: ProjectDefinition) -> list[Issue]:
+        """Why a definition is not a correction of tasks not started yet (spec section 11.2,
+        v2.2.0): another team or list of tasks, a change of a started or finished task, a
+        definition with errors (the deadline before the critical path aside: work is under way),
+        or an optional task that a task added at a check-in follows; empty if it is one."""
+        old, new = self.definition, definition
+        if tuple((p.key, p.role) for p in old.team) != tuple((p.key, p.role) for p in new.team):
+            return [issue("structure_frozen")]
+        if [t.key for t in old.tasks] != [t.key for t in new.tasks]:
+            return [issue("structure_frozen")]
+        found: list[Issue] = []
+        for i, (before, after) in enumerate(zip(old.tasks, new.tasks, strict=True)):
+            if _task_structure(before) == _task_structure(after):
+                continue
+            state = self.tasks[before.key].state if before.key in self.tasks else "unstarted"
+            if state != "unstarted":
+                found.append(issue("task_locked", f"tasks[{i}]", task=after.name, state=state))
+        found += [
+            i for i in errors(validate_definition(new)) if i.code != "deadline_before_critical_path"
+        ]
+        optional = {t.key: t.name for t in new.tasks if t.optional}
+        found += [
+            issue("optional_with_successors", task=optional[added.after], successor=added.name)
+            for added in self.inserted
+            if added.after in optional
+        ]
+        if not found:
+            trial = self.copy()
+            trial.definition, trial.model = new, None
+            if _cyclic(trial.nodes()):
+                found.append(issue("correction_cycle"))
+        return found
 
     def set_baseline(self, baseline: Baseline) -> None:
         """Start from a baseline plan; only before tracking (spec section 11.3)."""
@@ -911,8 +972,10 @@ class LiveProject:
         trial.apply_checkin(
             CheckinEffects(date=checkin.date, day=t, tasks=tasks, absences=absences)
         )
-        shocks = trial._resolve_increases(checkin, found)
+        shocks, revisions = trial._resolve_increases(checkin, found)
         trial.shocks += shocks
+        for revision in revisions:
+            trial.revise(revision.task, revision.duration)
         inserted = trial._resolve_new_tasks(checkin.new_tasks, found)
         if errors(found):
             raise LiveError(found)
@@ -923,6 +986,7 @@ class LiveProject:
             absences=absences,
             shocks=tuple(shocks),
             inserted=tuple(inserted),
+            revisions=tuple(revisions),
         )
         self.copy().apply_checkin(effects).check()
         return effects
@@ -963,12 +1027,17 @@ class LiveProject:
             new[(person.key, start)] = record
         return tuple(new.values())
 
-    def _resolve_increases(self, checkin: CheckIn, found: list[Issue]) -> list[ShockRecord]:
-        """Shocks of the reported work increases, on the state after the check-in's progress
-        (spec section 11.3); `+N` days are F = (R + N) / R with R of spec section 5.2."""
+    def _resolve_increases(
+        self, checkin: CheckIn, found: list[Issue]
+    ) -> tuple[list[ShockRecord], list[Revision]]:
+        """Shocks of the reported work increases of tasks in progress, on the state after the
+        check-in's progress (spec section 11.3; `+N` days are F = (R + N) / R with R of spec
+        section 5.2), and the revised estimates of tasks not started yet (v2.2.0): `+N` gives
+        p_j + N, `x F` gives p_j F, both rounded half up to at least p_j + 1 working days."""
         nodes = self.nodes()
         ids = self.activity_ids()
         shocks: list[ShockRecord] = []
+        revisions: dict[str, Revision] = {}
         for i, report in enumerate(checkin.increases):
             where = f"increases[{i}]"
             tracked = self.tasks.get(report.task)
@@ -976,12 +1045,38 @@ class LiveProject:
                 found.append(issue("unknown_task", where, task=report.task))
                 continue
             name = nodes[report.task].name
-            if tracked.state != "started":
-                state = tracked.state if tracked.state != "unstarted" else "not_started"
-                found.append(issue("increase_not_in_progress", where, task=name, state=state))
+            if tracked.state not in ("started", "unstarted"):
+                found.append(
+                    issue("increase_not_in_progress", where, task=name, state=tracked.state)
+                )
                 continue
             if (report.extra_days is None) == (report.factor is None):
                 found.append(issue("increase_amount", where, task=name))
+                continue
+            if tracked.state == "unstarted":
+                if (report.factor or 2.0) <= 1 or (report.extra_days or 1.0) <= 0:
+                    code = (
+                        "increase_factor_above_one" if report.factor else "increase_days_positive"
+                    )
+                    found.append(issue(code, where, task=name))
+                    continue
+                previous = (
+                    revisions[report.task].duration
+                    if report.task in revisions
+                    else (nodes[report.task].duration)
+                )
+                grown = (
+                    previous * report.factor
+                    if report.factor is not None
+                    else previous + (report.extra_days or 0.0)
+                )
+                duration = max(previous + 1, round_half_up(grown))
+                first = revisions.get(report.task)
+                revisions[report.task] = Revision(
+                    task=report.task,
+                    previous=first.previous if first else previous,
+                    duration=duration,
+                )
                 continue
             if report.factor is not None:
                 if report.factor <= 1:
@@ -1002,7 +1097,7 @@ class LiveProject:
             shocks.append(shock)
             self.shocks.append(shock)  # a second increase of the task sees the first
         del self.shocks[len(self.shocks) - len(shocks) :]
-        return shocks
+        return shocks, list(revisions.values())
 
     def _resolve_new_tasks(
         self, reports: Sequence[NewTaskReport], found: list[Issue]
@@ -1109,6 +1204,10 @@ class LiveProject:
 
     def apply_checkin(self, effects: CheckinEffects) -> "LiveProject":
         """Apply the stored effects of a check-in; returns the project."""
+        if not self.checkins and self.definition.budget is None:
+            self.budget_pin = self.require_model().budget
+        for revision in effects.revisions:
+            self.revise(revision.task, revision.duration)
         for progress in effects.tasks:
             tracked = self.tasks[progress.task]
             tracked.state = progress.status
@@ -1211,6 +1310,22 @@ class LiveProject:
     def copy(self) -> "LiveProject":
         return copy.deepcopy(self)
 
+    def revise(self, key: str, duration: int) -> None:
+        """A task not started yet gets the estimate `duration` (spec section 11.3, v2.2.0): in
+        the definition, or for a task added at a check-in, in its record."""
+        if any(task.key == key for task in self.definition.tasks):
+            tasks = tuple(
+                task.model_copy(update={"duration": duration}) if task.key == key else task
+                for task in self.definition.tasks
+            )
+            self.definition = self.definition.model_copy(update={"tasks": tasks})
+            self.model = None
+        else:
+            self.inserted = [
+                added.model_copy(update={"duration": duration}) if added.key == key else added
+                for added in self.inserted
+            ]
+
     def check(self) -> None:
         """Raise if the observation is not one the engine could be in (`state_from_observation`
         and the planning view accept it); a guard against mapping errors."""
@@ -1228,6 +1343,26 @@ def calendar_of(definition: ProjectDefinition) -> WorkCalendar:
     the Polish public holidays (unless the project was stored before them) and its days off."""
     settings = definition.settings
     return WorkCalendar(definition.start, holidays=settings.holidays, days_off=settings.days_off)
+
+
+def _task_structure(task: Task) -> tuple[object, ...]:
+    return task.duration, tuple(sorted(task.crew.items())), task.predecessors, task.optional
+
+
+def _cyclic(nodes: Mapping[str, Node]) -> bool:
+    """Whether the network of tasks has a cycle (one through a task added at a check-in too)."""
+    state: dict[str, int] = {}
+
+    def visit(key: str) -> bool:
+        state[key] = 1
+        for successor in nodes[key].successors:
+            mark = state.get(successor, 0)
+            if mark == 1 or (mark == 0 and visit(successor)):
+                return True
+        state[key] = 2
+        return False
+
+    return any(state.get(key, 0) == 0 and visit(key) for key in nodes)
 
 
 def _calendar_key(definition: ProjectDefinition) -> tuple[object, ...]:

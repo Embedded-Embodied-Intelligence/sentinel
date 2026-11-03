@@ -103,8 +103,12 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "absence_return_before_start": "The return date of {person} must be after the first day "
         "of the absence.",
         "absence_overlap": "{person} has another absence at that time (from {date}).",
-        "increase_not_in_progress": "More work can be reported only for a task in progress; "
-        "“{task}” is {state}.",
+        "increase_not_in_progress": "More work can be reported only for a task in progress or "
+        "not started yet; “{task}” is {state}.",
+        "task_locked": "“{task}” is {state}, so its estimate, people and dependencies stay as "
+        "they are; report what changes at a check-in.",
+        "correction_cycle": "With this change the tasks would depend on each other in a circle "
+        "through a task added at a check-in.",
         "increase_amount": "Give either the extra working days or the factor for “{task}”.",
         "increase_days_positive": "The extra working days of “{task}” must be more than 0.",
         "increase_factor_above_one": "The factor of “{task}” must be more than 1.",
@@ -118,6 +122,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "state_not_started": "not started",
         "state_done": "done",
         "state_removed": "dropped",
+        "state_started": "in progress",
         # recommendations and decisions (spec section 11.5)
         "recommendation_not_found": "There is no such recommendation.",
         "recommendation_closed": "This recommendation is no longer open ({status}).",
@@ -343,8 +348,12 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "absence_return_before_start": "Data powrotu osoby {person} musi być późniejsza niż "
         "pierwszy dzień nieobecności.",
         "absence_overlap": "{person} ma w tym czasie inną nieobecność (od {date}).",
-        "increase_not_in_progress": "Dodatkową pracę można zgłosić tylko dla zadania w toku; "
-        "„{task}” jest {state}.",
+        "increase_not_in_progress": "Dodatkową pracę można zgłosić tylko dla zadania w toku "
+        "albo jeszcze nierozpoczętego; „{task}” jest {state}.",
+        "task_locked": "„{task}” jest {state}, więc jego szacunek, osoby i zależności zostają bez "
+        "zmian; to, co się zmienia, zgłoś w raporcie statusu.",
+        "correction_cycle": "Po tej zmianie zadania zależałyby od siebie w kółko przez zadanie "
+        "dodane w raporcie statusu.",
         "increase_amount": "Podaj dla zadania „{task}” albo liczbę dodatkowych dni roboczych, "
         "albo mnożnik.",
         "increase_days_positive": "Liczba dodatkowych dni roboczych zadania „{task}” musi być "
@@ -361,6 +370,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "state_not_started": "nierozpoczęte",
         "state_done": "gotowe",
         "state_removed": "usunięte z zakresu",
+        "state_started": "w toku",
         "recommendation_not_found": "Nie ma takiej rekomendacji.",
         "recommendation_closed": "Ta rekomendacja nie jest już otwarta ({status}).",
         "nothing_to_decide": "Ta rekomendacja zachowuje plan; nie ma czego zatwierdzać.",

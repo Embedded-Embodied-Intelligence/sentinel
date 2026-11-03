@@ -80,6 +80,8 @@ class TaskView(View):
     late: bool
     expected_finish: date | None = None  # of a started task, in the current plan (v2.2.0)
     due: date | None = None  # the planned start a late task has missed
+    unit: int = 1  # crew-member days of one full-crew day, M_j
+    work_total: float | None = None  # its work in crew-member days, p_j * F * M_j (B13, WP12)
     baseline_start: date | None = None  # in the original plan
     baseline_finish: date | None = None
 
@@ -430,6 +432,8 @@ def task_views(
                 crew_names=[names.get(member, member) for member in tracked.crew],
                 late=late,
                 due=calendar.date_of(tracked.planned) if late else None,
+                unit=node.unit,
+                work_total=node.duration * factors * node.unit,
                 expected_finish=None if ends is None else calendar.finish_date(ends),
                 baseline_start=None if first is None else calendar.date_of(first),
                 baseline_finish=None

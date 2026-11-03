@@ -1,7 +1,7 @@
 {% import "_ui.html" as ui with context %}
 {% set started = task.state in ("in_progress", "paused") %}
 {% set status = fv("status_" ~ task.key, "in_progress" if started else "not_started") %}
-<fieldset class="task-row{% if errors.get('percent_' ~ task.key) or errors.get('finish_' ~ task.key) %} has-issue{% endif %}">
+<fieldset class="task-row{% if errors.get('percent_' ~ task.key) or errors.get('finish_' ~ task.key) %} has-issue{% endif %}" data-saved-status="{{ 'in_progress' if started else 'not_started' }}" data-saved-percent="{{ (task.percent | round | int) if task.percent is not none else 0 }}"{% if task.work_total %} data-units="{{ task.work_total }}" data-unit="{{ task.unit }}"{% endif %}>
   <legend><span class="task-name">{{ task.name }}</span> <span class="task-state">{{ task.state_text }}{% if task.percent is not none %}, {{ t("checkin.done_share", percent=task.percent | round | int) }}{% endif %}{% if task.state == "not_started" and task.planned_start %}{% if task.late %} · {{ t("checkin.was_due", date=t.date(task.due)) }}{% else %} · {{ t("checkin.planned", date=t.date(task.planned_start)) }}{% endif %}{% endif %}</span></legend>
   <input type="hidden" name="shown" value="{{ task.key }}">
   <div class="segmented">
@@ -13,11 +13,12 @@
     <label for="percent-{{ task.key }}">{{ t("checkin.share") }}</label>
     {% set percent = fv("percent_" ~ task.key, (task.percent | round | int) if task.percent is not none else 0) %}
     <div class="slider"><input type="range" id="percent-{{ task.key }}" name="percent_{{ task.key }}" min="0" max="99" step="1" value="{{ percent }}"><input type="number" id="percent-{{ task.key }}-num" data-range-for="percent-{{ task.key }}" min="0" max="99" value="{{ percent }}" inputmode="numeric" aria-label="{{ t('checkin.percent') }}"><span aria-hidden="true">%</span></div>
+    <p class="hint" data-saved-as data-template="{{ t('checkin.saved_as') }}" data-plain="{{ t('checkin.saved_days') }}" aria-live="polite"></p>
     {{ ui.field_error("percent-" ~ task.key, errors.get('percent_' ~ task.key)) }}
   </div>
   <div class="when-done field">
     <label for="finish-{{ task.key }}">{{ t("checkin.finished_on") }}</label>
-    <input type="date" id="finish-{{ task.key }}" name="finish_{{ task.key }}" lang="{{ t.lang }}" value="{{ fv('finish_' ~ task.key, default_date) }}">
+    <input type="date" id="finish-{{ task.key }}" name="finish_{{ task.key }}" lang="{{ t.lang }}" value="{{ fv('finish_' ~ task.key, report_date) }}" data-follow-date>
     {{ ui.echo(t, "finish-" ~ task.key, none) }}
     {{ ui.field_error("finish-" ~ task.key, errors.get('finish_' ~ task.key)) }}
   </div>

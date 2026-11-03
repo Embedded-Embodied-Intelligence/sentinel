@@ -22,14 +22,18 @@
     <label for="new-{{ i }}-after">{{ t("checkin.new.after") }}</label>
     <select id="new-{{ i }}-after" name="new_{{ i }}_after">
       <option value="">{{ t("checkin.new.after_none") }}</option>
-      {% for task in view.tasks if task.state != "removed" %}<option value="{{ task.key }}"{% if fv('new_' ~ i ~ '_after', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
+      {% for state in ("done", "in_progress", "not_started") %}
+      {% set group = view.tasks | selectattr("state", "in", (state, "paused") if state == "in_progress" else (state,)) | list %}
+      {% if group %}<optgroup label="{{ t('checkin.group.' ~ state) }}">{% for task in group %}<option value="{{ task.key }}"{% if fv('new_' ~ i ~ '_after', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}</optgroup>{% endif %}
+      {% endfor %}
     </select>
   </div>
   <div class="field">
     <label for="new-{{ i }}-before">{{ t("checkin.new.before") }}</label>
     <select id="new-{{ i }}-before" name="new_{{ i }}_before">
       <option value="">{{ t("checkin.new.before_none") }}</option>
-      {% for task in view.tasks if task.state == "not_started" %}<option value="{{ task.key }}"{% if fv('new_' ~ i ~ '_before', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}
+      {% set group = view.tasks | selectattr("state", "equalto", "not_started") | list %}
+      {% if group %}<optgroup label="{{ t('checkin.group.not_started') }}">{% for task in group %}<option value="{{ task.key }}"{% if fv('new_' ~ i ~ '_before', '') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}</optgroup>{% endif %}
     </select>
   </div>
   <label class="check field-wide"><input type="checkbox" name="new_{{ i }}_optional"{% if fv('new_' ~ i ~ '_optional', '') %} checked{% endif %}><span>{{ t("checkin.new.optional") }}</span></label>

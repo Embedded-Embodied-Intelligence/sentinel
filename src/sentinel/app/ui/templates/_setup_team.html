@@ -33,11 +33,11 @@
   <div class="card add-role">
     <div class="field">
       <label for="new_role">{{ t("setup.team.new_role") }}</label>
-      <input id="new_role" name="new_role" maxlength="120" list="role-suggestions" autocomplete="off" placeholder="{{ t('setup.team.role_example') }}">
+      <input id="new_role" name="new_role" maxlength="120" list="role-suggestions" autocomplete="off" placeholder="{{ t('setup.team.role_example') }}" data-enter="add_role">
     </div>
     <div class="field">
       <label for="new_role_count">{{ t("setup.team.new_count") }}</label>
-      <input id="new_role_count" name="new_role_count" inputmode="numeric" value="1">
+      <input id="new_role_count" name="new_role_count" inputmode="numeric" value="1" data-enter="add_role">
     </div>
     <button class="btn" name="action" value="add_role">{{ icon("plus", 16) }}{{ t("setup.team.add_role") }}</button>
   </div>

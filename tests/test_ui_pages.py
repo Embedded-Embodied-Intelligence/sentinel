@@ -464,11 +464,12 @@ def test_a_check_in_before_the_start_gets_a_note_and_is_not_refused(site: Site) 
 
 
 def test_a_task_started_in_the_check_in_can_grow_in_it(site: Site) -> None:
-    """QA-21: the list offers it once the task is marked in progress, and the server takes it."""
+    """QA-21: the server takes it. Since WP12 the list offers every task not started under its
+    own label (B15): its growth is a new estimate, unless it starts in the same report."""
     pid = _project(site, "Early growth")
     url = f"/projects/{pid}/checkin"
     page = _get(site, url, "en")
-    assert re.search(r'<option value="T1" data-starts hidden disabled>Build API</option>', page)
+    assert '<optgroup label="Not started: a new estimate"><option value="T1">Build API' in page
     body = {
         "date": "2026-11-03",
         "shown": ["T1", "T2"],
@@ -962,3 +963,39 @@ def test_the_overview_says_what_moved_the_chance(site: Site) -> None:
     assert "Co zmieniło szansę w raporcie z" in shown
     assert "Bez nieobecności osoby Ada szansa byłaby" in shown
     assert "skutki nie sumują się dokładnie" in shown
+
+
+def test_a_status_report_asks_once_and_defers_as_it_says(site: Site) -> None:
+    """Tasks 7, 8 and 11 of WP12 (B9, B12, B14): a report with no progress on a task in progress
+    asks first; a date far ahead is confirmed once, not after every refused save; "decide
+    later" keeps the proposal waiting until the next report, as its message says."""
+    client, headers = site.client, site.headers
+    pid = _create(client, headers, small())
+    assert client.post(f"/api/projects/{pid}/plan", headers=headers).status_code == 202
+    _checkin(client, headers, pid, ABSENCE_CHECKIN)  # T1 in progress at 30 %
+    seq = client.get(f"/api/projects/{pid}").json()["open_recommendation"]
+    later = client.post(
+        f"/projects/{pid}/recommendations/{seq}/decision",
+        data={"verdict": "later"},
+        headers=headers,
+    )
+    assert later.headers["HX-Redirect"].endswith("flash=later")
+    page = client.get(f"/projects/{pid}", params={"lang": "pl", "flash": "later"}).text
+    assert "Zostaje w części „Czeka na Twoją decyzję” do następnego raportu" in visible_text(page)
+    assert f"/projects/{pid}/recommendations/{seq}" in page  # still waiting, as it says
+    report = {"date": "2026-11-06", "shown": ["T1"], "status_T1": "in_progress", "percent_T1": "30"}
+    asked = client.post(f"/projects/{pid}/checkin", data=report, headers=headers)
+    assert asked.status_code == 422 and "Czy od" in visible_text(asked.text)
+    assert 'name="no_progress"' in asked.text and problems(asked.text) == []
+    ahead = {**report, "date": "2030-01-07", "confirm_date": "on", "no_progress": "1"}
+    refused = client.post(
+        f"/projects/{pid}/checkin", data={**ahead, "percent_T1": "x"}, headers=headers
+    )
+    assert refused.status_code == 422 and 'name="confirmed_date" value="2030-01-07"' in refused.text
+    del ahead["confirm_date"]
+    saved = client.post(
+        f"/projects/{pid}/checkin", data={**ahead, "confirmed_date": "2030-01-07"}, headers=headers
+    )
+    assert saved.headers["HX-Redirect"] == f"/projects/{pid}?flash=checkin_saved"
+    statuses = [r["status"] for r in client.get(f"/api/projects/{pid}").json()["recommendations"]]
+    assert statuses[0] == "superseded"  # the next report replaced the postponed proposal
