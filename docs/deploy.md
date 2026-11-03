@@ -35,8 +35,8 @@ reports its health on `/api/health` (Docker's `HEALTHCHECK`). The app listens on
 reverse proxy.
 
 ```bash
-docker compose up -d --build                    # build and start (the first build takes minutes)
-docker compose ps                               # STATUS shows "(healthy)" after the first check, ~30 s
+docker compose up -d --build                    # build and start (the first build took 57 s)
+docker compose ps                               # STATUS shows "(healthy)" after about 8 s
 curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.3.0","demo":false}
 docker compose logs -f sentinel                 # the log
 docker compose down                             # stop; the data stay in the volume
@@ -51,7 +51,8 @@ docker compose down                             # stop; the data stay in the vol
   and `llm_cache/`.
 - **Upgrade**: `git pull && docker compose up -d --build`; the volume is kept and the database
   migrates itself.
-- **Another port or address**: change `ports:` in `docker-compose.yml`, e.g.
+- **Another port or address**: `SENTINEL_PORT=8001 docker compose up -d` publishes the app on
+  `127.0.0.1:8001`; for another address change `ports:` in `docker-compose.yml`, e.g.
   `"0.0.0.0:8080:8000"` for a closed internal network.
 
 ### AI options
@@ -78,27 +79,29 @@ reads a 12-task description in about 50 s, a status message in about 7 s and wri
 explanation in about 8 s; `gpt-oss-120b` on Groq answers each in 1–5 s, and the three flows
 cost well under 0.01 USD through OpenRouter. When a call fails, the page says why (the key, the
 model's name, the address, a timeout, the provider's limit or a text too long) and the form
-keeps what was written.
+keeps what was written. The cloud model reads messages and writes explanations more accurately
+than the local one; for messages about real people's absences, use the local model or a
+provider that does not retain data.
 
-### Docker in WP9c
+### Measured in WP11
 
-Docker was not installed on the build server, so the image was not built in the work package.
-Its recipe was checked by replaying the build without Docker: a non-editable install from
-exactly the build context into a fresh environment (270 MB), started with
-`configs/app_server.toml`: healthy after 3.7 s, a project created and planned through the API,
-the Polish start page served. To build and measure it:
+On the 4-core server without a GPU (Docker 29.1.3, Compose 2.40.3; `scripts/docker_check.py`,
+its log in [`docs/qa/docker/`](qa/docker/)):
 
-```bash
-docker build -t sentinel:1.3.0 .                          # time it
-docker image ls sentinel:1.3.0                            # SIZE: about 400 MB expected
-docker run -d --name sentinel-smoke -p 127.0.0.1:8000:8000 sentinel:1.3.0
-time sh -c 'until curl -fs http://127.0.0.1:8000/api/health; do sleep 0.5; done'
-curl -s -c /tmp/jar http://127.0.0.1:8000/api/session     # note csrf_token
-curl -s -b /tmp/jar -H "X-CSRF-Token: <csrf_token>" -H "content-type: application/json" \
-  -d '{"name":"Smoke","start":"2026-11-02","team":[{"key":"a","name":"Ada","role":"Developer"}],"tasks":[{"key":"T1","name":"Build","duration":3,"crew":{"Developer":1}}]}' \
-  http://127.0.0.1:8000/api/projects                        # 201 and the project
-docker rm -f sentinel-smoke
-```
+| Step | Result |
+| --- | --- |
+| First build (`docker build`; the base images and the dependencies downloaded) | 57 s |
+| Build after a code change (`docker compose build`; the dependencies cached) | 26 s |
+| The image `sentinel:1.3.0` | 653 MB on disk, 156 MB compressed |
+| `docker compose up -d` until `/api/health` answers; until Docker calls it healthy | 4.3 s; 7.6 s |
+| A project made through the pages (11 people, 30 tasks, a plan) | unchanged after `docker compose restart` (answering after 3.0 s) and after `down` and `up -d` (3.7 s) |
+| `docker compose --profile ollama up -d` (the `ollama/ollama` image downloaded once) | 363 s |
+| `ollama pull qwen2.5:7b` in its container (4.7 GB) | 420 s |
+| The settings page's test of the local model (address and model left empty; it loads the model) | "Model qwen2.5:7b odpowiedział" after 13 s |
+| Memory as `docker stats` shows it (with the cached model file): the `ollama` container after the pull and the test; the app | 9.6 GiB; 123 MiB |
+
+To check it again, as its own compose project (`sentinel-check`, port 8002), so that a running
+deployment keeps its containers and data: `uv run python scripts/docker_check.py [--ollama]`.
 
 ## 3. The public course demo (Tailscale Funnel)
 
@@ -114,10 +117,13 @@ HTTPS at `https://<machine>.<tailnet>.ts.net/`.
 2. Your user must be allowed to change Tailscale's serve settings. If `tailscale funnel` says
    *Access denied*, run once `sudo tailscale set --operator=$USER`. Without sudo on WSL2, open a
    root shell from Windows (`wsl -u root`) and run `tailscale set --operator=<your user name>`.
-3. Optional, an AI model for the demo (the demo has no settings page): run the app once in the
-   normal mode on the demo's data, choose the provider on Settings, then stop it:
+3. The demo's AI model (the demo has no settings page): the cloud model `gpt-oss-120b`, the
+   more accurate one for messages and explanations. Run the app once in the normal mode on the
+   demo's data, choose **OpenRouter** on Settings, paste the key, leave the model empty
+   (`openai/gpt-oss-120b`), save, then stop it:
    `uv run sentinel ui --data-dir ~/.local/share/sentinel-demo --port 8001`. The demo then uses
-   it with the daily cap of `configs/app_demo.toml` (200 calls).
+   it with the daily cap of `configs/app_demo.toml` (200 calls; at about 0.0003–0.0006 USD a
+   call in WP11, at most about 0.12 USD a day).
 
 ### Every time
 
