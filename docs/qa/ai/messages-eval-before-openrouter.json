@@ -1,0 +1,1133 @@
+{
+  "provider": "openrouter",
+  "model": "openai/gpt-oss-120b",
+  "label": "before",
+  "summary": {
+    "cases": 30,
+    "expected_items": 43,
+    "exact_items": 7,
+    "added_items": 0,
+    "exact_share": 0.163,
+    "wrong_dates_without_question": 15,
+    "failed_readings": 0
+  },
+  "usage": {
+    "calls": 33,
+    "prompt_tokens": 86129,
+    "completion_tokens": 7350,
+    "cost_usd": 0.014161
+  },
+  "cases": [
+    {
+      "id": "m01",
+      "seconds": 2.4,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Bartosz Kowalski"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-13"
+        }
+      ],
+      "unparsed": [
+        "„Warsztat z klientem\" skończył się wczoraj, we wtorek 3 listopada.",
+        "„Baza danych i API\" trwa, zrobiono około 15 %."
+      ],
+      "expected": 3,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-05",
+            "back": "2026-11-16"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-13"
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Warsztat z klientem"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-03"
+        },
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 15
+        }
+      ],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m02",
+      "seconds": 0.7,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Bartosz Kowalski"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-05",
+            "back": "2026-11-09"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-09"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m03",
+      "seconds": 1.0,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Ewa Zielińska"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-06"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-11-05",
+            "back": "2026-11-06"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-06"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m04",
+      "seconds": 0.9,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Anna Nowak"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-13"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-09",
+            "back": "2026-11-12"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-13"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m05",
+      "seconds": 1.4,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Dawid Lewandowski"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": null
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Dawid Lewandowski"
+            ],
+            "form": "question"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Dawid Lewandowski"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": null
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m06",
+      "seconds": 1.0,
+      "items": [],
+      "unparsed": [
+        "Warsztat z klientem zakończyliśmy dzisiaj",
+        "projekt ekranów zacznie się jutro."
+      ],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Warsztat z klientem"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-04"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m07",
+      "seconds": 0.9,
+      "items": [],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m08",
+      "seconds": 0.6,
+      "items": [
+        {
+          "subject": [
+            "unknown_person"
+          ],
+          "form": "question",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m09",
+      "seconds": 0.7,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Celina Wiśniewska"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": null
+        }
+      ],
+      "unparsed": [],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Celina Wiśniewska"
+            ],
+            "form": "item",
+            "from": "2026-11-09",
+            "back": null
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Celina Wiśniewska"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": null
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 50
+        }
+      ],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m10",
+      "seconds": 0.3,
+      "items": [],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Warsztat z klientem"
+          ],
+          "form": "question"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m11",
+      "seconds": 1.0,
+      "items": [],
+      "unparsed": [
+        "Projekt ekranów zakończony wczoraj.",
+        "Z Bazy danych i API zrobiono już około 60 %."
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Projekt ekranów"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-09"
+        },
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 60
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m12",
+      "seconds": 0.8,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Ewa Zielińska"
+          ],
+          "form": "item",
+          "from": "2026-11-10",
+          "back": "2026-11-13"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-11-12",
+            "back": "2026-11-13"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-11-10",
+            "back": "2026-11-13"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m13",
+      "seconds": 1.4,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Anna Nowak"
+          ],
+          "form": "item",
+          "from": "2026-11-13",
+          "back": "2026-11-23"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-16",
+            "back": "2026-11-23"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-13",
+            "back": "2026-11-23"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m14",
+      "seconds": 2.4,
+      "items": [],
+      "unparsed": [
+        "Projekt ekranów ruszył w środę, zrobiono jakieś 10 %.",
+        "Wdrożenie przesuwamy",
+        "testy potrwają 2 dni dłużej."
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Projekt ekranów"
+          ],
+          "form": "question"
+        },
+        {
+          "subject": [
+            "increase",
+            "Testy"
+          ],
+          "form": "item",
+          "extra_days": 2
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m15",
+      "seconds": 0.7,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Dawid Lewandowski"
+          ],
+          "form": "item",
+          "from": "2026-11-16",
+          "back": "2026-11-23"
+        }
+      ],
+      "unparsed": [
+        "Celina zastąpi go przy testach."
+      ],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m16",
+      "seconds": 0.5,
+      "items": [],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m17",
+      "seconds": 0.5,
+      "items": [],
+      "unparsed": [
+        "Projekt ekranów jest w jednej trzeciej",
+        "baza danych i API w 80 %."
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Projekt ekranów"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 33
+        },
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 80
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m18",
+      "seconds": 1.3,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Celina Wiśniewska"
+          ],
+          "form": "item",
+          "from": "2026-11-20",
+          "back": "2026-12-09"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Celina Wiśniewska"
+            ],
+            "form": "item",
+            "from": "2026-11-23",
+            "back": "2026-11-30"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Celina Wiśniewska"
+            ],
+            "form": "item",
+            "from": "2026-11-20",
+            "back": "2026-12-09"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m19",
+      "seconds": 1.0,
+      "items": [
+        {
+          "subject": [
+            "new_task",
+            "przegląd bezpieczeństwa"
+          ],
+          "form": "item",
+          "duration": 2,
+          "after": "Aplikacja mobilna",
+          "before": "Testy"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m20",
+      "seconds": 0.8,
+      "items": [
+        {
+          "subject": [
+            "unknown_person"
+          ],
+          "form": "question",
+          "from": "2026-11-20",
+          "back": null
+        }
+      ],
+      "unparsed": [
+        "baza danych i API skończona w czwartek."
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "unknown_person"
+            ],
+            "form": "question",
+            "from": "2026-11-23",
+            "back": null
+          },
+          "found": {
+            "subject": [
+              "unknown_person"
+            ],
+            "form": "question",
+            "from": "2026-11-20",
+            "back": null
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-19"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m21",
+      "seconds": 0.8,
+      "items": [
+        {
+          "subject": [
+            "ambiguous",
+            "Testy integracyjne",
+            "Testy wydajności"
+          ],
+          "form": "question"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m22",
+      "seconds": 0.7,
+      "items": [],
+      "unparsed": [
+        "API katalogu produktów jest skończone od wczoraj",
+        "interfejs jest w 80 %."
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "API katalogu produktów"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-17"
+        },
+        {
+          "subject": [
+            "ambiguous",
+            "Interfejs katalogu",
+            "Interfejs procesu zakupu"
+          ],
+          "form": "question"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m23",
+      "seconds": 1.5,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Gabriela Kamińska"
+          ],
+          "form": "item",
+          "from": "2026-12-18",
+          "back": "2026-12-29"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Gabriela Kamińska"
+            ],
+            "form": "item",
+            "from": "2026-12-21",
+            "back": "2026-12-28"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Gabriela Kamińska"
+            ],
+            "form": "item",
+            "from": "2026-12-18",
+            "back": "2026-12-29"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m24",
+      "seconds": 1.7,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Filip Wójcik"
+          ],
+          "form": "item",
+          "from": "2026-12-18",
+          "back": "2026-12-28"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Filip Wójcik"
+            ],
+            "form": "item",
+            "from": "2026-12-21",
+            "back": "2026-12-28"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Filip Wójcik"
+            ],
+            "form": "item",
+            "from": "2026-12-18",
+            "back": "2026-12-28"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m25",
+      "seconds": 1.1,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Ewa Zielińska"
+          ],
+          "form": "item",
+          "from": "2026-12-23",
+          "back": "2027-01-04"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-12-28",
+            "back": "2027-01-04"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-12-23",
+            "back": "2027-01-04"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m26",
+      "seconds": 2.0,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Cezary Mazur"
+          ],
+          "form": "item",
+          "from": "2026-11-20",
+          "back": "2026-12-04"
+        }
+      ],
+      "unparsed": [
+        "Potok CI/CD gotowy w środę 18 listopada.",
+        "Interfejs procesu zakupu jest w 70 %"
+      ],
+      "expected": 3,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Cezary Mazur"
+            ],
+            "form": "item",
+            "from": "2026-11-23",
+            "back": "2026-11-26"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Cezary Mazur"
+            ],
+            "form": "item",
+            "from": "2026-11-20",
+            "back": "2026-12-04"
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Potok CI/CD"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-18"
+        },
+        {
+          "subject": [
+            "task",
+            "Interfejs procesu zakupu"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 70
+        }
+      ],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m27",
+      "seconds": 0.7,
+      "items": [],
+      "unparsed": [
+        "API katalogu produktów skończyło się w czwartek",
+        "interfejs katalogu ruszył w piątek rano."
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "API katalogu produktów"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-19"
+        },
+        {
+          "subject": [
+            "task",
+            "Interfejs katalogu"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": null,
+          "start": "2026-11-20"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m28",
+      "seconds": 1.0,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Anna Nowak"
+          ],
+          "form": "item",
+          "from": "2026-11-27",
+          "back": "2026-12-08"
+        }
+      ],
+      "unparsed": [
+        "Anna jest na urlopie do piątku 4 grudnia"
+      ],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-27",
+            "back": "2026-12-07"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-27",
+            "back": "2026-12-08"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m29",
+      "seconds": 0.5,
+      "items": [],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m30",
+      "seconds": 1.1,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Filip Wójcik"
+          ],
+          "form": "item",
+          "from": "2026-11-30",
+          "back": "2026-12-01"
+        }
+      ],
+      "unparsed": [
+        "Integracja płatności skończona w piątek, Testy integracyjne ruszyły dziś"
+      ],
+      "expected": 3,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Filip Wójcik"
+            ],
+            "form": "item",
+            "from": "2026-12-02",
+            "back": "2026-12-09"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Filip Wójcik"
+            ],
+            "form": "item",
+            "from": "2026-11-30",
+            "back": "2026-12-01"
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Integracja płatności"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-27"
+        },
+        {
+          "subject": [
+            "task",
+            "Testy integracyjne"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": null,
+          "start": "2026-11-30"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 1
+    }
+  ]
+}

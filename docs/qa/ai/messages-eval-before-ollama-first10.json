@@ -1,0 +1,428 @@
+{
+  "provider": "ollama",
+  "model": "qwen2.5:7b",
+  "label": "before",
+  "summary": {
+    "cases": 10,
+    "expected_items": 13,
+    "exact_items": 1,
+    "added_items": 2,
+    "exact_share": 0.067,
+    "wrong_dates_without_question": 6,
+    "failed_readings": 1
+  },
+  "usage": {
+    "calls": 14,
+    "prompt_tokens": 31658,
+    "completion_tokens": 630,
+    "cost_usd": 0.0
+  },
+  "cases": [
+    {
+      "id": "m01",
+      "seconds": 19.3,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Bartosz Kowalski"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-12-02"
+        }
+      ],
+      "unparsed": [
+        "„Baza danych i API\" trwa, zrobiono około 15 %."
+      ],
+      "expected": 3,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-05",
+            "back": "2026-11-16"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-12-02"
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Warsztat z klientem"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-03"
+        },
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 15
+        }
+      ],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m02",
+      "seconds": 5.7,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Bartosz Kowalski"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-05",
+            "back": "2026-11-09"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Bartosz Kowalski"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-09"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m03",
+      "seconds": 5.7,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Ewa Zielińska"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-11-05",
+            "back": "2026-11-06"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Ewa Zielińska"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-09"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m04",
+      "seconds": 5.5,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Anna Nowak"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-19"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-09",
+            "back": "2026-11-12"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Anna Nowak"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-19"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m05",
+      "seconds": 5.6,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Dawid Lewandowski"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-17"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Dawid Lewandowski"
+            ],
+            "form": "question"
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Dawid Lewandowski"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-17"
+          }
+        }
+      ],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m06",
+      "error": "AppError",
+      "expected": 1,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Warsztat z klientem"
+          ],
+          "form": "item",
+          "status": "done",
+          "finish": "2026-11-04"
+        }
+      ],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m07",
+      "seconds": 3.2,
+      "items": [],
+      "unparsed": [
+        "Dziś nic nowego, wszystko idzie zgodnie z planem."
+      ],
+      "expected": 1,
+      "exact": 1,
+      "wrong": [],
+      "missing": [],
+      "added": [],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m08",
+      "seconds": 5.4,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Anna Nowak"
+          ],
+          "form": "doubtful",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "unparsed": [],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "unknown_person"
+          ],
+          "form": "question",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "added": [
+        {
+          "subject": [
+            "absence",
+            "Anna Nowak"
+          ],
+          "form": "doubtful",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "wrong_dates": 0
+    },
+    {
+      "id": "m09",
+      "seconds": 5.8,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Celina Wiśniewska"
+          ],
+          "form": "item",
+          "from": "2026-11-04",
+          "back": "2026-11-10"
+        }
+      ],
+      "unparsed": [
+        "„baza danych i api” jest w połowie"
+      ],
+      "expected": 2,
+      "exact": 0,
+      "wrong": [
+        {
+          "expected": {
+            "subject": [
+              "absence",
+              "Celina Wiśniewska"
+            ],
+            "form": "item",
+            "from": "2026-11-09",
+            "back": null
+          },
+          "found": {
+            "subject": [
+              "absence",
+              "Celina Wiśniewska"
+            ],
+            "form": "item",
+            "from": "2026-11-04",
+            "back": "2026-11-10"
+          }
+        }
+      ],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Baza danych i API"
+          ],
+          "form": "item",
+          "status": "in_progress",
+          "percent": 50
+        }
+      ],
+      "added": [],
+      "wrong_dates": 1
+    },
+    {
+      "id": "m10",
+      "seconds": 12.3,
+      "items": [
+        {
+          "subject": [
+            "absence",
+            "Dawid Lewandowski"
+          ],
+          "form": "doubtful",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "unparsed": [
+        "Warsztat z klientem skończyliśmy w poniedziałek 3 listopada."
+      ],
+      "expected": 1,
+      "exact": 0,
+      "wrong": [],
+      "missing": [
+        {
+          "subject": [
+            "task",
+            "Warsztat z klientem"
+          ],
+          "form": "question"
+        }
+      ],
+      "added": [
+        {
+          "subject": [
+            "absence",
+            "Dawid Lewandowski"
+          ],
+          "form": "doubtful",
+          "from": "2026-11-04",
+          "back": "2026-11-09"
+        }
+      ],
+      "wrong_dates": 0
+    }
+  ]
+}
