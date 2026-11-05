@@ -30,6 +30,7 @@ JOB_LABELS = (
     "job.extract",
     "job.message",
     "job.llm_test",
+    "job.voice_test",
     "job.explain",
 )
 JOB_NOTES = ("sim.end_note.j30", "sim.end_note.j60", "job.slow_ai")
@@ -198,11 +199,13 @@ def router(ui: Ui) -> APIRouter:
         if provider not in PROVIDERS:
             raise AppError("field_invalid", field="provider", detail=provider)
         key = form.get("api_key", "").strip()
+        groq = form.get("groq_key", "").strip()
         change = LlmSettingsUpdate(
             provider=provider,
             model=form.get("model", "").strip() or None,
             host=form.get("host", "").strip() or None,
             api_key="" if form.flag("forget_key") else (key or None),
+            groq_key="" if form.flag("forget_groq_key") else (groq or None),
         )
         services.llm.update(change)
         return change
@@ -219,6 +222,14 @@ def router(ui: Ui) -> APIRouter:
         _save_settings(request, form)
         job = services.test_llm(ui.session(request), ui.language(request))
         return job_progress(ui, request, job, "job.llm_test")
+
+    @routes.post("/settings/test-voice")
+    async def test_voice(request: Request) -> Response:
+        """Save the settings, then write out a test recording with Groq's Whisper (WP14)."""
+        form = await Form.read(request)
+        _save_settings(request, form)
+        job = services.test_voice(ui.session(request), ui.language(request))
+        return job_progress(ui, request, job, "job.voice_test")
 
     @routes.get("/lang/{code}")
     def language(request: Request, code: str) -> Response:
@@ -255,6 +266,9 @@ def router(ui: Ui) -> APIRouter:
         match view.kind:
             case "llm_test":
                 return ui.page(request, "_test_ok.html", model=str(result.get("model", "?")))
+            case "voice_test":
+                model = str(result.get("model", "?"))
+                return ui.page(request, "_test_ok.html", model=model, key="settings.voice_ok")
             case "extract":
                 from sentinel.app.ui.setup import extraction_review
 

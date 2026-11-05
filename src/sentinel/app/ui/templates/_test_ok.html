@@ -1,2 +1,2 @@
 {% import "_ui.html" as ui with context %}
-{% call ui.callout("good", attrs=' role="status"') %}<p>{{ t("settings.test_ok", model=model) }}</p>{% endcall %}
+{% call ui.callout("good", attrs=' role="status"') %}<p>{{ t(key if key is defined else "settings.test_ok", model=model) }}</p>{% endcall %}

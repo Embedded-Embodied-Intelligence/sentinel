@@ -1,7 +1,8 @@
 // Sentinel pages (WP9b, WP10; ADR-0025, ADR-0027). HTMX does the requests; this file does what a
 // page must do by itself: form rows, the drawer, toasts, disclosures that close, live date and
 // rule hints, the check-in's count of changes, the unsaved-changes bar, the "after tasks" picker,
-// the chart's tooltip, and one request at a time from a form.
+// the chart's tooltip, one request at a time from a form, and (WP14) the tasks read from a
+// message filling their rows and a recording for a message box.
 (function () {
   "use strict";
   let counter = 1000;
@@ -303,7 +304,8 @@
   // differs from the saved state, which a page shown again after a refused save keeps (B12)
   function changeCount(form) {
     let changes = form.querySelectorAll("#away-list [data-row], #grow-list [data-row], #new-list [data-row]").length;
-    form.querySelectorAll("input[name^=msg_]:checked").forEach(function () {
+    // A task read from a message is counted by its row, which it fills (WP14).
+    form.querySelectorAll("input[name^=msg_]:not([name=msg_task]):checked").forEach(function () {
       changes += 1;
     });
     form.querySelectorAll("fieldset.task-row").forEach(function (row) {
@@ -598,6 +600,228 @@
     });
   });
 
+  // ---- a task read from a message fills its row of the check-in (WP14): ticking it, or choosing
+  // it in a question, sets the row's status, share, finish and start; unticking it puts back what
+  // the row had
+  function taskRow(key) {
+    return document.querySelector('#checkin-form fieldset.task-row[data-task="' + CSS.escape(key) + '"]');
+  }
+
+  function rowState(row) {
+    const status = row.querySelector("input[type=radio]:checked");
+    const value = function (selector) {
+      const field = row.querySelector(selector);
+      return field ? field.value : "";
+    };
+    return {
+      status: status ? status.value : "",
+      percent: value("input[type=range]"),
+      finish: value("input[name^=finish_]"),
+      start: value("input[name^=start_]"),
+    };
+  }
+
+  function setRow(row, state) {
+    const radio = row.querySelector('input[type=radio][value="' + state.status + '"]');
+    if (radio && !radio.disabled) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    if (state.percent !== null && state.percent !== undefined && state.percent !== "") {
+      row.querySelectorAll("input[type=range], input[data-range-for]").forEach(function (field) {
+        field.value = state.percent;
+      });
+      savedAs(row);
+    }
+    const finish = row.querySelector("input[name^=finish_]");
+    if (finish && state.finish) {
+      finish.value = state.finish;
+      finish.dataset.edited = "1";
+      echoDate(finish);
+    }
+    const start = row.querySelector("input[name^=start_]");
+    if (start) {
+      start.value = state.start || "";
+      const more = start.closest("details");
+      if (more && state.start) more.open = true;
+      echoDate(start);
+    }
+    const hidden = row.closest("details.more-tasks");
+    if (hidden) hidden.open = true;
+  }
+
+  function fillRow(key, report) {
+    const row = key && taskRow(key);
+    if (!row) return;
+    if (report) {
+      if (!row.dataset.beforeMessage) row.dataset.beforeMessage = JSON.stringify(rowState(row));
+      const percent = report.status === "in_progress" ? Math.round(report.percent || 0) : null;
+      setRow(row, { status: report.status, percent: percent, finish: report.finish, start: report.start });
+      row.classList.add("from-message");
+    } else if (row.dataset.beforeMessage) {
+      setRow(row, JSON.parse(row.dataset.beforeMessage));
+      delete row.dataset.beforeMessage;
+      row.classList.remove("from-message");
+    }
+  }
+
+  function applyTaskItem(field) {
+    if (field.tagName === "SELECT") {
+      Array.from(field.options).forEach(function (option) {
+        if (option.value && !option.selected) fillRow(option.dataset.taskItem, null);
+      });
+      const chosen = field.selectedOptions[0];
+      if (chosen && chosen.value) fillRow(chosen.dataset.taskItem, JSON.parse(chosen.value));
+    } else {
+      fillRow(field.dataset.taskItem, field.checked ? JSON.parse(field.value) : null);
+    }
+  }
+
+  document.addEventListener("change", function (event) {
+    if (event.target.matches && event.target.matches("[name=msg_task]")) applyTaskItem(event.target);
+  });
+
+  // ---- a recording for a message box (WP14, ADR-0031): the microphone shows only where the
+  // browser can record; the audio goes to the server, which has Groq's Whisper write it out and
+  // keeps neither the audio nor the text; the text goes into the box to be read and corrected.
+  // Nothing goes to the AI until the person processes the message.
+  const RECORDING_TYPES = ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4", "audio/webm"];
+
+  function canRecord() {
+    return Boolean(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  }
+
+  function csrfToken() {
+    try {
+      return JSON.parse(document.body.getAttribute("hx-headers") || "{}")["X-CSRF-Token"] || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function clock(seconds) {
+    const whole = Math.floor(seconds);
+    return Math.floor(whole / 60) + ":" + String(whole % 60).padStart(2, "0");
+  }
+
+  function setupVoice(box) {
+    if (box.dataset.ready || !canRecord()) return; // without it the box is for typing only
+    box.dataset.ready = "1";
+    box.hidden = false;
+    const start = box.querySelector("[data-voice-start]");
+    const stop = box.querySelector("[data-voice-stop]");
+    const live = box.querySelector("[data-voice-live]");
+    const timer = box.querySelector("[data-voice-timer]");
+    const status = box.querySelector("[data-voice-status]");
+    const limit = Number(box.dataset.voiceLimit) || 90;
+    let recorder = null;
+    let stream = null;
+    let chunks = [];
+    let began = 0;
+    let ticking = null;
+    let cutoff = null;
+    let atLimit = false;
+    const say = function (text, bad) {
+      status.textContent = text || "";
+      status.classList.toggle("is-bad", Boolean(bad));
+    };
+    const release = function () {
+      clearInterval(ticking);
+      clearTimeout(cutoff);
+      if (stream) stream.getTracks().forEach(function (track) { track.stop(); });
+      stream = null;
+      live.hidden = true;
+      start.hidden = false;
+    };
+    const finish = function () {
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+    };
+    async function send() {
+      const seconds = (Date.now() - began) / 1000;
+      const blob = new Blob(chunks, { type: (recorder && recorder.mimeType) || "audio/webm" });
+      chunks = [];
+      release();
+      start.disabled = true;
+      start.setAttribute("aria-busy", "true");
+      say(box.dataset.msgSending);
+      try {
+        const response = await fetch(box.dataset.voiceUrl, {
+          method: "POST",
+          body: blob,
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": blob.type.split(";")[0] || "audio/webm",
+            "X-CSRF-Token": csrfToken(),
+            "X-Recording-Seconds": seconds.toFixed(1),
+          },
+        });
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (error) {
+          data = {};
+        }
+        if (!response.ok || typeof data.text !== "string") {
+          say(data.error || box.dataset.msgFailed, true);
+          return;
+        }
+        const field = document.getElementById(box.dataset.voiceTarget);
+        if (field) {
+          field.value = field.value.trim() ? field.value.trim() + "\n" + data.text : data.text;
+          field.dispatchEvent(new Event("input", { bubbles: true }));
+          field.focus();
+        }
+        say((atLimit ? box.dataset.msgLimit + " " : "") + box.dataset.msgDone);
+      } catch (error) {
+        say(box.dataset.msgFailed, true);
+      } finally {
+        start.disabled = false;
+        start.removeAttribute("aria-busy");
+      }
+    }
+    start.addEventListener("click", async function () {
+      say("");
+      start.disabled = true;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (error) {
+        start.disabled = false;
+        const missing = error && (error.name === "NotFoundError" || error.name === "OverconstrainedError");
+        say(missing ? box.dataset.msgNoMic : box.dataset.msgDenied, true);
+        return;
+      }
+      const type = RECORDING_TYPES.find(function (candidate) { return MediaRecorder.isTypeSupported(candidate); });
+      try {
+        recorder = new MediaRecorder(stream, type ? { mimeType: type, audioBitsPerSecond: 32000 } : {});
+      } catch (error) {
+        release();
+        start.disabled = false;
+        say(box.dataset.msgFailed, true);
+        return;
+      }
+      chunks = [];
+      atLimit = false;
+      recorder.addEventListener("dataavailable", function (event) {
+        if (event.data && event.data.size) chunks.push(event.data);
+      });
+      recorder.addEventListener("stop", send);
+      recorder.start(1000);
+      began = Date.now();
+      start.disabled = false;
+      start.hidden = true;
+      live.hidden = false;
+      timer.textContent = clock(0);
+      say(box.dataset.msgRecording);
+      stop.focus();
+      ticking = setInterval(function () { timer.textContent = clock((Date.now() - began) / 1000); }, 250);
+      cutoff = setTimeout(function () {
+        atLimit = true;
+        finish();
+      }, limit * 1000);
+    });
+    stop.addEventListener("click", finish);
+  }
+
   // ---- after a page or a fragment arrives
   function arrive(scope) {
     if (scope !== document) {
@@ -613,6 +837,13 @@
       scope.querySelectorAll("fieldset.task-row").forEach(savedAs);
       scrollGantt(scope);
     }
+    // A job's result replaces the job (outerHTML), so its swap names the element it removed: a
+    // review just read and a microphone are found in the page, and each is handled once (WP14).
+    document.querySelectorAll("[data-voice]").forEach(setupVoice);
+    document.querySelectorAll("[data-fresh-review]").forEach(function (review) {
+      review.removeAttribute("data-fresh-review");
+      review.querySelectorAll("input[name=msg_task]:checked").forEach(applyTaskItem);
+    });
     checkRule();
     syncGrowth();
     countChanges();

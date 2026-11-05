@@ -16,7 +16,6 @@ import json
 import os
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Literal, cast
@@ -28,31 +27,18 @@ from sentinel.agent.decide import DecisionRecord
 from sentinel.agent.params import SentinelParams
 from sentinel.app.errors import AppError
 from sentinel.app.events import FactCheck, LlmExplanation
-from sentinel.app.live import LiveProject, role_key
-from sentinel.app.models import AbsenceReport, NewTaskReport, WorkIncreaseReport
+from sentinel.app.live import LiveProject
+from sentinel.app.message_reader import (
+    MessageContext,
+    MessageDraft,
+    draft,
+    read,
+)
 from sentinel.app.store import Store
 from sentinel.app.terms import internal_terms
 from sentinel.experiments.proposal_study import compile_entries
 from sentinel.interpret.actions import ProposalSettings, answer_entries, ask
 from sentinel.interpret.describe import state_summary
-from sentinel.interpret.events import (
-    EVENTS_PROMPT,
-    EVENTS_REPAIR_PROMPT,
-    STATUS_TEXT,
-    AbsenceEvent,
-    Context,
-    EventIssue,
-    MessageEvents,
-    NewActivityEvent,
-    ParseSettings,
-    Reading,
-    TeamMessage,
-    WorkIncreaseEvent,
-    parse_messages,
-    read_answer,
-    repair_messages,
-    withheld_issue,
-)
 from sentinel.interpret.explain import (
     EXPLAIN_PROMPT,
     ExplainSettings,
@@ -60,7 +46,6 @@ from sentinel.interpret.explain import (
     check,
     render_record,
 )
-from sentinel.interpret.team import WEEKDAYS, Member
 from sentinel.llm import (
     BaseClient,
     GroqClient,
@@ -79,12 +64,9 @@ from sentinel.llm import (
 )
 from sentinel.llm.core import WITHHELD, DomainIssue
 from sentinel.llm.http import TransportError, TransportTimeout
+from sentinel.llm.whisper import GroqWhisper, Transcriber, Transcript, silent_wav
 from sentinel.simulation.state import (
-    RUNNING,
     Observation,
-    nominal_activity,
-    nominal_world,
-    successor_lists,
 )
 from sentinel.wbs.extract import (
     EXTRACT_PROMPT,
@@ -97,7 +79,6 @@ from sentinel.wbs.extract import (
     answer_issues,
     extraction_messages,
     normalise_name,
-    normalise_role,
     validate_extraction,
 )
 from sentinel.wbs.extract import Issue as WbsIssue
@@ -120,9 +101,7 @@ OPENROUTER_PROVIDER: dict[str, JsonValue] = {
 EXTRACTION = ExtractionSettings(prompt_version="v1", max_tokens=4096, max_repair_rounds=3)
 EXPLANATION = ExplainSettings(prompt_version="v1", max_tokens=2048)
 PROPOSALS = ProposalSettings(prompt_version="v1", max_tokens=2048)
-EVENTS = ParseSettings(prompt_version="v1", max_tokens=2048, max_repair_rounds=3)
 USAGE_KEY = "llm"
-EVENTS_LIVE_PROMPT = "events_live"  # the application's addendum to the parser's prompt (WP12)
 EXPLAIN_LIVE_PROMPT = "explain_live"  # the explanation in the page's language (WP12, ADR-0029)
 LANGUAGE_NAMES = {"en": "English", "pl": "Polish"}
 WBS_LIVE_PROMPT = "wbs_live"  # the application's addendum to the extraction prompt (WP12)
@@ -132,39 +111,11 @@ OLLAMA_TIMEOUT_S = 600.0
 CLOUD_TIMEOUT_S = 90.0
 CLOUD_RETRIES = 2
 CLOUD_MAX_WAIT_S = 60.0
-NEXT_DAYS = 5  # working days written out for a message of a check-in: every weekday once
-DATED_DAYS = 20  # working days written out with their calendar dates (WP12: "do 26 listopada")
-MONTH_WORDS = {
-    "pl": (
-        "stycznia",
-        "lutego",
-        "marca",
-        "kwietnia",
-        "maja",
-        "czerwca",
-        "lipca",
-        "sierpnia",
-        "września",
-        "października",
-        "listopada",
-        "grudnia",
-    )
-}
-MORE_DAYS = (1, 2, 3, 5, 10)  # more days of work whose factor is written out for a running task
-# A weekday in a check-in message, by the project's language: its name, "until" it, "back on" it.
-WEEKDAY_WORDS = {
-    "pl": {
-        "Monday": ("poniedziałek", "do poniedziałku", "wraca w poniedziałek"),
-        "Tuesday": ("wtorek", "do wtorku", "wraca we wtorek"),
-        "Wednesday": ("środa", "do środy", "wraca w środę"),
-        "Thursday": ("czwartek", "do czwartku", "wraca w czwartek"),
-        "Friday": ("piątek", "do piątku", "wraca w piątek"),
-    }
-}
 
 
 class LlmSettings(BaseModel):
-    """The provider settings as stored (`api_key` only in the file)."""
+    """The provider settings as stored (the keys only in the file); `groq_key` is Groq's key for
+    recordings when the provider is another one (WP14, ADR-0031)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -172,6 +123,7 @@ class LlmSettings(BaseModel):
     model: str | None = Field(default=None, max_length=200)
     host: str | None = Field(default=None, max_length=300)
     api_key: str | None = Field(default=None, max_length=500)
+    groq_key: str | None = Field(default=None, max_length=500)
 
 
 class LlmSettingsView(BaseModel):
@@ -184,10 +136,12 @@ class LlmSettingsView(BaseModel):
     host: str | None
     has_key: bool
     available: bool
+    has_groq_key: bool = False
+    voice: bool = False  # recordings can be written out (WP14)
 
 
 class LlmSettingsUpdate(BaseModel):
-    """A change of the settings; a missing `api_key` keeps the stored one, "" removes it."""
+    """A change of the settings; a missing key keeps the stored one, "" removes it."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -195,9 +149,32 @@ class LlmSettingsUpdate(BaseModel):
     model: str | None = Field(default=None, max_length=200)
     host: str | None = Field(default=None, max_length=300)
     api_key: str | None = Field(default=None, max_length=500)
+    groq_key: str | None = Field(default=None, max_length=500)
 
 
 ClientFactory = Callable[[LlmSettings, LlmCache], LlmClient]
+TranscriberFactory = Callable[[Secret], Transcriber]
+
+
+def make_transcriber(key: Secret) -> Transcriber:
+    """Groq's Whisper with the key for recordings (ADR-0031)."""
+    return GroqWhisper(key)
+
+
+def voice_failure(error: LlmError) -> AppError:
+    """A failed transcription as a manager reads it (WP14)."""
+    code = "voice_failed"
+    if isinstance(error, TransportTimeout):
+        code = "voice_timeout"
+    elif isinstance(error, TransportError):
+        code = "voice_unreachable"
+    elif error.status in (401, 403):
+        code = "voice_key"
+    elif error.status in (400, 413, 415, 422):
+        code = "voice_audio"
+    elif error.status == 429:
+        code = "voice_quota"
+    return AppError(code, "unavailable", detail=type(error).__name__)
 
 
 def make_client(
@@ -290,6 +267,7 @@ class LlmService:
         mode: Literal["on", "capped", "off"] = "on",
         daily_cap: int | None = None,
         factory: ClientFactory = make_client,
+        transcriber: TranscriberFactory = make_transcriber,
     ) -> None:
         self.settings_file = settings_file
         self.cache_dir = cache_dir
@@ -297,6 +275,7 @@ class LlmService:
         self.mode = mode
         self.daily_cap = daily_cap
         self.factory = factory
+        self.transcriber = transcriber
 
     def settings(self) -> LlmSettings:
         try:
@@ -313,6 +292,8 @@ class LlmService:
             host=settings.host,
             has_key=bool(settings.api_key),
             available=self.available,
+            has_groq_key=bool(settings.groq_key),
+            voice=self.voice,
         )
 
     @property
@@ -322,17 +303,25 @@ class LlmService:
             return False
         return settings.provider == "ollama" or bool(settings.api_key)
 
+    @property
+    def voice(self) -> bool:
+        """Whether recordings can be written out: the AI is set up (the text is read by it) and
+        a Groq key is there, the provider's own or the one for recordings (WP14)."""
+        return self.available and _voice_key(self.settings()) is not None
+
     def update(self, change: LlmSettingsUpdate) -> LlmSettingsView:
         """Store new settings in the settings file (mode 0600)."""
         current = self.settings()
         key = current.api_key if change.api_key is None else (change.api_key or None)
         if change.provider in ("groq", "openrouter") and not key:
             raise AppError("settings_key_needed")
+        groq = current.groq_key if change.groq_key is None else (change.groq_key or None)
         settings = LlmSettings(
             provider=change.provider,
             model=change.model or None,
             host=change.host or None,
             api_key=key if change.provider in ("groq", "openrouter") else None,
+            groq_key=groq,
         )
         self.settings_file.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -360,6 +349,29 @@ class LlmService:
         settings = self.settings()
         cache = RequestCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
         return self.factory(settings, cache)
+
+    def transcribe(
+        self, audio: bytes, content_type: str, *, language: str | None, vocabulary: str = ""
+    ) -> Transcript:
+        """A recording written out by Groq's Whisper (ADR-0031), counted against the daily cap
+        as a feature request; neither the audio nor the text is kept."""
+        key = _voice_key(self.settings())
+        if not self.available or key is None:
+            raise AppError("voice_disabled", "unavailable")
+        cap = self.daily_cap if self.mode == "capped" else None
+        if not self.store.use(USAGE_KEY, cap):
+            raise AppError("llm_cap", "limit")
+        try:
+            return self.transcriber(key).transcribe(
+                audio, content_type, language=language, prompt=vocabulary
+            )
+        except LlmError as exc:
+            raise voice_failure(exc) from exc
+
+    def test_voice(self) -> str:
+        """Write out a second of a quiet tone (a connection test of recordings); the model's
+        name, or AppError with the reason."""
+        return self.transcribe(silent_wav(), "audio/wav", language="en").model
 
     def extract(self, text: str, seed: int, roles: Mapping[str, int] | None = None) -> Session:
         """WP6a extraction with up to three repair rounds (spec section 10); the roles of the
@@ -473,32 +485,21 @@ class LlmService:
             max_tokens=EXPLANATION.max_tokens,
         )
 
-    def read_message(
-        self, project: LiveProject, text: str, when: date, seed: int
-    ) -> "MessageDraft":
-        """The events of a manager's check-in message dated `when` (spec section 10.2, the WP6b
-        parser with its repair rounds), as check-in reports for the manager to confirm one by
-        one; never a reason for an absence (invariant 7)."""
-        context = LiveContext(
-            project, when, split_clauses(text, project.definition.settings.language)
-        )
+    def read_message(self, project: LiveProject, text: str, when: date, seed: int) -> MessageDraft:
+        """The reports of a manager's check-in message dated `when` (spec section 11.3, v2.3.0:
+        the application's reader with its repair rounds, dates settled by code), for the manager
+        to confirm one by one; never a reason for an absence (invariant 7)."""
+        context = MessageContext(project, when, text)
         client = self.client()
-        message = TeamMessage(day=context.day, author=0, text=text)
         try:
-            final = parse_live(client, message, context, seed=seed, settings=EVENTS)
+            reading = read(client, context, seed=seed)
         except LlmError as exc:
             raise failure(exc) from exc
-        if final.response.value is None and not final.reading.events:
-            detail = "no answer" if final.response.error is None else final.response.error.kind
+        if reading.answer is None:
+            error = reading.response.error
+            detail = "no answer" if error is None else error.kind
             raise AppError("parse_failed", "invalid", detail=detail)
-        draft = context.draft(
-            final.reading.events, len(final.reading.issues), final.unparsed, final.questions
-        )
-        names = {person.key: person.name for person in project.definition.team}
-        doubtful = tuple(
-            i for i, a in enumerate(draft.absences) if not named_in(names.get(a.person, ""), text)
-        )
-        return draft.model_copy(update={"doubtful": doubtful})
+        return draft(reading, context)
 
     def test(self) -> str:
         """Ask the configured model for a fixed answer, past the cache's replay (a connection
@@ -658,429 +659,18 @@ def with_team_roles(text: str, roles: Mapping[str, int] | None) -> str:
     )
 
 
+def _voice_key(settings: LlmSettings) -> Secret | None:
+    """The key for recordings: Groq's key for them, else the provider's if it is Groq."""
+    if settings.groq_key:
+        return Secret(settings.groq_key)
+    if settings.provider == "groq" and settings.api_key:
+        return Secret(settings.api_key)
+    return None
+
+
 class Ping(BaseModel):
     """The answer of a connection test."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     ok: bool
-
-
-class Question(BaseModel):
-    """What the parser could not decide alone about a clause of a message (WP12): somebody not
-    in the team is absent, or a task that grew fits several activities."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    kind: Literal["unknown_person", "ambiguous_task"]
-    clause: int = Field(ge=1)
-    return_day: int | None = None
-    candidates: tuple[int, ...] = ()
-    extra_days: float | None = Field(default=None, allow_inf_nan=False)
-    factor: float | None = Field(default=None, allow_inf_nan=False)
-
-
-class LiveMessageEvents(BaseModel):
-    """The output schema of the application's parser (WP12): the events of spec section 10.2,
-    the numbers of the clauses turned into no event, and the questions; no text of the
-    message, so that a cache without prompts holds none (invariant 7)."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    events: tuple[AbsenceEvent | WorkIncreaseEvent | NewActivityEvent, ...]
-    unparsed: tuple[int, ...] = ()
-    questions: tuple[Question, ...] = ()
-
-
-class QuestionDraft(BaseModel):
-    """A question for the manager about a clause of the message: who is the absent person (the
-    absence's dates are known), or which task grew (the candidates' keys and the growth)."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    kind: Literal["unknown_person", "ambiguous_task"]
-    clause: int
-    first_day: date | None = None
-    return_date: date | None = None
-    candidates: tuple[str, ...] = ()
-    extra_days: float | None = None
-    factor: float | None = None
-
-
-class MessageDraft(BaseModel):
-    """The events read from a check-in message, as check-in reports to confirm, the number of
-    issues the parser's last answer still had, the numbers of the clauses it turned into
-    nothing and its questions (WP12: nothing is dropped silently). It holds no text of the
-    message; the page shows the clauses from `clauses`, kept in memory only."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    absences: tuple[AbsenceReport, ...] = ()
-    increases: tuple[WorkIncreaseReport, ...] = ()
-    new_tasks: tuple[NewTaskReport, ...] = ()
-    issues: int = 0
-    unparsed: tuple[int, ...] = ()
-    questions: tuple[QuestionDraft, ...] = ()
-    doubtful: tuple[int, ...] = ()  # absences whose person the message does not name (WP12)
-
-
-MAX_CLAUSES = 20
-CONJUNCTIONS = {
-    "pl": r",?\s+(?:a|ale|oraz|natomiast)\s+",
-    "en": r",\s+(?:and|but|while)\s+",
-}
-
-
-NAME_STEM = 3  # letters of a name a word must start with: "Ani" names Ania, "Tomka" Tomasz
-
-
-def named_in(name: str, text: str) -> bool:
-    """Whether a message names a person: a word of it starts as a part of the name does (its
-    first three letters, so that Polish case forms match: "Ani", "Tomka"); WP12: a small model gave
-    Marek's absence to Tomasz, and the review now shows such an absence as one to check."""
-    words = [w.casefold() for w in re.findall(r"\w+", text)]
-    stems = [part.casefold()[:NAME_STEM] for part in name.split() if len(part) >= 2]
-    return any(word.startswith(stem) for stem in stems for word in words)
-
-
-def split_clauses(text: str, language: str = "en") -> tuple[str, ...]:
-    """The clauses of a message, numbered from 1 in the prompt (WP12): its sentences, split
-    further at a semicolon and at a conjunction that joins two statements ("..., a testy
-    potrwają"), at most `MAX_CLAUSES`."""
-    parts = re.split(r"(?<=[.!?;])\s+|\n+", text.strip())
-    joiner = re.compile(CONJUNCTIONS.get(language, CONJUNCTIONS["en"]), re.IGNORECASE)
-    clauses = [c.strip(" ,;") for part in parts for c in joiner.split(part)]
-    return tuple(c for c in clauses if c)[:MAX_CLAUSES]
-
-
-@dataclass(frozen=True)
-class LiveRound:
-    """A round of the application's parser: the answer, the reading of its events, and its
-    valid clause numbers and questions."""
-
-    response: LlmResponse[LiveMessageEvents]
-    reading: Reading
-    unparsed: tuple[int, ...]
-    questions: tuple[Question, ...]
-
-
-def parse_live(
-    client: LlmClient,
-    message: TeamMessage,
-    context: "LiveContext",
-    *,
-    seed: int,
-    settings: ParseSettings,
-) -> LiveRound:
-    """The parser of spec section 10.2 (`interpret.events.parse`) with the application's two
-    more fields: its prompt with the addendum `events_live`, its schema, and the issues of the
-    clause numbers and questions in its repair rounds; the research parser is unchanged."""
-    base = load_prompt(EVENTS_PROMPT, settings.prompt_version)
-    addendum = load_prompt(EVENTS_LIVE_PROMPT, settings.prompt_version)
-    prompt = Prompt(EVENTS_LIVE_PROMPT, settings.prompt_version, f"{base.text}\n\n{addendum.text}")
-    repair_prompt = load_prompt(EVENTS_REPAIR_PROMPT, settings.prompt_version)
-
-    def call(messages: list[Message]) -> LlmResponse[LiveMessageEvents]:
-        return client.complete(
-            messages,
-            schema=LiveMessageEvents,
-            temperature=settings.temperature,
-            seed=seed,
-            max_tokens=settings.max_tokens,
-            validator=lambda data: live_domain_issues(data, context),
-        )
-
-    response = call(parse_messages(context, message, prompt))
-    current = live_round(response, context)
-    rounds = 0
-    while current.reading.issues and rounds < settings.max_repair_rounds:
-        rounds += 1
-        previous = cast(LlmResponse[MessageEvents], current.response)  # reads .parsed, .text
-        conversation = repair_messages(
-            context, message, previous, current.reading.issues, prompt, repair_prompt
-        )
-        try:
-            response = call(conversation)
-        except RequestTooLarge:
-            break
-        current = live_round(response, context)
-    return current
-
-
-def live_round(response: LlmResponse[LiveMessageEvents], context: "LiveContext") -> LiveRound:
-    """The events (`read_answer`), the clause numbers and the questions of an answer, with
-    every issue of either for the repair round; an answer withheld or not JSON as one issue."""
-    error = response.error
-    if error is not None and error.kind == "domain":
-        withheld = tuple(withheld_issue(detail) for detail in error.details)
-        return LiveRound(response, Reading((), withheld), (), ())
-    if error is not None and error.kind in ("empty", "json", "truncated"):
-        text = "The answer is not valid JSON or was cut off. Return the JSON object only."
-        return LiveRound(response, Reading((), (EventIssue("invalid_json", text),)), (), ())
-    data = response.parsed
-    if not isinstance(data, dict):
-        return LiveRound(response, read_answer(data, context), (), ())
-    reading = read_answer({"events": data.get("events")}, context)
-    unparsed, questions, issues = context.extras(data)
-    found = Reading(reading.events, (*reading.issues, *issues))
-    return LiveRound(response, found, unparsed, questions)
-
-
-def _items(value: object) -> list[object]:
-    return list(value) if isinstance(value, list | tuple) else []
-
-
-def live_domain_issues(data: object, context: "LiveContext") -> list[DomainIssue]:
-    """The issues a cache without prompts keeps of an answer (spec section 10): those of its
-    events and of its clause numbers and questions, as kinds and places only."""
-    if not isinstance(data, dict):
-        return [DomainIssue("invalid_field")]
-    issues = [
-        DomainIssue(issue.kind, () if issue.event is None else ("events", issue.event))
-        for issue in read_answer({"events": data.get("events")}, context).issues
-    ]
-    return issues + [DomainIssue(issue.kind, ("questions",)) for issue in context.extras(data)[2]]
-
-
-def work_left(project: LiveProject) -> dict[str, float]:
-    """The remaining work of the running tasks in days of a full crew (one decimal), as the
-    parser is shown it (spec section 10.2)."""
-    observation = project.observation()
-    world = nominal_world(observation)
-    left = {}
-    for key, j in project.activity_ids().items():
-        if observation.status[j] == RUNNING:
-            unit = max(1, sum(nominal_activity(observation, j)[1]))
-            left[key] = max(0.1, round(world.remaining[j] / unit, 1))
-    return left
-
-
-class LiveContext(Context):
-    """The parser's context (spec section 10.2) for a live project's check-in message: the
-    project's own role names, task names and team, and today the check-in date. The prompt
-    numbers working days from a Monday, so a day is shown shifted by the weekday of the
-    project's first working day (`offset`) and shifted back when read."""
-
-    def __init__(self, project: LiveProject, when: date, clauses: Sequence[str] = ()) -> None:
-        # The fields of `Context` are set here, with the live project's roles (the base class
-        # takes the narrator's role names, which a live project does not use).
-        observation = project.observation()
-        model = project.require_model()
-        calendar = project.calendar
-        ids = project.activity_ids()
-        nodes = project.nodes()
-        self.project = project
-        self.when = when
-        self.clauses = tuple(clauses)
-        self.offset = calendar.origin.weekday()
-        self.observation = observation
-        self.day = max(0, calendar.last(when)) + self.offset
-        self.names = dict(
-            sorted(
-                (ids[key], node.name)
-                for key, node in nodes.items()
-                if project.tasks[key].state != "removed"
-            )
-        )
-        members = [
-            Member(worker=w, name=person.name, role=model.role_ids[role_key(person.role)])
-            for w, person in enumerate(project.definition.team)
-        ]
-        self.roster = tuple(members)
-        self.members = {member.worker: member for member in members}
-        self.by_member_name = {member.name: member.worker for member in members}
-        self.roles = model.role_names
-        self.role_index = {normalise_role(role): k for k, role in enumerate(self.roles)}
-        self.capacities = tuple(role.capacity for role in observation.instance.roles)
-        self.sink = observation.instance.sink_id
-        self.successors = successor_lists(observation)
-        self.by_name = {normalise_name(name): j for j, name in self.names.items()}
-        left = work_left(project)
-        self.remaining = {ids[key]: days for key, days in left.items() if ids[key] in self.names}
-
-    def weekday_name(self, d: int) -> str:
-        """The weekday of the prompt's day `d` in the project's calendar (spec section 11.1,
-        v2.2.0): after a holiday it is not `d mod 5` of section 10.1."""
-        return WEEKDAYS[self.project.calendar.date_of(d - self.offset).weekday()]
-
-    def render(self, message: TeamMessage) -> str:
-        """As `Context.render`, the author being the project manager, not a team member, and
-        with the next days, the return days and the factors of more work worked out: the rules
-        of the prompt ask for this arithmetic, which a small local model gets wrong (the WP11
-        runs: day 4 for the Friday of day 14, 1.3 for 3 more of 5 days), and its repair rounds
-        cannot see why. A weekday reads as in the application (spec section 11.3, v2.1.5):
-        "until Friday" is absent through Friday, "back on Friday" is back that day."""
-        observation, t = self.observation, self.day
-        words = WEEKDAY_WORDS.get(self.project.definition.settings.language, {})
-        weekday_name = self.weekday_name
-
-        def said(before: str, d: int, form: int) -> str:
-            name = weekday_name(d)
-            return f"{before} {name}" + (f" ({words[name][form]})" if name in words else "")
-
-        days = range(t + 1, t + NEXT_DAYS + 1)
-        coming = ", ".join(said(f"day {d}", d, 0) for d in days)
-        returns = "; ".join(
-            f"{said('until', d, 1)} → {d + 1}, {said('back on', d, 2)} → {d}" for d in days
-        )
-        calendar = self.project.calendar
-        months = MONTH_WORDS.get(self.project.definition.settings.language)
-
-        def on(d: int) -> str:
-            day = calendar.date_of(d - self.offset)
-            text = f"{day.day} {day.strftime('%B')} {day.year}"
-            return text + (f" ({day.day} {months[day.month - 1]})" if months else "")
-
-        dated = "; ".join(
-            f"until {on(d)} → {d + 1}, back on {on(d)} → {d}"
-            for d in range(t + 1, t + DATED_DAYS + 1)
-        )
-        lines = [
-            f"Today is day {t}, a {weekday_name(t)}. The next working days: {coming}.",
-            f"The return_day by date (holidays left out; a date is not a day number): {dated}.",
-            'In these messages "until <weekday>" means absent through that day, so return_day is '
-            'the next working day; "back on <weekday>" means return_day is that day. The '
-            f"return_day by weekday: {returns}.",
-            "",
-            "Team roster (worker id and name per role; * marks people absent today):",
-        ]
-        for k, role in enumerate(self.roles):
-            people = [
-                f"{m.worker} {m.name}{'' if observation.present[m.worker] else '*'}"
-                for m in self.roster
-                if m.role == k
-            ]
-            lines.append(f"- {role}: {', '.join(people)}")
-        lines += ["", "Activities (id, name, status; running ones with their remaining work):"]
-        for j, name in self.names.items():
-            entry = f'{j} "{name}": {STATUS_TEXT[observation.status[j]]}'
-            if j in self.remaining:
-                left = self.remaining[j]
-                factors = ", ".join(
-                    f"{d} day{'s' if d > 1 else ''} {(left + d) / left:.2f}" for d in MORE_DAYS
-                )
-                entry += (
-                    f", {left:.1f} days of work left; if it takes N days longer, the factor is: "
-                    f"{factors}"
-                )
-            lines.append(entry)
-        author = f"the project manager on day {t} ({weekday_name(t)})"
-        lines += ["", f"Message from {author}:", message.text]
-        if self.clauses:
-            lines += ["", "The message in numbered clauses:"]
-            lines += [f"[{n}] {clause}" for n, clause in enumerate(self.clauses, start=1)]
-        return "\n".join(lines)
-
-    def extras(
-        self, data: Mapping[str, object]
-    ) -> tuple[tuple[int, ...], tuple[Question, ...], list[EventIssue]]:
-        """The valid clause numbers and questions of an answer, and the issues of the others:
-        a clause out of range, an unknown activity, fewer than two candidates, a growth that is
-        not one, a return day outside the bounds of spec section 10.2."""
-        n, t = len(self.clauses), self.day
-        issues: list[EventIssue] = []
-        unparsed: list[int] = []
-        for value in _items(data.get("unparsed")):
-            if isinstance(value, int) and 1 <= value <= n and value not in unparsed:
-                unparsed.append(value)
-            else:
-                issues.append(
-                    EventIssue("invalid_field", f"unparsed: {value!r} is no clause number 1-{n}.")
-                )
-        questions: list[Question] = []
-        for i, raw in enumerate(_items(data.get("questions"))):
-            where = f"questions[{i}]"
-            try:
-                question = Question.model_validate(raw)
-            except ValueError:
-                issues.append(EventIssue("invalid_field", f"{where} does not match the format."))
-                continue
-            problem = None
-            if question.clause > n:
-                problem = f"{where} names clause {question.clause}; there are {n}."
-            elif question.kind == "unknown_person":
-                r = question.return_day
-                if r is not None and not t < r <= t + 365:
-                    problem = f"{where} has a return_day that is not after today (day {t})."
-            else:
-                known = [j for j in dict.fromkeys(question.candidates) if j in self.names]
-                if len(known) < 2:
-                    problem = f"{where} needs two or more candidate activity ids."
-                elif (
-                    (question.extra_days is None) == (question.factor is None)
-                    or (question.extra_days is not None and question.extra_days <= 0)
-                    or (question.factor is not None and question.factor <= 1)
-                ):
-                    problem = f"{where} needs extra_days above 0 or a factor above 1."
-                else:
-                    question = question.model_copy(update={"candidates": tuple(known)})
-            if problem is None:
-                questions.append(question)
-            else:
-                issues.append(EventIssue("invalid_field", problem))
-        return tuple(unparsed), tuple(questions), issues
-
-    def draft(
-        self,
-        events: Sequence[object],
-        issues: int,
-        unparsed: Sequence[int] = (),
-        questions: Sequence[Question] = (),
-    ) -> MessageDraft:
-        """The accepted events as check-in reports (person and task keys, calendar dates), the
-        clauses turned into nothing and the questions for the manager."""
-        project = self.project
-        calendar = project.calendar
-        keys = {j: key for key, j in project.activity_ids().items()}
-        people = [person.key for person in project.definition.team]
-        absences, increases, new_tasks = [], [], []
-        for event in events:
-            match event:
-                case AbsenceEvent(worker=w, return_day=r) if w < len(people):
-                    back = None if r is None else calendar.date_of(r - self.offset)
-                    absences.append(
-                        AbsenceReport(person=people[w], first_day=self.when, return_date=back)
-                    )
-                case WorkIncreaseEvent(activity=j, factor=factor) if j in keys and factor > 1:
-                    increases.append(WorkIncreaseReport(task=keys[j], factor=round(factor, 2)))
-                case NewActivityEvent() if event.duration >= 1:
-                    new_tasks.append(
-                        NewTaskReport(
-                            name=event.name.strip()[:120],
-                            duration=event.duration,
-                            crew={role: count for role, count in event.crew.items() if count > 0},
-                            after=None if event.after is None else keys.get(event.after),
-                            before=None if event.before is None else keys.get(event.before),
-                        )
-                    )
-        drafts = []
-        for question in questions:
-            if question.kind == "unknown_person":
-                r = question.return_day
-                back = None if r is None else calendar.date_of(r - self.offset)
-                drafts.append(
-                    QuestionDraft(
-                        kind=question.kind,
-                        clause=question.clause,
-                        first_day=self.when,
-                        return_date=back,
-                    )
-                )
-            else:
-                drafts.append(
-                    QuestionDraft(
-                        kind=question.kind,
-                        clause=question.clause,
-                        candidates=tuple(keys[j] for j in question.candidates if j in keys),
-                        extra_days=question.extra_days,
-                        factor=question.factor,
-                    )
-                )
-        return MessageDraft(
-            absences=tuple(absences),
-            increases=tuple(increases),
-            new_tasks=tuple(new_tasks),
-            issues=issues,
-            unparsed=tuple(unparsed),
-            questions=tuple(drafts),
-        )

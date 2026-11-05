@@ -677,13 +677,10 @@ def good_answer(payload: dict[str, Any]) -> str:
                 ],
             }
         )
-    if system.startswith("You turn"):
+    if system.startswith("You read a project manager's status report"):
         worker = re.search(r"(\d+) Ala", user)
-        return json.dumps(
-            {"events": [{"type": "absence", "worker": int(worker[1]), "return_day": None}]}
-            if worker
-            else {"events": []}
-        )
+        absence = {"type": "absence", "clause": 1, "person": int(worker[1]) if worker else 0}
+        return json.dumps({"items": [absence] if worker else []})
     label = re.search(r"chosen[^:]*: *(\S+)", user, re.IGNORECASE)
     return json.dumps(
         {

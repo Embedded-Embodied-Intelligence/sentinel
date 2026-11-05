@@ -453,6 +453,14 @@ def read_checkin(form: Form, current: Mapping[str, tuple[str, float | None]]) ->
     for value in form.getlist("msg_new"):
         if value:
             new_tasks.append(NewTaskReport.model_validate_json(value))
+    # A task confirmed from a message fills its row, which the report above holds (WP14); one
+    # without a row on the page is reported as confirmed.
+    shown = set(form.getlist("shown"))
+    for value in form.getlist("msg_task"):
+        if value:
+            confirmed = TaskReport.model_validate_json(value)
+            if confirmed.task not in shown and all(r.task != confirmed.task for r in reports):
+                reports.append(confirmed)
     if errors or when is None:
         return CheckinForm(None, errors)
     checkin = CheckIn(

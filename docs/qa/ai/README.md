@@ -15,3 +15,24 @@ every step (`shots/<provider>/`). Results and their reading: `docs/reports/WP11.
 
 Each log ends with the sweep of the data directory, the caches, the server's log and the served
 pages for the absence reason of the message (invariant 7): no match in any run.
+
+## Check-in messages and recordings (WP14)
+
+`messages-pl.jsonl` holds 30 Polish status reports on the usability test's project (as planned,
+and after the owner's report of 4 November) and the demo's showcase, each with the items its
+review should show; `scripts/messages_eval.py` reads them by the application's own path and
+scores each item (type, task or person, dates and values exact; an item the review adds counts
+against it; a date shown ticked without a question that is not the expected one is counted
+apart). Results and their reading: `docs/reports/WP14.md`.
+
+| Files | Command | What it shows |
+| --- | --- | --- |
+| `messages-eval-before-*.json` | `uv run python scripts/messages_eval.py openrouter --label before` (`ollama --limit 10`) at 30d9df3 | the parser of 1.4.1 (day numbers, absences, growth and new tasks only) |
+| `messages-eval-after1-openrouter.json` | the same on the first reader of 1.5.0 | scored against the first expectations (four "od poniedziałku" as the next Monday) |
+| `messages-eval-after-*.json` | `uv run python scripts/messages_eval.py openrouter --label after` (`ollama --limit 10`) | the reader of 1.5.0: dates settled by code, progress, finishes and starts |
+| `voice-check.json` | `uv run python scripts/voice_check.py` | the owner's message recorded (Windows' Polish voice, 15 s) written out by Groq's Whisper and read by gpt-oss-120b, through the services and in the browser in demo mode by message and by voice |
+
+`--rescore <file>` scores a stored run again against the current expectations without a call.
+The owner's message recording is `tests/fixtures/owner_message_pl.wav` (System.Speech, voice
+"Microsoft Paulina Desktop", 16 kHz mono PCM, from the text of m01); gpt-oss-120b's recorded
+answer to it is `tests/fixtures/owner_message_answer.json`.

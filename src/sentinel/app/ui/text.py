@@ -121,6 +121,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "job.message": ("The AI is reading the message…", "AI czyta wiadomość…"),
     "job.llm_test": ("Testing the connection…", "Sprawdzam połączenie…"),
+    "job.voice_test": ("Testing recordings…", "Sprawdzam nagrania…"),
     "job.explain": ("The AI is writing an explanation…", "AI pisze wyjaśnienie…"),
     # ---- start page
     "start.title": ("Your projects", "Twoje projekty"),
@@ -400,6 +401,34 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Klucz jest zapisany. Wpisz nowy, aby go zastąpić.",
     ),
     "settings.forget_key": ("Remove the saved key", "Usuń zapisany klucz"),
+    # recordings (WP14, ADR-0031)
+    "settings.voice": ("Voice recordings", "Nagrania głosowe"),
+    "settings.voice_lead": (
+        "A microphone beside a message box turns speech into text with Groq's Whisper "
+        "(whisper-large-v3-turbo). The recording goes to Groq in the USA, as a typed message goes "
+        "to a cloud model; neither the recording nor its text is kept here. With Groq as the AI "
+        "provider its key serves; with another provider give a Groq key here.",
+        "Mikrofon obok pola wiadomości zamienia mowę na tekst przez Whisper w Groq "
+        "(whisper-large-v3-turbo). Nagranie trafia do Groq w USA, tak jak wpisana wiadomość "
+        "trafia do modelu w chmurze; ani nagrania, ani jego tekstu tu nie zapisujemy. Gdy "
+        "dostawcą AI jest Groq, wystarczy jego klucz; przy innym dostawcy podaj tu klucz Groq.",
+    ),
+    "settings.groq_key": ("Groq key for recordings", "Klucz Groq do nagrań"),
+    "settings.groq_key_hint": (
+        "A key from console.groq.com, stored only on this server; empty: no recordings, unless "
+        "Groq is the AI provider.",
+        "Klucz z console.groq.com, przechowywany tylko na tym serwerze; puste: bez nagrań, chyba "
+        "że dostawcą AI jest Groq.",
+    ),
+    "settings.forget_groq_key": (
+        "Remove the saved key for recordings",
+        "Usuń zapisany klucz do nagrań",
+    ),
+    "settings.voice_test": ("Test recordings", "Sprawdź nagrania"),
+    "settings.voice_ok": (
+        "Groq wrote out a test recording with {model}. Recordings work.",
+        "Groq przepisał nagranie próbne modelem {model}. Nagrania działają.",
+    ),
     "settings.test": ("Test the connection", "Sprawdź połączenie"),
     "settings.test_ok": (
         "The model {model} answered. The connection works.",
@@ -1042,8 +1071,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "checkin.was_due": ("was due to start on {date}", "miało ruszyć {date}"),
     "checkin.or_by_hand": ("or fill it in by hand:", "albo uzupełnij ręcznie:"),
     "checkin.message_placeholder": (
-        "For example: Bartek is away until Monday, the API will take 2 more days.",
-        "np. Bartka nie będzie do poniedziałku, a API zajmie jeszcze 2 dni dłużej.",
+        "For example: the API is about half done, Bartek is away from tomorrow until Friday.",
+        "np. API jest w połowie, a Bartka od jutra do piątku nie będzie.",
     ),
     "checkin.changes.zero": ("No changes", "Bez zmian"),
     "checkin.changes.one": ("{n} change", "{n} zmiana"),
@@ -1162,6 +1191,73 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Jeśli coś z tego jest ważne, dodaj to ręcznie w częściach poniżej.",
     ),
     "checkin.message_clause": ("part {n} of the message", "część {n} wiadomości"),
+    # the items read from a message (WP14): a task, an absence with its working days
+    "checkin.item.done": ("“{task}”: done on {date}", "„{task}”: gotowe {date}"),
+    "checkin.item.progress": (
+        "“{task}”: in progress, {percent} % done",
+        "„{task}”: w toku, wykonano {percent} %",
+    ),
+    "checkin.item.started": ("“{task}”: in progress since {date}", "„{task}”: w toku od {date}"),
+    "checkin.item.started_progress": (
+        "“{task}”: in progress since {date}, {percent} % done",
+        "„{task}”: w toku od {date}, wykonano {percent} %",
+    ),
+    "checkin.item.in_progress": ("“{task}”: in progress", "„{task}”: w toku"),
+    "checkin.item.away": (
+        "{person}: away from {first}, back on {back} ({days})",
+        "{person}: nieobecność od {first}, wraca {back} ({days})",
+    ),
+    "checkin.item.away_open": (
+        "{person}: away from {first}, return not known",
+        "{person}: nieobecność od {first}, powrót nieznany",
+    ),
+    "checkin.item.away_dates": (
+        "away from {first}, back on {back} ({days})",
+        "nieobecność od {first}, wraca {back} ({days})",
+    ),
+    "checkin.item.away_dates_open": ("away from {first}", "nieobecność od {first}"),
+    "checkin.item.workdays.one": ("{n} working day", "{n} dzień roboczy"),
+    "checkin.item.workdays.few": ("{n} working days", "{n} dni robocze"),
+    "checkin.item.workdays.many": ("{n} working days", "{n} dni roboczych"),
+    "checkin.message_unchecked": (
+        "Nothing in the message confirms this date: tick it only if it is right.",
+        "Nic w wiadomości nie potwierdza tej daty: zaznacz tylko, jeśli się zgadza.",
+    ),
+    "checkin.message_tasks_filled": (
+        "The ticked tasks are filled into their rows below, where you can change them.",
+        "Zaznaczone zadania wpisałem w ich wiersze poniżej; tam możesz je zmienić.",
+    ),
+    "checkin.message_date_question": (
+        "Which date does {clause} mean?",
+        "Którą datę oznacza fragment {clause}?",
+    ),
+    "checkin.message_date.non_working": (
+        "{date} is not a working day ({why}).",
+        "{date} nie jest dniem roboczym ({why}).",
+    ),
+    "checkin.message_date.holiday": ("a public holiday", "święto"),
+    "checkin.message_date.weekend": ("a weekend", "weekend"),
+    "checkin.message_date.day_off": ("a day off of the project", "dzień wolny w projekcie"),
+    "checkin.message_date.mismatch": (
+        "{weekday} does not match the date {date}.",
+        "{weekday} nie pasuje do daty {date}.",
+    ),
+    "checkin.message_date.ambiguous": (
+        "It can mean two days: {dates}.",
+        "Może chodzić o dwa dni: {dates}.",
+    ),
+    "checkin.message_date.or": (" or ", " albo "),
+    "checkin.message_date.two_ends": (
+        "“Until” and “back” give different return dates.",
+        "„Do” i „wraca” dają różne daty powrotu.",
+    ),
+    "weekday.0": ("Monday", "Poniedziałek"),
+    "weekday.1": ("Tuesday", "Wtorek"),
+    "weekday.2": ("Wednesday", "Środa"),
+    "weekday.3": ("Thursday", "Czwartek"),
+    "weekday.4": ("Friday", "Piątek"),
+    "weekday.5": ("Saturday", "Sobota"),
+    "weekday.6": ("Sunday", "Niedziela"),
     "checkin.saved_as": (
         "{typed} % → saved as {saved} %, {done} of {total} days: progress is kept in whole days.",
         "{typed} % → zapisze się {saved} %, {done} z {total} dni: postęp liczy się w pełnych "
@@ -1187,12 +1283,44 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Co się wydarzyło? Opisz to zwykłymi słowami.",
     ),
     "checkin.message_hint": (
-        "The AI turns it into absences, growing tasks and new tasks; you confirm each one before "
-        "saving.",
-        "AI zamieni to na nieobecności, wydłużone i nowe zadania; każde z nich potwierdzasz "
-        "przed zapisaniem.",
+        "The AI turns it into task progress, absences, growing tasks and new tasks; you confirm "
+        "each one before saving.",
+        "AI zamieni to na postęp zadań, nieobecności, wydłużone i nowe zadania; każde z nich "
+        "potwierdzasz przed zapisaniem.",
     ),
     "checkin.message_read": ("Process the message", "Przetwórz wiadomość"),
+    "voice.start": ("Record by voice", "Nagraj głosem"),
+    "voice.stop": ("Stop", "Zatrzymaj"),
+    "voice.recording": ("Recording… speak now.", "Nagrywam… mów teraz."),
+    "voice.sending": ("Writing out the recording…", "Przepisuję nagranie…"),
+    "voice.done": (
+        "The text is in the box: read it, correct it, and only then process it.",
+        "Tekst jest w polu: przeczytaj go, popraw i dopiero wtedy przetwórz.",
+    ),
+    "voice.limit": (
+        "The recording stopped at its limit of {seconds} seconds.",
+        "Nagranie zatrzymało się po limicie {seconds} sekund.",
+    ),
+    "voice.denied": (
+        "The browser did not allow the microphone: allow it beside the address bar and try "
+        "again, or type the message.",
+        "Przeglądarka nie zezwoliła na mikrofon: zezwól na niego obok paska adresu i spróbuj "
+        "ponownie albo wpisz wiadomość.",
+    ),
+    "voice.no_mic": (
+        "No microphone was found; type the message instead.",
+        "Nie znaleziono mikrofonu; wpisz wiadomość.",
+    ),
+    "voice.failed": (
+        "The recording could not be written out; try again or type the message.",
+        "Nie udało się przepisać nagrania; spróbuj ponownie albo wpisz wiadomość.",
+    ),
+    "voice.privacy": (
+        "The recording goes to Groq (USA), which writes it out; neither the recording nor its "
+        "text is kept here.",
+        "Nagranie trafia do Groq (USA), który zamienia je na tekst; ani nagrania, ani tekstu "
+        "nie zapisujemy.",
+    ),
     "checkin.message_days.one": ("about {n} more day", "ok. {n} dzień więcej"),
     "checkin.message_days.few": ("about {n} more days", "ok. {n} dni więcej"),
     "checkin.message_days.many": ("about {n} more days", "ok. {n} dni więcej"),

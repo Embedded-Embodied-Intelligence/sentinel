@@ -24,6 +24,7 @@ LOG = logging.getLogger("sentinel.app")
 LANG_COOKIE = "sentinel_lang"
 DEFAULT_LANGUAGE: Language = "pl"
 STATIC_DIR = Path(__file__).parent / "static"
+VOICE_LIMIT_S = 90  # seconds of one recording (WP14): the page stops it, the server refuses more
 STATIC_PREFIX = "/static/"
 HTMX = "htmx-2.0.11.min.js"
 # HTMX swaps error responses too (into #alerts when the server retargets them), so a refused
@@ -163,6 +164,8 @@ class Ui:
             "demo": self.config.demo,
             "demo_hours": round(self.config.limits.sandbox_hours),
             "llm": self.services.llm.available,
+            "voice": self.services.llm.voice,  # recordings can be written out (WP14)
+            "voice_limit": VOICE_LIMIT_S,
             "version": self.version,
             "htmx": HTMX,
             "htmx_config": HTMX_CONFIG,

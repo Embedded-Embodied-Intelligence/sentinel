@@ -1,0 +1,96 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "transcription": "whisper-large-v3-turbo",
+  "services": {
+    "recording_s": 15.050000384,
+    "transcription_s": 0.46,
+    "transcript": "Warsztat z klientem skończył się wczoraj, we wtorek 3 listopada Baza danych i API trwa, zrobiono około 15% Bartosz Kowalski od jutra jest nieobecny i wraca w poniedziałek 16 listopada",
+    "reading_s": 1.88,
+    "items": [
+      {
+        "subject": [
+          "absence",
+          "Bartosz Kowalski"
+        ],
+        "form": "item",
+        "from": "2026-11-05",
+        "back": "2026-11-16"
+      },
+      {
+        "subject": [
+          "task",
+          "Warsztat z klientem"
+        ],
+        "form": "item",
+        "status": "done",
+        "finish": "2026-11-03"
+      },
+      {
+        "subject": [
+          "task",
+          "Baza danych i API"
+        ],
+        "form": "item",
+        "status": "in_progress",
+        "percent": 15
+      }
+    ],
+    "exact": 3,
+    "expected": 3,
+    "wrong_dates": 0
+  },
+  "browser": {
+    "message": {
+      "reading_s": 3.12,
+      "review": [
+        "„Warsztat z klientem”: gotowe wt. 3 lis",
+        "„Baza danych i API”: w toku, wykonano 15 %",
+        "Bartosz Kowalski: nieobecność od czw. 5 lis, wraca pon. 16 lis (6 dni roboczych)"
+      ],
+      "rows": {
+        "workshop_done": true,
+        "workshop_finish": "2026-11-03",
+        "api_in_progress": true,
+        "api_percent": "15"
+      },
+      "saved": true
+    },
+    "voice": {
+      "recorded_s": 16.2,
+      "stop_to_text_s": 0.82,
+      "transcript": "Warsztat z klientem skończył się wczoraj, we wtorek 3 listopada. Baza danych i API trwa, zrobiono około 15%. Bartosz Kowalski od jutra jest nieobecny i wraca w poniedziałek 16 listopada.",
+      "status": "Tekst jest w polu: przeczytaj go, popraw i dopiero wtedy przetwórz.",
+      "reading_s": 2.54,
+      "review": [
+        "„Warsztat z klientem”: gotowe wt. 3 lis",
+        "„Baza danych i API”: w toku, wykonano 15 %",
+        "Bartosz Kowalski: nieobecność od czw. 5 lis, wraca pon. 16 lis (6 dni roboczych)"
+      ],
+      "rows": {
+        "workshop_done": true,
+        "workshop_finish": "2026-11-03",
+        "api_in_progress": true,
+        "api_percent": "15"
+      },
+      "saved": true
+    },
+    "log": [
+      "| 3. Absence (with task 2) | the plan 00:43:18 | the saved status report 00:43:23 | 5 s (0:05) | 3 | 0 |",
+      "| 4. Recommendation | the saved status report 00:43:23 | the decision: not reached | – | – | – |",
+      "| 5. Simulator | the saved status report 00:43:23 | the end of the simulation: not reached | – | – | – |",
+      "| 00:43:19 | Opened the status report form (“P1 Aplikacja rezerwacji wizyt”) |  |",
+      "| 00:43:23 | Sent the status report (“P1 Aplikacja rezerwacji wizyt”) |  |",
+      "| 00:43:23 | Status report saved: “P1 Aplikacja rezerwacji wizyt” | as of Wed 4 Nov 2026; Warsztat z klientem: done on 3 Nov; Baza danych i API: in progress 15 %; Bartosz Kowalski absent from 5 Nov, back 16 Nov |",
+      "| 00:43:28 | Opened the status report form (“P2 Aplikacja rezerwacji wizyt”) |  |",
+      "| 00:43:44 | Recorded a message of 16 s (“P2 Aplikacja rezerwacji wizyt”) |  |",
+      "| 00:43:48 | Sent the status report (“P2 Aplikacja rezerwacji wizyt”) |  |",
+      "| 00:43:48 | Status report saved: “P2 Aplikacja rezerwacji wizyt” | as of Wed 4 Nov 2026; Warsztat z klientem: done on 3 Nov; Baza danych i API: in progress 15 %; Bartosz Kowalski absent from 5 Nov, back 16 Nov |"
+    ]
+  },
+  "usage": {
+    "calls": 3,
+    "prompt_tokens": 10315,
+    "completion_tokens": 1276,
+    "cost_usd": 0.002313
+  }
+}

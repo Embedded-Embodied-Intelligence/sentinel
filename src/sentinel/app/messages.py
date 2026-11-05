@@ -271,6 +271,21 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "Settings page.",
         "llm_quota": "The AI provider's limit or credit has run out; try again later or top it up.",
         "llm_too_long": "The text is too long for this AI model; shorten it.",
+        # recordings (WP14, ADR-0031)
+        "voice_disabled": "Recordings need a Groq key on the Settings page.",
+        "voice_empty": "The recording is empty; record again.",
+        "voice_too_long": "The recording is too long; record at most {seconds} seconds.",
+        "voice_type": "The browser sent a recording in a format that cannot be read.",
+        "voice_key": "Groq refused the key for recordings; check it on the Settings page.",
+        "voice_audio": "The recording could not be read; record again.",
+        "voice_quota": "Groq's limit for recordings is reached; try again later.",
+        "voice_unreachable": "Groq cannot be reached for the recording; try again later or "
+        "type the message.",
+        "voice_timeout": "The recording was not written out in time; try again or type the "
+        "message.",
+        "voice_failed": "The recording could not be written out; try again later or type the "
+        "message.",
+        "voice_nothing": "Nothing was heard in the recording; speak closer to the microphone.",
         "settings_key_needed": "This provider needs an API key.",
         "demo_forbidden": "This is not available in the demo.",
         "settings_invalid": "The AI settings are not valid: {detail}.",
@@ -518,6 +533,19 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_quota": "Skończył się limit lub środki u dostawcy AI; spróbuj później albo doładuj "
         "konto.",
         "llm_too_long": "Tekst jest za długi dla tego modelu AI; skróć go.",
+        "voice_disabled": "Nagrania wymagają klucza Groq w Ustawieniach.",
+        "voice_empty": "Nagranie jest puste; nagraj jeszcze raz.",
+        "voice_too_long": "Nagranie jest za długie; nagraj najwyżej {seconds} sekund.",
+        "voice_type": "Przeglądarka wysłała nagranie w formacie, którego nie da się odczytać.",
+        "voice_key": "Groq odrzucił klucz do nagrań; sprawdź go w Ustawieniach.",
+        "voice_audio": "Nie udało się odczytać nagrania; nagraj jeszcze raz.",
+        "voice_quota": "Osiągnięto limit nagrań w Groq; spróbuj później.",
+        "voice_unreachable": "Nie można połączyć się z Groq, by przepisać nagranie; spróbuj "
+        "później albo wpisz wiadomość.",
+        "voice_timeout": "Przepisanie nagrania trwało za długo; spróbuj jeszcze raz albo wpisz "
+        "wiadomość.",
+        "voice_failed": "Nie udało się przepisać nagrania; spróbuj później albo wpisz wiadomość.",
+        "voice_nothing": "W nagraniu nic nie słychać; mów bliżej mikrofonu.",
         "settings_key_needed": "Ten dostawca wymaga klucza API.",
         "demo_forbidden": "Ta funkcja nie jest dostępna w wersji demonstracyjnej.",
         "settings_invalid": "Ustawienia AI są nieprawidłowe: {detail}.",

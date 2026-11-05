@@ -125,6 +125,30 @@ def server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Server]:
         yield from serve(config)
 
 
+def create_project(page: Any, task: Task, name: str) -> None:
+    """Task 1 of the protocol: the project from the CSV template and the pasted team, planned."""
+    click(task, page.get_by_role("link", name="Nowy projekt").first)  # beside the showcase
+    fill(task, page.get_by_label("Nazwa projektu"), name)
+    fill(task, page.get_by_label("Data rozpoczęcia"), "2026-11-02")
+    fill(task, page.get_by_label("Termin", exact=True), "2026-12-04")
+    click(task, page.get_by_role("button", name="Dalej"))
+    page.wait_for_url(re.compile(r"/setup/team$"))
+    click(task, page.get_by_text("Wklej listę osób"))
+    fill(task, page.get_by_label("Jedna osoba w wierszu: imię, rola"), TEAM)
+    click(task, page.get_by_role("button", name="Dodaj te osoby"))
+    expect(page.get_by_label("Imię i nazwisko osoby 5")).to_have_value("Ewa Zielińska")
+    click(task, page.get_by_role("button", name="Dalej"))
+    page.wait_for_url(re.compile(r"/setup/tasks$"))
+    click(task, page.get_by_role("link", name="Zaimportuj arkusz"))
+    page.get_by_label("Plik arkusza (CSV)").set_input_files(str(CSV))
+    task.clicks += 1  # choosing the file
+    click(task, page.get_by_role("button", name="Importuj zadania"))
+    page.wait_for_url(re.compile(r"tab=manual"))
+    click(task, page.get_by_role("button", name="Utwórz plan"))
+    page.wait_for_url(re.compile(r"flash=plan_ready"))
+    expect(page.locator("#forecast .headline")).to_contain_text("Szansa")
+
+
 def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
     with sync_api.sync_playwright() as playwright:
         try:
@@ -138,26 +162,7 @@ def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
         page.goto(server.base + "/")
 
         with recorder.task("Utwórz projekt z szablonu CSV") as task:
-            click(task, page.get_by_role("link", name="Nowy projekt").first)  # beside the showcase
-            fill(task, page.get_by_label("Nazwa projektu"), NAME)
-            fill(task, page.get_by_label("Data rozpoczęcia"), "2026-11-02")
-            fill(task, page.get_by_label("Termin", exact=True), "2026-12-04")
-            click(task, page.get_by_role("button", name="Dalej"))
-            page.wait_for_url(re.compile(r"/setup/team$"))
-            click(task, page.get_by_text("Wklej listę osób"))
-            fill(task, page.get_by_label("Jedna osoba w wierszu: imię, rola"), TEAM)
-            click(task, page.get_by_role("button", name="Dodaj te osoby"))
-            expect(page.get_by_label("Imię i nazwisko osoby 5")).to_have_value("Ewa Zielińska")
-            click(task, page.get_by_role("button", name="Dalej"))
-            page.wait_for_url(re.compile(r"/setup/tasks$"))
-            click(task, page.get_by_role("link", name="Zaimportuj arkusz"))
-            page.get_by_label("Plik arkusza (CSV)").set_input_files(str(CSV))
-            task.clicks += 1  # choosing the file
-            click(task, page.get_by_role("button", name="Importuj zadania"))
-            page.wait_for_url(re.compile(r"tab=manual"))
-            click(task, page.get_by_role("button", name="Utwórz plan"))
-            page.wait_for_url(re.compile(r"flash=plan_ready"))
-            expect(page.locator("#forecast .headline")).to_contain_text("Szansa")
+            create_project(page, task, NAME)
 
         with recorder.task("Kiedy projekt najprawdopodobniej się skończy?") as task:
             likely = page.locator("dl.kpis > div", has_text="Najbardziej prawdopodobny koniec")
@@ -229,6 +234,135 @@ def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
     assert len(reached) == (4 if simulator else 3)
     assert "Bartosz Kowalski absent from 5 Nov, back 16 Nov" in text
     assert f"{SUBSTITUTE} (39 % → 67 %)" in text
+
+
+OWNER = (
+    '„Warsztat z klientem" skończył się wczoraj, we wtorek 3 listopada.\n'
+    '„Baza danych i API" trwa, zrobiono około 15 %.\n'
+    "Bartosz Kowalski od jutra jest nieobecny i wraca w poniedziałek 16 listopada."
+)
+# The owner's message as Groq's Whisper wrote out its recording (WP14; scripts/voice_check.py)
+WHISPERED = (
+    "Warsztat z klientem skończył się wczoraj, we wtorek 3 listopada Baza danych i API trwa, "
+    "zrobiono około 15% Bartosz Kowalski od jutra jest nieobecny i wraca w poniedziałek 16 "
+    "listopada"
+)
+RECORDING = ROOT / "tests" / "fixtures" / "owner_message_pl.wav"
+ITEMS = (
+    "„Warsztat z klientem”: gotowe wt. 3 lis",
+    "„Baza danych i API”: w toku, wykonano 15 %",
+    "Bartosz Kowalski: nieobecność od czw. 5 lis, wraca pon. 16 lis (6 dni roboczych)",
+)
+
+
+def recorded_reader(messages: Any) -> str:
+    """gpt-oss-120b's recorded answer to the owner's message (tests/fixtures), its clause
+    numbers fitted to the message read: a recording written out has no full stops."""
+    path = ROOT / "tests" / "fixtures" / "owner_message_answer.json"
+    answer = json.loads(path.read_text("utf-8"))["answer"]
+    clauses = len(re.findall(r"^\[\d+\] ", messages[1].content, re.M))
+    items = [{**item, "clause": min(item["clause"], clauses)} for item in answer["items"]]
+    return json.dumps({**answer, "items": items}, ensure_ascii=False)
+
+
+class Whisper:
+    """Groq's Whisper as it wrote out the recording of the owner's message."""
+
+    model = "scripted"
+
+    def transcribe(
+        self, audio: bytes, content_type: str, *, language: str | None, prompt: str = ""
+    ) -> Any:
+        from sentinel.llm.whisper import Transcript
+
+        assert audio and content_type.startswith("audio/") and language == "pl"
+        assert "Bartosz Kowalski" in prompt and "Baza danych i API" in prompt
+        return Transcript(WHISPERED, 15.1, self.model)
+
+
+@pytest.fixture(scope="module")
+def talking(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Server]:
+    """The demo with its AI and recordings, the reader and Whisper scripted, on the test's day."""
+    from sentinel.llm import FakeLlmClient
+
+    data = tmp_path_factory.mktemp("usability-ai")
+    settings = {"llm": {"provider": "ollama", "groq_key": "test-key-for-recordings"}}
+    (data / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
+    config = load_config(ROOT / DEMO_CONFIG, data_dir=data, secure_cookies=False)
+
+    def reader(settings: Any, cache: Any) -> Any:
+        client = FakeLlmClient(recorded_reader, cache=cache)
+        client.model = "scripted"
+        return client
+
+    with pytest.MonkeyPatch.context() as patch:
+        for module in (
+            sentinel.app.messages,
+            sentinel.app.ui.pages,
+            sentinel.app.ui.project,
+            sentinel.app.ui.setup,
+            sentinel.app.ui.sim,
+        ):
+            patch.setattr(module, "date", Today)
+        patch.setattr(sentinel.app.ui.text, "Day", Today)
+        yield from serve(config, llm_factory=reader, transcriber=lambda key: Whisper())
+
+
+def test_task_3_by_message_and_by_voice_in_demo_mode(talking: Server) -> None:
+    """WP14: task 3 written as the owner wrote it, and spoken (Chromium's fake microphone plays
+    the recording of it): three items to confirm, the tasks filled into their rows, and the
+    report saved as task 3 by form saves it; the request log keeps the recording's length."""
+    with sync_api.sync_playwright() as playwright:
+        fake = f"--use-file-for-fake-audio-capture={RECORDING}%noloop"
+        args = ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", fake]
+        try:
+            browser = playwright.chromium.launch(env=chromium_env(), args=args)
+        except sync_api.Error:  # pragma: no cover - depends on the machine
+            pytest.skip("Chromium for Playwright cannot start (docs/deploy.md, section 4)")
+        context = browser.new_context(viewport={"width": 1280, "height": 800}, locale="pl-PL")
+        context.set_default_timeout(30_000)
+        page = context.new_page()
+        page.goto(talking.base + "/")
+        timings = {}
+        for code, way in (("P1", "message"), ("P2", "voice")):
+            page.goto(talking.base + "/")
+            create_project(page, Task(0, "setup"), f"{code} Aplikacja rezerwacji wizyt")
+            page.get_by_role("link", name="Raport statusu").first.click()
+            page.get_by_label("Stan na koniec dnia").fill("2026-11-04")
+            box = page.locator("#message")
+            if way == "message":
+                box.fill(OWNER)
+            else:
+                began = time.perf_counter()
+                page.get_by_role("button", name="Nagraj głosem").click()
+                expect(page.locator("[data-voice-live]")).to_be_visible()
+                page.wait_for_timeout(2_000)
+                page.get_by_role("button", name="Zatrzymaj").click()
+                expect(box).to_have_value(WHISPERED)
+                timings["voice"] = round(time.perf_counter() - began, 1)
+                expect(page.locator("[data-voice-status]")).to_contain_text("przeczytaj go")
+            page.get_by_role("button", name="Przetwórz wiadomość").click()
+            items = page.locator("#message-result .confirm-list li")
+            expect(items).to_have_count(3, timeout=60_000)
+            for text in ITEMS:
+                expect(page.locator("#message-result")).to_contain_text(text)
+            workshop = page.locator("fieldset.task-row", has_text="Warsztat z klientem")
+            expect(workshop.get_by_label("Gotowe", exact=True)).to_be_checked()
+            expect(workshop.get_by_label("Zakończone dnia")).to_have_value("2026-11-03")
+            api = page.locator("fieldset.task-row", has_text="Baza danych i API")
+            expect(api.get_by_label("W toku")).to_be_checked()
+            expect(api.get_by_label("Wykonana część")).to_have_value("15")
+            page.get_by_role("button", name="Zapisz raport").click()
+            page.wait_for_url(re.compile(r"flash=checkin_saved"))  # no question about the date
+        browser.close()
+    print("\nRecording (2 s) to the text in the box:", timings["voice"], "s")
+    for code in ("P1", "P2"):
+        text = usability_logs().export(talking.config.database, code, UTC)
+        assert text is not None
+        assert "Bartosz Kowalski absent from 5 Nov, back 16 Nov" in text
+        assert "Warsztat z klientem: done on 3 Nov" in text
+        assert "Baza danych i API: in progress 15 %" in text
+    assert "Recorded a message of " in text  # P2's sandbox is the same: its log holds both
 
 
 def usability_logs() -> Any:

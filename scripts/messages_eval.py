@@ -32,7 +32,8 @@ from sentinel.app.config import AppConfig
 from sentinel.app.events import replay
 from sentinel.app.io import definition_from_csv
 from sentinel.app.live import LiveProject, build_model
-from sentinel.app.llm import LlmSettingsUpdate, split_clauses, work_left
+from sentinel.app.llm import LlmSettingsUpdate
+from sentinel.app.message_reader import split_clauses, work_left
 from sentinel.app.models import AbsenceReport, CheckIn, Person, Settings, TaskReport
 from sentinel.app.services import Services
 from sentinel.app.store import EventRow
@@ -187,7 +188,8 @@ def review_items(project: LiveProject, draft: Any) -> list[Item]:
     names = {key: node.name for key, node in project.nodes().items()}
     people = {p.key: p.name for p in project.definition.team}
     left = work_left(project)
-    doubtful = set(getattr(draft, "doubtful", ()))
+    doubtful = set(getattr(draft, "doubtful", ())) | set(getattr(draft, "unchecked_absences", ()))
+    unchecked = set(getattr(draft, "unchecked_tasks", ()))
     items = []
     for i, a in enumerate(draft.absences):
         items.append(
@@ -197,15 +199,16 @@ def review_items(project: LiveProject, draft: Any) -> list[Item]:
                 {"from": _day(a.first_day), "back": _day(a.return_date)},
             )
         )
-    for report in getattr(draft, "tasks", ()):
+    for i, report in enumerate(getattr(draft, "tasks", ())):
         values: dict[str, Any] = {"status": report.status}
         if report.status == "done":
             values["finish"] = _day(report.finish)
-        else:
-            values["percent"] = None if report.percent is None else round(report.percent)
+        else:  # a start without a share is saved at 0 %, the share "not given"
+            values["percent"] = round(report.percent) if report.percent else None
         if report.start is not None:
             values["start"] = _day(report.start)
-        items.append(Item(("task", names.get(report.task, report.task)), "item", values))
+        form = "doubtful" if i in unchecked else "item"
+        items.append(Item(("task", names.get(report.task, report.task)), form, values))
     for g in draft.increases:
         values = {}
         if g.extra_days is not None:
@@ -224,29 +227,33 @@ def review_items(project: LiveProject, draft: Any) -> list[Item]:
         }
         items.append(Item(("new_task", n.name.casefold()), "item", values))
     for q in draft.questions:
-        if q.kind == "unknown_person":
-            items.append(
-                Item(
-                    ("unknown_person",),
-                    "question",
-                    {"from": _day(q.first_day), "back": _day(q.return_date)},
-                )
-            )
+        if q.kind == "unknown_person":  # its dates, or the choices of them it offers
+            firsts = sorted({_day(a.first_day) for a in q.absences}) or [_day(q.first_day)]
+            backs = sorted({str(_day(a.return_date)) for a in q.absences}) or [_day(q.return_date)]
+            values = {
+                "from": firsts[0] if len(firsts) == 1 else firsts,
+                "back": None
+                if backs in (["None"], [None])
+                else backs[0]
+                if len(backs) == 1
+                else backs,
+            }
+            items.append(Item(("unknown_person",), "question", values))
         elif q.kind == "ambiguous_task":
             items.append(
                 Item(("ambiguous", *sorted(names.get(c, c) for c in q.candidates)), "question")
             )
-        else:  # a question about a date (WP14)
-            about = getattr(q, "about", "absence")
-            subject = (
-                people.get(q.person, q.person) if about == "absence" else names.get(q.task, q.task)
-            )
-            items.append(Item(("absence" if about == "absence" else "task", subject), "question"))
+        elif q.person is not None:  # a question about a date (WP14)
+            items.append(Item(("absence", people.get(q.person, q.person)), "question"))
+        else:
+            items.append(Item(("task", names.get(q.task, q.task)), "question"))
     return items
 
 
 def same(expected: Item, found: Item) -> bool:
-    if expected.form != found.form:
+    """Whether a found item is the expected one: its type, subject and values; an item shown
+    unticked with a note ("doubtful") is one, a question is not."""
+    if (expected.form == "question") != (found.form == "question"):
         return False
     for key, value in expected.values.items():
         got = found.values.get(key)
@@ -361,8 +368,34 @@ def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "added_items": added,
         "exact_share": round(exact / (expected + added), 3) if expected + added else None,
         "wrong_dates_without_question": sum(r["wrong_dates"] for r in rows),
+        "doubtful_items": sum(
+            1 for r in rows for item in r.get("items", ()) if item["form"] == "doubtful"
+        ),
         "failed_readings": sum(1 for r in rows if "error" in r),
     }
+
+
+def rescore(path: Path) -> int:
+    """Score the items a stored run found against the current expected items, without a call:
+    the "before" runs are compared with the "after" runs on one set of expectations."""
+    results = json.loads(path.read_text("utf-8"))
+    cases = {c["id"]: c for c in read_cases(None)}
+    rows = []
+    for row in results["cases"]:
+        found = [
+            Item(
+                tuple(i["subject"]),
+                i["form"],
+                {k: v for k, v in i.items() if k not in ("subject", "form")},
+            )
+            for i in row.get("items", ())
+        ]
+        rows.append({**row, **score(expected_items(cases[row["id"]]), found)})
+    results["cases"] = rows
+    results["summary"] = summary(rows)
+    path.write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(results["summary"]), "->", path)
+    return 0
 
 
 def main() -> int:
@@ -371,7 +404,12 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="the first N reports only")
     parser.add_argument("--only", nargs="*", default=(), help="report ids, e.g. m01 m05")
     parser.add_argument("--label", default="after", help="before or after (the file name)")
+    parser.add_argument(
+        "--rescore", type=Path, default=None, help="score a stored results file again (no calls)"
+    )
     args = parser.parse_args()
+    if args.rescore is not None:
+        return rescore(args.rescore)
     key = None
     if args.provider in KEYS:
         key = load_secret(KEYS[args.provider])

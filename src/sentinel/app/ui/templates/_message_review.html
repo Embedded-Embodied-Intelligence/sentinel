@@ -1,20 +1,33 @@
 {% import "_ui.html" as ui with context %}
-{% if not (found.absences or found.increases or found.new_tasks or found.questions or found.unparsed) %}
+{% macro clause(n) %}{% if clauses and n <= clauses | length %}„{{ clauses[n - 1] }}”{% else %}{{ t("checkin.message_clause", n=n) }}{% endif %}{% endmacro %}
+{% macro away(item) %}{% if item.return_date %}{{ t("checkin.item.away", person=people.get(item.person, item.person), first=t.date(item.first_day), back=t.date(item.return_date), days=t.plural("checkin.item.workdays", workdays(item))) }}{% else %}{{ t("checkin.item.away_open", person=people.get(item.person, item.person), first=t.date(item.first_day)) }}{% endif %}{% endmacro %}
+{% macro away_dates(item) %}{% if item.return_date %}{{ t("checkin.item.away_dates", first=t.date(item.first_day), back=t.date(item.return_date), days=t.plural("checkin.item.workdays", workdays(item))) }}{% else %}{{ t("checkin.item.away_dates_open", first=t.date(item.first_day)) }}{% endif %}{% endmacro %}
+{% macro task_text(item) %}{% set name = names.get(item.task, item.task) %}{% if item.status == "done" %}{{ t("checkin.item.done", task=name, date=t.date(item.finish)) }}{% elif item.start and item.percent %}{{ t("checkin.item.started_progress", task=name, date=t.date(item.start), percent=item.percent | round | int) }}{% elif item.start %}{{ t("checkin.item.started", task=name, date=t.date(item.start)) }}{% elif item.percent %}{{ t("checkin.item.progress", task=name, percent=item.percent | round | int) }}{% else %}{{ t("checkin.item.in_progress", task=name) }}{% endif %}{% endmacro %}
+{% macro growth_text(item) %}{{ t("history.grows_factor", task=names.get(item.task, item.task), percent=((item.factor - 1) * 100) | round | int) if item.factor else t("history.grows_days", task=names.get(item.task, item.task), days=t.decimal(item.extra_days)) }}{% set days = extra_days(item) %}{% if days and item.factor %} ({% if days == days | int %}{{ t.plural("checkin.message_days", days | int) }}{% else %}{{ t("checkin.message_days_part", days=t.decimal(days)) }}{% endif %}){% endif %}{% endmacro %}
+<div{% if fresh is defined and fresh %} data-fresh-review{% endif %}>
+{% set items = found.absences or found.tasks or found.increases or found.new_tasks %}
+{% if not (items or found.questions or found.unparsed) %}
 <p class="row-list-empty">{{ t("checkin.message_nothing") }}</p>
-{% elif not (found.absences or found.increases or found.new_tasks) %}
+{% elif not items %}
 <p class="row-list-empty">{{ t("checkin.message_nothing_sure") }}</p>
 {% else %}
 <div class="review-block">
   <p class="callout-title">{{ t("checkin.message_found") }}</p>
   <ul class="confirm-list">
+    {% for item in found.tasks %}
+    {% set unchecked = loop.index0 in found.unchecked_tasks %}
+    <li><label class="check"><input type="checkbox" name="msg_task" value="{{ item.model_dump_json() }}" data-task-item="{{ item.task }}"{% if not unchecked %} checked{% endif %}>
+      <span>{{ task_text(item) }}</span>{% if unchecked %} <span class="hint">{{ t("checkin.message_unchecked") }}</span>{% endif %}</label></li>
+    {% endfor %}
     {% for item in found.absences %}
     {% set doubtful = loop.index0 in found.doubtful %}
-    <li><label class="check"><input type="checkbox" name="msg_absence" value="{{ item.model_dump_json() }}"{% if not doubtful %} checked{% endif %}>
-      <span>{% if item.return_date %}{{ t("history.away_back", person=people.get(item.person, item.person), first=t.date(item.first_day), back=t.date(item.return_date)) }}{% else %}{{ t("history.away", person=people.get(item.person, item.person), first=t.date(item.first_day)) }}{% endif %}</span>{% if doubtful %} <span class="hint">{{ t("checkin.message_doubtful") }}</span>{% endif %}</label></li>
+    {% set unchecked = loop.index0 in found.unchecked_absences %}
+    <li><label class="check"><input type="checkbox" name="msg_absence" value="{{ item.model_dump_json() }}"{% if not (doubtful or unchecked) %} checked{% endif %}>
+      <span>{{ away(item) }}</span>{% if doubtful %} <span class="hint">{{ t("checkin.message_doubtful") }}</span>{% elif unchecked %} <span class="hint">{{ t("checkin.message_unchecked") }}</span>{% endif %}</label></li>
     {% endfor %}
     {% for item in found.increases %}
     <li><label class="check"><input type="checkbox" name="msg_increase" value="{{ item.model_dump_json() }}" checked>
-      <span>{{ t("history.grows_factor", task=names.get(item.task, item.task), percent=((item.factor - 1) * 100) | round | int) }}{% set days = extra_days(item) %}{% if days %} ({% if days == days | int %}{{ t.plural("checkin.message_days", days | int) }}{% else %}{{ t("checkin.message_days_part", days=t.decimal(days)) }}{% endif %}){% endif %}</span></label></li>
+      <span>{{ growth_text(item) }}</span></label></li>
     {% endfor %}
     {% for item in found.new_tasks %}
     <li><label class="check"><input type="checkbox" name="msg_new" value="{{ item.model_dump_json() }}" checked>
@@ -22,10 +35,10 @@
     {% endfor %}
   </ul>
   {% if found.issues %}<p class="caption">{{ t("checkin.message_issues") }}</p>{% endif %}
+  {% if found.tasks %}<p class="caption">{{ t("checkin.message_tasks_filled") }}</p>{% endif %}
   <p class="caption">{{ t("checkin.message_confirm") }}</p>
 </div>
 {% endif %}
-{% macro clause(n) %}{% if clauses and n <= clauses | length %}„{{ clauses[n - 1] }}”{% else %}{{ t("checkin.message_clause", n=n) }}{% endif %}{% endmacro %}
 {% if found.questions %}
 <div class="review-block">
   <p class="callout-title">{{ t("checkin.message_questions") }}</p>
@@ -34,18 +47,43 @@
   <div class="field">
     {% if q.kind == "unknown_person" %}
     <label for="msg-q-{{ qi }}">{{ t("checkin.message_unknown_person", clause=clause(q.clause)) }}
-      <span class="hint">{% if q.return_date %}{{ t("chart.away", first=t.date(q.first_day), back=t.date(q.return_date)) }}{% else %}{{ t("chart.away_open", first=t.date(q.first_day)) }}{% endif %}</span></label>
+      <span class="hint">{% if q.absences %}{{ date_problem(q) }}{% elif q.return_date %}{{ t("chart.away", first=t.date(q.first_day), back=t.date(q.return_date)) }}{% else %}{{ t("chart.away_open", first=t.date(q.first_day)) }}{% endif %}</span></label>
     <select id="msg-q-{{ qi }}" name="msg_absence">
       <option value="">{{ t("checkin.message_skip") }}</option>
-      {% for key, name in people.items() %}<option value="{{ as_absence(q, key) }}">{{ name }}</option>{% endfor %}
+      {% for key, name in people.items() %}
+      {% if q.absences %}{% for option in q.absences %}<option value="{{ as_absence(option, key) }}">{{ name }}: {{ away_dates(option) }}</option>{% endfor %}
+      {% else %}<option value="{{ as_absence(q, key) }}">{{ name }}</option>{% endif %}
+      {% endfor %}
     </select>
-    {% else %}
+    {% elif q.kind == "ambiguous_task" %}
     <label for="msg-q-{{ qi }}">{{ t("checkin.message_ambiguous_task", clause=clause(q.clause)) }}
       <span class="hint">{% if q.extra_days %}{{ t.plural("checkin.message_days", q.extra_days | round | int) }}{% elif q.factor %}× {{ t.decimal(q.factor) }}{% endif %}</span></label>
+    {% if q.tasks %}
+    <select id="msg-q-{{ qi }}" name="msg_task" data-task-choice>
+      <option value="">{{ t("checkin.message_skip") }}</option>
+      {% for option in q.tasks %}<option value="{{ option.model_dump_json() }}" data-task-item="{{ option.task }}">{{ task_text(option) }}</option>{% endfor %}
+    </select>
+    {% else %}
     <select id="msg-q-{{ qi }}" name="msg_increase">
       <option value="">{{ t("checkin.message_skip") }}</option>
-      {% for key in q.candidates %}<option value="{{ as_growth(q, key) }}">{{ names.get(key, key) }}</option>{% endfor %}
+      {% for option in q.increases %}<option value="{{ option.model_dump_json() }}">{{ names.get(option.task, option.task) }}</option>{% endfor %}
+      {% if not q.increases %}{% for key in q.candidates %}<option value="{{ as_growth(q, key) }}">{{ names.get(key, key) }}</option>{% endfor %}{% endif %}
     </select>
+    {% endif %}
+    {% else %}
+    <label for="msg-q-{{ qi }}">{{ t("checkin.message_date_question", clause=clause(q.clause)) }}
+      <span class="hint">{{ date_problem(q) }}</span></label>
+    {% if q.tasks %}
+    <select id="msg-q-{{ qi }}" name="msg_task" data-task-choice>
+      <option value="">{{ t("checkin.message_skip") }}</option>
+      {% for option in q.tasks %}<option value="{{ option.model_dump_json() }}" data-task-item="{{ option.task }}">{{ task_text(option) }}</option>{% endfor %}
+    </select>
+    {% else %}
+    <select id="msg-q-{{ qi }}" name="msg_absence">
+      <option value="">{{ t("checkin.message_skip") }}</option>
+      {% for option in q.absences %}<option value="{{ option.model_dump_json() }}">{{ away(option) }}</option>{% endfor %}
+    </select>
+    {% endif %}
     {% endif %}
   </div>
   {% endfor %}
@@ -58,3 +96,4 @@
   <p class="caption">{{ t("checkin.message_unparsed_hint") }}</p>
 </div>
 {% endif %}
+</div>

@@ -188,16 +188,32 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    słownie. Data ponad tydzień od dziś wymaga potwierdzenia: raporty następują po sobie, więc
    pomyłka w roku zablokowałaby kolejne. Przy dacie sprzed startu projektu strona o tym
    przypomina, ale raport można zapisać.
-2. Jeśli AI jest włączone: **Napisz własnymi słowami** („Ani nie będzie do środy, API zajmie
-   jeszcze 3 dni”) i kliknij **Przetwórz wiadomość**. „Do środy” oznacza nieobecność przez całą
-   środę i powrót w czwartek, a „wraca w środę” — powrót tego dnia. Pod **Tak to rozumiem:** AI
-   wypisze, co znalazło (wydłużone zadanie także w dniach pracy), a Ty odznaczysz to, co się nie
-   zgadza. Pokaże też części wiadomości, z których nic nie zrobiło („Tego nie zamieniłem na
-   zmianę”), i zapyta, gdy osoby nie ma w zespole albo do opisu pasuje kilka zadań. Wtedy
-   wybierz osobę lub zadanie albo **Pomiń**. Nieobecność osoby, której wiadomość nie wymienia, jest
-   odznaczona. Zapisują się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest
-   pomijany i nigdzie nie zostaje zapisany. Jeśli AI nie odpowie, strona powie dlaczego (np. brak
-   połączenia albo brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
+2. Jeśli AI jest włączone: **Napisz własnymi słowami** cały raport, np. „Warsztat z klientem
+   skończył się wczoraj. Baza danych i API jest w połowie. Ania od jutra do środy ma urlop.”, i
+   kliknij **Przetwórz wiadomość**. AI rozumie postęp („zrobiono około 15 %”, „w połowie”),
+   zakończenie z datą („skończył się wczoraj”), rozpoczęcie („ruszyło w poniedziałek”),
+   nieobecności, wydłużone i nowe zadania. Daty liczy aplikacja według kalendarza projektu (ze
+   świętami), nie AI: „od jutra” to następny dzień roboczy, „do środy” — nieobecność przez całą
+   środę i powrót w następnym dniu roboczym, „wraca w środę” — powrót tego dnia. Nazwy zadań
+   mogą być odmienione i pisane małą literą („z bazy danych i API”). Pod **Tak to rozumiem:**
+   widać pozycje do potwierdzenia, np. „Bartosz Kowalski: nieobecność od czw. 5 lis, wraca pon.
+   16 lis (6 dni roboczych)”; zaznaczone zadania od razu wypełniają swoje wiersze formularza,
+   gdzie możesz je poprawić. Gdy dzień tygodnia nie pasuje do daty („w poniedziałek 3 listopada”,
+   a to wtorek), gdy data wypada w dzień wolny albo „od poniedziałku” może znaczyć dwa różne
+   poniedziałki, strona pyta zamiast zgadywać; pyta też, gdy osoby nie ma w zespole albo do opisu
+   pasuje kilka zadań. Wybierz odpowiedź albo **Pomiń**. Pokaże też części wiadomości, z których
+   nic nie zrobiło („Tego nie zamieniłem na zmianę”). Nieobecność osoby, której wiadomość nie
+   wymienia, i data, której nic w wiadomości nie potwierdza, są odznaczone z dopiskiem. Zapisują
+   się tylko zaznaczone pozycje; powód nieobecności napisany w wiadomości jest pomijany i nigdzie
+   nie zostaje zapisany. Jeśli AI nie odpowie, strona powie dlaczego (np. brak połączenia albo
+   brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
+   - **Nagraj głosem** (gdy w Ustawieniach jest klucz Groq): kliknij, mów (najwyżej 90 sekund,
+     licznik pokazuje czas), kliknij **Zatrzymaj**. Po chwili tekst pojawi się w polu: przeczytaj
+     go, popraw i dopiero wtedy kliknij **Przetwórz wiadomość** — wcześniej nic nie jest
+     przetwarzane. Nagranie trafia do Groq (USA), który zamienia je na tekst; ani nagrania, ani
+     tekstu Sentinel nie zapisuje. Przeglądarka zapyta o zgodę na mikrofon; nagrywanie działa na
+     stronie https albo na tym samym komputerze (localhost). Tak samo można nagrać opis projektu
+     przy **Opisz słowami**.
 3. **Zadania w toku i najbliższe** — przy każdym: *Nierozpoczęte*, *W toku* z wykonaną częścią
    (suwak albo liczba, w procentach) albo *Gotowe* z datą zakończenia. Postęp zapisuje się w
    pełnych dniach pracy, więc przy suwaku widać, co się zapisze, np. „60 % → zapisze się 67 %, 2 z
@@ -326,7 +342,12 @@ przebieg to jeden możliwy los projektu; przypadek też ma znaczenie, więc wart
   Bez AI nic go nie opuszcza.
 - AI jest opcjonalne. **Model lokalny (Ollama)** działa na Waszym sprzęcie i nic nie wysyła na
   zewnątrz; modele w chmurze (Groq, OpenRouter) otrzymują tylko tekst, który odczytują.
-  Odpowiedzi AI z prawdziwych projektów są zapamiętywane bez treści wiadomości.
+  Odpowiedzi AI z prawdziwych projektów są zapamiętywane bez treści wiadomości (zostają tylko
+  słowa dat i nazwy zadań).
+- **Nagrania głosowe** idą do Groq (USA), tak jak wpisana wiadomość idzie do modelu w chmurze;
+  Sentinel nie zapisuje ani nagrania, ani jego tekstu (zapisuje się tylko raport z pozycjami,
+  które potwierdzisz). W wersji demonstracyjnej dziennik zapytań notuje jedynie, że nagranie
+  przepisano, i jego długość.
 - Wersja demonstracyjna w internecie: każdy odwiedzający dostaje własną piaskownicę, której nikt
   inny nie widzi; po 24 godzinach jest usuwana razem z projektami. Na potrzeby testu
   użyteczności wersja demonstracyjna zapisuje też w piaskownicy, które strony i kiedy otwarto
@@ -391,6 +412,7 @@ serwerze i nie jest więcej wyświetlany):
 | Model lokalny (Ollama) | bezpłatnie; karta graficzna od 6 GB pamięci (albo wolniej na procesorze) | nie; `docker compose --profile ollama up -d` i `docker compose --profile ollama exec ollama ollama pull qwen2.5:7b` |
 | Groq (chmura) | bezpłatny plan z dziennymi limitami | tak, do Groq (USA); klucz z console.groq.com |
 | OpenRouter (chmura) | płatność za użycie (cennik na openrouter.ai) | tak, do OpenRouter i dostawcy modelu |
+| Nagrania głosowe (Groq Whisper) | bezpłatny plan Groq z limitami; poza nim ok. 0,04 USD za godzinę nagrań | tak, nagranie do Groq (USA); klucz Groq w Ustawieniach (**Klucz Groq do nagrań**, chyba że dostawcą AI jest Groq), **Sprawdź nagrania** testuje |
 
 Model w chmurze (gpt-oss-120b, domyślny przy Groq i OpenRouter) dokładniej niż lokalny czyta
 wiadomości i pisze wyjaśnienia. Do wiadomości o nieobecnościach prawdziwych osób używaj modelu

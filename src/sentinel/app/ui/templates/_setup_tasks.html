@@ -25,6 +25,7 @@
         <label for="text">{{ t("setup.describe.label") }}</label>
         <textarea id="text" name="text" rows="9" maxlength="20000" aria-describedby="text-hint" required></textarea>
         <p class="hint" id="text-hint">{{ t("setup.describe.hint") }}</p>
+        {% if voice %}{% with target="text", voice_url="/projects/" ~ project_id ~ "/transcribe", voice_limit=voice_limit %}{% include "_voice.html" %}{% endwith %}{% endif %}
       </div>
       <p><button class="btn btn-primary">{{ t("setup.describe.read") }}</button></p>
     </form>

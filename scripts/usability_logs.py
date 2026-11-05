@@ -55,6 +55,7 @@ PAGES = {  # a route (method, path template) in words
     ("GET", "/projects/{project_id}/checkin"): "the status report form",
     ("POST", "/projects/{project_id}/checkin"): "sent the status report",
     ("POST", "/projects/{project_id}/checkin/message"): "sent a message to the AI",
+    ("POST", "/projects/{project_id}/transcribe"): "recorded a message",
     ("POST", "/projects/{project_id}/ask"): "asked Sentinel for a proposal",
     ("GET", "/projects/{project_id}/recommendations/{seq}"): "a recommendation",
     ("POST", "/projects/{project_id}/recommendations/{seq}/decision"): "sent a decision",
@@ -104,6 +105,7 @@ class Request:
     project: str | None
     partial: bool
     status: int
+    seconds: float | None = None  # the length of a recording written out (WP14)
 
     @property
     def page(self) -> bool:
@@ -181,6 +183,7 @@ def load(db: sqlite3.Connection, sid: str, created: datetime, logged: bool) -> S
                 r["project"],
                 bool(r["partial"]),
                 r["status"],
+                r["seconds"] if "seconds" in r.keys() else None,  # noqa: SIM118 - a Row's in tests values
             )
             for r in db.execute("SELECT * FROM requests WHERE session = ? ORDER BY id", (sid,))
         ]
@@ -423,6 +426,8 @@ def request_row(request: Request, labels: dict[str, str]) -> Row | None:
         words = f"{request.method} {request.path or '(no such page)'}"
     where = labels.get(request.project or "", "a deleted project" if request.project else "")
     what = f"Opened {words}" if request.method == "GET" else words[0].upper() + words[1:]
+    if request.seconds is not None:  # a recording: its length, nothing else (ADR-0031)
+        what += f" of {request.seconds:.0f} s"
     what += f" ({where})" if where else ""
     rank = PAGE if request.method == "GET" else ACTION
     if request.status >= 500:

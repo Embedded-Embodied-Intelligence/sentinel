@@ -1,0 +1,41 @@
+{
+  "about": "The answer of openai/gpt-oss-120b (OpenRouter, pinned to Groq) to the owner's message of WP14 (docs/qa/ai/messages-pl.jsonl, m01), recorded on 2026-11-04 by the application's reader (prompt checkin_message.v1); the cache kept no prompt.",
+  "model": "openai/gpt-oss-120b",
+  "recorded_utc": "2026-11-04T22:18:49+00:00",
+  "answer": {
+    "items": [
+      {
+        "type": "done",
+        "clause": 1,
+        "task": "Warsztat z klientem",
+        "day": {
+          "day": "2026-11-03",
+          "words": "we wtorek 3 listopada"
+        }
+      },
+      {
+        "type": "progress",
+        "clause": 2,
+        "task": "Baza danych i API",
+        "percent": 15,
+        "started": null
+      },
+      {
+        "type": "absence",
+        "clause": 3,
+        "person": 1,
+        "since": {
+          "day": "2026-11-05",
+          "words": "od jutra"
+        },
+        "until": null,
+        "back": {
+          "day": "2026-11-16",
+          "words": "wraca w poniedziałek 16 listopada"
+        }
+      }
+    ],
+    "unparsed": [],
+    "questions": []
+  }
+}

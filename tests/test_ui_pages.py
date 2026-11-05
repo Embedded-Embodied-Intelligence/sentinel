@@ -820,8 +820,10 @@ def test_ai_features_through_the_pages(tmp_path: Path) -> None:
 
     def answer(messages: Any) -> str:
         system = messages[0].content
-        if system.startswith("You turn messages"):  # Ada (worker 0) back on day 10 (Mon 16 Nov)
-            return json.dumps({"events": [{"type": "absence", "worker": 0, "return_day": 10}]})
+        if system.startswith("You read a project manager's status report"):  # Ada (worker 0)
+            back = {"day": "2026-11-16", "words": "back on Monday the 16th"}
+            absence = {"type": "absence", "clause": 1, "person": 0, "back": back}
+            return json.dumps({"items": [absence]})
         if system.startswith("Answer with the JSON object"):
             return json.dumps({"ok": True})
         return json.dumps(extraction)
@@ -866,7 +868,7 @@ def test_ai_features_through_the_pages(tmp_path: Path) -> None:
         read = finish(
             client.post(
                 f"/projects/{other}/checkin/message",
-                data={"message": "Ada is out until Monday the 16th.", "date": "2026-11-04"},
+                data={"message": "Ada is out, back on Monday the 16th.", "date": "2026-11-04"},
                 headers=headers,
             )
         )

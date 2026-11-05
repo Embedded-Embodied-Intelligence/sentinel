@@ -73,7 +73,8 @@ Każdą kartę czyta uczestnik; moderator nie dodaje wyjaśnień. Dzisiejszą da
 jest środa 4 listopada 2026, także gdy test odbywa się później (raport statusu ma wtedy datę z
 przeszłości i zapisuje się bez pytań). Kalendarz projektu ma polskie święta (11 listopada jest
 wolny). Wartości oczekiwane poniżej pochodzą ze skryptowego przebiegu wersji 1.4.1 w trybie
-demonstracyjnym; są takie same w każdym dniu testu, poza datami symulatora (zadanie 5).
+demonstracyjnym (w wersji 1.5.0 są te same); są takie same w każdym dniu testu, poza datami
+symulatora (zadanie 5).
 
 ### Zadanie 1. Załóż projekt z arkusza (limit 6 minut)
 
@@ -114,7 +115,9 @@ demonstracyjnym; są takie same w każdym dniu testu, poza datami symulatora (za
   16 listopada.
 - **Częściowy sukces:** zapisany z jednym błędem (np. data powrotu jako ostatni dzień
   nieobecności, brak postępu API).
-- **Obserwuj:** czy szuka miejsca na powód nieobecności (nie ma go — to celowe); jak rozumie
+- **Obserwuj:** którą drogą wpisuje raport (od wersji 1.5.0 każda jest sukcesem: części
+  formularza, wiadomość własnymi słowami albo **Nagraj głosem**) i czy sprawdza, co aplikacja
+  zrozumiała; czy szuka miejsca na powód nieobecności (nie ma go — to celowe); jak rozumie
   „Stan na koniec dnia” (formularz podpowiada dzisiejszą datę, a raport jest na 4 listopada) i
   „Powrót (jeśli wiadomo)”; czy zauważa licznik zmian na dole.
 - **Punkt odniesienia:** 6 kliknięć, 5 pól.

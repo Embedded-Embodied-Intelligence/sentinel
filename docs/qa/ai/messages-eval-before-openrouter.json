@@ -9,6 +9,7 @@
     "added_items": 0,
     "exact_share": 0.163,
     "wrong_dates_without_question": 15,
+    "doubtful_items": 0,
     "failed_readings": 0
   },
   "usage": {
@@ -335,9 +336,7 @@
               "absence",
               "Celina Wiśniewska"
             ],
-            "form": "item",
-            "from": "2026-11-09",
-            "back": null
+            "form": "question"
           },
           "found": {
             "subject": [
@@ -697,7 +696,10 @@
               "unknown_person"
             ],
             "form": "question",
-            "from": "2026-11-23",
+            "from": [
+              "2026-11-16",
+              "2026-11-23"
+            ],
             "back": null
           },
           "found": {
@@ -802,9 +804,7 @@
               "absence",
               "Gabriela Kamińska"
             ],
-            "form": "item",
-            "from": "2026-12-21",
-            "back": "2026-12-28"
+            "form": "question"
           },
           "found": {
             "subject": [
@@ -845,9 +845,7 @@
               "absence",
               "Filip Wójcik"
             ],
-            "form": "item",
-            "from": "2026-12-21",
-            "back": "2026-12-28"
+            "form": "question"
           },
           "found": {
             "subject": [

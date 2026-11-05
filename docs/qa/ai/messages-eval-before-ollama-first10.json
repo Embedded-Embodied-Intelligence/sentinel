@@ -9,6 +9,7 @@
     "added_items": 2,
     "exact_share": 0.067,
     "wrong_dates_without_question": 6,
+    "doubtful_items": 2,
     "failed_readings": 1
   },
   "usage": {
@@ -353,9 +354,7 @@
               "absence",
               "Celina Wiśniewska"
             ],
-            "form": "item",
-            "from": "2026-11-09",
-            "back": null
+            "form": "question"
           },
           "found": {
             "subject": [

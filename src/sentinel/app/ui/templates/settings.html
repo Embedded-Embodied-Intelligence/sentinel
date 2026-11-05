@@ -11,6 +11,7 @@
   <dl class="summary-rows">
     <div><dt>{{ t("settings.provider") }}</dt><dd>{{ t("settings.provider." ~ view.provider) }}</dd></div>
     <div><dt>{{ t("settings.status") }}</dt><dd>{{ t("settings.available") if view.available else t("settings.unavailable") }}</dd></div>
+    <div><dt>{{ t("settings.voice") }}</dt><dd>{{ t("settings.available") if view.voice else t("settings.unavailable") }}</dd></div>
   </dl>
 </section>
 {% else %}
@@ -49,9 +50,24 @@
     {% if view.has_key %}<label class="check"><input type="checkbox" name="forget_key"><span>{{ t("settings.forget_key") }}</span></label>{% endif %}
   </div>
   <div id="test-result" aria-live="polite"></div>
+  <fieldset class="form-stack">
+    <legend>{{ t("settings.voice") }}</legend>
+    <p class="small">{{ t("settings.voice_lead") }}</p>
+    <div class="field">
+      <label for="groq_key">{{ t("settings.groq_key") }}</label>
+      <div class="input-reveal">
+        <input id="groq_key" name="groq_key" type="password" autocomplete="new-password" maxlength="500" placeholder="{{ '••••••••' if view.has_groq_key else '' }}" aria-describedby="groq-key-hint">
+        <button type="button" class="btn" data-reveal-field="groq_key" data-show="{{ t('settings.key_show') }}" data-hide="{{ t('settings.key_hide') }}">{{ t("settings.key_show") }}</button>
+      </div>
+      <p class="hint" id="groq-key-hint">{{ t("settings.key_saved") if view.has_groq_key else t("settings.groq_key_hint") }}</p>
+      {% if view.has_groq_key %}<label class="check"><input type="checkbox" name="forget_groq_key"><span>{{ t("settings.forget_groq_key") }}</span></label>{% endif %}
+    </div>
+    <div id="voice-test-result" aria-live="polite"></div>
+  </fieldset>
   <div class="btn-row">
     <button class="btn btn-primary">{{ t("settings.save") }}</button>
     <button class="btn needs-model" hx-post="/settings/test" hx-target="#test-result">{{ t("settings.test") }}</button>
+    <button class="btn needs-model" hx-post="/settings/test-voice" hx-target="#voice-test-result">{{ t("settings.voice_test") }}</button>
   </div>
 </form>
 {% endif %}

@@ -203,8 +203,9 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
 
     async def log_request(request: Request, session: str, arrived: datetime, status: int) -> None:
         """Log a sandbox's request (ADR-0030): its route's path template and the project it
-        names, never the address, the path's other values, the query or the form; written in
-        a worker thread, so the event loop does not wait for the database."""
+        names, never the address, the path's other values, the query or the form, and of a
+        recording only its length (ADR-0031); written in a worker thread, so the event loop
+        does not wait for the database."""
         route = request.scope.get("route")
         project = request.path_params.get("project_id")
         await run_in_threadpool(
@@ -216,6 +217,7 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
             None if project is None else str(project),
             is_htmx(request),
             status,
+            getattr(request.state, "log_seconds", None),  # a recording's length (ADR-0031)
         )
 
     @app.middleware("http")

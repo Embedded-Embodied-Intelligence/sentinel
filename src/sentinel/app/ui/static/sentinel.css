@@ -842,6 +842,17 @@ fieldset:has(input[value="turbulent"]:checked) .hint-turbulent { display: block;
 .task-name { font: 600 0.9375rem/1.25rem var(--font); display: block; }
 .task-state { font: var(--fs-caption); color: var(--muted); display: block; }
 .task-row.has-issue .task-name { color: var(--bad); }
+.task-row.from-message { box-shadow: inset 3px 0 0 var(--primary); padding-left: var(--space-3); }
+/* a recording for a message box (WP14) */
+.voice { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+.voice[hidden], .voice-live[hidden], .voice [hidden] { display: none; }
+.voice-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.voice-live { display: inline-flex; align-items: center; gap: var(--space-2); }
+.voice-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); animation: voice-pulse 1.2s ease-in-out infinite; }
+.voice-time { font-variant-numeric: tabular-nums; }
+.voice [data-voice-status].is-bad { color: var(--bad); }
+.voice [data-voice-status]:empty { display: none; }
+@keyframes voice-pulse { 50% { opacity: 0.35; } }
 .task-row:not(:has(input[value="in_progress"]:checked)) .when-progress { display: none; }
 .task-row:not(:has(input[value="done"]:checked)) .when-done { display: none; }
 .task-more > summary { font: 500 0.8125rem/1.125rem var(--font); }

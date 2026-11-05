@@ -184,16 +184,31 @@ when something important changes. Click **New check-in**.
    the field. A date more than a week from today needs a confirmation: check-ins follow each other,
    so a mistyped year would block the next ones. A date before the project's start gets a note, but
    the check-in can be saved.
-2. With the AI on: **Write in your own words** ("Ada is away until Wednesday, the API needs 3 more
-   days") and click **Process the message**. "Until Wednesday" means away through Wednesday and
-   back on Thursday; "back on Wednesday" means back that day. Under **This is how I read it:** the
-   AI lists what it found (a task that grows also in days of work) and you untick what is wrong.
-   It also shows the parts of the message it turned into nothing ("Not turned into a change"),
-   and it asks when a person is not in the team or several tasks fit. Pick the person or the task,
-   or **Skip it**. An absence of somebody the message does not name is left unticked. Only the
-   ticked items are saved; a reason for an absence written in the message is left out
-   and never stored. If the AI cannot answer, the page says why (e.g. no connection or no answer
-   in time) and you fill in the form by hand.
+2. With the AI on: **Write in your own words** the whole report, e.g. "The client workshop
+   finished yesterday. The API is halfway. Ada is away from tomorrow until Wednesday.", and click
+   **Process the message**. The AI understands progress ("about 15 % done", "halfway"), a finish
+   with its date ("finished yesterday"), a start ("started on Monday"), absences, growing tasks
+   and new tasks. The app, not the AI, works out the dates on the project's calendar with its
+   holidays: "from tomorrow" is the next working day, "until Wednesday" means away through
+   Wednesday and back on the next working day, "back on Wednesday" means back that day. Task
+   names may be inflected or in lower case. Under **This is how I read it:** you see the items to
+   confirm, e.g. "Bartosz Kowalski: away from Thu 5 Nov, back on Mon 16 Nov (6 working days)";
+   the ticked tasks fill their rows of the form at once, where you can change them. When a
+   weekday does not match its date ("Monday 3 November", a Tuesday), a date falls on a day off,
+   or "from Monday" can mean two Mondays, the page asks instead of guessing; it also asks when a
+   person is not in the team or several tasks fit. Pick the answer or **Skip it**. It also shows
+   the parts of the message it turned into nothing ("Not turned into a change"). An absence of
+   somebody the message does not name, and a date nothing in the message confirms, are left
+   unticked with a note. Only the ticked items are saved; a reason for an absence written in the
+   message is left out and never stored. If the AI cannot answer, the page says why (e.g. no
+   connection or no answer in time) and you fill in the form by hand.
+   - **Record by voice** (with a Groq key on Settings): click, speak (at most 90 seconds; a
+     counter shows the time), click **Stop**. The text appears in the box shortly after: read it,
+     correct it, and only then click **Process the message**; nothing is processed before that.
+     The recording goes to Groq (USA), which writes it out; Sentinel keeps neither the recording
+     nor its text. The browser asks for the microphone; recording works on an https page or on
+     the same computer (localhost). The description of a project can be recorded the same way
+     under **Describe in words**.
 3. **Tasks in progress and next**: for each, *Not started*, *In progress* with the share done
    (a slider or a number, in per cent) or *Done* with its finish date. Progress is kept in whole
    days of work, so the slider says what is saved, e.g. "60 % → saved as 67 %, 2 of 3 days". The
@@ -322,7 +337,10 @@ theirs. One run is one possible fate of the project; chance plays a part, so try
   server). Without AI, nothing leaves it.
 - AI is optional. A **local model (Ollama)** runs on your own hardware and sends nothing out;
   cloud models (Groq, OpenRouter) receive only the text they read. AI answers on real projects
-  are remembered without the messages.
+  are remembered without the messages (only the words of dates and the names of tasks stay).
+- **Voice recordings** go to Groq (USA), as a typed message goes to a cloud model; Sentinel keeps
+  neither the recording nor its text (only the report with the items you confirm is saved). In
+  the public demo the request log notes only that a recording was written out, and its length.
 - The public demo: every visitor gets an own sandbox that nobody else sees; it is deleted with
   its projects after 24 hours. For the usability test the demo also notes in the sandbox which
   pages were opened and when, and whether a form was refused (never an address or what a form
@@ -387,6 +405,7 @@ and is never shown again):
 | Local model (Ollama) | free; a graphics card with 6 GB or more (or slower on the processor) | no; `docker compose --profile ollama up -d` and `docker compose --profile ollama exec ollama ollama pull qwen2.5:7b` |
 | Groq (cloud) | a free plan with daily limits | yes, to Groq (US); a key from console.groq.com |
 | OpenRouter (cloud) | pay per use (prices on openrouter.ai) | yes, to OpenRouter and the model's host |
+| Voice recordings (Groq Whisper) | Groq's free tier with limits; beyond it about 0.04 USD an hour of recordings | yes, the recording to Groq (USA); a Groq key on Settings (**Groq key for recordings**, unless Groq is the AI provider); **Test recordings** checks it |
 
 The cloud model (gpt-oss-120b, the default with Groq and OpenRouter) reads messages and writes
 explanations more accurately than the local one. For messages about real people's absences, use

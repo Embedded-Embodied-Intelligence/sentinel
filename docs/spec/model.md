@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.2.1)
+# Sentinel — formal model (v2.3.0)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -98,7 +98,13 @@ at it (§11.2); §1–§10 are unchanged. v2.2.1 (WP12, the answer to its questi
 observation may give each SUBST handover's position among the observed shocks, so that a
 handover keeps its real order after a shock at the same work done (a growth reported at a
 check-in, then a substitute approved) and the growth does not multiply the onboarding (§5.1,
-§11.3); research observations carry no position, so the research runs are unchanged.
+§11.3); research observations carry no position, so the research runs are unchanged. v2.3.0
+(WP14) the application reads a whole check-in message: finishes, progress and starts besides
+absences, work increases and new tasks, as items of the check-in form; dates as calendar dates
+with their words, settled by code on the project calendar, with questions for a weekday that
+contradicts its date, a day that is not a working day and a weekday that can name two days;
+tasks matched to the message's words tolerantly; the words of a date limited to date words
+(§11.3); the parser of §10.2, its prompt, schema and corpus and §1–§10 are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -914,21 +920,46 @@ or before `d` (`−1` before `date(0)`).
   the task around the new estimate, §2.1, and the original plan keeps the old one); new tasks (fields of §11.2, inserted after one task `i` and before one task `s`
   as in §10.2). Tasks not mentioned keep their state; a started task does not become unstarted
   again, nor a done task undone.
-- **Message** (v2.1.5, WP11). With an AI provider set up, the reports of a check-in dated `d` can
-  be drafted from a message of the manager: the parser of §10.2 reads it as a message of day
-  `last(d)`, and each absence, work increase and new task it reads is shown for the manager to
-  confirm before the check-in is saved. In the application a weekday reads as in everyday speech:
-  "until <weekday>" ("do <weekday>") means absent through that day, so the return day `r` is the
-  next working day after it, and "back on <weekday>" ("wraca w <weekday>") means `r` is that
-  weekday, in both cases the first such day after `last(d)` (§10.1). The research runs keep §10.2
-  (a weekday gives `r`) with its prompt and corpus.
-  Nothing is dropped silently (v2.2.0, WP12): the application's parser also answers the numbers
-  of the message's clauses that it turned into no event, and asks about a clause that names a
-  person who is not in the team or a growth that fits several tasks (with the candidates); the
-  answer holds clause numbers, never words of the message (invariant 7), and the review lists
-  those clauses and the questions, each answered by picking a person or a task, or skipped. The
-  prompt aids give the return day of the next working days by weekday and by date. The parser
-  of §10.2 with its prompt, schema and corpus is unchanged.
+- **Message** (v2.1.5, WP11; v2.3.0, WP14). With an AI provider set up, the reports of a
+  check-in dated `d` can be drafted from a message of the manager. The application's own reader
+  (not the parser of §10.2) reads it into the items of the check-in form, each shown for the
+  manager to confirm before the check-in is saved: a task done with its finish date, a task in
+  progress with its share done and, for a task not started, its start date, an absence with its
+  first day and its return date, a work increase (`+N` days or `×F`) and a new task. A confirmed
+  task item fills the task's row of the form; the review shows an absence as its first day away
+  and its return date.
+  - *Dates are settled by code*, never counted by the model. The model names each date as the
+    calendar date its words give, with the words (`YYYY-MM-DD`, "wraca w poniedziałek 16
+    listopada"), and is shown `d` with its weekday and the weeks around it, two before and eight
+    after, with the days that are not working days (§11.1). The words fix what they can: a day
+    and month, a day of the month, a weekday, today, tomorrow or yesterday, a named day
+    (Wigilia), the end of a week or a month. A weekday alone names the first such day after `d`
+    for a return or an "until" (after the first day away when that is later), the last one on or
+    before `d` for a start or a finish, and for the first day away the one the clause's tense
+    gives, else either. The model's date is kept when the words allow it, and the only date they
+    allow replaces it. "Until <date>" ("do <date>") means absent through that date, so the
+    return date is the next working day after it; "back on <date>" ("wraca <date>") means the
+    return date is that date; the words decide which, else the field the model used. "Tomorrow"
+    ("jutro") as the first day away or as a return is the next working day after `d`. A first
+    day away not given is `d`; a finish or a start after `d` is no report.
+  - *Questions, not silent shifts.* A weekday that contradicts its date ("poniedziałek 17
+    listopada") is a question with both dates, as are the two days a weekday alone can name as
+    the first day away, an "until" and a "back" that give different returns, and a return, a
+    first day away, a start or a finish on a day that is not a working day (with the next working
+    day, the previous one for a finish). Words that fix nothing leave the model's date, shown
+    unticked with a note.
+  - *Tasks* are named by the message's words and matched to the project's tasks with quotes,
+    case and inflection ignored (each word of the message a form of a word of the task's name;
+    a name equal to the words wins); words that fit several tasks are a question with the
+    candidates, and an item of a task already done is no report.
+  - *Nothing is dropped silently* (v2.2.0, WP12): the clauses that gave no item are listed, a
+    person who is not in the team is asked about with the absence's dates, and every question is
+    answered by a choice or skipped.
+  - *Privacy* (invariant 7): an answer holds clause numbers, worker ids, the words naming tasks
+    (checked against the project), the names of new tasks and the words of dates, which must be
+    date words that occur in the message; an answer with any other word in a date has an issue,
+    so a cache without prompts keeps only its issue list (§10) and it is asked for again.
+  The research runs keep §10.2 (a weekday gives `r`) with its prompt, schema and corpus.
 - **Mapping to the `Observation`** of day `t` (§3); everything not listed is as in the engine:
   - *Starts and finishes.* A done task has `S_j < F_j ≤ t`, a started one `S_j < t`; without a
     start date `S_j` is the planned start, clamped to the days since the previous check-in and

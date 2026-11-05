@@ -69,7 +69,7 @@ def _definition(**update: Any) -> dict[str, Any]:
 
 def test_health_session_and_the_error_format(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
-    assert test.get("/api/health").json() == {"status": "ok", "version": "1.4.1", "demo": False}
+    assert test.get("/api/health").json() == {"status": "ok", "version": "1.5.0", "demo": False}
     assert test.get("/api/docs").status_code == 404  # no HTML pages before WP9b
     session = test.get("/api/session").json()
     assert session["demo"] is False and len(session["csrf_token"]) == 64
@@ -247,6 +247,8 @@ def test_llm_settings_are_kept_server_side_and_never_returned(
         "host": None,
         "has_key": False,
         "available": False,
+        "has_groq_key": False,
+        "voice": False,
     }
     saved = test.put(
         "/api/settings/llm",
@@ -254,6 +256,7 @@ def test_llm_settings_are_kept_server_side_and_never_returned(
         headers=csrf,
     )
     assert saved.status_code == 200 and saved.json()["has_key"] is True
+    assert saved.json()["voice"] is True  # Groq's key also writes out recordings (WP14)
     assert KEY not in saved.text and KEY not in test.get("/api/settings/llm").text
     assert KEY not in test.get("/api/session").text
     assert os.stat(config.settings_file).st_mode & 0o777 == 0o600

@@ -14,7 +14,8 @@ from datetime import date, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Request
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
+from starlette.concurrency import run_in_threadpool
 
 from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
@@ -34,13 +35,14 @@ from sentinel.app.models import (
     CheckIn,
     NewTaskReport,
     ProjectDefinition,
+    TaskReport,
     WorkIncreaseReport,
 )
 from sentinel.app.planning import half_up
 from sentinel.app.services import ChanceStep, JobView
 from sentinel.app.ui.charts import chance_points, forecast_strip, live_gantt
-from sentinel.app.ui.core import STATIC_DIR, Ui, chance_level, is_htmx
-from sentinel.app.ui.forms import Form, read_checkin, read_settings, team_roles
+from sentinel.app.ui.core import STATIC_DIR, VOICE_LIMIT_S, Ui, chance_level, is_htmx
+from sentinel.app.ui.forms import Form, parse_number, read_checkin, read_settings, team_roles
 from sentinel.app.ui.pages import job_progress, trend
 from sentinel.app.ui.text import Texts
 from sentinel.app.views import (
@@ -51,8 +53,12 @@ from sentinel.app.views import (
     RecommendationView,
     TaskView,
 )
+from sentinel.llm.whisper import base_type
 
 HISTORY_FILTERS = ("all", "checkins", "recommendations", "changes")
+VOICE_SLACK_S = 5  # a recording's measured length may exceed the page's limit by this much
+MAX_AUDIO_BYTES = 4 * 1024 * 1024  # 90 s of speech take some 0.4-1.5 MB in a browser's codecs
+VOICE_STATUS = {"invalid": 422, "limit": 429, "unavailable": 503, "not_found": 404}
 HISTORY_SHOWN = 20  # entries before "show older"
 NEXT_DAYS = 10  # unstarted tasks planned within this many working days are shown at check-in
 FUTURE_CHECKIN_DAYS = 7  # a check-in dated further ahead asks for a confirmation
@@ -1117,6 +1123,55 @@ def router(ui: Ui) -> APIRouter:
         )
         return job_progress(ui, request, job, "job.message", project=project_id, note="job.slow_ai")
 
+    @routes.post("/projects/{project_id}/transcribe")
+    async def transcribe(request: Request, project_id: str) -> Response:
+        """A recording of a message box written out (WP14, ADR-0031). The audio comes as the
+        request's body, is read in memory up to its limit, goes to Groq's Whisper and is
+        dropped; the text goes back as JSON for the person to read, correct and process, and is
+        stored nowhere. The demo's request log keeps only the recording's length."""
+        texts = ui.texts(request)
+
+        def refused(code: str, status: int, **params: object) -> Response:
+            return JSONResponse({"error": texts.msg(code, **params)}, status_code=status)
+
+        kind = base_type(request.headers.get("content-type", ""))
+        if not kind.startswith("audio/"):
+            return refused("voice_type", 415)
+        claimed = parse_number(request.headers.get("x-recording-seconds", ""))
+        limit = VOICE_LIMIT_S + VOICE_SLACK_S
+        if claimed is not None and claimed > limit:
+            return refused("voice_too_long", 413, seconds=VOICE_LIMIT_S)
+        if int(request.headers.get("content-length") or 0) > MAX_AUDIO_BYTES:
+            return refused("voice_too_long", 413, seconds=VOICE_LIMIT_S)
+        audio = bytearray()
+        async for chunk in request.stream():
+            audio += chunk
+            if len(audio) > MAX_AUDIO_BYTES:
+                return refused("voice_too_long", 413, seconds=VOICE_LIMIT_S)
+        if not audio:
+            return refused("voice_empty", 422)
+        try:
+            found = await run_in_threadpool(
+                services.transcribe,
+                ui.session(request),
+                project_id,
+                bytes(audio),
+                kind,
+                ui.language(request),
+            )
+        except AppError as exc:
+            return JSONResponse(
+                {"error": texts.error(exc)}, status_code=VOICE_STATUS.get(exc.kind, 503)
+            )
+        finally:
+            audio.clear()
+        seconds = found.seconds if found.seconds is not None else claimed
+        if seconds is not None:
+            request.state.log_seconds = round(seconds, 1)
+            if seconds > limit:
+                return refused("voice_too_long", 413, seconds=VOICE_LIMIT_S)
+        return JSONResponse({"text": found.text, "seconds": seconds})
+
     # ---- recommendations
 
     def recommendation(
@@ -1341,30 +1396,42 @@ def router(ui: Ui) -> APIRouter:
 
 def message_review(ui: Ui, request: Request, view: JobView) -> Response:
     """The events the AI read from a check-in message, each to confirm (spec section 10.2)."""
-    from sentinel.app.llm import MessageDraft
+    from sentinel.app.message_reader import MessageDraft
 
     found = MessageDraft.model_validate(view.result or {})
     project_id = request.query_params.get("project", "")
     values = message_values(ui, request, project_id, found)
     values["clauses"] = ui.services.message_clauses(view.id)
+    values["fresh"] = True  # its ticked tasks fill their rows of the form (WP14)
     return ui.page(request, "_message_review.html", **values)
 
 
 def message_values(ui: Ui, request: Request, project_id: str, found: Any) -> dict[str, Any]:
-    """What the review of a message shows: its events, the names of their tasks and people, and
-    a growth in days of work, which a manager can compare with the message."""
-    from sentinel.app.llm import work_left
+    """What the review of a message shows: its items, the names of their tasks and people, an
+    absence's working days, a growth in days of work, which a manager can compare with the
+    message, and why a date needs an answer (WP14)."""
+    from sentinel.app.calendar import polish_holidays
+    from sentinel.app.message_reader import work_left
 
     project = ui.services.state(ui.session(request), project_id).project
     left = work_left(project)
+    calendar = project.calendar
+    texts = ui.texts(request)
 
     def extra_days(item: WorkIncreaseReport) -> float | None:
         if item.factor is None or item.task not in left:
             return None
         return round(left[item.task] * (item.factor - 1), 1)
 
+    def workdays(item: AbsenceReport) -> int:
+        """The working days of an absence: from its first day to the day before its return."""
+        if item.return_date is None:
+            return 0
+        return max(0, calendar.first(item.return_date) - calendar.first(item.first_day))
+
     def as_absence(question: Any, person: str) -> str:
-        """The absence a question about an unknown person becomes once the manager names one."""
+        """The absence a question about an unknown person becomes once the manager names one
+        (the question's dates, or one of its date choices)."""
         report = AbsenceReport(
             person=person, first_day=question.first_day, return_date=question.return_date
         )
@@ -1377,13 +1444,40 @@ def message_values(ui: Ui, request: Request, project_id: str, found: Any) -> dic
         )
         return report.model_dump_json()
 
+    def date_problem(question: Any) -> str:
+        """Why the date of a clause needs an answer: a day that is not a working day, a weekday
+        that does not match its date, two days the words can mean, two returns."""
+        said = question.said
+        if question.problem == "non_working" and said is not None:
+            if calendar.holidays == "pl" and said in polish_holidays(said.year):
+                why = "holiday"
+            else:
+                why = "weekend" if said.weekday() >= 5 else "day_off"
+            reason = texts(f"checkin.message_date.{why}")
+            return texts("checkin.message_date.non_working", date=texts.date(said), why=reason)
+        if question.problem == "mismatch" and question.weekday is not None and said is not None:
+            weekday = texts(f"weekday.{question.weekday}")
+            return texts("checkin.message_date.mismatch", weekday=weekday, date=texts.date(said))
+        if question.problem == "ambiguous":
+            days = sorted(
+                {a.first_day for a in question.absences}
+                | {d for r in question.tasks for d in (r.start, r.finish) if d is not None}
+            )
+            joined = texts("checkin.message_date.or").join(texts.date(d) for d in days)
+            return texts("checkin.message_date.ambiguous", dates=joined)
+        if question.problem == "mismatch":
+            return texts("checkin.message_date.two_ends")
+        return ""
+
     return {
         "found": found,
         "names": {key: node.name for key, node in project.nodes().items()},
         "people": {p.key: p.name for p in project.definition.team},
         "extra_days": extra_days,
+        "workdays": workdays,
         "as_absence": as_absence,
         "as_growth": as_growth,
+        "date_problem": date_problem,
         "clauses": (),
     }
 
@@ -1391,14 +1485,15 @@ def message_values(ui: Ui, request: Request, project_id: str, found: Any) -> dic
 def kept_message(ui: Ui, request: Request, project_id: str, form: Form) -> dict[str, Any] | None:
     """The events a manager confirmed from a message, for the form after a refused submit: the
     review is shown again, while the message itself is not sent back."""
-    from sentinel.app.llm import MessageDraft
+    from sentinel.app.message_reader import MessageDraft
 
     absences = tuple(AbsenceReport.model_validate_json(v) for v in form.getlist("msg_absence") if v)
     increases = tuple(
         WorkIncreaseReport.model_validate_json(v) for v in form.getlist("msg_increase") if v
     )
     new_tasks = tuple(NewTaskReport.model_validate_json(v) for v in form.getlist("msg_new") if v)
-    if not (absences or increases or new_tasks):
+    tasks = tuple(TaskReport.model_validate_json(v) for v in form.getlist("msg_task") if v)
+    if not (absences or increases or new_tasks or tasks):
         return None
-    found = MessageDraft(absences=absences, increases=increases, new_tasks=new_tasks)
+    found = MessageDraft(absences=absences, tasks=tasks, increases=increases, new_tasks=new_tasks)
     return message_values(ui, request, project_id, found)

@@ -55,9 +55,11 @@ from sentinel.app.llm import (
     MAX_NAME_WORDS,
     ClientFactory,
     LlmService,
+    TranscriberFactory,
     make_client,
-    split_clauses,
+    make_transcriber,
 )
+from sentinel.app.message_reader import split_clauses
 from sentinel.app.messages import render
 from sentinel.app.models import CheckIn, Language, Person, ProjectDefinition, Settings, Task
 from sentinel.app.store import (
@@ -84,6 +86,7 @@ from sentinel.app.views import (
     recommendation_view,
 )
 from sentinel.experiments.runs import derive_seed
+from sentinel.llm.whisper import Transcript
 from sentinel.policies.sentinel import Proposer
 from sentinel.simulation.state import Observation
 from sentinel.wbs.extract import Extraction
@@ -188,7 +191,13 @@ class ChanceStep:
 class Services:
     """The services of one server."""
 
-    def __init__(self, config: AppConfig, *, llm_factory: ClientFactory | None = None) -> None:
+    def __init__(
+        self,
+        config: AppConfig,
+        *,
+        llm_factory: ClientFactory | None = None,
+        transcriber: TranscriberFactory | None = None,
+    ) -> None:
         self.config = config
         self.limits = config.limits
         self.store = Store(config.database)
@@ -201,6 +210,7 @@ class Services:
             mode=config.llm,
             daily_cap=config.limits.llm_calls_per_day,
             factory=llm_factory or partial(make_client, timeout_s=config.llm_timeout_s),
+            transcriber=transcriber or make_transcriber,
         )
         self._guard = threading.Lock()
         self._cancelled: set[str] = set()  # simulator jobs to stop after their current day
@@ -778,6 +788,34 @@ class Services:
         """The clauses of the message a reading job read, while this process keeps them."""
         with self._guard:
             return self._clauses.get(job_id, ())
+
+    def transcribe(
+        self, session: str, project_id: str, audio: bytes, content_type: str, language: Language
+    ) -> Transcript:
+        """A recording of a project's message box written out (WP14, ADR-0031), in the page's
+        language, with the names of the team and the tasks as Whisper's vocabulary; the text goes
+        back to the page only: neither it nor the audio is stored."""
+        row = self._row(session, project_id)
+        if row.kind != "live":
+            raise AppError("not_a_live_project", "invalid")
+        definition = self._state(session, project_id)[1].project.definition
+        names = [p.name for p in definition.team] + [t.name for t in definition.tasks]
+        vocabulary = ", ".join(dict.fromkeys(n for n in names if n))
+        found = self.llm.transcribe(audio, content_type, language=language, vocabulary=vocabulary)
+        if not found.text:
+            raise AppError("voice_nothing", "invalid")
+        return found
+
+    def test_voice(self, session: str, language: Language) -> JobView:
+        """A connection test of recordings in a job."""
+        if not self.llm.voice:
+            raise AppError("voice_disabled", "unavailable")
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            progress(0.1, "testing")
+            return {"model": self.llm.test_voice()}
+
+        return self._submit(session, None, "voice_test", work, language)
 
     def test_llm(self, session: str, language: Language) -> JobView:
         """A connection test of the configured language model in a job."""

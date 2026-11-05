@@ -1,0 +1,3 @@
+Your JSON answer has these problems:
+$issues
+Correct them using the report, the calendar, the team and the task list. Answer with the corrected JSON object for the whole report, every item included, in the same format and nothing else.

@@ -14,7 +14,7 @@ import uvicorn
 
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig
-from sentinel.app.llm import ClientFactory
+from sentinel.app.llm import ClientFactory, TranscriberFactory
 from sentinel.app.services import Services
 
 E2E_LIBS = Path(
@@ -40,9 +40,13 @@ class Server:
     config: AppConfig
 
 
-def serve(config: AppConfig, llm_factory: ClientFactory | None = None) -> Iterator[Server]:
+def serve(
+    config: AppConfig,
+    llm_factory: ClientFactory | None = None,
+    transcriber: TranscriberFactory | None = None,
+) -> Iterator[Server]:
     """The app of `config` on a free port of 127.0.0.1 until the generator is closed."""
-    services = Services(config, llm_factory=llm_factory)
+    services = Services(config, llm_factory=llm_factory, transcriber=transcriber)
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]

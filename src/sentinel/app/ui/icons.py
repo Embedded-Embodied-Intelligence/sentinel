@@ -27,6 +27,8 @@ PATHS = {
     'M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
     "info": '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.1"/>',
     "menu": '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    "mic": '<rect x="9" y="3" width="6" height="11" rx="3"/>'
+    '<path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
     "minus": '<path d="M5 12h14"/>',
     "more": '<circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/>'
     '<circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>'
@@ -37,6 +39,7 @@ PATHS = {
     "plus": '<path d="M12 5v14M5 12h14"/>',
     "sliders": '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/>'
     '<circle cx="9" cy="17" r="2"/>',
+    "stop": '<rect x="7" y="7" width="10" height="10" rx="1.5"/>',
     "swap": '<path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/>',
     "x": '<path d="M6 6l12 12M18 6L6 18"/>',
 }

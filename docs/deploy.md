@@ -37,7 +37,7 @@ reverse proxy.
 ```bash
 docker compose up -d --build                    # build and start (the first build took 57 s)
 docker compose ps                               # STATUS shows "(healthy)" after about 8 s
-curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.4.1","demo":false}
+curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.5.0","demo":false}
 docker compose logs -f sentinel                 # the log
 docker compose down                             # stop; the data stay in the volume
 ```
@@ -67,6 +67,16 @@ is stored server-side and never shown again.
 | Local Ollama | free; a GPU with 6 GB or more, or a slow CPU | no | `docker compose --profile ollama up -d`, then `docker compose --profile ollama exec ollama ollama pull qwen2.5:7b`; in Settings choose Ollama, model `qwen2.5:7b` (the address `http://ollama:11434` is preset) |
 | Groq | free tier with daily limits | yes, to Groq (US) | a key from console.groq.com; in Settings choose Groq |
 | OpenRouter | pay per use (prices on openrouter.ai; small for a team's messages) | yes, to OpenRouter and the model's host | a key from openrouter.ai; in Settings choose OpenRouter |
+| Voice recordings (with any of the three above) | Groq's free tier; beyond it about 0.04 USD an hour of audio | yes, the audio to Groq (US), as a typed message goes to a cloud model | a Groq key: the provider's own if it is Groq, else **Groq key for recordings** in Settings; **Test recordings** checks it |
+
+Recordings (WP14, ADR-0031): a microphone beside the message box of a check-in and of "describe
+the project" records at most 90 s in the browser; the server has Groq's `whisper-large-v3-turbo`
+write it out with the team's and the tasks' names as its vocabulary and sends the text back into
+the box, where the manager reads and corrects it before processing it. The audio and the text are
+kept nowhere (no cache, no log, no file); the demo's request log notes only that a recording was
+written out, and its length, and its daily AI cap counts each recording. The button shows only
+with a Groq key and only where the browser may use a microphone: an https page (the Funnel, a
+proxy with TLS) or `localhost`; on plain http from another machine the box is for typing only.
 
 For a GPU in the `ollama` container, uncomment the `deploy:` block in `docker-compose.yml`
 (needs the NVIDIA Container Toolkit).
@@ -123,7 +133,9 @@ HTTPS at `https://<machine>.<tailnet>.ts.net/`.
    (`openai/gpt-oss-120b`), save, then stop it:
    `uv run sentinel ui --data-dir ~/.local/share/sentinel-demo --port 8001`. The demo then uses
    it with the daily cap of `configs/app_demo.toml` (200 calls; at about 0.0003–0.0006 USD a
-   call in WP11, at most about 0.12 USD a day).
+   call in WP11, at most about 0.12 USD a day). For voice recordings (1.5.0) also paste a Groq
+   key under **Groq key for recordings** and press **Test recordings** in the same run; the cap
+   counts each recording (about 0.0002 USD for a short one).
 
 ### Every time
 
@@ -200,6 +212,8 @@ libasound2t64` does the same system-wide.
 | The simulator page says it is unavailable | The PSPLIB data are missing: `uv run python scripts/fetch_psplib.py --sets j30 j60` (Docker: see section 2) |
 | "The AI did not answer in time" | A local model on a processor: the first call loads it, a description takes about a minute. Try again; on a slow machine raise `llm_timeout_s` |
 | "The AI provider cannot be reached" | The address in **Settings**: empty for Ollama on the same machine, `http://ollama:11434` in Docker; is `ollama serve` (or the `ollama` container) running? |
+| No **Record by voice** button | A Groq key on Settings (the provider's or the one for recordings); an https address or `localhost` (browsers allow the microphone nowhere else); a browser with MediaRecorder (Chrome, Edge, Firefox, Safari 14.1 or later) |
+| "The browser did not allow the microphone" | Allow it beside the address bar (the lock or camera icon) and record again; the system's privacy settings may block it too |
 | "The AI provider refused the API key" or "cannot serve this model" | A new key, or the model's exact name (`openai/gpt-oss-120b` on OpenRouter), in **Settings**; **Test the connection** checks both |
 | The container is "unhealthy" | `docker compose logs sentinel`; the volume must be writable by the container's user (uid 10001) |
 | The e2e tests skip: "Chromium … cannot start" | Section 4 |

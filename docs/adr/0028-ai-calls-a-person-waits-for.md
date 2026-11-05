@@ -1,6 +1,6 @@
 # ADR-0028: AI calls a person waits for: limits, plain failures, retries and prompt aids
 
-- Status: accepted
+- Status: accepted; the prompt aids of a check-in message superseded by ADR-0032 (WP14)
 - Date: 2026-11-02
 - WP: WP11
 

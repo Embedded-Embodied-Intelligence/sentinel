@@ -23,7 +23,8 @@ from sentinel.app import planning
 from sentinel.app.config import AppConfig
 from sentinel.app.events import RecommendationEntry
 from sentinel.app.live import LiveProject, build_model
-from sentinel.app.llm import LlmSettingsUpdate, split_clauses
+from sentinel.app.llm import LlmSettingsUpdate
+from sentinel.app.message_reader import split_clauses
 from sentinel.app.models import (
     AbsenceReport,
     CheckIn,

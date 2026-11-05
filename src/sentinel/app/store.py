@@ -93,6 +93,11 @@ MIGRATIONS: tuple[str, ...] = (
     );
     CREATE INDEX requests_session ON requests(session);
     """,
+    # WP14 (ADR-0031): the length in seconds of a recording written out, the only thing the log
+    # keeps of it; NULL for every other request.
+    """
+    ALTER TABLE requests ADD COLUMN seconds REAL;
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 LOCAL_SESSION = "local"  # the one session of a local (non-demo) app
@@ -150,7 +155,8 @@ class EventRow:
 @dataclass(frozen=True)
 class RequestRow:
     """A request of a demo sandbox: when it came, its method, its route's path template (no
-    ids, no query), the project it named, whether it was an HTMX request, the status answered."""
+    ids, no query), the project it named, whether it was an HTMX request, the status answered,
+    and for a recording written out its length in seconds (WP14)."""
 
     session: str
     at: datetime
@@ -159,6 +165,7 @@ class RequestRow:
     project: str | None
     partial: bool
     status: int
+    seconds: float | None = None
 
 
 @dataclass(frozen=True)
@@ -493,14 +500,16 @@ class Store:
         project: str | None,
         partial: bool,
         status: int,
+        seconds: float | None = None,
     ) -> None:
         """Log a request of a live sandbox; `project` is kept only if it is one of the
-        sandbox's projects (a path can name anything)."""
+        sandbox's projects (a path can name anything); `seconds` is a recording's length."""
         with self._write() as db:
             db.execute(
-                "INSERT INTO requests (session, at, method, path, project, partial, status) "
-                "SELECT ?, ?, ?, ?, (SELECT id FROM projects WHERE id = ? AND session = ?), ?, ? "
-                "WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ?)",
+                "INSERT INTO requests "
+                "(session, at, method, path, project, partial, status, seconds) "
+                "SELECT ?, ?, ?, ?, (SELECT id FROM projects WHERE id = ? AND session = ?), ?, ?, "
+                "? WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ?)",
                 (
                     session,
                     _stamp(at),
@@ -510,6 +519,7 @@ class Store:
                     session,
                     int(partial),
                     status,
+                    seconds,
                     session,
                 ),
             )
@@ -529,6 +539,7 @@ class Store:
                 row["project"],
                 bool(row["partial"]),
                 int(row["status"]),
+                None if row["seconds"] is None else float(row["seconds"]),
             )
             for row in rows
         ]

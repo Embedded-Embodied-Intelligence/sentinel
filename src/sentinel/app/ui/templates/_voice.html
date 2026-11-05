@@ -1,0 +1,18 @@
+{# The microphone of a message box (WP14, ADR-0031): shown by the script only where the browser can
+record (a secure page with a microphone); the text the recording gives goes into the box `target`
+to be read and corrected before anything is processed. #}
+<div class="voice" data-voice data-voice-url="{{ voice_url }}" data-voice-target="{{ target }}" data-voice-limit="{{ voice_limit }}" hidden
+  data-msg-recording="{{ t('voice.recording') }}" data-msg-sending="{{ t('voice.sending') }}" data-msg-done="{{ t('voice.done') }}"
+  data-msg-limit="{{ t('voice.limit', seconds=voice_limit) }}" data-msg-denied="{{ t('voice.denied') }}" data-msg-no-mic="{{ t('voice.no_mic') }}"
+  data-msg-failed="{{ t('voice.failed') }}">
+  <div class="voice-row">
+    <button type="button" class="btn btn-sm" data-voice-start aria-describedby="{{ target }}-voice-note">{{ icon("mic", 16) }}{{ t("voice.start") }}</button>
+    <span class="voice-live" data-voice-live hidden>
+      <span class="voice-dot" aria-hidden="true"></span>
+      <span class="voice-time" data-voice-timer>0:00</span><span class="muted"> / {{ (voice_limit // 60) }}:{{ "%02d" | format(voice_limit % 60) }}</span>
+      <button type="button" class="btn btn-sm" data-voice-stop>{{ icon("stop", 16) }}{{ t("voice.stop") }}</button>
+    </span>
+  </div>
+  <p class="hint" data-voice-status role="status" aria-live="polite"></p>
+  <p class="caption" id="{{ target }}-voice-note">{{ t("voice.privacy") }}</p>
+</div>

@@ -58,23 +58,16 @@ class Model:
             return "to nie jest JSON"
         if system.startswith("You extract"):
             return json.dumps(WITH_DRIVER if "kierowca" in user else EXTRACTION)
-        if system.startswith("You turn"):
+        if system.startswith("You read a project manager's status report"):
             worker = re.search(r"(\d+) Ania", user)
-            running = re.search(r'(\d+) "Logowanie": running', user)
-            return json.dumps(
-                {
-                    "events": [
-                        {
-                            "type": "absence",
-                            "worker": int(worker[1]) if worker else 0,
-                            "return_day": None,
-                        },
-                        {"type": "work_increase", "activity": int(running[1]), "factor": 1.5}
-                        if running
-                        else {"type": "absence", "worker": 2, "return_day": None},
-                    ]
-                }
-            )
+            items: list[dict[str, Any]] = [
+                {"type": "absence", "clause": 1, "person": int(worker[1]) if worker else 0}
+            ]
+            if '"Logowanie": in progress' in user:
+                items.append({"type": "more_work", "clause": 1, "task": "Logowanie", "factor": 1.5})
+            else:
+                items.append({"type": "absence", "clause": 1, "person": 2})
+            return json.dumps({"items": items})
         record = re.search(r"Chosen action: (\S+)", user)
         return json.dumps(
             {

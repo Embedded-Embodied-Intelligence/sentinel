@@ -5,6 +5,37 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.5.0 — 2026-11-05 (WP14, status messages that understand a whole report; voice input)
+
+- A check-in message is read as a whole report: progress ("zrobiono około 15 %", "w połowie"),
+  a finish with its date, a start, absences, growing tasks and new tasks, each an item to confirm;
+  confirmed tasks fill their rows of the form. The owner's message of the usability rehearsal now
+  gives its three items (workshop done Tue 3 Nov, the API at 15 %, Bartosz away from Thu 5 Nov,
+  back Mon 16 Nov) instead of one wrong absence.
+- Dates are settled by code, never counted by the model (spec v2.3.0, section 11.3; ADR-0032):
+  the model names each date as a calendar date with the words it came from, the code checks the
+  words on the project calendar ("od jutra" is the next working day, "do piątku" is through
+  Friday, "wraca w piątek" is back that day), and a weekday that contradicts its date, a day off
+  or a weekday that can name two days becomes a question on the review, never a silent shift.
+  Task words match the tasks with quotes, case and inflection ignored; words that fit several
+  tasks ask. The words of a date must be date words, so no reason for an absence reaches the
+  cache. The review shows an absence as its first day away and its return day, with its working
+  days.
+- An evaluation set of 30 Polish reports on the usability and showcase projects
+  (`docs/qa/ai/messages-pl.jsonl`, `scripts/messages_eval.py`): with gpt-oss-120b 43 of 43 items
+  exact and no wrong date shown without a question (1.4.1: 7 of 43, 15 wrong dates); with
+  qwen2.5:7b on the first 10, see `docs/reports/WP14.md`.
+- Voice input beside the message box of a check-in and of "describe the project" (ADR-0031): the
+  browser records at most 90 s, Groq's Whisper (`whisper-large-v3-turbo`) writes it out with the
+  team's and the tasks' names as its vocabulary, and the text goes into the box to be read and
+  corrected before it is processed. Neither the audio nor the text is stored; the demo's request
+  log keeps only a recording's length (schema version 3) and its daily AI cap counts recordings.
+  The button needs a Groq key (the provider's, or a key for recordings on Settings, which also
+  tests them) and an https page or localhost.
+- `scripts/voice_check.py`: the owner's message recorded (Windows' Polish voice, 15 s) written
+  out in 0.5 s and read into its three items, also in the browser in demo mode by message and by
+  voice; task 3 of the usability test may be done by form, message or voice.
+
 ## 1.4.1 — 2026-11-03 (WP13, the remote usability test)
 
 - The protocol's scenario checked in demo mode on a day after the story's Wednesday 4 November,
