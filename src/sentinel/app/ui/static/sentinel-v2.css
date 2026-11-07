@@ -130,7 +130,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3, h4 { margin: 0; color: var(--text); }
-h1 { font-size: 30px; line-height: 38px; font-weight: 700; letter-spacing: -0.01em; }
+h1 { font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.01em; }
 h2 { font-size: 21px; line-height: 28px; font-weight: 650; }
 h3 { font-size: 18px; line-height: 26px; font-weight: 600; }
 p { margin: 0; }
@@ -172,14 +172,14 @@ a:hover { color: var(--accent-hover); }
 .v2-switch-label { font-size: 14px; color: var(--muted); font-weight: 600; }
 .v2-version { color: var(--muted); font-size: 14px; }
 .v2-old { font-size: 14px; }
-.v2-main { padding: 32px 48px 64px; max-width: 1240px; width: 100%; }
+.v2-main { padding: 24px 48px 64px; max-width: 1240px; width: 100%; }
 .v2-demo { margin: 0 0 16px; padding: 8px 16px; border-radius: 12px; background: var(--neutral-bg); color: var(--text-2); font-size: 15px; }
 
 /* ---- page header and project tabs */
-.v2-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 16px; }
+.v2-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 8px; }
 .v2-head-text { display: grid; gap: 4px; }
 .v2-head .v2-asof { color: var(--muted); font-size: 15px; }
-.v2-tabs { display: flex; gap: 4px; margin: 0 0 24px; padding: 0; list-style: none; border-bottom: 1px solid var(--line); }
+.v2-tabs { display: flex; gap: 4px; margin: 0 0 16px; padding: 0; list-style: none; border-bottom: 1px solid var(--line); }
 .v2-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; color: var(--text-2); text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -1px; }
 .v2-tabs a:hover { color: var(--text); }
 .v2-tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
@@ -187,13 +187,16 @@ a:hover { color: var(--accent-hover); }
 /* ---- cards and sections */
 .card { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; border: 1px solid var(--line); }
 .card + .card { margin-top: 16px; }
+.grid-3 > .card, .grid-2 > .card { margin-top: 0; }
 .overline { font-size: 14px; line-height: 20px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.stack { display: grid; gap: 16px; }
-.stack-sm { display: grid; gap: 8px; }
+.stack { display: grid; gap: 16px; align-content: start; }
+.stack-sm { display: grid; gap: 8px; align-content: start; }
 .row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .grid-2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
-.section { margin-top: 32px; display: grid; gap: 12px; }
+.section { margin-top: 24px; display: grid; gap: 12px; }
+#pending.section { margin-top: 12px; }
+.grid-3 { margin-top: 12px; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .bullets { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
@@ -230,15 +233,15 @@ a:hover { color: var(--accent-hover); }
 .state-lg { font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 14px 6px 10px; }
 
 /* ---- verdict and the three numbers */
-.verdict { display: grid; gap: 8px; padding: 28px 28px 24px; border-left: 6px solid var(--line-strong); }
+.verdict { display: grid; gap: 6px; padding: 18px 24px; border-left: 6px solid var(--line-strong); }
 .verdict-good { border-left-color: var(--good); }
 .verdict-warn { border-left-color: var(--warn); }
 .verdict-bad { border-left-color: var(--bad); }
-.verdict-text { font-size: 26px; line-height: 34px; font-weight: 650; }
+.verdict-text { font-size: 24px; line-height: 32px; font-weight: 650; }
 .verdict-cause { color: var(--text-2); }
 .figure { display: grid; gap: 8px; align-content: start; }
-.hero { font-size: 48px; line-height: 52px; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.hero small { font-size: 22px; font-weight: 650; letter-spacing: 0; }
+.hero { font-size: 46px; line-height: 50px; white-space: nowrap; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.hero small { font-size: 20px; font-weight: 650; letter-spacing: 0; }
 .hero-good { color: var(--good); }
 .hero-warn { color: var(--warn); }
 .hero-bad { color: var(--bad); }
@@ -246,6 +249,8 @@ a:hover { color: var(--accent-hover); }
 .facts dt { color: var(--muted); font-size: 15px; }
 .facts dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
 .facts .big { font-size: 24px; line-height: 30px; font-weight: 700; }
+.figure.card { padding: 18px 22px; }
+.budget-line { font-size: 22px; line-height: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .with-grid { display: flex; align-items: center; gap: 20px; }
 details.help summary { cursor: pointer; color: var(--accent); font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; gap: 4px; }
 details.help p { margin-top: 8px; color: var(--text-2); font-size: 16px; }
@@ -258,8 +263,8 @@ details.help p { margin-top: 8px; color: var(--text-2); font-size: 16px; }
 .dots .off { fill: var(--dot-empty); }
 
 /* ---- the pending decision */
-.decision { display: grid; gap: 16px; border: 2px solid var(--accent); }
-.decision-title { font-size: 22px; line-height: 30px; font-weight: 650; }
+.decision { display: grid; gap: 12px; border: 2px solid var(--accent); padding: 20px 24px; }
+.decision-title { font-size: 20px; line-height: 28px; font-weight: 650; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); font-weight: 600; font-variant-numeric: tabular-nums; }
 .chip-good .arrow { color: var(--good); }

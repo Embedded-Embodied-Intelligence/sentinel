@@ -1,0 +1,20 @@
+{% import "v2/_macros.html" as m %}
+<section id="pending" class="card section{% if pending %} decision{% endif %}" aria-labelledby="pending-title"{% if thinking and not pending %} hx-get="{{ prefix }}/projects/{{ view.id }}/pending" hx-trigger="load delay:3s" hx-swap="outerHTML"{% endif %}>
+  {% if pending %}
+  <div class="section-head">
+    <h2 id="pending-title" class="overline">{{ t("v2.decision.title") }}{% if lifecycle and lifecycle.valid %} · <span class="valid">{{ t("v2.decision.valid", date=t.date(lifecycle.valid)) }}</span>{% endif %}</h2>
+    {% if lifecycle and lifecycle.expires_tomorrow %}<span class="expires">{{ icon("clock", 16) }} {{ t("v2.decision.expires") }}</span>{% endif %}
+  </div>
+  <p class="decision-title">{{ pending.title }}</p>
+  {{ m.effect_chips(t, chips) }}
+  {% with seq=pending.seq, project_id=view.id, back="overview" %}{% include "v2/_decide.html" %}{% endwith %}
+  {% elif thinking %}
+  <h2 id="pending-title" class="overline">{{ t("v2.decision.title") }}</h2>
+  <p class="computing">{{ t("v2.decision.thinking") }}</p>
+  {% else %}
+  <div class="quiet-box">
+    <p id="pending-title">{{ t("v2.decision.none", day=t.date(next_report)) }}</p>
+    {% if not view.finished %}<a class="btn btn-primary" href="{{ prefix }}/projects/{{ view.id }}/report">{{ icon("mic", 20) }}{{ t("v2.report_button") }}</a>{% endif %}
+  </div>
+  {% endif %}
+</section>

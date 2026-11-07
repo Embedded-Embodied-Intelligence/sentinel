@@ -1,0 +1,67 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% block content %}
+{% set state = s.state if s.state in ("good", "warn", "bad") else "none" %}
+<section class="card verdict verdict-{{ state }}" aria-labelledby="verdict-state">
+  <p id="verdict-state">{{ m.state_badge(t, s.state, large=True) }}</p>
+  {% if s.sentence %}<p class="verdict-text">{{ s.sentence }}</p>{% endif %}
+  {% if s.cause %}<p class="verdict-cause">{{ t("v2.verdict.cause", cause=s.cause) }}</p>{% endif %}
+  {% if s.summary and s.summary.promise_note %}<p class="muted small">{{ t("v2.promise_note", why=t("v2.promise." ~ s.summary.promise_note)) }}</p>{% endif %}
+</section>
+
+{% if f %}
+<div class="grid-3">
+  <section class="card figure" aria-labelledby="fig-chance">
+    <h2 id="fig-chance" class="overline">{{ t("v2.chance.title") }}</h2>
+    {% if s.n is not none %}
+    <div class="with-grid">
+      <p class="hero hero-{{ state }} num">{{ s.n }} <small>{{ t("v2.chance.value", n="").strip() }}</small></p>
+      {{ m.dot_grid(t, s.n, state, 84) }}
+    </div>
+    <details class="help">
+      <summary>{{ t("v2.chance.help") }}</summary>
+      <p>{{ t("v2.chance.explain", w=s.worlds, k=s.on_time, n=s.n) }}</p>
+    </details>
+    {% else %}<p class="muted">{{ t("v2.verdict.none") }}</p>{% endif %}
+  </section>
+  <section class="card figure" aria-labelledby="fig-end">
+    <h2 id="fig-end" class="overline">{{ t("v2.end.title") }}</h2>
+    <dl class="facts">
+      <dt>{{ t("v2.end.likely") }}</dt><dd class="big">{{ t.date(f.p50) }}</dd>
+      {% if f.deadline %}<dt>{{ t("v2.end.deadline") }}</dt><dd>{{ t.date(f.deadline) }}</dd>{% endif %}
+      <dt>{{ t("v2.end.bad") }}</dt><dd>{{ t.date(f.p90) }}</dd>
+    </dl>
+  </section>
+  <section class="card figure" aria-labelledby="fig-budget">
+    <h2 id="fig-budget" class="overline">{{ t("v2.budget.title") }}</h2>
+    {% if view.budget %}
+    <p class="budget-line">{{ t("v2.budget.spent" if person_days else "v2.budget.spent_units", a=t.money(view.cost_so_far or 0), b=t.money(view.budget)) }}</p>
+    {% if budget_end %}<p class="num">{{ budget_end }}</p>{% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endif %}
+
+{% include "v2/_pending.html" %}
+
+<div class="grid-2 section">
+  <section class="card stack" aria-labelledby="buffer-title">
+    <div><h2 id="buffer-title">{{ t("v2.buffer.title") }}</h2><p class="muted small">{{ t("v2.buffer.subtitle") }}</p></div>
+    {% if fever %}
+    {{ fever }}
+    <p class="legend"><span class="lg-good">{{ t("v2.buffer.zone.good") }}</span><span class="lg-warn">{{ t("v2.buffer.zone.warn") }}</span><span class="lg-bad">{{ t("v2.buffer.zone.bad") }}</span></p>
+    {% elif reserve <= 0 and view.deadline %}
+    <p class="notice notice-warn">{{ icon("alert", 20) }}<span>{{ t("v2.buffer.none") }}</span></p>
+    {% endif %}
+  </section>
+  <section class="card stack" aria-labelledby="week-title">
+    <h2 id="week-title">{{ t("v2.week.title") }}</h2>
+    {% if week %}
+    <ul class="week">
+      {% for item in week %}<li><span class="when">{{ t.date(item.day) }}</span><span{% if item.deadline %} class="deadline"{% endif %}>{{ item.text }}</span></li>{% endfor %}
+    </ul>
+    {% else %}<p class="muted">{{ t("v2.week.empty") }}</p>{% endif %}
+  </section>
+</div>
+{% with project_id=view.id %}{% include "v2/_insights.html" %}{% endwith %}
+{% endblock %}

@@ -351,15 +351,22 @@ class LlmService:
         return self.factory(settings, cache)
 
     def transcribe(
-        self, audio: bytes, content_type: str, *, language: str | None, vocabulary: str = ""
+        self,
+        audio: bytes,
+        content_type: str,
+        *,
+        language: str | None,
+        vocabulary: str = "",
+        preview: bool = False,
     ) -> Transcript:
         """A recording written out by Groq's Whisper (ADR-0031), counted against the daily cap
-        as a feature request; neither the audio nor the text is kept."""
+        as a feature request, except a live preview of a recording still running (v2, WP15);
+        neither the audio nor the text is kept."""
         key = _voice_key(self.settings())
         if not self.available or key is None:
             raise AppError("voice_disabled", "unavailable")
         cap = self.daily_cap if self.mode == "capped" else None
-        if not self.store.use(USAGE_KEY, cap):
+        if not preview and not self.store.use(USAGE_KEY, cap):
             raise AppError("llm_cap", "limit")
         try:
             return self.transcriber(key).transcribe(

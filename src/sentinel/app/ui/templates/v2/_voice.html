@@ -1,0 +1,17 @@
+{# The voice component (section 9): a text box with a microphone, live grey preview, ✓/Enter and ✕/Esc. #}
+<div class="voice-box" data-voice-box>
+  <textarea class="input" id="{{ box_id }}" name="{{ box_name }}" rows="{{ box_rows }}"{% if box_example %} placeholder="{{ box_example }}"{% endif %} maxlength="5000"{% if box_hint %} aria-describedby="{{ box_id }}-hint"{% endif %}>{{ box_value | default("") }}</textarea>
+  {% if voice %}
+  <button type="button" class="btn btn-quiet btn-icon voice-mic" data-voice-start data-voice-url="{{ prefix }}/transcribe{% if box_project %}?project={{ box_project }}{% endif %}" aria-label="{{ t('v2.voice.start') }}" title="{{ t('v2.voice.start') }}">{{ icon("mic", 24) }}</button>
+  <div class="voice-rec" data-voice-rec hidden>
+    <span class="voice-dot" aria-hidden="true"></span><span>{{ t("v2.voice.recording") }}</span>
+    <span class="voice-time" data-voice-time>0:00</span>
+    <span class="voice-level" role="meter" aria-label="{{ t('v2.voice.level') }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-voice-level><span></span></span>
+    <span style="flex:1"></span>
+    <button type="button" class="voice-ok" data-voice-accept aria-label="{{ t('v2.voice.accept') }}" title="{{ t('v2.voice.accept') }}">{{ icon("check", 24) }}</button>
+    <button type="button" class="voice-no" data-voice-cancel aria-label="{{ t('v2.voice.cancel') }}" title="{{ t('v2.voice.cancel') }}">{{ icon("x", 24) }}</button>
+  </div>
+  <p class="voice-status" data-voice-status aria-live="polite" data-writing="{{ t('v2.voice.writing') }}" data-done="{{ t('v2.voice.done') }}" data-denied="{{ t('v2.voice.denied') }}" data-failed="{{ t('v2.voice.failed') }}" data-preview-off="{{ t('v2.voice.preview_off') }}" data-cap-soon="{{ t('v2.voice.cap_soon') }}"></p>
+  {% endif %}
+  {% if box_hint %}<p class="hint" id="{{ box_id }}-hint">{{ box_hint }}</p>{% endif %}
+</div>

@@ -1,0 +1,17 @@
+<div id="insights" class="grid-2 section"{% if insights.waiting %} hx-get="{{ prefix }}/projects/{{ project_id }}/insights" hx-trigger="load delay:2s" hx-swap="outerHTML"{% endif %}>
+  <section class="card stack" aria-labelledby="causes-title">
+    <div><h2 id="causes-title">{{ t("v2.causes.title") }}</h2>{% if insights.since %}<p class="muted small">{{ insights.since }}</p>{% endif %}</div>
+    {% if insights.causes %}
+    <ul class="bullets">{% for line in insights.causes %}<li>{{ line }}</li>{% endfor %}</ul>
+    <p class="muted small">{{ t("v2.causes.note") }}</p>
+    {% elif insights.waiting %}<p class="computing">{{ t("v2.causes.wait") }}</p>
+    {% else %}<p class="muted">{{ t("v2.causes.none") }}</p>{% endif %}
+  </section>
+  <section class="card stack" aria-labelledby="risks-title">
+    <h2 id="risks-title">{{ t("v2.risks.title") }}</h2>
+    {% if insights.risks %}
+    <ul class="bullets">{% for line in insights.risks %}<li>{{ line }}</li>{% endfor %}</ul>
+    {% elif insights.waiting %}<p class="computing">{{ t("v2.risks.wait") }}</p>
+    {% elif insights.risk_note %}<p class="muted">{{ insights.risk_note }}</p>{% endif %}
+  </section>
+</div>

@@ -192,8 +192,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Przypomnę przy następnej wizycie.",
     ),
     "v2.done.discarded": (
-        "The change was no longer possible, so nothing was applied: {reason}",
-        "Tej zmiany nie dało się już wprowadzić, więc nic nie zmieniono: {reason}",
+        "The change was no longer possible, so nothing changed; Sentinel is analysing again.",
+        "Tej zmiany nie dało się już wprowadzić, więc nic nie zmieniono; Sentinel analizuje "
+        "projekt ponownie.",
     ),
     "v2.done.report": ("Report saved.", "Raport zapisany."),
     "v2.promise_note": (

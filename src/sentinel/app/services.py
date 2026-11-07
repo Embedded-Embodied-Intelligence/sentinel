@@ -36,6 +36,7 @@ from sentinel.app.events import (
     Explained,
     LiveState,
     Recommended,
+    RejectReason,
     Source,
     Undone,
     Verdict,
@@ -455,9 +456,16 @@ class Services:
         return job_view(self.jobs.submit(session, project_id, THREATS_JOB, work), language)
 
     def checkin(
-        self, session: str, project_id: str, checkin: CheckIn, language: Language
+        self,
+        session: str,
+        project_id: str,
+        checkin: CheckIn,
+        language: Language,
+        *,
+        autonomy: int | None = None,
     ) -> CheckinResult:
-        """Apply a check-in (spec section 11.3); a recommendation job follows (11.5)."""
+        """Apply a check-in (spec section 11.3); a recommendation job follows (11.5), at the
+        project's autonomy or at `autonomy` (the v2 interface: 0, spec section 11.8)."""
         with self._lock(project_id):
             row, state = self._state(session, project_id)
             project = state.project
@@ -477,15 +485,18 @@ class Services:
         _, state = self._state(session, project_id)
         if state.project.definition.deadline is not None and not state.project.finished:
             try:
-                job = self.recommend(session, project_id, language)
+                job = self.recommend(session, project_id, language, autonomy=autonomy)
             except AppError:
                 job = None  # e.g. the job limit; the manager can ask again
         return CheckinResult(
             project=self.live(session, project_id, language), recommendation_job=job
         )
 
-    def recommend(self, session: str, project_id: str, language: Language) -> JobView:
-        """A Sentinel deliberation on the latest observation in a job (spec section 11.5)."""
+    def recommend(
+        self, session: str, project_id: str, language: Language, *, autonomy: int | None = None
+    ) -> JobView:
+        """A Sentinel deliberation on the latest observation in a job (spec section 11.5), at
+        the project's autonomy or at `autonomy` (spec section 11.8)."""
         _, state = self._state(session, project_id)
         _ready(state.project)
 
@@ -495,7 +506,9 @@ class Services:
                 project = current.project
                 _ready(project)
                 progress(0.05, "deliberating")
-                recommendation = planning.recommend(project, proposer=self._proposer(project))
+                recommendation = planning.recommend(
+                    project, proposer=self._proposer(project), autonomy=autonomy
+                )
                 applied = None
                 record = recommendation.record
                 if record.gate == "auto" and recommendation.chosen is not None:
@@ -537,9 +550,19 @@ class Services:
         return propose
 
     def decide(
-        self, session: str, project_id: str, seq: int, verdict: Verdict, language: Language
+        self,
+        session: str,
+        project_id: str,
+        seq: int,
+        verdict: Verdict,
+        language: Language,
+        *,
+        reason: RejectReason | None = None,
+        note: str | None = None,
+        autonomy: int | None = None,
     ) -> ProjectView:
-        """The manager's decision on a recommendation (spec section 11.5)."""
+        """The manager's decision on a recommendation (spec section 11.5); a rejection with its
+        reason and words (v2), a fresh recommendation at `autonomy` after a discarded one."""
         follow = False
         with self._lock(project_id):
             row, state = self._state(session, project_id)
@@ -550,7 +573,12 @@ class Services:
                 status = render(f"status_{entry.status}", language)
                 raise AppError("recommendation_closed", "conflict", status=status)
             project = state.project
-            event = Decided(recommendation=seq, verdict=verdict)
+            event = Decided(
+                recommendation=seq,
+                verdict=verdict,
+                reason=reason if verdict == "reject" else None,
+                note=(note or "").strip()[:300] or None if verdict == "reject" else None,
+            )
             if verdict == "approve":
                 try:
                     approved, rejection = planning.approval(project, entry.recommendation)
@@ -569,7 +597,7 @@ class Services:
             self._append(session, row, "decision", event)
         if follow:
             with suppress(AppError):  # e.g. the job limit; the manager can ask again
-                self.recommend(session, project_id, language)
+                self.recommend(session, project_id, language, autonomy=autonomy)
         return self.live(session, project_id, language)
 
     def undo(self, session: str, project_id: str, seq: int, language: Language) -> ProjectView:
@@ -652,6 +680,13 @@ class Services:
                 )
             )
         return steps, self._deadline_chance(project_id, replay(rows))
+
+    def forecast_of(self, project_id: str, state: LiveState) -> planning.ForecastResult | None:
+        """The forecast of a state of the project's log (cached), None without a valid plan or
+        for a finished project (the v2 charts, WP15)."""
+        if not _forecastable(state.project):
+            return None
+        return self._forecast(project_id, state)
 
     def chance_of(self, project_id: str, state: LiveState) -> float | None:
         """The chance of meeting the deadline of a state of the project's log (cached), None
@@ -795,18 +830,30 @@ class Services:
             return self._clauses.get(job_id, ())
 
     def transcribe(
-        self, session: str, project_id: str, audio: bytes, content_type: str, language: Language
+        self,
+        session: str,
+        project_id: str | None,
+        audio: bytes,
+        content_type: str,
+        language: Language,
+        *,
+        preview: bool = False,
     ) -> Transcript:
         """A recording of a project's message box written out (WP14, ADR-0031), in the page's
-        language, with the names of the team and the tasks as Whisper's vocabulary; the text goes
-        back to the page only: neither it nor the audio is stored."""
-        row = self._row(session, project_id)
-        if row.kind != "live":
-            raise AppError("not_a_live_project", "invalid")
-        definition = self._state(session, project_id)[1].project.definition
-        names = [p.name for p in definition.team] + [t.name for t in definition.tasks]
-        vocabulary = ", ".join(dict.fromkeys(n for n in names if n))
-        found = self.llm.transcribe(audio, content_type, language=language, vocabulary=vocabulary)
+        language, with the names of the team and the tasks as Whisper's vocabulary (none without
+        a project: the v2 wizard); `preview` for the live preview of a recording still running
+        (v2, WP15). The text goes back to the page only: neither it nor the audio is stored."""
+        vocabulary = ""
+        if project_id is not None:
+            row = self._row(session, project_id)
+            if row.kind != "live":
+                raise AppError("not_a_live_project", "invalid")
+            definition = self._state(session, project_id)[1].project.definition
+            names = [p.name for p in definition.team] + [t.name for t in definition.tasks]
+            vocabulary = ", ".join(dict.fromkeys(n for n in names if n))
+        found = self.llm.transcribe(
+            audio, content_type, language=language, vocabulary=vocabulary, preview=preview
+        )
         if not found.text:
             raise AppError("voice_nothing", "invalid")
         return found

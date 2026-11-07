@@ -560,17 +560,17 @@ class Recommendation(_Frozen):
         return record.model_copy(update={"needs": needs, "candidates": candidates})
 
 
-def sentinel_params(project: LiveProject) -> SentinelParams:
-    """Sentinel's parameters for the project: spec section 8, the project's autonomy Lambda and
+def sentinel_params(project: LiveProject, autonomy: int | None = None) -> SentinelParams:
+    """Sentinel's parameters for the project: spec section 8, the project's autonomy Lambda (or
+    `autonomy`: the v2 interface deliberates at 0, every action approved, spec section 11.8) and
     DESCOPE candidates if it has optional tasks (spec section 11.5)."""
     observation_optional = any(
         node.optional
         for key, node in project.nodes().items()
         if project.tasks[key].state == "unstarted"
     )
-    return SentinelParams(
-        autonomy=project.definition.settings.autonomy, descope=observation_optional
-    )
+    level = project.definition.settings.autonomy if autonomy is None else autonomy
+    return SentinelParams(autonomy=level, descope=observation_optional)
 
 
 def stage_one(
@@ -823,15 +823,17 @@ class AppSentinel(Sentinel):
         return record
 
 
-def recommend(project: LiveProject, *, proposer: Proposer | None = None) -> Recommendation:
+def recommend(
+    project: LiveProject, *, proposer: Proposer | None = None, autonomy: int | None = None
+) -> Recommendation:
     """A deliberation on the current observation with its comparison (spec sections 6 and 11.5,
-    `AppSentinel`)."""
+    `AppSentinel`), at the project's autonomy or at `autonomy` (spec section 11.8)."""
     observation = project.observation()
     if observation.deadline is None:
         raise LiveError([issue("no_deadline")])
     if project.finished:
         raise LiveError([issue("project_finished")])
-    params = sentinel_params(project)
+    params = sentinel_params(project, autonomy)
     seed = project.definition.settings.seed
     sentinel = AppSentinel(
         params, seed=seed, keep_records=False, proposer=proposer, project=project

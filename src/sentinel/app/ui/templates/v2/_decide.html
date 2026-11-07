@@ -1,0 +1,30 @@
+{# Approve / reject in place (sections 3 and 8.4); on the decision page also adjust and postpone. #}
+<div class="stack" data-decide>
+  <div class="decide">
+    <button type="button" class="btn btn-approve btn-lg" hx-post="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/approve" hx-vals='{"back": "{{ back }}"}'>{{ icon("check", 20) }}{{ t("v2.approve") }}</button>
+    <button type="button" class="btn btn-reject btn-lg" data-toggle="reject-{{ seq }}" aria-expanded="false" aria-controls="reject-{{ seq }}">{{ icon("x", 20) }}{{ t("v2.reject") }}</button>
+    {% if full | default(false) %}
+    {% if adjustable | default(false) %}<button type="button" class="btn btn-lg" data-toggle="adjust-{{ seq }}" aria-expanded="false" aria-controls="adjust-{{ seq }}">{{ icon("pencil", 20) }}{{ t("v2.adjust") }}</button>{% endif %}
+    <button type="button" class="btn btn-quiet btn-lg" hx-post="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/postpone">{{ t("v2.postpone") }}</button>
+    {% else %}
+    <a class="link-more" href="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}">{{ t("v2.details") }} ›</a>
+    {% endif %}
+  </div>
+  <form id="reject-{{ seq }}" class="panel" hidden hx-post="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/reject">
+    <input type="hidden" name="back" value="{{ back }}">
+    <fieldset class="reason-chips">
+      <legend class="label" style="margin-bottom:8px">{{ t("v2.reject.title") }}</legend>
+      {% for reason in ("too_expensive", "unavailable", "no_budget", "other") %}
+      <label><input type="radio" name="reason" value="{{ reason }}" required{% if reason == "other" %} data-other{% endif %}>{{ t("v2.reject." ~ reason) }}</label>
+      {% endfor %}
+    </fieldset>
+    <div class="field" data-other-box hidden>
+      <label for="note-{{ seq }}">{{ t("v2.reject.note") }}</label>
+      {% with box_id="note-" ~ seq, box_name="note", box_rows=3, box_example="", box_hint=t("v2.reject.note_hint"), box_project=project_id %}{% include "v2/_voice.html" %}{% endwith %}
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-reject-fill">{{ icon("x", 20) }}{{ t("v2.reject.confirm") }}</button>
+      <button type="button" class="btn btn-quiet" data-toggle="reject-{{ seq }}">{{ t("v2.reject.cancel") }}</button>
+    </div>
+  </form>
+</div>

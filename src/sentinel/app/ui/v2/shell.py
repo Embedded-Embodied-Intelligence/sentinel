@@ -20,6 +20,7 @@ Theme = Literal["light", "dark", "system"]
 THEMES: tuple[Theme, ...] = ("light", "dark", "system")
 THEME_COOKIE = "sentinel_theme"
 PREFIX = "/v2"
+GATE = 0  # every deliberation v2 asks for: every action needs approval (spec section 11.8)
 BANNER_POLL_S = 20
 BANNER_MOVE = 10  # a change of the chance in 100 the banner reports (section 7)
 # The tabs of a project (section 7) and the screens of WP16 that are placeholders for now, with
@@ -72,7 +73,8 @@ def header(ui: Ui, request: Request, view: ProjectView) -> Header:
     t = texts(request)
     rows = ui.services.store.events(ui.session(request), view.id)
     moment = rows[-1].created.astimezone() if rows else datetime.now().astimezone()
-    as_of = f"{t.date(view.as_of)}, {moment:%H:%M}"
+    day = view.checkins[-1].date if view.checkins else view.as_of  # the latest report's date
+    as_of = f"{t.date(day)}, {moment:%H:%M}"
     return Header(view.id, view.name, t("v2.as_of", moment=as_of))
 
 

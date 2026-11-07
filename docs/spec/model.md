@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.3.0)
+# Sentinel — formal model (v2.4.0)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -104,7 +104,11 @@ absences, work increases and new tasks, as items of the check-in form; dates as 
 with their words, settled by code on the project calendar, with questions for a weekday that
 contradicts its date, a day that is not a working day and a weekday that can name two days;
 tasks matched to the message's words tolerantly; the words of a date limited to date words
-(§11.3); the parser of §10.2, its prompt, schema and corpus and §1–§10 are unchanged.
+(§11.3); the parser of §10.2, its prompt, schema and corpus and §1–§10 are unchanged. v2.4.0
+(WP15) the v2 interface of the application (§11.8): its deliberations at `Λ = 0` (a note in
+§4), the chance in 100, the three states and their verdict, the time-reserve chart, the
+lifecycle of a decision with its validity date, cost of delay and corrections; §1–§10 and the
+research runs are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -363,7 +367,8 @@ Operations are applied in step 3 in the order given, each validated against the 
 the previous one; an invalid operation is rejected (logged, counted), the others still apply.
 
 Levels: 0 automatic, 1 automatic with report, 2 human approval. `*` DESCOPE always needs
-approval. No classical crashing: adding people to a late software task is modelled by the
+approval. (The application's v2 interface fixes `Λ = 0` for its deliberations, so every action
+other than NOOP waits for the manager; §11.8. The research runs keep their configured `Λ`.) No classical crashing: adding people to a late software task is modelled by the
 handover cost (Brooks's law).
 
 **Permission gate.** With autonomy level `Λ ∈ {0,1,2,3}`, an action other than NOOP runs
@@ -1216,3 +1221,62 @@ Never shown: the symbols of this document (`Λ`, `λ`, `τ`, `δ`, `γ`, `θ`, `
 NOOP, SHIFT, RESEQ, SUBST, OVERTIME, DESCOPE and `OT(k)`, and the words makespan, rollout,
 deliberation, epoch, observation, baseline, seed, PERT, CP-SAT, SGS, PSPLIB, RCPSP, NoReaction,
 LLM and Monte Carlo. File formats (CSV, JSON) may be named.
+
+### §11.8 The v2 interface (v2.4.0, WP15)
+
+The second interface of the application (`docs/design/v2-spec.md`) shows the figures of §11.4
+and §11.5 in the following forms and adds a lifecycle to a recommendation. It changes no figure
+of §11.4–§11.5, and the first interface keeps them as they are.
+
+- **Gate.** Every deliberation the v2 interface asks for (after a check-in, after an approval
+  that was discarded, after a correction) runs with `Λ = 0`: every chosen action other than
+  NOOP waits for the manager, a plan re-ordering included (§4, §11.5 *Autonomy*). The project's
+  autonomy setting applies only to the deliberations the first interface asks for.
+- **Chance in 100.** A chance `p` of `W` worlds (§11.4, `W = N = 200`) is shown as
+  `n = half_up(100 p)` "in 100", `0` and `100` only when exact (else clamped to `1 … 99`, as the
+  whole per cent of §11.5 item 5), with `K = half_up(p W)` of the worlds on time.
+- **States.** `n ≥ 80` (the target `θ_D`): on track; `50 ≤ n < 80`: at risk; `n < 50`: late
+  without changes. With `q₅₀` the median makespan of the forecast and the slack
+  `s = last(d_D) − last(date(q₅₀ − 1))` in working days, the verdict says `max(0, s)` days of
+  reserve in the first two states (`0`: "no reserve") and `max(0, −s)` days late in the third;
+  below `n = 50` the median is after the deadline, so `s < 0`. The main cause is the first
+  cause of the latest move (§11.4), else the first threat.
+- **Time reserve** (a buffer-consumption chart; Goldratt 1997, Leach 2014). The reserve is
+  `R = D − C⁰`, `C⁰` the makespan of the original plan `π⁰`; with `R ≤ 0` the page says that the
+  plan had no reserve. Each check-in is a point `(x, y)`: `x` the share of the work done, in
+  crew-member days, of the tasks not removed (a done task in full, a started one by its share
+  `x_j` of §11.3), and `y = max(0, q₅₀ − C⁰) / R` with `q₅₀` the median makespan of the
+  forecast of that check-in. Its zone is green for `y ≤ 2x/3`, amber for `y ≤ 1/3 + 2x/3`, red
+  above (at half the work each zone is a third of the reserve).
+- **Lifecycle.** A recommendation that waits for the manager is *pending*; *postponed*
+  ("later", §11.5) it is shown as pending again from the next calendar day; *adjusted* after a
+  correction (below), still pending; then *approved*, *rejected* (with one of the reasons
+  "too expensive", "person unavailable", "no budget" or "other" with at most 300 characters of
+  the manager's words), *expired* (below), *superseded* (§11.5: a newer check-in or
+  recommendation) or *discarded* (an approval no longer valid). Every change is an event of the
+  log with its time and actor: the manager for check-ins, decisions and corrections, Sentinel
+  for recommendations, validity and expiry. A decision event also stores the brief as it was:
+  the chance in 100, the most likely finish and the expected cost with and without the action,
+  the validity date and the cost of delay.
+- **Validity date and cost of delay.** For the action a recommendation waits on (as corrected),
+  on the forecast's `N` worlds of its day `t` (§11.4: seed and rollout layout) and with the
+  rollouts of §6, which apply an action approved `δ` days later on the approval day as §4 does,
+  `p(δ)` is evaluated for `δ = 0, 1, …` until `p(δ) − p_NOOP < ε_D` or `δ = 10`, with `p_NOOP`
+  the forecast's chance. The validity date is `date(t + δ*)` for the largest `δ*` with every
+  `p(δ') − p_NOOP ≥ ε_D`, `δ' ≤ δ*`; an action whose `p(0)` gains less than `ε_D` (one chosen
+  by a later component of the rule) has no validity date and does not expire. The cost of delay
+  is `(p(0) − p(δ_e)) / δ_e` per day, `δ_e` the last `δ` evaluated, shown when it is at least 1
+  in 100. Both are computed in a background job after the recommendation and stored as an event.
+  A pending recommendation whose validity date has passed (today is later) gets an *expired*
+  event when a page next reads the project; one whose validity date is the next working day
+  after today is marked "expires tomorrow". Nothing is ever applied without the manager.
+- **Correction.** The manager may change the one parameter of the action the model evaluates:
+  the substitute of a SUBST (another idle present worker of the replaced member's role; with
+  several replaced members, the first substitute), the role, number `u ≤ max(u_min, ⌊γR_k⌋)`
+  and window `H ∈ {5, 10, 15, 20}` of an OVERTIME, or the task of a DESCOPE (another optional
+  unstarted task); an action of several operations has its first non-plan operation corrected
+  and its plan part planned again on approval (§11.5 *Approve*); SHIFT and RESEQ alone have no
+  correction. The corrected action is evaluated as a row of the comparison (§11.5 item 3,
+  applied at once on the forecast's worlds) and becomes the recommendation's choice, with its
+  validity computed again; approving it applies it as §11.5 does, so the figures it promises are
+  those the overview shows after the approval.

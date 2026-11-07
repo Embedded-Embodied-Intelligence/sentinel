@@ -13,7 +13,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from sentinel.app.live import AppliedAction, Baseline, CheckinEffects, LiveProject
 from sentinel.app.models import CheckIn, ProjectDefinition
@@ -22,6 +22,7 @@ from sentinel.app.store import EventRow
 
 Source = Literal["new", "csv", "json", "text", "showcase"]
 Verdict = Literal["approve", "reject", "later"]
+RejectReason = Literal["too_expensive", "unavailable", "no_budget", "other"]
 RecommendationStatus = Literal[
     "none", "auto", "open", "later", "approved", "rejected", "discarded", "superseded", "undone"
 ]
@@ -56,10 +57,15 @@ class Recommended(_Event):
 
 
 class Decided(_Event):
+    """The manager's decision on a recommendation; a rejection may give one of the reasons of
+    the v2 interface and, for "other", the manager's own words (WP15)."""
+
     recommendation: int
     verdict: Verdict
     applied: AppliedAction | None = None
     discarded: str | None = None
+    reason: RejectReason | None = None
+    note: str | None = Field(default=None, max_length=300)
 
 
 class Undone(_Event):
