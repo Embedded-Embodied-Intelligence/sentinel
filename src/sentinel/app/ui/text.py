@@ -151,6 +151,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu.",
     ),
     "start.today": ("today", "dziś"),
+    "start.v2": ("New look (v2)", "Nowy wygląd (v2)"),
     "start.yesterday": ("yesterday", "wczoraj"),
     "start.days_ago.one": ("{n} day ago", "{n} dzień temu"),
     "start.days_ago.few": ("{n} days ago", "{n} dni temu"),

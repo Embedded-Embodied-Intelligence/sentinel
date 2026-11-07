@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{ t.lang }}" data-theme="{{ theme }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="htmx-config" content='{{ htmx_config }}'>
+<title>{% block title %}{{ title }}{% endblock %} · Sentinel</title>
+<link rel="stylesheet" href="{{ static('sentinel-v2.css') }}">
+<link rel="icon" href="{{ static('favicon.svg') }}" type="image/svg+xml">
+<script src="{{ static(htmx) }}" defer></script>
+<script src="{{ static('sentinel-v2.js') }}" defer></script>
+</head>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'>
+<a class="skip" href="#main">{{ t("v2.skip") }}</a>
+<div class="v2-shell">
+  {% include "v2/_sidebar.html" %}
+  <main id="main" class="v2-main" tabindex="-1">
+    {% include "v2/_banner.html" %}
+    {% if demo %}<p class="v2-demo">{{ t.plural("demo.note", demo_hours) }}</p>{% endif %}
+    <div id="alerts" class="alerts" role="alert"></div>
+    {% if project %}{% include "v2/_project_head.html" %}{% endif %}
+    {% if notice %}<p class="notice notice-{{ notice.tone }}" role="status">{{ icon(notice.icon, 20) }}<span>{{ notice.text }}</span></p>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

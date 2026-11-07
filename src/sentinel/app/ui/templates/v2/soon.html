@@ -1,0 +1,8 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<section class="card stack" aria-labelledby="soon-title">
+  <h2 id="soon-title">{{ t("v2.soon.title") }}</h2>
+  <p>{{ t("v2.soon.text") }}</p>
+  <p><a class="btn" href="{{ old }}">{{ t("v2.soon.open") }}</a></p>
+</section>
+{% endblock %}

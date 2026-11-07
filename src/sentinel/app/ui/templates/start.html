@@ -6,6 +6,7 @@
     <div>
       <h1>{{ t("start.title") }}</h1>
       <p class="lead">{{ t("start.what") }}</p>
+      <p><a href="/v2">{{ t("start.v2") }}</a></p>
     </div>
     {% if cards or drafts or examples %}
     <div class="page-actions"><a class="btn{% if not cards | selectattr("pending") | list %} btn-primary{% endif %}" href="/new">{{ icon("plus", 16) }}{{ t("start.new") }}</a></div>

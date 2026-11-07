@@ -1,0 +1,13 @@
+{% import "v2/_macros.html" as m %}
+<ul class="tiles list" role="list">
+  {% for tile in tiles %}
+  {% set s = tile.status %}
+  <li><a class="card tile tile-{{ s.state }}" href="{{ tile.href }}">
+    {{ m.state_badge(t, s.state) }}
+    <span class="tile-name">{{ tile.name }}</span>
+    {% if s.state == "draft" %}<span class="muted">{{ t("v2.start.draft") }}</span>{% elif s.sentence %}<span>{{ s.sentence }}</span>{% endif %}
+    {% if s.n is not none %}<span class="row"><strong class="num">{{ t.hundred(s.n) }}</strong>{% if tile.pending %}<span class="tag">{{ t.plural("v2.start.pending", tile.pending) }}</span>{% endif %}</span>{% endif %}
+  </a></li>
+  {% endfor %}
+  <li><a class="card tile tile-new" href="{{ prefix }}/new">{{ icon("plus", 24) }}{{ t("v2.start.new") }}</a></li>
+</ul>

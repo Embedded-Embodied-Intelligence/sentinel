@@ -1,0 +1,14 @@
+<header class="v2-head">
+  <div class="v2-head-text">
+    <h1>{{ project.name }}</h1>
+    <p class="v2-asof">{{ project.as_of }}</p>
+  </div>
+  {% if tab == "overview" %}<a class="btn btn-primary btn-lg" href="{{ prefix }}/projects/{{ project.id }}/report">{{ icon("mic", 20) }}{{ t("v2.report_button") }}</a>{% endif %}
+</header>
+<nav aria-label="{{ t('v2.tabs') }}">
+  <ul class="v2-tabs">
+    {% for key in ("overview", "report", "decisions", "log", "plan", "settings") %}
+    <li><a href="{{ prefix }}/projects/{{ project.id }}{% if key != 'overview' %}/{{ key }}{% endif %}"{% if tab == key %} aria-current="page"{% endif %}>{{ t("v2.tab." ~ key) }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>

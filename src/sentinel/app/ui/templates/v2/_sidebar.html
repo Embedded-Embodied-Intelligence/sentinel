@@ -1,0 +1,29 @@
+<aside class="v2-side" aria-label="{{ t('v2.nav.label') }}">
+  <a class="v2-brand" href="{{ prefix }}"><span class="v2-brand-mark" aria-hidden="true"></span>Sentinel</a>
+  <nav class="v2-nav" aria-label="{{ t('v2.nav.label') }}">
+    <ul>
+      {% for key, href, name in (("start", prefix, "home"), ("projects", prefix ~ "/projects", "folder"), ("log", prefix ~ "/log", "list"), ("lab", prefix ~ "/lab", "flask"), ("settings", prefix ~ "/settings", "sliders")) %}
+      <li><a href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}>{{ icon(name, 20) }}{{ t("v2.nav." ~ key) }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <div class="v2-side-foot">
+    <div class="stack-sm">
+      <span class="v2-switch-label" id="lang-label">{{ t("v2.nav.language") }}</span>
+      <div class="v2-switch" role="group" aria-labelledby="lang-label">
+        <a href="/lang/pl?next={{ here | urlencode }}" lang="pl" hreflang="pl"{% if t.lang == 'pl' %} aria-current="true"{% endif %}>Polski</a>
+        <a href="/lang/en?next={{ here | urlencode }}" lang="en" hreflang="en"{% if t.lang == 'en' %} aria-current="true"{% endif %}>English</a>
+      </div>
+    </div>
+    <div class="stack-sm">
+      <span class="v2-switch-label" id="theme-label">{{ t("v2.theme") }}</span>
+      <div class="v2-switch" role="group" aria-labelledby="theme-label">
+        {% for value in themes %}
+        <a href="{{ prefix }}/theme/{{ value }}?next={{ here | urlencode }}" data-theme-set="{{ value }}"{% if theme == value %} aria-current="true"{% endif %}>{{ t("v2.theme." ~ value) }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    <a class="v2-old" href="/">{{ t("v2.nav.old") }}</a>
+    <span class="v2-version">{{ t("v2.version", version=version) }}</span>
+  </div>
+</aside>

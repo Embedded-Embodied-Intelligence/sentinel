@@ -1,0 +1,6 @@
+<div id="v2-banner" class="v2-banner" role="status" aria-live="polite" aria-label="{{ t('v2.banner.label') }}"{% if not items | default([]) %} hx-get="{{ prefix }}/banner?since={{ banner_since | urlencode }}" hx-trigger="every {{ banner_poll }}s" hx-swap="outerHTML"{% endif %}>
+{% for item in items | default([]) %}
+  <div class="banner-item">{{ icon("info", 20) }}<p>{{ item.text }}</p><a class="btn btn-primary" href="{{ item.href }}">{{ t("v2.banner.see") }}</a>
+  <button type="button" class="btn btn-quiet btn-icon" hx-get="{{ prefix }}/banner?since={{ banner_since | urlencode }}" hx-target="#v2-banner" hx-swap="outerHTML" aria-label="{{ t('v2.banner.close') }}">{{ icon("x", 20) }}</button></div>
+{% endfor %}
+</div>

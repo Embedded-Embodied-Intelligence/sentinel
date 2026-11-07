@@ -1,0 +1,8 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.start.title") }}</h1><a class="btn btn-primary btn-lg" href="{{ prefix }}/new">{{ icon("plus", 20) }}{{ t("v2.start.new") }}</a></header>
+<section class="section" aria-labelledby="tiles-title">
+  <h2 id="tiles-title" class="overline">{{ t("v2.start.projects") }}</h2>
+  {% include "v2/_tiles.html" %}
+</section>
+{% endblock %}

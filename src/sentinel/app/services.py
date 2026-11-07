@@ -653,6 +653,11 @@ class Services:
             )
         return steps, self._deadline_chance(project_id, replay(rows))
 
+    def chance_of(self, project_id: str, state: LiveState) -> float | None:
+        """The chance of meeting the deadline of a state of the project's log (cached), None
+        without a plan or a deadline (the v2 banner and charts, WP15)."""
+        return self._deadline_chance(project_id, state)
+
     def _deadline_chance(self, project_id: str, state: LiveState) -> float | None:
         if not _forecastable(state.project) or state.project.definition.deadline is None:
             return None

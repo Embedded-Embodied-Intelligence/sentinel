@@ -1,0 +1,5 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.nav.projects") }}</h1><a class="btn btn-primary btn-lg" href="{{ prefix }}/new">{{ icon("plus", 20) }}{{ t("v2.start.new") }}</a></header>
+{% include "v2/_tiles.html" %}
+{% endblock %}

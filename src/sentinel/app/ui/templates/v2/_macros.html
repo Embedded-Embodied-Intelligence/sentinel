@@ -1,0 +1,21 @@
+{# The shared parts of the v2 pages (docs/design/v2-spec.md, sections 4 and 5). #}
+{% macro state_badge(t, state, large=False) -%}
+{% set icons = {"good": "check-circle", "warn": "alert", "bad": "cross-circle", "finished": "flag", "draft": "pencil"} %}
+<span class="state state-{{ state if state in ("good", "warn", "bad") else "none" }}{% if large %} state-lg{% endif %}">{{ icon(icons[state] | default("minus"), 20 if large else 16) }}{{ t("v2.state." ~ state) }}</span>
+{%- endmacro %}
+
+{% macro dot_grid(t, n, state, size=120) -%}
+<svg class="dots" width="{{ size }}" height="{{ size }}" viewBox="0 0 100 100" role="img" aria-label="{{ t('v2.dots', n=n) }}">
+{% for i in range(100) %}<circle cx="{{ 5 + (i % 10) * 10 }}" cy="{{ 5 + (i // 10) * 10 }}" r="3.6" class="{{ 'on-' ~ state if i < n else 'off' }}"/>{% endfor %}
+</svg>
+{%- endmacro %}
+
+{% macro effect_chips(t, chips) -%}
+<ul class="chips">
+{% for chip in chips %}<li class="chip chip-{{ chip.tone }}">{{ chip.text }}{% if chip.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif chip.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</li>{% endfor %}
+</ul>
+{%- endmacro %}
+
+{% macro life_badge(t, state) -%}
+<span class="life life-{{ state }}">{{ t("v2.life." ~ state) }}</span>
+{%- endmacro %}

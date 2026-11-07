@@ -237,3 +237,6 @@ def mount(app: FastAPI, ui: Ui) -> None:
     app.mount(STATIC_PREFIX.rstrip("/"), StaticFiles(directory=STATIC_DIR), name="static")
     for module in (pages, setup, project, sim):
         app.include_router(module.router(ui))
+    from sentinel.app.ui import v2
+
+    v2.mount(app, ui)
