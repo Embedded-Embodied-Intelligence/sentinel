@@ -249,7 +249,7 @@ a:hover { color: var(--accent-hover); }
 .hero-bad { color: var(--bad); }
 .facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; }
 .facts dt { color: var(--muted); font-size: 15px; }
-.facts dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
+.facts dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .facts .big { font-size: 24px; line-height: 30px; font-weight: 700; }
 .figure.card { padding: 18px 22px; }
 .budget-line { font-size: 22px; line-height: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -409,6 +409,7 @@ textarea.input { min-height: 132px; resize: vertical; }
 .tile-warn { border-left-color: var(--warn); }
 .tile-bad { border-left-color: var(--bad); }
 .tile-name { font-size: 20px; font-weight: 700; }
+.tile .state { justify-self: start; }
 .tile-new { display: grid; place-items: center; min-height: 160px; border: 2px dashed var(--line-strong); box-shadow: none; background: transparent; color: var(--accent); font-weight: 700; }
 .todo { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 14px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: var(--text); }
 .todo:hover { border-color: var(--accent); color: var(--text); }
@@ -434,3 +435,4 @@ textarea.input { min-height: 132px; resize: vertical; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
 .table-input input, .table-input select { min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface); color: var(--text); font: 400 16px var(--font); width: 100%; }
 .big-result { font-size: 30px; line-height: 38px; font-weight: 750; }
+.table-input input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; accent-color: var(--accent); }

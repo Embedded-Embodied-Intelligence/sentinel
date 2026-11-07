@@ -24,7 +24,7 @@ only the text it reads).
 changed: [CHANGELOG.md](CHANGELOG.md). The release zip explains its own installation in
 `RELEASE.md`.
 
-> Status: release 1.5.0 (course project at Rzeszów University of Technology, 2026). The article
+> Status: release 1.6.0 (course project at Rzeszów University of Technology, 2026). The article
 > (English, LNCS) and the course report (Polish) are added to the release package.
 
 ## Research
@@ -154,6 +154,11 @@ threatens the deadline and a plan-and-progress chart. A *check-in* reports progr
 events; Sentinel's recommendation follows with its effect, reasons and alternatives, to approve,
 reject or postpone, and automatic plan changes can be undone. The *simulator* runs an example
 project day by day under Sentinel next to nobody reacting. Screenshots: [`docs/ui/`](docs/ui/).
+A second interface, **v2**, runs beside it at <http://127.0.0.1:8000/v2> (release 1.6.0,
+`docs/design/v2-spec.md`): Start with the decisions of every project by validity date, an
+overview that answers "will we make it?" at a glance ("39 na 100"), a report written or
+dictated with a live preview, decisions that are always the manager's (approve, reject with a
+reason, adjust, postpone) and a four-step wizard; screenshots in [`docs/ui/v2/`](docs/ui/v2/).
 The pages use the JSON API's services (`/api/…`, the OpenAPI schema at `/api/openapi.json`);
 projects, settings (the optional AI provider and its key, never shown again) and caches live in
 `--data-dir` (default `$XDG_DATA_HOME/sentinel`, outside the repository).
@@ -210,7 +215,7 @@ would not return the same text, which is why the bundles are the reference.
 
 ## Release package
 
-`uv run sentinel release --version 1.5.0` writes `dist/sentinel-1.5.0.zip` from `git archive`
+`uv run sentinel release --version 1.6.0` writes `dist/sentinel-1.6.0.zip` from `git archive`
 of HEAD (tracked files only) with a generated `RELEASE.md`, refusing a dirty tree, and adds
 files given with `--include` (the final PDFs) under `docs/deliverables/`. It never tags or
 publishes; it prints the tag command.

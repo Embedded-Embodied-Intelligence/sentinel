@@ -38,6 +38,7 @@ def cards(fragment: str) -> dict[str, list[str]]:
     return found
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_progress_as_planned_then_save_replaces_the_decision(fresh: Site) -> None:
     pid = fresh.project
     page = fresh.client.get(f"/v2/projects/{pid}/report", params={"lang": "pl"}).text

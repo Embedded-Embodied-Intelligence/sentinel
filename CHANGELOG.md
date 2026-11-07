@@ -5,6 +5,40 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.6.0 — 2026-11-08 (WP15, interface v2, part 1)
+
+- A new interface under `/v2` beside the first one, which stays at `/` (link "Nowy wygląd (v2)";
+  ADR-0033): light by default, dark and system themes remembered in a cookie, a glass sidebar,
+  calm cards, one teal accent, status colours only for the three states and always with an icon
+  and a word, body 17 px, decision buttons at least 44 px high.
+- **Start**: the decisions of every project sorted by their validity date, the project tiles
+  (state, verdict, "N na 100", decisions waiting), the recent events of the log with who did
+  them, and three large cards on a first visit.
+- **Pulpit**: the verdict ("Nie zdążymy bez zmian · Spóźnimy się o ok. 2 dni robocze"), the
+  chance as "39 na 100" with a 10 × 10 dot grid and "Skąd ta liczba?", the project end and the
+  budget in work-days, the pending decision with approve and reject in place, the "Zapas czasu"
+  buffer chart, the next seven days, the causes of the change and the main risks.
+- **Decyzja**: the effect before → after (green ▲ better, red ▼ worse), a contrastive reasoning
+  written by code from the numbers, who is affected, the cost of delay, "Zatwierdź", "Odrzuć"
+  with four reasons, "Popraw" (another substitute, temporary person or optional task, evaluated
+  on the same worlds), "Odłóż decyzję", and the details (every option, the finish-date
+  distribution, the AI explanation on request); the project tab "Decyzje" with the archive.
+- **Decision model** (spec v2.4.0, §11.8): every deliberation v2 asks for runs with every
+  action approved; a decision's lifecycle (pending, postponed, adjusted, approved, rejected with
+  its reason, expired, superseded) is kept in the log with its time, actor and brief; its
+  validity date and cost of delay are computed in the background ("ważna do czw. 19 lis",
+  "Każdy dzień czekania to ok. −5 na 100"), and a decision is never applied by silence.
+- **Raport**: write or dictate what happened; a live grey preview while recording (Groq's
+  Whisper about every 3 s, outside the demo's AI cap), ✓/Enter and ✕/Esc, five minutes at most;
+  the AI's items as cards unchecked by default with ✎ and ✕, questions that block saving, the
+  parts not recognised, "Postęp zgodny z planem", and "Wpływ na projekt" as a dry-run forecast
+  of the draft (ADR-0031 updated).
+- **Nowy projekt**: four steps (basics, team pasted or dictated, tasks from a sheet, words or a
+  table, ready with "Plan gotowy: zdążymy w N na 100" and the budget as information). No
+  question about absences: one team-wide rate from ZUS's 2025 sickness-absence report, about
+  4 % of working days (ADR-0034).
+- Research results unchanged (`sentinel reproduce --check`: 117 of 117).
+
 ## 1.5.0 — 2026-11-05 (WP14, status messages that understand a whole report; voice input)
 
 - A check-in message is read as a whole report: progress ("zrobiono około 15 %", "w połowie"),

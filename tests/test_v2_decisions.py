@@ -35,6 +35,7 @@ def test_the_v2_gate_asks_for_every_action() -> None:
     assert not planning.sentinel_params(project).needs_approval(plan_only)  # the project's 3
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_a_v2_deliberation_is_never_applied_automatically(
     tmp_path: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -59,6 +60,7 @@ def test_a_v2_deliberation_is_never_applied_automatically(
     assert state.open is not None and state.open.validity is not None  # computed after it
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_a_correction_is_evaluated_and_keeps_its_promise(tmp_path: Any) -> None:
     services = Services(AppConfig(data_dir=tmp_path, inline_jobs=True))
     services.local_session()
@@ -93,6 +95,7 @@ def test_a_correction_is_evaluated_and_keeps_its_promise(tmp_path: Any) -> None:
     assert other.person in crew
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_validity_stops_where_waiting_no_longer_helps() -> None:
     project = checked_in(planned(small()), ABSENCE_CHECKIN)
     recommendation = planning.recommend(project, autonomy=0)
@@ -110,6 +113,7 @@ def test_validity_stops_where_waiting_no_longer_helps() -> None:
         assert found.delay is not None and found.delay >= 0
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_the_lifecycle_replays_from_the_log(tmp_path: Any) -> None:
     services = Services(AppConfig(data_dir=tmp_path, inline_jobs=True))
     services.local_session()

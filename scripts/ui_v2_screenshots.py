@@ -10,6 +10,7 @@ Take them after a version bump: the sidebar shows the installed package's versio
 """
 
 import argparse
+import json
 import sys
 import tempfile
 import time
@@ -150,6 +151,10 @@ def main() -> int:
         for language in args.lang:
             browser = playwright.chromium.launch(env=language_env(language))
             data = Path(tempfile.mkdtemp(prefix="sentinel-v2-ui-"))
+            # An AI provider and a key for recordings, so that the pages show the microphone
+            # and "Rozpoznaj zmiany"; no screenshot calls either.
+            settings = {"llm": {"provider": "ollama", "groq_key": "screenshots-only"}}
+            (data / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
             config = AppConfig(data_dir=data, inline_jobs=True)
             services = Services(config)
             began = time.perf_counter()

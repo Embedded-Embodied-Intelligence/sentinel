@@ -69,7 +69,7 @@ def _definition(**update: Any) -> dict[str, Any]:
 
 def test_health_session_and_the_error_format(tmp_path: Path, client: Visitor) -> None:
     test, csrf = client(local(tmp_path))
-    assert test.get("/api/health").json() == {"status": "ok", "version": "1.5.0", "demo": False}
+    assert test.get("/api/health").json() == {"status": "ok", "version": "1.6.0", "demo": False}
     assert test.get("/api/docs").status_code == 404  # no HTML pages before WP9b
     session = test.get("/api/session").json()
     assert session["demo"] is False and len(session["csrf_token"]) == 64

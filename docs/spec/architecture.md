@@ -40,6 +40,10 @@ src/sentinel/
                          #   vocabulary/<lang>.toml (names of the example projects per language)
     ui/                  # WP9b: the pages: Jinja2 templates, text.py (catalogue PL/EN), forms,
                          #   charts (SVG), routes per screen; static/ (CSS, vendored HTMX)
+      v2/                # WP15: the v2 interface under /v2 (ADR-0033): shell, numbers (states,
+                         #   "na 100", time reserve), overview, decision, report, voice, start,
+                         #   wizard; text.py (its catalogue); templates/v2/, sentinel-v2.css/js
+    decisions.py         # WP15: validity date, cost of delay, corrections, brief (spec 11.8)
 scripts/                 # one-off utilities, e.g. fetch_psplib.py; run_demo.sh (public demo),
                          #   setup_e2e_libs.sh (Chromium libraries without root)
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)

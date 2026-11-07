@@ -37,7 +37,7 @@ reverse proxy.
 ```bash
 docker compose up -d --build                    # build and start (the first build took 57 s)
 docker compose ps                               # STATUS shows "(healthy)" after about 8 s
-curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.5.0","demo":false}
+curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.6.0","demo":false}
 docker compose logs -f sentinel                 # the log
 docker compose down                             # stop; the data stay in the volume
 ```

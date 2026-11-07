@@ -152,6 +152,7 @@ def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
     assert validity is not None and validity.valid_day == 12 and validity.chances[0] == 0.57
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_approval_from_the_decision_page_keeps_the_promise(fresh: Site) -> None:
     """The WP12 guarantee on v2: after "Zatwierdź" the overview shows the card's numbers."""
     seq = seq_of(fresh)
@@ -173,6 +174,7 @@ def test_approval_from_the_decision_page_keeps_the_promise(fresh: Site) -> None:
     assert decided["brief"]["p_after"] == 0.57 and decided["brief"]["valid_day"] == 12
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_rejection_needs_a_reason_and_keeps_it(fresh: Site) -> None:
     seq = seq_of(fresh)
     path = f"/v2/projects/{fresh.project}/decisions/{seq}"
@@ -191,6 +193,7 @@ def test_rejection_needs_a_reason_and_keeps_it(fresh: Site) -> None:
     assert "Nic nie czeka na Twoją decyzję" in overview
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_postpone_and_expiry(fresh: Site) -> None:
     from datetime import date
 
@@ -222,6 +225,7 @@ def test_start_lists_decisions_by_validity_and_the_latest_events(site: Site) -> 
     assert "Sentinel Nowa odsłona sklepu internetowego: Nowa propozycja" in events
 
 
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
 def test_the_first_visit_offers_three_ways_in(tmp_path_factory: pytest.TempPathFactory) -> None:
     config = AppConfig(data_dir=tmp_path_factory.mktemp("v2-empty"), inline_jobs=True)
     services = Services(config)
