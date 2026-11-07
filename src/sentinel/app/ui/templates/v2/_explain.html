@@ -1,0 +1,4 @@
+{% if text %}<p>{{ text }}</p>
+{% elif failed %}<p class="error">{{ failed }}</p>
+{% elif job %}<p class="computing" hx-get="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/explain?job={{ job }}" hx-trigger="load delay:2s" hx-target="#explain" hx-swap="innerHTML">{{ t("v2.report.computing") }}</p>
+{% else %}<p class="muted">{{ t("v2.failed") }}</p>{% endif %}

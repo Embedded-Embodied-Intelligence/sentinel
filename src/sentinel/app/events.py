@@ -24,7 +24,16 @@ Source = Literal["new", "csv", "json", "text", "showcase"]
 Verdict = Literal["approve", "reject", "later"]
 RejectReason = Literal["too_expensive", "unavailable", "no_budget", "other"]
 RecommendationStatus = Literal[
-    "none", "auto", "open", "later", "approved", "rejected", "discarded", "superseded", "undone"
+    "none",
+    "auto",
+    "open",
+    "later",
+    "approved",
+    "rejected",
+    "discarded",
+    "superseded",
+    "undone",
+    "expired",
 ]
 OPEN: tuple[RecommendationStatus, ...] = ("open", "later")
 
@@ -56,6 +65,21 @@ class Recommended(_Event):
     applied: AppliedAction | None = None
 
 
+class Brief(_Event):
+    """A decision as the manager saw it (spec section 11.8): the chance, the most likely finish
+    (a makespan) and the expected cost without and with the action, its validity day and its
+    cost of delay per day; stored with the decision on it."""
+
+    p_before: float
+    p_after: float
+    finish_before: int | None = None
+    finish_after: int | None = None
+    cost_before: float
+    cost_after: float
+    valid_day: int | None = None
+    delay: float | None = None
+
+
 class Decided(_Event):
     """The manager's decision on a recommendation; a rejection may give one of the reasons of
     the v2 interface and, for "other", the manager's own words (WP15)."""
@@ -66,6 +90,35 @@ class Decided(_Event):
     discarded: str | None = None
     reason: RejectReason | None = None
     note: str | None = Field(default=None, max_length=300)
+    brief: Brief | None = None
+
+
+class Corrected(_Event):
+    """A correction of a pending recommendation by the manager (spec section 11.8): the
+    recommendation with the corrected action as its choice, and the option chosen."""
+
+    recommendation: int
+    replacement: Recommendation
+    option: str
+
+
+class Validity(_Event):
+    """The validity of a pending recommendation (spec section 11.8), computed by Sentinel: the
+    chance with the action applied 0, 1, ... days later on the forecast's worlds, NOOP's, the
+    last day it still helps (None: it never gained enough) and the chance lost per day."""
+
+    recommendation: int
+    label: str  # the action evaluated: a validity of an action since corrected is ignored
+    chances: tuple[float, ...]
+    noop: float
+    valid_day: int | None
+    delay: float | None
+
+
+class Expired(_Event):
+    """A pending recommendation whose validity date passed (spec section 11.8)."""
+
+    recommendation: int
 
 
 class Undone(_Event):
@@ -120,6 +173,9 @@ EVENTS: dict[str, type[_Event]] = {
     "decision": Decided,
     "explanation": Explained,
     "undo": Undone,
+    "correction": Corrected,
+    "validity": Validity,
+    "expiry": Expired,
 }
 
 
@@ -133,6 +189,8 @@ class RecommendationEntry:
     applied: AppliedAction | None = None
     discarded: str | None = None
     explanation: LlmExplanation | None = None
+    corrected: bool = False  # the manager changed its parameter (spec section 11.8)
+    validity: Validity | None = None
 
 
 @dataclass
@@ -156,6 +214,10 @@ class LiveState:
     def open(self) -> RecommendationEntry | None:
         """The recommendation that waits for the manager, if any."""
         return next((r for r in reversed(self.recommendations) if r.status in OPEN), None)
+
+    def open_seq(self) -> int | None:
+        found = self.open
+        return None if found is None else found.seq
 
     @property
     def latest(self) -> RecommendationEntry | None:
@@ -254,6 +316,24 @@ def apply(state: LiveState, seq: int, event: _Event) -> None:
             found = state.recommendation(event.recommendation)
             if found is not None:
                 found.explanation = event.explanation
+            state.seq = seq
+            return
+        case Corrected() | Validity() | Expired():
+            # The v2 lifecycle (spec section 11.8): none of them changes the project.
+            found = state.recommendation(event.recommendation)
+            if found is None:
+                raise ValueError(f"{type(event).__name__} of unknown recommendation")
+            if isinstance(event, Corrected):
+                found.recommendation, found.corrected, found.validity = (
+                    event.replacement,
+                    True,
+                    None,
+                )
+            elif isinstance(event, Validity):
+                if event.label == found.recommendation.record.chosen:
+                    found.validity = event
+            elif found.status in OPEN:
+                found.status = "expired"
             state.seq = seq
             return
         case _:

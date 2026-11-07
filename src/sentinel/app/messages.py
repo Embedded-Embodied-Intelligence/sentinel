@@ -174,6 +174,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "status_discarded": "no longer possible",
         "status_superseded": "replaced by a newer recommendation",
         "status_undone": "applied automatically, then undone",
+        "status_expired": "expired: waiting longer no longer helps",
         "undo_impossible": "This change can no longer be undone: only an automatic plan change "
         "with nothing reported after it can be undone.",
         "message_empty": "Write a message first.",
@@ -438,6 +439,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "status_discarded": "już niemożliwe",
         "status_superseded": "zastąpione nowszą rekomendacją",
         "status_undone": "zastosowane automatycznie, potem cofnięte",
+        "status_expired": "wygasło: dalsze czekanie już nie pomaga",
         "undo_impossible": "Tej zmiany nie można już cofnąć: cofnąć można tylko automatyczną "
         "zmianę planu, po której nic nie zgłoszono.",
         "message_empty": "Najpierw napisz wiadomość.",

@@ -1,0 +1,80 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% block content %}
+<p><a class="back" href="{{ prefix }}/projects/{{ view.id }}">‹ {{ t("v2.dec.back") }}</a></p>
+<article class="card brief" aria-labelledby="dec-title">
+  <header class="stack-sm">
+    <p class="overline">
+      {% if pending %}{{ t("v2.dec.title") }}{% if validity and validity.valid %} · {{ t("v2.decision.valid", date=t.date(validity.valid)) }}{% if validity.left is not none and validity.left > 0 %} ({{ t.plural("v2.dec.left", validity.left) }}){% elif validity.left == 0 %} ({{ t("v2.dec.today") }}){% endif %}{% endif %}
+      {% else %}{{ t("v2.decisions.archive") }}{% endif %}
+      · {{ m.life_badge(t, life) }}
+      {% if validity and validity.expires_tomorrow %}<span class="expires">{{ icon("clock", 16) }} {{ t("v2.decision.expires") }}</span>{% endif %}
+    </p>
+    <h2 id="dec-title" class="decision-title" style="font-size:24px;line-height:32px">{{ rec.title }}</h2>
+    {% if pending %}<p class="notice">{{ icon("info", 20) }}<span>{{ t("v2.dec.need." ~ need) }}</span></p>{% endif %}
+  </header>
+  <section class="brief-row" aria-labelledby="effect-title">
+    <h3 id="effect-title" class="overline">{{ t("v2.dec.effect") }}</h3>
+    <div class="effects">
+      {% for e in effects %}
+      <div class="effect effect-{{ e.tone }}"><p class="label">{{ e.label }}</p><p class="value">{{ e.text }} {% if e.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif e.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</p></div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="brief-row" aria-labelledby="why-title">
+    <h3 id="why-title" class="overline">{{ t("v2.dec.reasoning") }}</h3>
+    <p>{{ reasoning | join(" ") }}</p>
+  </section>
+  <section class="brief-row" aria-labelledby="who-title">
+    <h3 id="who-title" class="overline">{{ t("v2.dec.who") }}</h3>
+    <ul class="list">{% for line in who %}<li>{{ line }}</li>{% endfor %}</ul>
+  </section>
+  {% if pending %}
+  <section class="brief-row" aria-labelledby="delay-title">
+    <h3 id="delay-title" class="overline">{{ t("v2.dec.delay") }}</h3>
+    {% if validity and validity.computing %}<p class="computing" hx-get="{{ here }}" hx-trigger="load delay:3s" hx-select="#main" hx-target="#main" hx-swap="outerHTML">{{ t("v2.dec.delay_wait") }}</p>
+    {% elif validity and validity.delay %}<p><strong>{{ t("v2.dec.delay_text", n=validity.delay) }}</strong></p>
+    {% else %}<p>{{ t("v2.dec.delay_small") }}</p>{% endif %}
+  </section>
+  {% with seq=rec.seq, project_id=view.id, back="decision", full=true, adjustable=true %}{% include "v2/_decide.html" %}{% endwith %}
+  <form id="adjust-{{ rec.seq }}" class="panel" hidden hx-post="{{ prefix }}/projects/{{ view.id }}/decisions/{{ rec.seq }}/adjust">
+    <h3>{{ t("v2.adjust.title") }}</h3>
+    {% if parameter == "none" %}<p>{{ t("v2.adjust.none") }}</p>
+    {% elif options | length < 2 %}<p>{{ t("v2.adjust.no_choice") }}</p>
+    {% else %}
+    <div class="field" style="max-width:520px">
+      <label for="option-{{ rec.seq }}">{{ t("v2.adjust." ~ parameter) }}</label>
+      <select id="option-{{ rec.seq }}" name="option">{% for key, label, current in options %}<option value="{{ key }}"{% if current %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    </div>
+    <div class="actions"><button type="submit" class="btn btn-primary">{{ t("v2.adjust.apply") }}</button><span class="computing htmx-indicator">{{ t("v2.adjust.working") }}</span></div>
+    {% endif %}
+  </form>
+  {% endif %}
+</article>
+<details class="card more section" id="details">
+  <summary>{{ t("v2.details") }}</summary>
+  <section class="stack" aria-labelledby="options-title">
+    <h3 id="options-title">{{ t("v2.options.title") }}</h3>
+    <table class="table">
+      <thead><tr><th scope="col">{{ t("v2.options.option") }}</th><th scope="col">{{ t("v2.options.chance") }}</th><th scope="col">{{ t("v2.options.end") }}</th><th scope="col">{{ t("v2.options.budget") }}</th></tr></thead>
+      <tbody>
+      {% for row in rows %}
+      <tr{% if row.chosen %} class="chosen"{% endif %}><td>{{ row.title }}{% if row.chosen %} <span class="tag">{{ t("v2.options.chosen") }}</span>{% endif %}</td><td class="num">{{ t.hundred(row.chance) }}</td><td class="nowrap">{{ t.date(row.end) }}</td><td class="num">{{ row.cost }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% if pending %}
+  <section class="stack section" aria-labelledby="dist-title">
+    <h3 id="dist-title">{{ t("v2.dist.title") }}</h3>
+    <div id="distribution" hx-get="{{ prefix }}/projects/{{ view.id }}/decisions/{{ rec.seq }}/distribution" hx-trigger="toggle once from:#details" hx-swap="innerHTML"><p class="computing">{{ t("v2.report.computing") }}</p></div>
+  </section>
+  {% endif %}
+  <section class="stack section" aria-labelledby="ai-title">
+    <h3 id="ai-title">{{ t("v2.ai.title") }}</h3>
+    {% if rec.llm_explanation %}<p>{{ rec.llm_explanation.text }}</p>
+    {% elif llm %}<div id="explain"><button type="button" class="btn" hx-post="{{ prefix }}/projects/{{ view.id }}/decisions/{{ rec.seq }}/explain" hx-target="#explain" hx-swap="innerHTML">{{ t("v2.ai.ask") }}</button></div>
+    {% else %}<p class="muted">{{ t("v2.ai.off") }}</p>{% endif %}
+  </section>
+</details>
+{% endblock %}

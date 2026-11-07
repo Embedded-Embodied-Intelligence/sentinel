@@ -124,3 +124,89 @@ def test_the_theme_is_remembered_in_a_cookie(site: Site) -> None:
 
 def test_the_first_interface_links_to_v2(site: Site) -> None:
     assert 'href="/v2"' in site.client.get("/", params={"lang": "pl"}).text
+
+
+def seq_of(site: Site) -> int:
+    found = site.services.live(LOCAL_SESSION, site.project, "pl").open_recommendation
+    assert found is not None
+    return found
+
+
+def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
+    seq = seq_of(site)
+    html = site.client.get(f"/v2/projects/{site.project}/decisions/{seq}", params={"lang": "pl"})
+    text = text_of(html.text)
+    assert "Dotyczy ludzi, dlatego wymaga Twojej zgody." in text
+    assert "Szansa 39 → 57 na 100" in text and "Budżet 92 → 94 dni pracy" in text
+    assert "Ta zmiana podnosi szansę z 39 do 57 na 100" in text  # written by code (8.4)
+    assert "dałaby mniej (56 na 100)" in text
+    assert "Cezary Mazur: przejmuje „API katalogu produktów”" in text
+    assert "Każdy dzień czekania to ok. \u22125 na 100." in text
+    assert "ważna do czw. 19 lis" in text
+    assert "Bez zmian 39 na 100" in text  # every option, "Bez zmian" included
+    dist = site.client.get(f"/v2/projects/{site.project}/decisions/{seq}/distribution")
+    assert "Na 200: w terminie 114, później 86." in text_of(dist.text)
+    assert "Na 200: w terminie 78, później 122." in text_of(dist.text)
+    state = site.services.state(LOCAL_SESSION, site.project)
+    validity = state.recommendation(seq).validity  # type: ignore[union-attr]
+    assert validity is not None and validity.valid_day == 12 and validity.chances[0] == 0.57
+
+
+def test_approval_from_the_decision_page_keeps_the_promise(fresh: Site) -> None:
+    """The WP12 guarantee on v2: after "Zatwierdź" the overview shows the card's numbers."""
+    seq = seq_of(fresh)
+    path = f"/v2/projects/{fresh.project}/decisions/{seq}"
+    fresh.client.get(path)  # the validity, so that the brief stored has it
+    response = fresh.client.post(
+        f"{path}/approve", data={"back": "decision"}, headers=fresh.headers
+    )
+    assert response.headers["HX-Redirect"] == f"/v2/projects/{fresh.project}?done=approved"
+    text = text_of(fresh.client.get(f"/v2/projects/{fresh.project}?done=approved").text)
+    assert "Zatwierdzono. Projekt ma nowy plan." in text
+    assert "57 na 100" in text and "najpewniej pt. 18 gru" in text
+    assert "na koniec ok. 94" in text
+    archive = text_of(fresh.client.get(f"/v2/projects/{fresh.project}/decisions").text)
+    assert "zatwierdzona" in archive and " Ty " in archive
+    assert "Szansa 39 → 57 na 100" in archive
+    rows = fresh.services.store.events(LOCAL_SESSION, fresh.project)
+    decided = [r for r in rows if r.type == "decision"][-1].payload
+    assert decided["brief"]["p_after"] == 0.57 and decided["brief"]["valid_day"] == 12
+
+
+def test_rejection_needs_a_reason_and_keeps_it(fresh: Site) -> None:
+    seq = seq_of(fresh)
+    path = f"/v2/projects/{fresh.project}/decisions/{seq}"
+    refused = fresh.client.post(f"{path}/reject", data={}, headers=fresh.headers)
+    assert refused.status_code == 422
+    words = "Wolę poczekać na powrót."
+    response = fresh.client.post(
+        f"{path}/reject",
+        data={"reason": "other", "note": words, "back": "overview"},
+        headers=fresh.headers,
+    )
+    assert response.headers["HX-Redirect"].endswith("?done=rejected")
+    archive = text_of(fresh.client.get(f"/v2/projects/{fresh.project}/decisions").text)
+    assert "odrzucona" in archive and f"Powód: Inny powód: „{words}”" in archive
+    overview = text_of(fresh.client.get(f"/v2/projects/{fresh.project}").text)
+    assert "Nic nie czeka na Twoją decyzję" in overview
+
+
+def test_postpone_and_expiry(fresh: Site) -> None:
+    from datetime import date
+
+    seq = seq_of(fresh)
+    path = f"/v2/projects/{fresh.project}/decisions/{seq}"
+    fresh.client.get(path)
+    response = fresh.client.post(f"{path}/postpone", headers=fresh.headers)
+    target = response.headers["HX-Redirect"]
+    assert "done=postponed" in target and "valid=2026-11-19" in target
+    text = text_of(fresh.client.get(target).text)
+    assert "Przypomnę przy następnej wizycie. Decyzja ważna do czw. 19 lis." in text
+    assert "odłożona" in text_of(fresh.client.get(path).text)
+    fresh.services.expire(LOCAL_SESSION, fresh.project, date(2026, 11, 19))  # still valid
+    assert fresh.services.state(LOCAL_SESSION, fresh.project).open is not None
+    fresh.services.expire(LOCAL_SESSION, fresh.project, date(2026, 11, 20))
+    state = fresh.services.state(LOCAL_SESSION, fresh.project)
+    assert state.open is None and state.recommendation(seq).status == "expired"  # type: ignore[union-attr]
+    archive = text_of(fresh.client.get(f"/v2/projects/{fresh.project}/decisions").text)
+    assert "wygasła" in archive and "Sentinel" in archive

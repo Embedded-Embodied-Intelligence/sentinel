@@ -18,6 +18,31 @@
     if (link) {
       event.preventDefault();
       setTheme(link.getAttribute("data-theme-set"));
+      return;
     }
+    // A button that opens a panel in place (reject, adjust) and the panel's own cancel button.
+    var toggle = event.target.closest("[data-toggle]");
+    if (toggle) {
+      var panel = document.getElementById(toggle.getAttribute("data-toggle"));
+      if (!panel) return;
+      var open = panel.hidden;
+      panel.hidden = !open;
+      document.querySelectorAll('[data-toggle="' + panel.id + '"][aria-expanded]').forEach(function (b) {
+        b.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      if (open) {
+        var first = panel.querySelector("input, select, textarea, button");
+        if (first) first.focus();
+      }
+    }
+  });
+
+  // "Inny powód" reveals the text box with the microphone (section 8.4).
+  document.addEventListener("change", function (event) {
+    var radio = event.target;
+    if (radio.name !== "reason") return;
+    var form = radio.closest("form");
+    var box = form && form.querySelector("[data-other-box]");
+    if (box) box.hidden = !form.querySelector("[data-other]:checked");
   });
 })();

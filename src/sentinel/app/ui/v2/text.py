@@ -440,14 +440,14 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.options.noop": ("No change", "Bez zmian"),
     "v2.dist.title": ("Where these numbers come from", "Skąd te liczby"),
     "v2.dist.text": (
-        "Each bar counts the played futures that end in that week; bars after the deadline line "
+        "Each bar counts the played futures that end on that day; bars after the deadline line "
         "are late. Out of {w}: by the deadline {k}, later {late}.",
-        "Każdy słupek liczy rozegrane warianty, które kończą się w danym tygodniu; słupki za "
-        "linią terminu są spóźnione. Na {w}: w terminie {k}, później {late}.",
+        "Każdy słupek liczy rozegrane warianty, które kończą się danego dnia; słupki za linią "
+        "terminu są spóźnione. Na {w}: w terminie {k}, później {late}.",
     ),
     "v2.dist.with": ("With the change", "Ze zmianą"),
     "v2.dist.without": ("Without a change", "Bez zmian"),
-    "v2.dist.week": ("week of {date}: {n}", "tydzień od {date}: {n}"),
+    "v2.dist.day": ("{date}: {n}", "{date}: {n}"),
     "v2.ai.title": ("Explanation in plain words (AI)", "Wyjaśnienie prostymi słowami (AI)"),
     "v2.ai.ask": ("Explain", "Wyjaśnij"),
     "v2.ai.off": (

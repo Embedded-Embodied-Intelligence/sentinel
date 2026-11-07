@@ -24,21 +24,25 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 
 from sentinel.agent.candidates import Candidate
 from sentinel.agent.decide import DecisionRecord
-from sentinel.app import io, planning, simulator
+from sentinel.app import decisions, io, planning, simulator
 from sentinel.app.config import AppConfig
 from sentinel.app.errors import AppError
 from sentinel.app.events import (
+    OPEN,
     BaselineSet,
     CheckinDone,
+    Corrected,
     Created,
     Decided,
     DefinitionChanged,
+    Expired,
     Explained,
     LiveState,
     Recommended,
     RejectReason,
     Source,
     Undone,
+    Validity,
     Verdict,
     replay,
 )
@@ -95,6 +99,7 @@ from sentinel.wbs.extract import Extraction
 SIMULATIONS_KEPT = 8  # simulator projects kept in memory; others are re-simulated
 FORECASTS_KEPT = 128  # forecasts and threat lists kept in memory, by project and last change
 CLAUSES_KEPT = 64  # messages whose clauses a review may still show, kept in memory only
+VALIDITY_JOB = "validity"  # the validity of a pending decision (11.8), outside the job limit
 THREATS_JOB = "threats"  # the job of a threat list: the pages' own, outside the demo's job limit
 MIN_ROLE_STEM = 5  # letters two role names must share to count as one role (`team_role`)
 
@@ -524,9 +529,117 @@ class Services:
                     "recommendation",
                     Recommended(recommendation=recommendation, applied=applied),
                 )
-                return {"recommendation": seq}
+            if autonomy is not None and applied is None and recommendation.acts:
+                with suppress(AppError):  # the v2 interface: its validity follows (11.8)
+                    self.validity_job(session, project_id, language)
+            return {"recommendation": seq}
 
         return self._submit(session, project_id, "recommend", work, language)
+
+    # ---- the v2 decision model (spec section 11.8)
+
+    def validity_job(self, session: str, project_id: str, language: Language) -> JobView:
+        """The validity date and cost of delay of the pending recommendation in a background
+        job, stored as a `validity` event; outside the demo's job limit, like the threats. The
+        job of a pending one already running is returned."""
+        for job in self.store.project_jobs(session, project_id):
+            if job.kind == VALIDITY_JOB and job.status in ("queued", "running"):
+                return job_view(job, language)
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            _, current = self._state(session, project_id)
+            entry = current.open
+            if entry is None or entry.validity is not None:
+                return {}
+            progress(0.05, "simulating")
+            label = entry.recommendation.record.chosen
+            try:
+                found = decisions.validity(current.project, entry.recommendation)
+            except ValueError:
+                return {}  # no longer the recommendation of the current observation
+            with self._lock(project_id):
+                row, latest = self._state(session, project_id)
+                again = latest.recommendation(entry.seq)
+                if (
+                    again is None
+                    or again.status not in OPEN
+                    or again.recommendation.record.chosen != label
+                ):
+                    return {}
+                event = Validity(
+                    recommendation=entry.seq,
+                    label=label,
+                    chances=found.chances,
+                    noop=found.noop,
+                    valid_day=found.valid_day,
+                    delay=found.delay,
+                )
+                return {"validity": self._append(session, row, "validity", event)}
+
+        return job_view(self.jobs.submit(session, project_id, VALIDITY_JOB, work), language)
+
+    def correction_options(self, session: str, project_id: str, seq: int) -> list[decisions.Option]:
+        """The corrections of a pending recommendation the engine accepts (11.8)."""
+        _, state = self._state(session, project_id)
+        entry = state.recommendation(seq)
+        if entry is None or entry.status not in OPEN:
+            return []
+        return decisions.options(state.project, entry.recommendation)
+
+    def correct(
+        self, session: str, project_id: str, seq: int, key: str, language: Language
+    ) -> ProjectView:
+        """The manager's correction of a pending recommendation (spec section 11.8): the
+        corrected action evaluated and stored as its choice; its validity follows."""
+        with self._lock(project_id):
+            row, state = self._state(session, project_id)
+            entry = state.recommendation(seq)
+            if entry is None:
+                raise AppError("recommendation_not_found", "not_found")
+            if entry.status not in OPEN or entry.seq != state.open_seq():
+                status = render(f"status_{entry.status}", language)
+                raise AppError("recommendation_closed", "conflict", status=status)
+            try:
+                replacement = decisions.correct(state.project, entry.recommendation, key)
+            except ValueError as exc:
+                raise AppError("field_invalid", field="option", detail=key) from exc
+            self._append(
+                session,
+                row,
+                "correction",
+                Corrected(recommendation=seq, replacement=replacement, option=key),
+            )
+        with suppress(AppError):
+            self.validity_job(session, project_id, language)
+        return self.live(session, project_id, language)
+
+    def distribution(
+        self, session: str, project_id: str, seq: int
+    ) -> tuple[list[int], list[int]] | None:
+        """The makespans with and without a pending recommendation's action (11.8 details)."""
+        _, state = self._state(session, project_id)
+        entry = state.recommendation(seq)
+        if entry is None or entry.status not in OPEN:
+            return None
+        try:
+            return decisions.distribution(state.project, entry.recommendation)
+        except ValueError:
+            return None
+
+    def expire(self, session: str, project_id: str, today: date) -> None:
+        """An `expiry` event for the pending recommendation whose validity date is before
+        `today` (spec section 11.8); nothing is ever applied by it."""
+        _, state = self._state(session, project_id)
+        entry = state.open
+        if entry is None or entry.validity is None or entry.validity.valid_day is None:
+            return
+        if state.project.calendar.date_of(entry.validity.valid_day) >= today:
+            return
+        with self._lock(project_id):
+            row, state = self._state(session, project_id)
+            again = state.recommendation(entry.seq)
+            if again is not None and again.status in OPEN:
+                self._append(session, row, "expiry", Expired(recommendation=entry.seq))
 
     def _proposer(self, project: LiveProject) -> Proposer | None:
         """The LLM's proposals (spec section 10.3) if the project asks for them (off by
@@ -569,15 +682,22 @@ class Services:
             entry = state.recommendation(seq)
             if entry is None:
                 raise AppError("recommendation_not_found", "not_found")
-            if entry.status not in ("open", "later"):
+            if entry.status not in OPEN:
                 status = render(f"status_{entry.status}", language)
                 raise AppError("recommendation_closed", "conflict", status=status)
             project = state.project
+            valid = entry.validity
+            brief = decisions.brief_of(
+                entry.recommendation,
+                None if valid is None else valid.valid_day,
+                None if valid is None else valid.delay,
+            )
             event = Decided(
                 recommendation=seq,
                 verdict=verdict,
                 reason=reason if verdict == "reject" else None,
                 note=(note or "").strip()[:300] or None if verdict == "reject" else None,
+                brief=brief,
             )
             if verdict == "approve":
                 try:
@@ -590,10 +710,10 @@ class Services:
                         approved.decision, approved.label, approved.kind
                     )
                 if isinstance(outcome, str):
-                    event = Decided(recommendation=seq, verdict=verdict, discarded=outcome)
+                    event = event.model_copy(update={"discarded": outcome})
                     follow = True
                 else:
-                    event = Decided(recommendation=seq, verdict=verdict, applied=outcome)
+                    event = event.model_copy(update={"applied": outcome})
             self._append(session, row, "decision", event)
         if follow:
             with suppress(AppError):  # e.g. the job limit; the manager can ask again

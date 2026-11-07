@@ -1,0 +1,7 @@
+{% for title, chart, on, late in charts %}
+<figure class="stack-sm" style="margin:0">
+  <figcaption class="label">{{ title }}</figcaption>
+  {{ chart }}
+  <p class="muted small">{{ t("v2.dist.text", w=worlds, k=on, late=late) }}</p>
+</figure>
+{% else %}<p class="muted">{{ t("v2.failed") }}</p>{% endfor %}

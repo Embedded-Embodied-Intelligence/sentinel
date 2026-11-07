@@ -335,6 +335,7 @@ def router(ui: Ui) -> APIRouter:
         row = services.store.project(session, project_id)
         if row is None or row.kind != "live":
             raise AppError("project_not_found", "not_found")
+        services.expire(session, project_id, date.today())  # spec section 11.8
         view = services.live(session, project_id, language)
         if not view.has_plan:
             return ui.redirect(request, f"{PREFIX}/new/{project_id}")

@@ -312,13 +312,13 @@ details.help p { margin-top: 8px; color: var(--text-2); font-size: 16px; }
 
 /* ---- decision page */
 .back { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; min-height: 44px; }
-.brief { display: grid; gap: 20px; }
-.brief-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: start; padding-top: 16px; border-top: 1px solid var(--line); }
+.brief { display: grid; gap: 14px; }
+.brief-row { display: grid; grid-template-columns: 168px 1fr; gap: 16px; align-items: start; padding-top: 12px; border-top: 1px solid var(--line); }
 .brief-row:first-child { border-top: 0; padding-top: 0; }
 .effects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.effect { padding: 14px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.effect { padding: 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
 .effect .label { color: var(--muted); font-size: 15px; font-weight: 600; }
-.effect .value { font-size: 22px; line-height: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.effect .value { font-size: 19px; line-height: 26px; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
 .effect .arrow { font-size: 18px; }
 .effect-good .arrow { color: var(--good); }
 .effect-bad .arrow { color: var(--bad); }
@@ -335,7 +335,8 @@ details.help p { margin-top: 8px; color: var(--text-2); font-size: 16px; }
 .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700; }
 details.more > summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; gap: 8px; }
 details.more[open] > summary { margin-bottom: 12px; }
-.hist { width: 100%; height: auto; }
+.hist { width: 100%; max-width: 640px; height: auto; }
+.table td.num, .table td.nowrap { white-space: nowrap; }
 .hist .bar-on { fill: var(--good); }
 .hist .bar-late { fill: var(--bad); }
 .hist .deadline { stroke: var(--text); stroke-width: 2; stroke-dasharray: 4 3; }
