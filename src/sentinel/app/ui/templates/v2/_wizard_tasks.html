@@ -1,0 +1,13 @@
+{% if job %}
+<p class="computing" hx-get="{{ prefix }}/new/{{ project_id }}/describe?job={{ job }}" hx-trigger="load delay:1s" hx-target="#described" hx-swap="innerHTML">{{ t("v2.new.tasks.reading") }}</p>
+{% elif failed %}<p class="card muted">{{ failed }}</p>
+{% else %}
+<form class="card stack" hx-post="{{ prefix }}/new/{{ project_id }}/tasks" hx-target="body" aria-labelledby="found-title">
+  <h2 id="found-title">{{ t("v2.report.step2") }}</h2>
+  <p class="muted">{{ t("v2.report.step2_hint") }}</p>
+  {% for value, text in cards %}
+  <div class="confirm" data-card><input type="checkbox" id="task-{{ loop.index }}" name="c_task" value="{{ value }}"><span class="kind" aria-hidden="true">{{ icon("list", 20) }}</span><label for="task-{{ loop.index }}">{{ text }}</label><button type="button" class="btn btn-quiet btn-icon" data-remove-card aria-label="{{ t('v2.report.remove') }}">{{ icon("x", 20) }}</button></div>
+  {% endfor %}
+  <div class="actions"><button type="button" class="btn btn-quiet" data-tick-all>{{ t("v2.report.all") }}</button><button type="submit" class="btn btn-primary">{{ t("v2.new.tasks.confirm") }}</button></div>
+</form>
+{% endif %}

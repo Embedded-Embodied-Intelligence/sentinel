@@ -234,3 +234,60 @@ def test_the_first_visit_offers_three_ways_in(tmp_path_factory: pytest.TempPathF
         made = client.post("/v2/example", headers={"X-CSRF-Token": token, "HX-Request": "true"})
         assert made.headers["HX-Redirect"].startswith("/v2/projects/")
         assert "39 na 100" in text_of(client.get(made.headers["HX-Redirect"]).text)
+
+
+def test_dictated_and_pasted_teams() -> None:
+    from sentinel.app.ui.v2.wizard import parse_day, people_of
+
+    assert people_of("Anna, programistka; Bartek, programista") == [
+        ("Anna", "programistka"),
+        ("Bartek", "programista"),
+    ]
+    assert people_of("Anna, programistka, Bartek, programista.") == [
+        ("Anna", "programistka"),
+        ("Bartek", "programista"),
+    ]
+    assert people_of("Anna\tdesigner\nTom, tester\n\n") == [("Anna", "designer"), ("Tom", "tester")]
+    assert parse_day("31.12.2026") == parse_day("2026-12-31") is not None
+    assert parse_day("jutro") is None
+
+
+def test_the_wizard_makes_a_project_without_asking_about_absences(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    config = AppConfig(data_dir=tmp_path_factory.mktemp("v2-new"), inline_jobs=True)
+    services = Services(config)
+    with TestClient(create_app(config, services)) as client:
+        headers = {
+            "X-CSRF-Token": client.get("/api/session").json()["csrf_token"],
+            "HX-Request": "true",
+        }
+        first = client.get("/v2/new", params={"lang": "pl"})
+        assert problems(first.text) == [] and "Np. „Aplikacja rezerwacji”" in first.text
+        basics = {"name": "Aplikacja", "start": "2026-11-09", "deadline": "2026-12-18"}
+        made = client.post("/v2/new", data={**basics, "days_off": "24.12.2026"}, headers=headers)
+        pid = made.headers["HX-Redirect"].split("/")[3]
+        team_page = text_of(client.get(f"/v2/new/{pid}/team").text)
+        assert "nie pyta, jak często ktoś bywa nieobecny" in team_page and "ok. 4 %" in team_page
+        team = {"team": "Anna, programista; Bartek, programista; Celina, tester"}
+        client.post(f"/v2/new/{pid}/team", data=team, headers=headers)
+        rows = {
+            "t_name": ["Projekt", "API", "Testy", ""],
+            "t_days": ["3", "6", "3", "1"],
+            "t_count": ["1", "2", "1", "1"],
+            "t_role": ["programista", "programista", "tester", "programista"],
+            "t_after": ["", "Projekt", "API", ""],
+        }
+        client.post(f"/v2/new/{pid}/tasks", data=rows, headers=headers)
+        tasks_page = client.get(f"/v2/new/{pid}/tasks")
+        assert problems(tasks_page.text) == [] and "Pobierz przykładowy arkusz" in tasks_page.text
+        client.post(f"/v2/new/{pid}/plan", headers=headers)
+        ready = text_of(client.get(f"/v2/new/{pid}/ready").text)
+        assert "Plan gotowy: zdążymy w 100 na 100" in ready
+        assert "Budżet z planu: 21 dni pracy" in ready and "Zmień" in ready
+        client.post(f"/v2/new/{pid}/budget", data={"budget": "30"}, headers=headers)
+        assert "Budżet z planu: 30 dni pracy" in text_of(client.get(f"/v2/new/{pid}/ready").text)
+        definition = services.state(LOCAL_SESSION, pid).project.definition
+    assert definition.settings.advanced.lambda_a == 0.014  # ADR-0034
+    assert [t.predecessors for t in definition.tasks] == [(), ("T1",), ("T2",)]
+    assert str(definition.settings.days_off[0]) == "2026-12-24"

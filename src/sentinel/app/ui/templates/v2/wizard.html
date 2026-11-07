@@ -1,0 +1,104 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.new.title") }}{% if view %} · <span class="muted" style="font-weight:600">{{ view.name }}</span>{% endif %}</h1></header>
+<nav aria-label="{{ t('v2.new.steps') }}">
+  <ol class="wizard-steps">
+    {% for key in steps %}{% set i = loop.index0 %}{% set here = steps.index(step) %}
+    <li{% if key == step %} aria-current="step"{% elif i < here %} class="done"{% endif %}><span class="no">{% if i < here %}{{ icon("check", 16) }}{% else %}{{ loop.index }}{% endif %}</span>{{ t("v2.new.step." ~ key) }}</li>
+    {% endfor %}
+  </ol>
+</nav>
+{% if errors is defined and errors %}<div class="notice notice-bad" role="alert">{{ icon("alert", 20) }}<ul class="list">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+
+{% if step == "basics" %}
+<form class="card stack" hx-post="{{ prefix }}/new" hx-target="body">
+  <input type="hidden" name="tasks_way" value="{{ tasks_way }}">
+  <div class="field"><label for="name">{{ t("v2.new.name") }}</label><input type="text" id="name" name="name" placeholder="{{ t('v2.new.name_example') }}" required maxlength="120"></div>
+  <div class="form-grid">
+    <div class="field"><label for="start">{{ t("v2.new.start") }}</label><input type="date" id="start" name="start" required aria-describedby="start-hint"><p class="hint" id="start-hint">{{ t("v2.new.start_hint") }}</p></div>
+    <div class="field"><label for="deadline">{{ t("v2.new.deadline") }}</label><input type="date" id="deadline" name="deadline" aria-describedby="deadline-hint"><p class="hint" id="deadline-hint">{{ t("v2.new.deadline_hint") }}</p></div>
+  </div>
+  <details class="more"><summary>{{ t("v2.new.more") }}</summary>
+    <div class="field"><label for="days_off">{{ t("v2.new.days_off") }}</label><textarea class="input" id="days_off" name="days_off" rows="3" aria-describedby="days-off-hint"></textarea><p class="hint" id="days-off-hint">{{ t("v2.new.days_off_hint") }}</p></div>
+  </details>
+  <div class="actions"><button type="submit" class="btn btn-primary btn-lg">{{ t("v2.new.next") }} ›</button></div>
+</form>
+
+{% elif step == "team" %}
+<form class="card stack" hx-post="{{ prefix }}/new/{{ view.id }}/team" hx-target="body">
+  <input type="hidden" name="tasks_way" value="{{ tasks_way }}">
+  <p>{{ t("v2.new.team_text") }}</p>
+  <label class="label" for="team">{{ t("v2.new.team") }}</label>
+  {% with box_id="team", box_name="team", box_rows=6, box_example=t("v2.new.team_example"), box_hint=t("v2.new.team_hint"), box_project=none, box_value=team %}{% include "v2/_voice.html" %}{% endwith %}
+  {% if roles %}<p class="muted">{{ roles | join(" · ") }}</p>{% endif %}
+  <p class="notice">{{ icon("info", 20) }}<span>{{ t("v2.new.absence_note", share=share) }}</span></p>
+  <div class="actions"><a class="btn btn-quiet" href="{{ prefix }}">‹ {{ t("v2.new.back") }}</a><button type="submit" class="btn btn-primary btn-lg">{{ t("v2.new.next") }} ›</button></div>
+</form>
+
+{% elif step == "tasks" %}
+<p class="section">{{ t("v2.new.tasks_text") }}</p>
+<div class="choice-cards">
+  <details class="choice-card" name="way"{% if tasks_way == "import" %} open{% endif %}>
+    <summary class="stack-sm"><strong style="font-size:19px">{{ icon("upload", 24) }} {{ t("v2.new.tasks.import") }}</strong><span class="muted">{{ t("v2.new.tasks.import_text") }}</span></summary>
+    <form class="stack-sm" hx-post="{{ prefix }}/new/{{ view.id }}/import" hx-encoding="multipart/form-data" hx-target="body" style="margin-top:12px">
+      <label class="label" for="file">{{ t("v2.new.tasks.file") }}</label><input type="file" id="file" name="file" accept=".csv,text/csv" required>
+      <p><a href="/api/templates/tasks.csv" download>{{ t("v2.new.tasks.template") }}</a></p>
+      <button type="submit" class="btn btn-primary">{{ t("v2.new.tasks.upload") }}</button>
+    </form>
+  </details>
+  <details class="choice-card" name="way"{% if tasks_way == "describe" %} open{% endif %}>
+    <summary class="stack-sm"><strong style="font-size:19px">{{ icon("mic", 24) }} {{ t("v2.new.tasks.describe") }}</strong><span class="muted">{{ t("v2.new.tasks.describe_text") }}</span></summary>
+    <form class="stack-sm" id="describe-form" style="margin-top:12px">
+      <label class="vh" for="describe">{{ t("v2.new.tasks.describe") }}</label>
+      {% with box_id="describe", box_name="text", box_rows=5, box_example=t("v2.new.tasks.describe_example"), box_hint="", box_project=none %}{% include "v2/_voice.html" %}{% endwith %}
+      {% if llm %}<button type="button" class="btn btn-primary" hx-post="{{ prefix }}/new/{{ view.id }}/describe" hx-include="#describe-form" hx-target="#described" hx-swap="innerHTML">{{ t("v2.new.tasks.read") }}</button>
+      {% else %}<p class="hint">{{ t("v2.ai.off") }}</p>{% endif %}
+    </form>
+  </details>
+  <details class="choice-card" name="way"{% if tasks_way == "table" or (not tasks_way and rows) %} open{% endif %}>
+    <summary class="stack-sm"><strong style="font-size:19px">{{ icon("list", 24) }} {{ t("v2.new.tasks.table") }}</strong><span class="muted">{{ t("v2.new.tasks.table_text") }}</span></summary>
+  </details>
+</div>
+<div id="described" class="section"></div>
+<form class="card stack section" hx-post="{{ prefix }}/new/{{ view.id }}/tasks" hx-target="body" aria-labelledby="table-title">
+  <h2 id="table-title">{{ t("v2.new.current_tasks") }}</h2>
+  <table class="table table-input">
+    <thead><tr><th scope="col">{{ t("v2.new.task.name") }}</th><th scope="col">{{ t("v2.new.task.days") }}</th><th scope="col">{{ t("v2.new.task.crew") }}</th><th scope="col">{{ t("v2.new.task.after") }}</th><th scope="col">{{ t("v2.new.task.optional") }}</th></tr></thead>
+    <tbody data-rows>
+    {% for row in rows + [none] %}{% set i = loop.index0 %}
+    <tr>
+      <td><input type="text" name="t_name" value="{{ row.name if row else '' }}" aria-label="{{ t('v2.new.task.name') }} {{ loop.index }}"></td>
+      <td style="width:90px"><input type="number" name="t_days" min="1" value="{{ row.days if row else 1 }}" aria-label="{{ t('v2.new.task.days') }} {{ loop.index }}"></td>
+      <td style="width:260px"><span class="row" style="gap:6px;flex-wrap:nowrap"><input type="number" name="t_count" min="0" style="width:70px" value="{{ row.count if row else 1 }}" aria-label="{{ t('v2.new.task.crew') }} {{ loop.index }}">
+        <select name="t_role" aria-label="{{ t('v2.new.task.crew') }} {{ loop.index }}">{% for role in roles %}<option{% if row and row.role == role %} selected{% endif %}>{{ role }}</option>{% endfor %}</select></span></td>
+      <td style="width:220px"><select name="t_after" aria-label="{{ t('v2.new.task.after') }} {{ loop.index }}"><option value="">—</option>{% for other in rows %}{% if not row or other.name != row.name %}<option{% if row and row.after == other.name %} selected{% endif %}>{{ other.name }}</option>{% endif %}{% endfor %}</select></td>
+      <td style="width:90px"><input type="checkbox" name="t_optional" value="{{ i }}"{% if row and row.optional %} checked{% endif %} aria-label="{{ t('v2.new.task.optional') }} {{ loop.index }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="actions"><button type="submit" class="btn">{{ t("v2.new.tasks.save_table") }}</button></div>
+</form>
+<div class="actions section">
+  <a class="btn btn-quiet" href="{{ prefix }}/new/{{ view.id }}/team">‹ {{ t("v2.new.back") }}</a>
+  <button type="button" class="btn btn-primary btn-lg" hx-post="{{ prefix }}/new/{{ view.id }}/plan"{% if not rows %} disabled{% endif %}>{{ t("v2.new.make_plan") }} ›</button>
+</div>
+
+{% else %}
+<section class="card stack" aria-labelledby="ready-title">
+  {% if planning %}
+  <p id="ready-title" class="computing" hx-get="{{ here }}" hx-trigger="load delay:2s" hx-target="body">{{ t("v2.new.planning") }}</p>
+  {% else %}
+  <h2 id="ready-title" class="big-result">{% if n is not none %}{{ t("v2.new.ready", n=n) }}{% else %}{{ t("v2.new.ready_no_deadline") }}{% endif %}</h2>
+  {% if budget %}
+  <p class="row">{{ t("v2.new.budget" if view.person_days else "v2.new.budget_units", b=t.money(budget)) }} <button type="button" class="btn btn-quiet" data-toggle="budget-form" aria-expanded="false" aria-controls="budget-form">{{ t("v2.new.budget_change") }}</button></p>
+  <form id="budget-form" class="row" hidden hx-post="{{ prefix }}/new/{{ view.id }}/budget" hx-target="body">
+    <div class="field" style="max-width:240px"><label for="budget">{{ t("v2.new.budget_field") }}</label><input type="number" id="budget" name="budget" min="1" step="1" value="{{ budget | round | int }}"></div>
+    <button type="submit" class="btn">{{ t("v2.new.budget_save") }}</button>
+  </form>
+  {% endif %}
+  <p><a class="btn btn-primary btn-lg" href="{{ prefix }}/projects/{{ view.id }}">{{ t("v2.new.open") }} ›</a></p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
