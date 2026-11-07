@@ -1,8 +1,40 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% block content %}
-<header class="v2-head"><h1>{{ t("v2.start.title") }}</h1><a class="btn btn-primary btn-lg" href="{{ prefix }}/new">{{ icon("plus", 20) }}{{ t("v2.start.new") }}</a></header>
+<header class="v2-head"><h1>{{ t("v2.start.title") }} · <span class="muted" style="font-weight:600">{{ t.date(today) }}</span></h1>{% if tiles %}<a class="btn btn-primary btn-lg" href="{{ prefix }}/new">{{ icon("plus", 20) }}{{ t("v2.start.new") }}</a>{% endif %}</header>
+{% if not tiles %}
+<section class="section stack" aria-labelledby="first-title">
+  <h2 id="first-title">{{ t("v2.start.first") }}</h2>
+  <div class="first-cards">
+    <a class="card first-card" href="{{ prefix }}/new?tasks=import"><span class="big-icon">{{ icon("upload", 28) }}</span><strong style="font-size:20px">{{ t("v2.start.first.import") }}</strong><span class="muted">{{ t("v2.start.first.import_text") }}</span></a>
+    <a class="card first-card" href="{{ prefix }}/new?tasks=describe"><span class="big-icon">{{ icon("mic", 28) }}</span><strong style="font-size:20px">{{ t("v2.start.first.voice") }}</strong><span class="muted">{{ t("v2.start.first.voice_text") }}</span></a>
+    <button type="button" class="card first-card" hx-post="{{ prefix }}/example"><span class="big-icon">{{ icon("folder", 28) }}</span><strong style="font-size:20px">{{ t("v2.start.first.example") }}</strong><span class="muted">{{ t("v2.start.first.example_text") }}</span></button>
+  </div>
+</section>
+{% else %}
+<section class="section" aria-labelledby="todo-title">
+  <div class="section-head"><h2 id="todo-title" class="overline">{{ t("v2.start.decisions") }} ({{ todos | length }})</h2>{% if todos %}<span class="muted small">{{ t("v2.start.sorted") }}</span>{% endif %}</div>
+  {% if todos %}
+  <ul class="list">
+    {% for todo in todos %}
+    <li><a class="todo" href="{{ todo.href }}"><span><span class="muted">{{ todo.project }}</span> · <span class="what">{{ todo.title }}</span></span><span class="chip chip-good num">{{ todo.effect }}</span><span class="{{ 'expires' if todo.validity.expires_tomorrow else 'valid' }}">{% if todo.validity.expires_tomorrow %}{{ t("v2.decision.expires") }}{% elif todo.validity.valid %}{{ t("v2.decision.valid", date=t.date(todo.validity.valid)) }}{% endif %}</span></a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="card muted">{{ t("v2.start.no_decisions") }}</p>{% endif %}
+</section>
 <section class="section" aria-labelledby="tiles-title">
   <h2 id="tiles-title" class="overline">{{ t("v2.start.projects") }}</h2>
   {% include "v2/_tiles.html" %}
 </section>
+<section class="section" aria-labelledby="events-title">
+  <div class="section-head"><h2 id="events-title" class="overline">{{ t("v2.start.events") }}</h2><a class="link-more" href="{{ prefix }}/log">{{ t("v2.start.all_events") }} ›</a></div>
+  {% if events %}
+  <ul class="card events">
+    {% for item in events %}{% set local = item.when.astimezone() %}
+    <li><span class="time">{% if local.date() == today %}{{ local.strftime("%H:%M") }}{% else %}{{ t.date(local.date()) }}{% endif %}</span><span class="actor">{{ item.actor }}</span><a href="{{ item.href }}">{{ item.text }}</a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="card muted">{{ t("v2.start.no_events") }}</p>{% endif %}
+</section>
+{% endif %}
 {% endblock %}

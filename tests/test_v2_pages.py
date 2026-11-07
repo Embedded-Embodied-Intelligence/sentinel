@@ -210,3 +210,27 @@ def test_postpone_and_expiry(fresh: Site) -> None:
     assert state.open is None and state.recommendation(seq).status == "expired"  # type: ignore[union-attr]
     archive = text_of(fresh.client.get(f"/v2/projects/{fresh.project}/decisions").text)
     assert "wygasła" in archive and "Sentinel" in archive
+
+
+def test_start_lists_decisions_by_validity_and_the_latest_events(site: Site) -> None:
+    text = text_of(site.client.get("/v2", params={"lang": "pl"}).text)
+    assert "Decyzje do podjęcia (1)" in text and "posortowane wg daty ważności" in text
+    assert "+18 na 100" in text and "ważna do czw. 19 lis" in text
+    assert "Nie zdążymy bez zmian" in text and "1 decyzja" in text
+    events = text[text.index("Ostatnie zdarzenia") :]
+    assert events.index("Nowa propozycja: Zastępstwo") < events.index("Utworzono projekt")
+    assert "Sentinel Nowa odsłona sklepu internetowego: Nowa propozycja" in events
+
+
+def test_the_first_visit_offers_three_ways_in(tmp_path_factory: pytest.TempPathFactory) -> None:
+    config = AppConfig(data_dir=tmp_path_factory.mktemp("v2-empty"), inline_jobs=True)
+    services = Services(config)
+    with TestClient(create_app(config, services)) as client:
+        token = client.get("/api/session").json()["csrf_token"]
+        text = text_of(client.get("/v2", params={"lang": "pl"}).text)
+        assert "Zacznij od pierwszego projektu" in text
+        for card in ("Zaimportuj arkusz", "Opisz projekt głosem", "Otwórz projekt przykładowy"):
+            assert card in text
+        made = client.post("/v2/example", headers={"X-CSRF-Token": token, "HX-Request": "true"})
+        assert made.headers["HX-Redirect"].startswith("/v2/projects/")
+        assert "39 na 100" in text_of(client.get(made.headers["HX-Redirect"]).text)
