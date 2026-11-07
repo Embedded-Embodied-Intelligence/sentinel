@@ -1,0 +1,45 @@
+{% if job %}
+<p class="computing" hx-get="{{ prefix }}/projects/{{ project_id }}/report/read?job={{ job }}" hx-trigger="load delay:1s" hx-target="this" hx-swap="outerHTML">{{ t("v2.report.reading") }}</p>
+{% else %}
+<div class="stack-sm" data-cards-loaded>
+{% if failed %}<p class="muted">{{ failed }}</p>{% endif %}
+{% for card in cards %}
+{% set id = source ~ "-" ~ loop.index0 %}
+<div class="confirm" data-card>
+  <input type="checkbox" id="card-{{ id }}" name="c_{{ card.kind }}" value="{{ card.value }}">
+  <span class="kind" aria-hidden="true">{{ icon(card.icon, 20) }}</span>
+  <label for="card-{{ id }}">{{ card.text }}{% if card.note %} <span class="hint">{{ card.note }}</span>{% endif %}</label>
+  <span class="row" style="gap:4px">
+    {% if card.edits %}<button type="button" class="btn btn-quiet btn-icon" data-toggle="edit-{{ id }}" aria-expanded="false" aria-controls="edit-{{ id }}" aria-label="{{ t('v2.report.edit') }}" title="{{ t('v2.report.edit') }}">{{ icon("pencil", 20) }}</button>{% endif %}
+    <button type="button" class="btn btn-quiet btn-icon" data-remove-card aria-label="{{ t('v2.report.remove') }}" title="{{ t('v2.report.remove') }}">{{ icon("x", 20) }}</button>
+  </span>
+  {% if card.edits %}
+  <div class="confirm-edit" id="edit-{{ id }}" hidden>
+    {% for e in card.edits %}
+    <div class="field"><label for="edit-{{ id }}-{{ e.name }}">{{ e.label }}</label><input class="input" type="{{ e.kind }}" id="edit-{{ id }}-{{ e.name }}" value="{{ e.value }}" data-edit="{{ e.name }}" data-for="card-{{ id }}"{% if e.kind == "number" %} min="0" step="1"{% endif %}></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+{% for q in questions %}
+{% set qi = loop.index0 %}
+<fieldset class="question" data-question>
+  <legend class="vh">{{ q.text }}</legend>
+  <p>{{ icon("alert", 20) }} {{ q.text }}</p>
+  {% if q.hint %}<p class="hint">{{ q.hint }}</p>{% endif %}
+  <div class="choices">
+    {% for c in q.choices %}<label><input type="radio" name="q-{{ qi }}" value="{{ c.value }}">{{ c.text }}</label>{% endfor %}
+    <label><input type="radio" name="q-{{ qi }}" value="skip">{{ t("v2.report.question_skip") }}</label>
+  </div>
+</fieldset>
+{% endfor %}
+{% if questions %}<input type="hidden" name="qn" value="{{ questions | length }}">{% endif %}
+{% if unparsed %}
+<div class="stack-sm">
+  <p class="label">{{ t("v2.report.unparsed") }}</p>
+  <ul class="bullets">{% for part in unparsed %}<li>{{ part }} → <a href="/projects/{{ project_id }}/checkin">{{ t("v2.report.add_by_hand") }}</a></li>{% endfor %}</ul>
+</div>
+{% endif %}
+</div>
+{% endif %}

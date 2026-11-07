@@ -224,6 +224,7 @@ class Services:
         self._live: OrderedDict[str, tuple[int, LiveState]] = OrderedDict()
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
         self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
+        self._drafts: OrderedDict[tuple[str, int, str], ForecastView] = OrderedDict()
         self._threats: OrderedDict[tuple[str, int], planning.ThreatList] = OrderedDict()
         self._causes: OrderedDict[tuple[str, int], planning.Causes | None] = OrderedDict()
         self._clauses: OrderedDict[str, tuple[str, ...]] = OrderedDict()
@@ -625,6 +626,31 @@ class Services:
             return decisions.distribution(state.project, entry.recommendation)
         except ValueError:
             return None
+
+    def dry_run(
+        self, session: str, project_id: str, checkin: CheckIn
+    ) -> tuple[ForecastView, ForecastView]:
+        """The forecast now and with a draft check-in applied (v2 "Wpływ na projekt", 11.8):
+        nothing is stored; the draft's forecasts are kept by the draft and the project's state."""
+        _, state = self._state(session, project_id)
+        project = state.project
+        _ready(project, need_deadline=False)
+        before = forecast_view(project, self._forecast(project_id, state))
+        key = (project_id, state.last_change, checkin.model_dump_json())
+        with self._guard:
+            found = self._drafts.get(key)
+        if found is None:
+            trial = project.copy()
+            try:
+                trial.apply_checkin(trial.resolve_checkin(checkin))
+            except LiveError as exc:
+                raise AppError.of(exc) from exc
+            found = forecast_view(trial, planning.forecast(trial))
+            with self._guard:
+                self._drafts[key] = found
+                while len(self._drafts) > FORECASTS_KEPT:
+                    self._drafts.popitem(last=False)
+        return before, found
 
     def expire(self, session: str, project_id: str, today: date) -> None:
         """An `expiry` event for the pending recommendation whose validity date is before

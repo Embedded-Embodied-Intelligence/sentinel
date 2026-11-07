@@ -145,6 +145,8 @@ a:hover { color: var(--accent-hover); }
 .small { font-size: 15px; line-height: 22px; }
 .icon { flex: none; vertical-align: middle; }
 [hidden] { display: none !important; }
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
 
 /* ---- shell: glass sidebar and the content */
 .v2-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
@@ -393,7 +395,8 @@ textarea.input { min-height: 132px; resize: vertical; }
 .voice-level { width: 120px; height: 8px; border-radius: 4px; background: var(--dot-empty); overflow: hidden; }
 .voice-level span { display: block; height: 100%; width: 0; background: var(--bad); transition: width 0.1s linear; }
 .voice-time { font-variant-numeric: tabular-nums; min-width: 48px; }
-.voice-preview { color: var(--muted); font-style: italic; }
+.voice-preview { color: var(--muted); }
+.voice-ghost { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 132px; }
 .voice-status { min-height: 22px; font-size: 15px; color: var(--muted); }
 .voice-ok { width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--good); color: var(--good-ink); cursor: pointer; display: inline-grid; place-items: center; }
 .voice-no { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--bad); background: var(--surface); color: var(--bad); cursor: pointer; display: inline-grid; place-items: center; }

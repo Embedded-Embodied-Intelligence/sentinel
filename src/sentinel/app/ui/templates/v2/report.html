@@ -1,0 +1,48 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<form id="report-form" class="stack" hx-post="{{ prefix }}/projects/{{ view.id }}/report" data-report>
+  <div class="section-head">
+    <p class="row"><strong>{{ t("v2.report.of", date=t.date(day)) }}</strong>
+      <button type="button" class="btn btn-quiet" data-toggle="report-date" aria-expanded="false" aria-controls="report-date">{{ t("v2.report.change_date") }}</button></p>
+    <p class="muted">{% if last %}{{ t("v2.report.last", date=t.date(last)) }}{% else %}{{ t("v2.report.first") }}{% endif %}</p>
+  </div>
+  <div id="report-date" class="field" hidden style="max-width:260px">
+    <label for="date">{{ t("v2.report.date") }}</label>
+    <input type="date" id="date" name="date" value="{{ day.isoformat() }}" required>
+  </div>
+  <input type="hidden" name="planned_used" value="" data-planned-used>
+
+  <section class="card step" aria-labelledby="step1-title">
+    <div class="step-head"><span class="step-no">1</span><h2 id="step1-title">{{ t("v2.report.step1") }}</h2></div>
+    <label class="vh" for="message">{{ t("v2.report.message") }}</label>
+    {% with box_id="message", box_name="message", box_rows=4, box_example=t("v2.report.example"), box_hint="", box_project=view.id %}{% include "v2/_voice.html" %}{% endwith %}
+    <div class="hints"><span class="muted">{{ t("v2.report.hints") }}</span>
+      {% for key, label, text in hints %}<button type="button" class="hint-chip" data-hint="{{ text }}">{{ label }}</button>{% endfor %}
+    </div>
+    <div class="actions">
+      {% if llm %}<button type="button" class="btn btn-primary" data-read hx-post="{{ prefix }}/projects/{{ view.id }}/report/read" hx-include="#report-form" hx-target="#cards-message" hx-swap="innerHTML">{{ t("v2.report.read") }}</button>{% endif %}
+      <button type="button" class="btn" data-planned hx-post="{{ prefix }}/projects/{{ view.id }}/report/planned" hx-include="#report-form" hx-target="#cards-planned" hx-swap="innerHTML">{{ t("v2.report.planned") }}</button>
+    </div>
+    {% if not llm %}<p class="hint">{{ t("v2.report.no_ai") }}</p>{% endif %}
+  </section>
+
+  <section class="card step" aria-labelledby="step2-title">
+    <div class="section-head">
+      <div class="step-head"><span class="step-no">2</span><h2 id="step2-title">{{ t("v2.report.step2") }}</h2></div>
+      <button type="button" class="btn btn-quiet" data-tick-all>{{ t("v2.report.all") }}</button>
+    </div>
+    <p class="muted">{{ t("v2.report.step2_hint") }}</p>
+    <div id="cards-message" data-cards></div>
+    <div id="cards-planned" data-cards></div>
+    <p class="muted" data-cards-empty>{{ t("v2.report.empty") }}</p>
+  </section>
+
+  <section class="card step" aria-labelledby="step3-title">
+    <div class="step-head"><span class="step-no">3</span><h2 id="step3-title">{{ t("v2.report.step3") }}</h2></div>
+    <div id="impact" hx-post="{{ prefix }}/projects/{{ view.id }}/report/impact" hx-include="#report-form" hx-trigger="change from:#report-form delay:600ms, cards from:body delay:100ms" hx-swap="innerHTML" hx-sync="this:replace" aria-live="polite">
+      {% with chips=[], error=none, blocked=false, ticked=0, can_save=false, stalled=0, last=last %}{% include "v2/_impact.html" %}{% endwith %}
+    </div>
+    <p><a href="/projects/{{ view.id }}/checkin">{{ t("v2.report.form") }} ›</a></p>
+  </section>
+</form>
+{% endblock %}

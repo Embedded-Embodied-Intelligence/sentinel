@@ -1,0 +1,12 @@
+{% import "v2/_macros.html" as m %}
+<div class="impact">
+  {% if error %}<p class="error">{{ error }}</p>
+  {% elif chips %}{{ m.effect_chips(t, chips) }}
+  {% else %}<p class="muted">{{ t("v2.report.tick_some") }}</p>{% endif %}
+  <span class="computing htmx-indicator" data-computing>{{ t("v2.report.computing") }}</span>
+</div>
+{% if stalled %}<p class="stalled">{{ icon("alert", 20) }}{{ t.plural("v2.report.stalled", stalled, date=t.date(last)) }}</p>{% endif %}
+<div class="actions" style="margin-top:12px">
+  <button type="submit" class="btn btn-primary btn-lg"{% if not can_save %} disabled{% endif %}>{{ t("v2.report.save") }}</button>
+  {% if blocked %}<span class="muted">{{ t("v2.report.blocked") }}</span>{% endif %}
+</div>

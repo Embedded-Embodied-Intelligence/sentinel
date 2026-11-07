@@ -41,3 +41,19 @@ deploy guide say so, and Settings offers to test recordings. Groq's free tier li
 failure says plainly what to do (no microphone permission, no key, provider down, too long). The
 app now has a second cloud call outside the record/replay cache, kept in `sentinel.llm.whisper`
 and used only by the pages, never by a study.
+
+## Update (WP15): live preview and five minutes in the v2 interface
+
+The v2 voice component (`docs/design/v2-spec.md`, section 9) records up to a technical cap of
+5 minutes (a warning at 4:30) and shows a live preview: about every 3 s the audio recorded so far
+(the MediaRecorder's chunks from the start, a valid file) goes to `POST /v2/transcribe?preview=1`,
+one request in flight at a time and a tick skipped while one runs; the text appears grey at the
+cursor in a mirror of the box. On ✓ (or Enter) the whole recording is written out once more and
+replaces the preview as ordinary text; on ✕ (or Esc) the recording and the dictated span go, the
+text around it stays. A preview does not count against the demo's daily AI cap and is not logged
+with a length; the final transcription is counted and logged as in WP14. A refused preview (429
+from Groq's free tier, 20 requests a minute and 7,200 audio seconds an hour) keeps the recording
+going with "Podgląd chwilowo niedostępny". Sending the growing recording rather than only its
+new part keeps every request a valid audio file at the price of more audio seconds: a 2-minute
+recording sends about 40 minutes of audio in previews, so long dictations may meet the hourly
+limit, after which only the final transcription runs. Nothing more is stored.

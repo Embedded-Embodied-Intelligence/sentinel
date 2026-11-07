@@ -40,7 +40,7 @@ class Shot:
     name: str
     path: str
     ready: str | None = None
-    click: str | None = None
+    clicks: tuple[str, ...] = ()
     scroll: str | None = None
     wait: str | None = None
 
@@ -71,13 +71,19 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
         Shot(
             "report_cards",
             f"{live}/report",
-            click="[data-planned]",
+            clicks=("[data-planned]", "[data-tick-all]"),
             wait="#impact .chips",
             scroll="#step2-title",
         ),
         Shot("decision", decision),
-        Shot("decision_reject", decision, click="[data-toggle^='reject']"),
-        Shot("decision_details", decision, click="#details > summary", scroll="#details"),
+        Shot("decision_reject", decision, clicks=("[data-toggle^='reject']",)),
+        Shot(
+            "decision_details",
+            decision,
+            clicks=("#details > summary",),
+            scroll="#details",
+            wait="#distribution svg",
+        ),
         Shot("decisions", f"{live}/decisions"),
         Shot("wizard_basics", "/v2/new"),
         Shot("wizard_team", f"/v2/new/{ids['draft']}/team"),
@@ -115,9 +121,10 @@ def capture(
             page.wait_for_load_state("networkidle")
             if shot.ready is not None:
                 page.wait_for_selector(shot.ready)
-            if shot.click is not None:
-                page.locator(shot.click).first.click()
+            for click in shot.clicks:
+                page.locator(click).first.click()
                 page.wait_for_load_state("networkidle")
+                page.wait_for_timeout(200)
             if shot.wait is not None:
                 page.wait_for_selector(shot.wait)
             if shot.scroll is not None:
