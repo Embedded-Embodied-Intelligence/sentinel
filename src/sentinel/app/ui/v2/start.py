@@ -107,6 +107,10 @@ def overview(ui: Ui, request: Request, with_feed: bool = True) -> Overview:
     return Overview(tiles, todos, events[:EVENTS_SHOWN])
 
 
+def deleted_notice(t: TextsV2) -> dict[str, str]:
+    return {"tone": "good", "icon": "check-circle", "text": t("v2.psettings.deleted")}
+
+
 def router(ui: Ui) -> APIRouter:
     routes = APIRouter()
 
@@ -124,6 +128,7 @@ def router(ui: Ui) -> APIRouter:
             todos=found.todos,
             events=found.events,
             today=date.today(),
+            notice=deleted_notice(t) if request.query_params.get("done") == "deleted" else None,
         )
 
     @routes.get(PREFIX + "/projects")

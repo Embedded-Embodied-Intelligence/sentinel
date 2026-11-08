@@ -47,6 +47,9 @@ FAMILIES = {
     "v2.lab.level.": ("low", "high"),
     "v2.lab.side.": ("sentinel", "no_reaction"),
     "v2.lab.step.": ("1", "5", "end"),
+    "v2.settings.ai_now.": ("cloud", "local", "none"),
+    "v2.psettings.saved.": ("basics", "days_off", "reminder", "calendar", "revoked"),
+    "v2.weekday.": ("0", "1", "2", "3", "4"),
 }
 # The labels of the glossary (section 6), Polish and English, exactly.
 GLOSSARY = {

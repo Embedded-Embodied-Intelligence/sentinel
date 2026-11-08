@@ -98,6 +98,18 @@ MIGRATIONS: tuple[str, ...] = (
     """
     ALTER TABLE requests ADD COLUMN seconds REAL;
     """,
+    # WP16 (ADR-0035): a project's calendar: the weekly report reminder (0 Monday ... 4 Friday,
+    # "HH:MM") and the nonce of its secret link (NULL: no link); the token itself is never
+    # stored. It goes with its project, and so with its sandbox.
+    """
+    CREATE TABLE calendars (
+        project TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+        nonce TEXT,
+        reminder_day INTEGER NOT NULL DEFAULT 3 CHECK (reminder_day BETWEEN 0 AND 4),
+        reminder_time TEXT NOT NULL DEFAULT '17:00',
+        updated TEXT NOT NULL
+    );
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 LOCAL_SESSION = "local"  # the one session of a local (non-demo) app
@@ -141,6 +153,18 @@ class ProjectRow:
     created: datetime
     updated: datetime
     seq: int
+
+
+@dataclass(frozen=True)
+class CalendarRow:
+    """A project's calendar (ADR-0035): the session it belongs to, the nonce of its secret link
+    (None: no link), and the weekly report reminder's weekday (0 Monday) and time."""
+
+    project: str
+    session: str
+    nonce: str | None
+    reminder_day: int = 3
+    reminder_time: str = "17:00"
 
 
 @dataclass(frozen=True)
@@ -325,6 +349,53 @@ class Store:
                 "SELECT * FROM projects WHERE id = ? AND session = ?", (project_id, session)
             ).fetchone()
         return None if row is None else _project(row)
+
+    def calendar(self, session: str, project_id: str) -> CalendarRow | None:
+        """The calendar of a project of `session` (the defaults if none was saved), None if the
+        project is not the session's."""
+        if self.project(session, project_id) is None:
+            return None
+        with self._connect() as db:
+            row = db.execute("SELECT * FROM calendars WHERE project = ?", (project_id,)).fetchone()
+        if row is None:
+            return CalendarRow(project_id, session, None)
+        return CalendarRow(
+            project_id, session, row["nonce"], row["reminder_day"], row["reminder_time"]
+        )
+
+    def calendar_feed(self, project_id: str) -> CalendarRow | None:
+        """The calendar of a project whatever its session, for the feed a secret link opens
+        without a session (ADR-0035): the caller checks the link's token against the nonce."""
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT c.*, p.session FROM calendars c JOIN projects p ON p.id = c.project "
+                "WHERE c.project = ? AND p.kind = 'live'",
+                (project_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return CalendarRow(
+            project_id, row["session"], row["nonce"], row["reminder_day"], row["reminder_time"]
+        )
+
+    def save_calendar(self, session: str, calendar: CalendarRow) -> None:
+        """Store a project's calendar; a project of another session is left alone."""
+        if self.project(session, calendar.project) is None:
+            return
+        with self._write() as db:
+            db.execute(
+                "INSERT INTO calendars (project, nonce, reminder_day, reminder_time, updated) "
+                "VALUES (?, ?, ?, ?, ?) ON CONFLICT(project) DO UPDATE SET nonce = "
+                "excluded.nonce, reminder_day = excluded.reminder_day, reminder_time = "
+                "excluded.reminder_time, updated = excluded.updated",
+                (
+                    calendar.project,
+                    calendar.nonce,
+                    calendar.reminder_day,
+                    calendar.reminder_time,
+                    _stamp(now()),
+                ),
+            )
 
     def append(
         self,

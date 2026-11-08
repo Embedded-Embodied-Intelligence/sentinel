@@ -178,10 +178,6 @@ def router(ui: Ui) -> APIRouter:
             **values,
         )
 
-    @routes.get(PREFIX + "/settings")
-    def settings_soon(request: Request) -> Response:
-        return soon(request, "settings", SOON_PAGES["settings"])
-
     @routes.get(PREFIX + "/projects/{project_id}/{tab}")
     def tab_soon(request: Request, project_id: str, tab: str) -> Response:
         if tab not in SOON_TABS:

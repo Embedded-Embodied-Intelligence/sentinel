@@ -253,18 +253,24 @@ def upcoming(t: TextsV2, view: ProjectView, today: date) -> tuple[date, list[Upc
     return first, items
 
 
-def next_report(view: ProjectView, today: date) -> date:
-    """The day of the next weekly report: the first Thursday after the latest report, or the
-    first one from today if that has passed (the default reminder day, section 8.9)."""
+def next_report(view: ProjectView, today: date, weekday: int = 3) -> date:
+    """The day of the next weekly report: the first reminder day (Thursday by default, section
+    8.9) after the latest report, or the first one from today if that has passed."""
     base = view.checkins[-1].date if view.checkins else view.definition.start - timedelta(days=1)
     day = base + timedelta(days=1)
-    while day.weekday() != 3:
+    while day.weekday() != weekday:
         day += timedelta(days=1)
     if day < today:
         day = today
-        while day.weekday() != 3:
+        while day.weekday() != weekday:
             day += timedelta(days=1)
     return day
+
+
+def reminder_day(ui: Ui, request: Request, project_id: str) -> int:
+    """The weekday of the project's report reminder (Thursday unless changed, section 8.10)."""
+    found = ui.services.store.calendar(ui.session(request), project_id)
+    return 3 if found is None else found.reminder_day
 
 
 # --------------------------------------------------------------------------- causes and risks
@@ -378,7 +384,7 @@ def router(ui: Ui) -> APIRouter:
             week=week,
             week_from=first,
             insights=insights(t, f, waiting),
-            next_report=next_report(view, today),
+            next_report=next_report(view, today, reminder_day(ui, request, project_id)),
             notice=notice_of(t, done, request),
             person_days=view.person_days,
             budget_end=budget_end(t, view, f),
@@ -414,7 +420,7 @@ def router(ui: Ui) -> APIRouter:
             chips=[] if pending is None else decision_chips(t, pending, view.person_days),
             lifecycle=lifecycle_of(ui, request, view, pending),
             thinking=thinking,
-            next_report=next_report(view, date.today()),
+            next_report=next_report(view, date.today(), reminder_day(ui, request, project_id)),
         )
 
     return routes

@@ -1,0 +1,17 @@
+{# The calendar of a project (section 8.9) and its weekly report reminder (section 8.10). #}
+<section class="card stack" aria-labelledby="calendar-title" id="calendar">
+  <h2 id="calendar-title">{{ t("v2.psettings.calendar") }}</h2>
+  <form class="stack-sm" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/reminder" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    <fieldset class="scenario"><legend>{{ t("v2.psettings.reminder") }}</legend>
+      <div class="form-grid">
+        <div class="field"><label for="reminder-day">{{ t("v2.psettings.reminder_day") }}</label>
+          <select id="reminder-day" name="reminder_day">{% for d in weekdays %}<option value="{{ d }}"{% if (kv('reminder_day', calendar.reminder_day) | string) == (d | string) %} selected{% endif %}>{{ t("v2.weekday." ~ d) }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="reminder-time">{{ t("v2.psettings.reminder_time") }}</label>
+          <input type="time" id="reminder-time" name="reminder_time" value="{{ kv('reminder_time', calendar.reminder_time) }}"></div>
+      </div>
+      {{ err("reminder") }}
+      <p class="hint">{{ t("v2.psettings.reminder_hint") }}</p>
+      <div class="actions"><button type="submit" class="btn">{{ t("v2.psettings.save") }}</button></div>
+    </fieldset>
+  </form>
+</section>

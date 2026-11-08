@@ -15,11 +15,24 @@ def mount(app: FastAPI, ui: Ui) -> None:
         overview,
         plan,
         report,
+        settings,
         shell,
         start,
         voice,
         wizard,
     )
 
-    for module in (start, wizard, overview, decision, report, log, plan, lab, voice, shell):
+    for module in (
+        start,
+        wizard,
+        overview,
+        decision,
+        report,
+        log,
+        plan,
+        lab,
+        settings,
+        voice,
+        shell,
+    ):
         app.include_router(module.router(ui))

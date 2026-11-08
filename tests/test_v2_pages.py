@@ -9,6 +9,7 @@ import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -176,6 +177,75 @@ def test_a_task_not_started_is_corrected_from_the_plan(fresh: Site) -> None:
     assert "Ty Poprawiono „Integracja płatności”: szacunek 5 → 7 dni" in log
     started = client.post(f"/v2/projects/{pid}/plan/tasks/T3", data=form, headers=headers)
     assert started.status_code == 422  # a task under way keeps its definition
+
+
+def test_the_settings_read_as_the_spec(site: Site) -> None:
+    """Ustawienia (8.10): appearance, language and the model in plain words; the project's
+    basics, team, days off, calendar reminder (Thursday 17:00), exports, the fixed text of
+    section 3 and the red zone."""
+    app = text_of(site.client.get("/v2/settings", params={"lang": "pl"}).text)
+    for label in ("Wygląd", "Jasny (domyślny)", "Ciemny", "Systemowy", "Język", "Model AI"):
+        assert label in app, label
+    assert "Chmura (zalecany) Dokładniejszy" in app
+    assert "Lokalny Dane nie wychodzą z firmy; wolniejszy" in app
+    html = site.client.get(f"/v2/projects/{site.project}/settings", params={"lang": "pl"}).text
+    shown = text_of(html)
+    for label in ("Podstawy", "Zespół", "Dni wolne w firmie", "Kalendarz", "Eksport"):
+        assert label in shown, label
+    assert "Przypomnienie o raporcie" in shown and '<option value="3" selected>' in html
+    assert 'value="17:00"' in html
+    assert (
+        "Jak Sentinel podejmuje decyzje Sentinel zbiera informacje, analizuje projekt i "
+        "przygotowuje decyzje. Każdą zmianę zatwierdzasz Ty."
+    ) in shown
+    assert "Usuń projekt" in shown and 'class="card stack danger-zone"' in html
+    assert "Wkrótce" not in shown
+
+
+def test_the_demo_sets_no_model_or_key(tmp_path: Path) -> None:
+    config = AppConfig(data_dir=tmp_path, demo=True, inline_jobs=True, showcase=False)
+    with TestClient(create_app(config, Services(config))) as client:
+        page = client.get("/v2/settings", params={"lang": "pl"}).text
+        assert "W pokazie model AI ustawia jego właściciel" in text_of(page)
+        assert 'name="api_key"' not in page and 'name="groq_key"' not in page
+        token = client.get("/api/session").json()["csrf_token"]
+        refused = client.post(
+            "/v2/settings/ai",
+            data={"choice": "cloud", "api_key": "x"},
+            headers={"X-CSRF-Token": token, "HX-Request": "true"},
+        )
+        assert refused.status_code == 403
+
+
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
+def test_project_settings_are_saved_and_the_project_deleted(fresh: Site) -> None:
+    pid, client, headers = fresh.project, fresh.client, fresh.headers
+    base = f"/v2/projects/{pid}/settings"
+    refused = client.post(
+        f"{base}/basics", data={"name": "", "deadline": "2026-12-18"}, headers=headers
+    )
+    assert refused.status_code == 422
+    basics = {"name": "Sklep 2.0", "deadline": "2026-12-18", "budget": "90"}
+    saved = client.post(f"{base}/basics", data=basics, headers=headers)
+    assert saved.headers["HX-Redirect"].endswith("/settings?done=basics")
+    assert fresh.services.live(LOCAL_SESSION, pid, "pl").definition.budget == 90
+    reminder = {"reminder_day": "1", "reminder_time": "09:30"}
+    client.post(f"{base}/reminder", data=reminder, headers=headers)
+    calendar = fresh.services.store.calendar(LOCAL_SESSION, pid)
+    assert calendar is not None and (calendar.reminder_day, calendar.reminder_time) == (1, "09:30")
+    overview = text_of(client.get(f"/v2/projects/{pid}", params={"lang": "pl"}).text)
+    assert "Następny raport: wt." in overview or "Decyzja do podjęcia" in overview
+    bad = client.post(
+        f"{base}/reminder", data={"reminder_day": "6", "reminder_time": "25:00"}, headers=headers
+    )
+    assert bad.status_code == 422
+    day_off = {"action": "add", "day": "2026-12-24"}
+    frozen = client.post(f"{base}/days-off", data=day_off, headers=headers)
+    assert frozen.status_code == 422  # the calendar is fixed after the first report
+    gone = client.post(f"/v2/projects/{pid}/delete", headers=headers)
+    assert gone.headers["HX-Redirect"] == "/v2?done=deleted"
+    assert fresh.services.projects(LOCAL_SESSION) == []
+    assert "Usunięto projekt." in text_of(client.get(gone.headers["HX-Redirect"]).text)
 
 
 def test_a_log_cell_is_never_a_formula() -> None:

@@ -1,0 +1,83 @@
+{% extends "v2/base.html" %}
+{% macro kv(name, default="") %}{{ kept.get(name, default) if kept else default }}{% endmacro %}
+{% macro err(name) %}{% if errors.get(name) %}<p class="error" id="{{ name }}-error">{{ errors.get(name) }}</p>{% endif %}{% endmacro %}
+{% block content %}
+<div class="stack">
+<section class="card stack" aria-labelledby="basics-title">
+  <h2 id="basics-title">{{ t("v2.psettings.basics") }}</h2>
+  <form class="stack" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/basics" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    {{ err("basics") }}
+    <div class="form-grid">
+      <div class="field"><label for="name">{{ t("v2.psettings.name") }}</label>
+        <input type="text" id="name" name="name" maxlength="120" value="{{ kv('name', view.definition.name) }}"{% if errors.get('name') %} aria-invalid="true" aria-describedby="name-error"{% endif %}>{{ err("name") }}</div>
+      <div class="field"><label for="deadline">{{ t("v2.psettings.deadline") }}</label>
+        <input type="date" id="deadline" name="deadline" value="{{ kv('deadline', view.definition.deadline.isoformat() if view.definition.deadline else '') }}"{% if errors.get('deadline') %} aria-invalid="true" aria-describedby="deadline-error"{% endif %}>{{ err("deadline") }}</div>
+      <div class="field"><label for="budget">{{ t("v2.psettings.budget") }}</label>
+        <input type="number" id="budget" name="budget" min="1" step="any" value="{{ kv('budget', (view.definition.budget | round(1)) if view.definition.budget else '') }}" aria-describedby="budget-hint"{% if errors.get('budget') %} aria-invalid="true"{% endif %}>
+        <p class="hint" id="budget-hint">{{ t("v2.psettings.budget_hint") }}</p>{{ err("budget") }}</div>
+      <div class="field"><span class="label">{{ t("v2.psettings.start") }}</span><span>{{ t.date(view.definition.start) }}</span></div>
+    </div>
+    <div class="actions"><button type="submit" class="btn btn-primary">{{ t("v2.psettings.save") }}</button></div>
+  </form>
+</section>
+
+<section class="card stack" aria-labelledby="team-title">
+  <h2 id="team-title">{{ t("v2.psettings.team") }}</h2>
+  <ul class="list team-list">{% for p in view.definition.team %}<li><strong>{{ p.name }}</strong> <span class="muted">· {{ p.role }}</span></li>{% endfor %}</ul>
+  <p class="hint">{% if tracking %}{{ t("v2.psettings.team_fixed") }}{% else %}{{ t("v2.psettings.team_edit") }} <a href="{{ prefix }}/new/{{ view.id }}/team">{{ t("v2.psettings.team_link") }} ›</a>{% endif %}</p>
+</section>
+
+<section class="card stack" aria-labelledby="days-off-title">
+  <h2 id="days-off-title">{{ t("v2.psettings.days_off") }}</h2>
+  <p class="muted">{{ t("v2.psettings.holidays") }}</p>
+  {% if tracking %}
+  {% if view.definition.settings.days_off %}<p>{% for day in view.definition.settings.days_off %}{{ t.date(day) }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% else %}<p>{{ t("v2.psettings.days_off_none") }}</p>{% endif %}
+  <p class="hint">{{ t("v2.psettings.days_off_fixed") }}</p>
+  {% else %}
+  {% if view.definition.settings.days_off %}
+  <ul class="list days-off">{% for day in view.definition.settings.days_off %}
+    <li><span>{{ t.date(day) }}</span><button type="button" class="btn btn-quiet btn-icon" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/days-off" hx-vals='{"action": "remove", "day": "{{ day.isoformat() }}"}' hx-target="#main" hx-select="#main" hx-swap="outerHTML" aria-label="{{ t('v2.psettings.days_off_remove', date=t.date(day)) }}" title="{{ t('v2.psettings.days_off_remove', date=t.date(day)) }}">{{ icon("x", 20) }}</button></li>
+  {% endfor %}</ul>
+  {% else %}<p>{{ t("v2.psettings.days_off_none") }}</p>{% endif %}
+  <form class="row" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/days-off" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    <input type="hidden" name="action" value="add">
+    <div class="field"><label for="day-off">{{ t("v2.psettings.days_off_field") }}</label>
+      <input type="date" id="day-off" name="day" value="{{ kv('day') }}"{% if errors.get('days_off') %} aria-invalid="true" aria-describedby="days_off-error"{% endif %}></div>
+    <button type="submit" class="btn">{{ icon("plus", 20) }}{{ t("v2.psettings.days_off_add") }}</button>
+  </form>
+  {{ err("days_off") }}
+  <p class="hint">{{ t("v2.psettings.days_off_hint") }}</p>
+  {% endif %}
+</section>
+
+{% include "v2/_calendar.html" %}
+
+<section class="card stack" aria-labelledby="exports-title">
+  <h2 id="exports-title">{{ t("v2.psettings.exports") }}</h2>
+  <ul class="list">
+    {% if view.has_plan %}<li><a class="btn btn-quiet" href="/api/projects/{{ view.id }}/plan.csv?lang={{ t.lang }}" download>{{ icon("download", 20) }}{{ t("v2.plan.download") }}</a></li>{% endif %}
+    <li><a class="btn btn-quiet" href="{{ prefix }}/projects/{{ view.id }}/log.csv" download>{{ icon("download", 20) }}{{ t("v2.log.download") }}</a></li>
+    <li><a class="btn btn-quiet" href="/api/projects/{{ view.id }}/export.json" download>{{ icon("download", 20) }}{{ t("v2.psettings.export_json") }}</a></li>
+    {% if view.has_plan %}<li><a class="btn btn-quiet" href="/projects/{{ view.id }}/report.html" target="_blank" rel="noopener">{{ icon("document", 20) }}{{ t("v2.psettings.print") }}</a></li>{% endif %}
+  </ul>
+</section>
+
+<section class="card stack" aria-labelledby="how-title">
+  <h2 id="how-title">{{ t("v2.psettings.how") }}</h2>
+  <p>{{ t("v2.psettings.how_text") }}</p>
+</section>
+
+<section class="card stack danger-zone" aria-labelledby="delete-title">
+  <h2 id="delete-title">{{ t("v2.psettings.delete") }}</h2>
+  <p>{{ t("v2.psettings.delete_text") }}</p>
+  <p><button type="button" class="btn btn-reject" data-toggle="delete-confirm" aria-expanded="false" aria-controls="delete-confirm">{{ icon("trash", 20) }}{{ t("v2.psettings.delete") }}</button></p>
+  <div id="delete-confirm" class="panel stack-sm" hidden>
+    <p><strong>{{ t("v2.psettings.delete_sure", name=view.name) }}</strong></p>
+    <div class="actions">
+      <button type="button" class="btn btn-reject-fill" hx-post="{{ prefix }}/projects/{{ view.id }}/delete">{{ t("v2.psettings.delete_confirm") }}</button>
+      <button type="button" class="btn btn-quiet" data-toggle="delete-confirm">{{ t("v2.reject.cancel") }}</button>
+    </div>
+  </div>
+</section>
+</div>
+{% endblock %}

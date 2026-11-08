@@ -1,0 +1,52 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.settings.title") }}</h1></header>
+{% if saved %}<p class="notice notice-good" role="status">{{ icon("check-circle", 20) }}<span>{{ t("v2.settings.saved") }}</span></p>{% endif %}
+<div class="stack">
+<section class="card stack" aria-labelledby="look-title">
+  <h2 id="look-title">{{ t("v2.theme") }}</h2>
+  <div class="choices-row" role="group" aria-labelledby="look-title">
+    {% for value in themes_all %}<a class="choice-pill" href="{{ prefix }}/theme/{{ value }}?next={{ (prefix ~ '/settings') | urlencode }}" data-theme-set="{{ value }}"{% if theme == value %} aria-current="true"{% endif %}>{{ t("v2.theme." ~ value) }}{% if value == "light" %} <span class="muted">({{ t("v2.settings.default") }})</span>{% endif %}</a>{% endfor %}
+  </div>
+  <p class="hint">{{ t("v2.settings.theme_hint") }}</p>
+</section>
+<section class="card stack" aria-labelledby="lang-title">
+  <h2 id="lang-title">{{ t("v2.nav.language") }}</h2>
+  <div class="choices-row" role="group" aria-labelledby="lang-title">
+    <a class="choice-pill" href="/lang/pl?next={{ (prefix ~ '/settings') | urlencode }}" lang="pl" hreflang="pl"{% if t.lang == 'pl' %} aria-current="true"{% endif %}>Polski</a>
+    <a class="choice-pill" href="/lang/en?next={{ (prefix ~ '/settings') | urlencode }}" lang="en" hreflang="en"{% if t.lang == 'en' %} aria-current="true"{% endif %}>English</a>
+  </div>
+</section>
+<section class="card stack" aria-labelledby="ai-title">
+  <h2 id="ai-title">{{ t("v2.settings.ai") }}</h2>
+  {% if demo %}
+  <p>{{ t("v2.settings.ai_demo") }}</p>
+  {% else %}
+  <p class="muted">{{ t("v2.settings.ai_now." ~ choice, model=llm.model or "") }}</p>
+  <form class="stack" hx-post="{{ prefix }}/settings/ai" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    <fieldset class="scenario"><legend>{{ t("v2.settings.ai_choose") }}</legend>
+      <div class="choice-cards-2">
+        <label class="choice-big"><input type="radio" name="choice" value="cloud"{% if choice == "cloud" %} checked{% endif %}><span><strong>{{ t("v2.settings.cloud") }}</strong><span class="muted">{{ t("v2.settings.cloud_text") }}</span></span></label>
+        <label class="choice-big"><input type="radio" name="choice" value="local"{% if choice == "local" %} checked{% endif %}><span><strong>{{ t("v2.settings.local") }}</strong><span class="muted">{{ t("v2.settings.local_text") }}</span></span></label>
+        <label class="choice-big"><input type="radio" name="choice" value="none"{% if choice == "none" %} checked{% endif %}><span><strong>{{ t("v2.settings.none") }}</strong><span class="muted">{{ t("v2.settings.none_text") }}</span></span></label>
+      </div>
+    </fieldset>
+    <div class="form-grid">
+      <div class="field"><label for="api-key">{{ t("v2.settings.key") }}</label>
+        <input type="password" id="api-key" name="api_key" autocomplete="off" placeholder="{{ t('v2.settings.key_saved') if llm.has_key else t('v2.settings.key_example') }}" aria-describedby="api-key-hint">
+        <p class="hint" id="api-key-hint">{{ t("v2.settings.key_hint") }}</p>
+        {% if llm.has_key %}<label class="check"><input type="checkbox" name="forget_key">{{ t("v2.settings.forget") }}</label>{% endif %}</div>
+      <div class="field"><label for="host">{{ t("v2.settings.host") }}</label>
+        <input type="text" id="host" name="host" value="{{ llm.host or '' }}" placeholder="http://localhost:11434" aria-describedby="host-hint">
+        <p class="hint" id="host-hint">{{ t("v2.settings.host_hint") }}</p></div>
+      <div class="field"><label for="groq-key">{{ t("v2.settings.voice_key") }}</label>
+        <input type="password" id="groq-key" name="groq_key" autocomplete="off" placeholder="{{ t('v2.settings.key_saved') if llm.has_groq_key else t('v2.settings.key_example') }}" aria-describedby="groq-key-hint">
+        <p class="hint" id="groq-key-hint">{{ t("v2.settings.voice_hint") }}</p>
+        {% if llm.has_groq_key %}<label class="check"><input type="checkbox" name="forget_groq_key">{{ t("v2.settings.forget") }}</label>{% endif %}</div>
+    </div>
+    <div class="actions"><button type="submit" class="btn btn-primary btn-lg">{{ t("v2.settings.save") }}</button></div>
+  </form>
+  {% endif %}
+</section>
+</div>
+{% endblock %}
