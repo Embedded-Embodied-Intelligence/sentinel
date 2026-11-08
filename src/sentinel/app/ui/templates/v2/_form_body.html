@@ -35,6 +35,6 @@
   {% else %}<p class="muted">{{ t("v2.form.no_tasks") }}</p>{% endfor %}
   {% include "v2/_scenario.html" %}
   <div class="actions">
-    <button type="button" class="btn btn-primary" hx-post="{{ prefix }}/projects/{{ view.id }}/report/form" hx-include="#report-form" hx-target="#cards-form" hx-swap="beforeend">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</button>
+    <button type="button" class="btn" hx-post="{{ prefix }}/projects/{{ view.id }}/report/form" hx-include="#report-form" hx-target="#cards-form" hx-swap="beforeend">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</button>
   </div>
 </div>

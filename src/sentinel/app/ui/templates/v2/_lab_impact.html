@@ -5,5 +5,5 @@
 {{ m.effect_chips(t, chips) }}
 {% if later %}<p class="notice notice-warn">{{ icon("info", 20) }}<span>{{ later }}</span></p>{% endif %}
 <p class="muted">{{ t("v2.lab.not_saved") }}</p>
-{% if link %}<p><a class="btn btn-primary" href="{{ link }}">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</a></p>{% endif %}
+{% if link %}<p><a class="btn" href="{{ link }}">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</a></p>{% endif %}
 {% endif %}

@@ -5,6 +5,39 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.7.0 — 2026-11-08 (WP16, interface v2, part 2)
+
+- **Dziennik**, for all projects and per project: who ("Ty" or "Sentinel") did what, one
+  sentence each, grouped by day, filters "Wszystko" · "Decyzje" · "Raporty" · "Zmiany planu",
+  the effect chip ("92 → 39 na 100"), each decision's brief as it was and its fate with the
+  rejection reason one click away (▸), the "Szansa w czasie" chart whose dots open their entries,
+  and "Pobierz dziennik (CSV)" (no cell a spreadsheet reads as a formula). Start's recent events
+  come from the same log.
+- **Plan**: "Harmonogram", a Gantt chart of the current plan with today, the deadline, the
+  forecast's band from the most likely to the bad-case finish, done tasks grey, running blue,
+  the main risks amber with an icon and a word, absences hatched; "Zadania", with the correction
+  of a task not started (days, people, dependencies, optional); "Zespół", absences by date,
+  current and next tasks and next week's workload from the plan, never a performance metric;
+  "Pobierz plan (CSV)".
+- **Laboratorium**: "Co jeśli?" (a person absent, a task taking longer, a new task) shows the
+  Raport's dry run on the latest report's day and saves nothing; "Dodaj do raportu" opens the
+  Raport with the items ticked and their effect. The simulator restyled: "Mało zakłóceń" or
+  "Dużo zakłóceń", Sentinel against "Bez reakcji" on the same events, "+1 dzień", "+5 dni",
+  "Do końca" with a day counter, and one sentence with the result.
+- **Kalendarz** (ADR-0035): a secret, revocable link to an iCalendar feed with the deadline, task
+  starts and ends, absences as names and dates only, decision validity dates and the weekly
+  report reminder (Thursday 17:00 unless changed); a calendar reads it without a session, and in
+  the demo it works while the visitor's sandbox lives.
+- **Ustawienia**: appearance, language and the AI model in plain words ("Chmura (zalecany)",
+  "Lokalny"; keys only outside the demo); project settings with the basics, the team, company
+  days off, the calendar, the report reminder (which also sets "Następny raport"), exports,
+  "Jak Sentinel podejmuje decyzje" and "Usuń projekt" with a confirmation. No "Wkrótce" page is
+  left.
+- **Raport**: "Wypełnij formularz", the per-task form restyled, adds its changes as ticked cards.
+- Tests: the e2e suite covers a rejection's fate in the Dziennik, "Co jeśli?" to "Dodaj do
+  raportu" and the calendar feed, and the accessibility scan every v2 screen; a dev-only
+  `icalendar` check reads the feed. Research results unchanged (117 of 117 files).
+
 ## 1.6.0 — 2026-11-08 (WP15, interface v2, part 1)
 
 - A new interface under `/v2` beside the first one, which stays at `/` (link "Nowy wygląd (v2)";

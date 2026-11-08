@@ -7,7 +7,7 @@
   <div class="field"><label for="calendar-link">{{ t("v2.cal.link") }}</label>
     <input type="text" class="input" id="calendar-link" value="{{ calendar_link }}" readonly data-origin-fix></div>
   <div class="actions">
-    <button type="button" class="btn btn-primary" data-copy="calendar-link" data-copied="{{ t('v2.cal.copied') }}">{{ icon("link", 20) }}{{ t("v2.cal.copy") }}</button>
+    <button type="button" class="btn" data-copy="calendar-link" data-copied="{{ t('v2.cal.copied') }}">{{ icon("link", 20) }}{{ t("v2.cal.copy") }}</button>
     <button type="button" class="btn btn-reject" hx-post="{{ prefix }}/projects/{{ view.id }}/calendar/revoke">{{ t("v2.cal.revoke") }}</button>
     <span class="muted" data-copy-status role="status"></span>
   </div>
@@ -17,7 +17,7 @@
   </div>
   <p class="hint">{{ t("v2.cal.refresh") }}{% if demo %} {{ t("v2.cal.demo") }}{% endif %}</p>
   {% else %}
-  <div class="actions"><button type="button" class="btn btn-primary" hx-post="{{ prefix }}/projects/{{ view.id }}/calendar">{{ icon("calendar", 20) }}{{ t("v2.cal.make") }}</button></div>
+  <div class="actions"><button type="button" class="btn" hx-post="{{ prefix }}/projects/{{ view.id }}/calendar">{{ icon("calendar", 20) }}{{ t("v2.cal.make") }}</button></div>
   {% endif %}
   <form class="stack-sm" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/reminder" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
     <fieldset class="scenario"><legend>{{ t("v2.psettings.reminder") }}</legend>
