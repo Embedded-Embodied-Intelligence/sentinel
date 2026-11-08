@@ -25,6 +25,7 @@ sentinel = "sentinel.cli:main"
 dev = [
     "detect-secrets>=1.5",
     "httpx>=0.28.1",
+    "icalendar>=7.3.0",
     "mypy>=1.13",
     "playwright==1.63.0",
     "pre-commit>=4",

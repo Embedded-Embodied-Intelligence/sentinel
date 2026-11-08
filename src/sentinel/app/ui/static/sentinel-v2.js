@@ -53,6 +53,29 @@
     if (first) first.focus({ preventScroll: true });
   });
 
+  // The calendar link (section 8.9): shown with this page's own address, copied on request.
+  document.querySelectorAll("[data-origin-fix]").forEach(function (input) {
+    try {
+      var url = new URL(input.value);
+      input.value = window.location.origin + url.pathname + url.search;
+    } catch (e) { /* keep the server's address */ }
+  });
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-copy]");
+    if (!button) return;
+    var input = document.getElementById(button.getAttribute("data-copy"));
+    if (!input) return;
+    var status = button.parentNode.querySelector("[data-copy-status]");
+    var done = function () { if (status) status.textContent = button.getAttribute("data-copied"); };
+    input.select();
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand("copy"); done(); });
+    } else {
+      document.execCommand("copy");
+      done();
+    }
+  });
+
   // A dot of "Szansa w czasie" opens its entry of the log as it scrolls to it (section 8.6).
   document.addEventListener("click", function (event) {
     var dot = event.target.closest && event.target.closest("[data-open-entry]");

@@ -83,6 +83,7 @@ STATUS: dict[ErrorKind, int] = {
 EXPIRY_CHECK_S = 60.0
 UNLIMITED = ("/api/health", "/favicon.ico")  # neither limited nor given a session
 SESSIONLESS = ("/api/client-address",)  # rate-limited, but no sandbox is made for it
+FEED_PREFIX = "/calendar/"  # a project's calendar feed, opened by its secret link (ADR-0035)
 
 
 def _version() -> str:
@@ -233,7 +234,7 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         request.state.address = address
         if limiter is not None and not limiter.allow(address):
             return refuse(request, "rate_limited", 429, language)
-        if path in SESSIONLESS:
+        if path in SESSIONLESS or path.startswith(FEED_PREFIX):  # a calendar has no session
             return await call_next(request)
         new_session = None
         if config.demo:

@@ -19,6 +19,7 @@ from sentinel.app.models import MAX_DAYS_OFF
 from sentinel.app.store import CalendarRow
 from sentinel.app.ui.core import Ui
 from sentinel.app.ui.forms import Form, parse_date, parse_number, text_of
+from sentinel.app.ui.v2.calendar import link_of
 from sentinel.app.ui.v2.shell import PREFIX, THEMES, header, page, texts
 from sentinel.app.views import ProjectView
 
@@ -124,6 +125,7 @@ def router(ui: Ui) -> APIRouter:
             "view": view,
             "tracking": project.tracking,
             "calendar": calendar_of(ui, request, project_id),
+            "calendar_link": link_of(ui, request, calendar_of(ui, request, project_id)),
             "weekdays": WEEKDAYS,
             "errors": {},
             "kept": None,

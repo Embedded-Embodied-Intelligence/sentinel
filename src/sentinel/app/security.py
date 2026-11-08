@@ -58,6 +58,18 @@ def _mac(key: bytes, purpose: str, value: str) -> str:
     return hmac.new(key, f"{purpose}:{value}".encode(), hashlib.sha256).hexdigest()
 
 
+def calendar_token(key: bytes, project_id: str, nonce: str) -> str:
+    """The secret of a project's calendar link (ADR-0035): derived from the app's key and the
+    link's nonce, so the store never holds it and a new nonce revokes every old link."""
+    return _mac(key, "calendar", f"{project_id}:{nonce}")[:32]
+
+
+def calendar_valid(key: bytes, project_id: str, nonce: str | None, token: str) -> bool:
+    if not nonce or not token:
+        return False
+    return hmac.compare_digest(token, calendar_token(key, project_id, nonce))
+
+
 def sign(key: bytes, session_id: str) -> str:
     """The cookie value of a session id."""
     return f"{session_id}.{_mac(key, 'session', session_id)}"

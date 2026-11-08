@@ -4,15 +4,17 @@ codes or ISO dates, the theme cookie, the decisions taken from the overview and 
 page with the promised numbers shown after an approval (the WP12 guarantee, spec 11.5)."""
 
 import csv
+import html
 import io
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from icalendar import Calendar
 from ui_check import problems, visible_text
 
 from sentinel.app import planning, showcase
@@ -445,3 +447,67 @@ def test_the_wizard_makes_a_project_without_asking_about_absences(
     assert definition.settings.advanced.lambda_a == 0.014  # ADR-0034
     assert [t.predecessors for t in definition.tasks] == [(), ("T1",), ("T2",)]
     assert str(definition.settings.days_off[0]) == "2026-12-24"
+
+
+# ---- the calendar feed (section 8.9, ADR-0035), read by a standard parser (dev only)
+
+
+def link_of(client: TestClient, project: str, headers: dict[str, str]) -> str:
+    """Make the project's calendar link and read it from the settings page; its path."""
+    client.post(f"/v2/projects/{project}/calendar", headers=headers)
+    page = client.get(f"/v2/projects/{project}/settings", params={"lang": "pl"}).text
+    assert "Kto ma ten link, widzi imiona osób i daty nieobecności." in page
+    found = re.search(r'id="calendar-link" value="http://testserver([^"]+)"', page)
+    assert found is not None
+    return html.unescape(found.group(1))
+
+
+def events(text: str) -> dict[str, list[tuple[object, object]]]:
+    by_summary: dict[str, list[tuple[object, object]]] = {}
+    for event in Calendar.from_ical(text).walk("VEVENT"):
+        start = event.decoded("DTSTART")
+        end = event.decoded("DTEND") if "DTEND" in event else None
+        by_summary.setdefault(str(event.get("SUMMARY")), []).append((start, end))
+    return by_summary
+
+
+def test_the_feed_is_valid_icalendar_with_the_project_dates(site: Site) -> None:
+    client, headers, pid = site.client, site.headers, site.project
+    path = link_of(client, pid, headers)
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/calendar; charset=utf-8"
+    text = response.text
+    assert text.endswith("\r\n") and "\n" not in text.replace("\r\n", "")
+    assert all(len(line.encode()) <= 75 for line in text.split("\r\n"))
+    parsed = Calendar.from_ical(text)
+    assert str(parsed.get("X-WR-CALNAME")) == "Sentinel: Nowa odsłona sklepu internetowego"
+    found = events(text)
+    uids = [str(e.get("UID")) for e in parsed.walk("VEVENT")]
+    assert len(uids) == len(set(uids))
+    deadline = found["Termin: Nowa odsłona sklepu internetowego"]
+    assert deadline == [(date(2026, 12, 18), date(2026, 12, 19))]
+    assert found["Nieobecność: Bartosz Kowalski"] == [(date(2026, 11, 12), date(2026, 11, 23))]
+    assert any(name.startswith("Decyzja ważna do dziś: Zastępstwo") for name in found)
+    valid = next(v for k, v in found.items() if k.startswith("Decyzja ważna do dziś"))
+    assert valid == [(date(2026, 11, 19), date(2026, 11, 20))]
+    assert "Start: Integracja płatności" in found and "Koniec: API katalogu produktów" in found
+    reminder = next(
+        e for e in parsed.walk("VEVENT") if str(e.get("SUMMARY")).startswith("Raport tygodniowy")
+    )
+    first = reminder.decoded("DTSTART")
+    assert isinstance(first, datetime) and first.weekday() == 3 and first.hour == 17
+    assert reminder.get("RRULE")["FREQ"] == ["WEEKLY"] and reminder.get("RRULE")["BYDAY"] == ["TH"]
+    for word in ("chor", "urlop", "powód", "L4"):  # dates and names only (invariant 7)
+        assert word not in text
+
+
+def test_a_wrong_or_revoked_link_finds_nothing(site: Site) -> None:
+    client, headers, pid = site.client, site.headers, site.project
+    path = link_of(client, pid, headers)
+    token = path.split("/")[3].split(".")[0]
+    assert client.get(path.replace(token, "0" * 32)).status_code == 404
+    client.post(f"/v2/projects/{pid}/calendar/revoke", headers=headers)
+    assert client.get(path).status_code == 404
+    again = link_of(client, pid, headers)
+    assert again != path and client.get(again).status_code == 200

@@ -1,6 +1,24 @@
 {# The calendar of a project (section 8.9) and its weekly report reminder (section 8.10). #}
 <section class="card stack" aria-labelledby="calendar-title" id="calendar">
   <h2 id="calendar-title">{{ t("v2.psettings.calendar") }}</h2>
+  <p>{{ t("v2.cal.intro") }}</p>
+  <p class="notice notice-warn">{{ icon("alert", 20) }}<span>{{ t("v2.cal.warning") }}</span></p>
+  {% if calendar_link %}
+  <div class="field"><label for="calendar-link">{{ t("v2.cal.link") }}</label>
+    <input type="text" class="input" id="calendar-link" value="{{ calendar_link }}" readonly data-origin-fix></div>
+  <div class="actions">
+    <button type="button" class="btn btn-primary" data-copy="calendar-link" data-copied="{{ t('v2.cal.copied') }}">{{ icon("link", 20) }}{{ t("v2.cal.copy") }}</button>
+    <button type="button" class="btn btn-reject" hx-post="{{ prefix }}/projects/{{ view.id }}/calendar/revoke">{{ t("v2.cal.revoke") }}</button>
+    <span class="muted" data-copy-status role="status"></span>
+  </div>
+  <div class="grid-2 cal-help">
+    <div class="stack-sm"><h3>{{ t("v2.cal.google") }}</h3><ol>{% for i in (1, 2, 3) %}<li>{{ t("v2.cal.google." ~ i) }}</li>{% endfor %}</ol></div>
+    <div class="stack-sm"><h3>{{ t("v2.cal.icloud") }}</h3><ol>{% for i in (1, 2, 3) %}<li>{{ t("v2.cal.icloud." ~ i) }}</li>{% endfor %}</ol></div>
+  </div>
+  <p class="hint">{{ t("v2.cal.refresh") }}{% if demo %} {{ t("v2.cal.demo") }}{% endif %}</p>
+  {% else %}
+  <div class="actions"><button type="button" class="btn btn-primary" hx-post="{{ prefix }}/projects/{{ view.id }}/calendar">{{ icon("calendar", 20) }}{{ t("v2.cal.make") }}</button></div>
+  {% endif %}
   <form class="stack-sm" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/reminder" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
     <fieldset class="scenario"><legend>{{ t("v2.psettings.reminder") }}</legend>
       <div class="form-grid">

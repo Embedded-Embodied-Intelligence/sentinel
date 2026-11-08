@@ -1000,6 +1000,68 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Calendar link revoked: it no longer works.",
         "Unieważniono link do kalendarza: już nie działa.",
     ),
+    # ---- Kalendarz (section 8.9, WP16; ADR-0035)
+    "v2.cal.intro": (
+        "Add the project to your calendar: the deadline, the starts and ends of tasks, absences, "
+        "the validity dates of decisions and the report reminder.",
+        "Dodaj projekt do swojego kalendarza: termin, początki i końce zadań, nieobecności, daty "
+        "ważności decyzji i przypomnienie o raporcie.",
+    ),
+    "v2.cal.warning": (
+        "Whoever has this link sees people's names and the dates of their absences.",
+        "Kto ma ten link, widzi imiona osób i daty nieobecności.",
+    ),
+    "v2.cal.make": ("Create the calendar link", "Utwórz link do kalendarza"),
+    "v2.cal.link": ("Calendar link", "Link do kalendarza"),
+    "v2.cal.copy": ("Copy the calendar link", "Kopiuj link do kalendarza"),
+    "v2.cal.copied": ("Copied.", "Skopiowano."),
+    "v2.cal.revoke": ("Revoke the link", "Unieważnij link"),
+    "v2.cal.google": ("Google Calendar", "Kalendarz Google"),
+    "v2.cal.google.1": (
+        "Open calendar.google.com on a computer.",
+        "Otwórz calendar.google.com na komputerze.",
+    ),
+    "v2.cal.google.2": (
+        "Next to “Other calendars” click “+” and choose “From URL”.",
+        "Przy „Inne kalendarze” kliknij „+” i wybierz „Z adresu URL”.",
+    ),
+    "v2.cal.google.3": (
+        "Paste the link and click “Add calendar”.",
+        "Wklej link i kliknij „Dodaj kalendarz”.",
+    ),
+    "v2.cal.icloud": ("iCloud (Mac, iPhone)", "iCloud (Mac, iPhone)"),
+    "v2.cal.icloud.1": (
+        "On a Mac open Calendar, then File → New Calendar Subscription.",
+        "Na Macu otwórz Kalendarz, potem Plik → Nowa subskrypcja kalendarza.",
+    ),
+    "v2.cal.icloud.2": (
+        "Paste the link and click “Subscribe”.",
+        "Wklej link i kliknij „Subskrybuj”.",
+    ),
+    "v2.cal.icloud.3": (
+        "Under “Location” choose iCloud to see it on the iPhone too, then click OK.",
+        "W polu „Położenie” wybierz iCloud, by widzieć go też na iPhonie, i kliknij OK.",
+    ),
+    "v2.cal.refresh": (
+        "Calendars refresh such a link every few hours, so changes show up later.",
+        "Kalendarze odświeżają taki link co kilka godzin, więc zmiany pojawią się później.",
+    ),
+    "v2.cal.demo": (
+        "In the demo the link works while your demo session lasts.",
+        "W pokazie link działa, dopóki trwa Twoja sesja pokazu.",
+    ),
+    "v2.cal.name": ("Sentinel: {project}", "Sentinel: {project}"),
+    "v2.cal.deadline": ("Deadline: {project}", "Termin: {project}"),
+    "v2.cal.start": ("Start: {task}", "Start: {task}"),
+    "v2.cal.end": ("End: {task}", "Koniec: {task}"),
+    "v2.cal.away": ("Away: {name}", "Nieobecność: {name}"),
+    "v2.cal.away_open": ("Away: {name} (return unknown)", "Nieobecność: {name} (powrót nieznany)"),
+    "v2.cal.valid": ("Decision valid until today: {title}", "Decyzja ważna do dziś: {title}"),
+    "v2.cal.report": ("Weekly report: {project}", "Raport tygodniowy: {project}"),
+    "v2.cal.report_text": (
+        "Open Sentinel and save the report: what has changed since the last one.",
+        "Otwórz Sentinel i zapisz raport: co się zmieniło od ostatniego.",
+    ),
     "v2.weekday.0": ("Monday", "poniedziałek"),
     "v2.weekday.1": ("Tuesday", "wtorek"),
     "v2.weekday.2": ("Wednesday", "środa"),

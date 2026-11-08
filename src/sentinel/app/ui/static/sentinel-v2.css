@@ -578,3 +578,5 @@ a.choice-pill { color: var(--text); text-decoration: none; }
 .danger-zone { border: 1.5px solid var(--bad); }
 .danger-zone h2 { color: var(--bad); }
 .days-off li { display: flex; align-items: center; justify-content: space-between; max-width: 360px; }
+.cal-help ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.cal-help h3 { font-size: 17px; }
