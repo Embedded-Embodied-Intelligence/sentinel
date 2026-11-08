@@ -467,6 +467,7 @@ textarea.input { min-height: 132px; resize: vertical; }
 .chance-time .threshold { stroke: var(--line-strong); stroke-dasharray: 4 4; }
 .chance-time .trend { fill: none; stroke: var(--text-2); stroke-width: 2.5; stroke-linejoin: round; }
 .chance-time .pt { stroke: var(--surface); stroke-width: 3; }
+.chance-time .pt-hit { fill: transparent; cursor: pointer; }
 .chance-time .pt-good { fill: var(--good); }
 .chance-time .pt-warn { fill: var(--warn); }
 .chance-time .pt-bad { fill: var(--bad); }

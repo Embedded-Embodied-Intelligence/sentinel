@@ -32,6 +32,7 @@
     <path class="trend" d="{{ chart.path }}"/>
     {% for p in chart.points %}
     <a href="#{{ p.anchor }}" aria-label="{{ p.name }}" data-open-entry="{{ p.anchor }}">
+      <circle class="pt-hit" cx="{{ p.x }}" cy="{{ p.y - 6 }}" r="22"/>
       <circle class="pt pt-{{ p.state }}{% if loop.last %} pt-last{% endif %}" cx="{{ p.x }}" cy="{{ p.y }}" r="{{ 9 if loop.last else 7 }}"/>
       <text class="pt-value" x="{{ p.x }}" y="{{ p.y - 14 }}" text-anchor="middle">{{ p.n }}</text>
     </a>

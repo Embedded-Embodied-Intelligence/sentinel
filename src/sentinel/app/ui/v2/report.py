@@ -291,9 +291,12 @@ class Choices:
     open_tasks: list[TaskView]
     all_tasks: list[TaskView]
     errors: dict[str, str] = field(default_factory=dict)
+    away_from: date | None = None  # the first day an absence counts in the forecast (11.3)
 
 
-def choices(view: ProjectView, errors: dict[str, str] | None = None) -> Choices:
+def choices(
+    view: ProjectView, errors: dict[str, str] | None = None, away_from: date | None = None
+) -> Choices:
     first, _ = shown_tasks(view)
     tasks = [task for task in view.tasks if task.state != "removed"]
     return Choices(
@@ -303,6 +306,7 @@ def choices(view: ProjectView, errors: dict[str, str] | None = None) -> Choices:
         open_tasks=[task for task in tasks if task.state != "done"],
         all_tasks=tasks,
         errors=errors or {},
+        away_from=away_from,
     )
 
 

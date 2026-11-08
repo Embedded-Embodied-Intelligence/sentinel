@@ -63,6 +63,13 @@ def test_what_if_shows_the_effect_and_adds_to_the_report(lab_site: Site) -> None
     assert "Anna Nowak: nieobecność od pon. 16 lis, wraca pon. 23 lis" in text
     assert "„Integracja płatności” potrwa o 2 dni dłużej" in text
     assert 'hx-trigger="load, change from:#report-form' in report  # the effect at once
+    assert 'name="away_0_from" value="2026-11-16"' in page  # the first day that counts (11.3)
+    alone = {**SCENARIO, "grow_0_task": "", "new_0_name": "", "new_0_days": ""}
+    later = {**alone, "away_0_from": "2026-11-17"}
+    note = text_of(client.post(f"/v2/lab/whatif/{pid}", data=later, headers=headers).text)
+    assert "Szansa 39 → 39 na 100" in note and "ustaw „Od” na pon. 16 lis" in note
+    sooner = text_of(client.post(f"/v2/lab/whatif/{pid}", data=alone, headers=headers).text)
+    assert "Szansa 39 → 39" not in sooner and "ustaw „Od”" not in sooner
     empty = {**SCENARIO, "away_0_person": "", "grow_0_task": "", "new_0_name": "", "new_0_days": ""}
     nothing = text_of(client.post(f"/v2/lab/whatif/{pid}", data=empty, headers=headers).text)
     assert "Wypełnij co najmniej jeden wiersz" in nothing

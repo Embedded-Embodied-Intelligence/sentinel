@@ -1,6 +1,5 @@
 """The frame of the v2 pages (docs/design/v2-spec.md, sections 5 and 7; ADR-0033): the theme
-remembered in a cookie, the sidebar, the project header and tabs, the live banner, and the calm
-"Wkrótce" placeholder of the screens WP16 builds."""
+remembered in a cookie, the sidebar, the project header and tabs, and the live banner."""
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -9,7 +8,6 @@ from typing import Any, Literal
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
-from sentinel.app.errors import AppError
 from sentinel.app.events import Recommended, parse, replay
 from sentinel.app.ui.core import Ui, local_path
 from sentinel.app.ui.v2.numbers import per_hundred, state_of
@@ -23,11 +21,7 @@ PREFIX = "/v2"
 GATE = 0  # every deliberation v2 asks for: every action needs approval (spec section 11.8)
 BANNER_POLL_S = 20
 BANNER_MOVE = 10  # a change of the chance in 100 the banner reports (section 7)
-# The tabs of a project (section 7) and the screens of WP16 that are placeholders for now, with
-# the page of the first interface that does their work meanwhile.
-TABS = ("overview", "report", "decisions", "log", "plan", "settings")
-SOON_TABS = {"settings": "settings"}
-SOON_PAGES = {"settings": "/settings"}
+TABS = ("overview", "report", "decisions", "log", "plan", "settings")  # of a project (section 7)
 
 
 def theme_of(request: Request) -> Theme:
@@ -166,30 +160,5 @@ def router(ui: Ui) -> APIRouter:
         now = datetime.now(UTC).isoformat(timespec="seconds")
         items = banner_items(ui, request, since)
         return page(ui, request, "_banner.html", items=items, banner_since=now)
-
-    def soon(request: Request, nav: str, old: str, **values: Any) -> Response:
-        return page(
-            ui,
-            request,
-            "soon.html",
-            title=texts(request)("v2.soon.title"),
-            nav=nav,
-            old=old,
-            **values,
-        )
-
-    @routes.get(PREFIX + "/projects/{project_id}/{tab}")
-    def tab_soon(request: Request, project_id: str, tab: str) -> Response:
-        if tab not in SOON_TABS:
-            raise AppError("project_not_found", "not_found")
-        view = ui.services.live(ui.session(request), project_id, ui.language(request))
-        old = f"/projects/{project_id}/{SOON_TABS[tab]}"
-        return soon(
-            request,
-            "projects",
-            old,
-            project=header(ui, request, view),
-            tab=tab,
-        )
 
     return routes

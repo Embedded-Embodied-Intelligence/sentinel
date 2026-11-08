@@ -1,9 +1,10 @@
-"""The v2 interface in a real browser (WP15; docs/design/v2-spec.md, section 10): the demo path in
-demo mode, from Start through the showcase's overview, a report dictated into Chromium's fake
-microphone with its live preview, the cards confirmed, their effect, the save, the decision and
-its approval, after which the overview shows exactly the promised numbers; and the accessibility
-scan (axe-core) of every v2 screen in the light and the dark theme. The reader and Whisper are
-scripted, so the test makes no AI call.
+"""The v2 interface in a real browser (WP15, WP16; docs/design/v2-spec.md, section 10): the demo
+path in demo mode, from Start through the showcase's overview, a report dictated into Chromium's
+fake microphone with its live preview, the cards confirmed, their effect, the save, the decision
+and its approval, after which the overview shows exactly the promised numbers; a rejection and
+its fate in the Dziennik; "Co jeśli?" added to a report; the calendar feed read without a
+session and revoked; and the accessibility scan (axe-core) of every v2 screen in the light and
+the dark theme. The reader and Whisper are scripted, so the test makes no AI call.
 
     uv run pytest -q -m e2e tests/test_v2_e2e.py
 """
@@ -192,6 +193,110 @@ def test_the_demo_path(demo: Server) -> None:
     assert WHISPER.calls >= 2  # a preview and the final transcription
 
 
+def showcase_page(demo: Server, playwright: Any, **context_args: Any) -> tuple[Any, Any, str]:
+    """A new visitor (a sandbox with the showcase) on the showcase's overview; its address."""
+    chromium = browser(playwright)
+    context = chromium.new_context(
+        viewport={"width": 1440, "height": 900}, locale="pl-PL", **context_args
+    )
+    context.set_default_timeout(60_000)
+    page = context.new_page()
+    page.goto(demo.base + "/v2")
+    page.locator(".tile", has_text="Nowa odsłona sklepu internetowego").click()
+    expect(page.locator(".verdict")).to_contain_text("Nie zdążymy bez zmian")
+    return chromium, page, page.url
+
+
+def test_the_log_shows_a_decision_and_its_fate(demo: Server) -> None:
+    """Dziennik (8.6): a rejection with its reason, the proposal's fate one click away, a dot of
+    "Szansa w czasie" that opens its entry, and the CSV."""
+    with sync_api.sync_playwright() as playwright:
+        chromium, page, overview = showcase_page(demo, playwright)
+        page.locator("#pending").get_by_role("link", name=re.compile("Szczegóły")).click()
+        page.locator("[data-toggle^='reject']").first.click()
+        page.locator(".reason-chips label", has_text="Za drogo").click()
+        page.get_by_role("button", name="Potwierdź odrzucenie").click()
+        page.wait_for_url(re.compile(r"done=rejected"))
+        page.goto(overview + "/log")
+        log = page.locator(".log")
+        expect(log).to_contain_text("Odrzucono: Zastępstwo")
+        expect(log).to_contain_text("(za drogo)")
+        proposal = page.locator("details.log-entry", has_text="Nowa propozycja")
+        proposal.locator("summary").click()
+        expect(proposal).to_contain_text("Stan decyzji")
+        expect(proposal.locator(".life")).to_have_text("odrzucona")
+        expect(proposal).to_contain_text("Powód: Za drogo")
+        dot = page.locator(".chance-time a").nth(1)  # the report of 6 November
+        dot.click()
+        target = dot.get_attribute("href")
+        assert target is not None
+        expect(page.locator(f"{target} details")).to_have_attribute("open", "")
+        href = page.get_by_role("link", name="Pobierz dziennik (CSV)").get_attribute("href")
+        assert href is not None
+        table = page.request.get(demo.base + href)
+        assert table.ok and "Odrzucono: Zastępstwo" in table.text()
+        chromium.close()
+
+
+def test_what_if_then_add_to_the_report(demo: Server) -> None:
+    """Laboratorium (8.8): "Co jeśli?" shows "Wpływ na projekt", saves nothing, and "Dodaj do
+    raportu" opens the Raport with the scenario as ticked cards and their effect."""
+    with sync_api.sync_playwright() as playwright:
+        chromium, page, _ = showcase_page(demo, playwright)
+        page.get_by_role("link", name="Laboratorium").click()
+        expect(page.get_by_role("link", name="Co jeśli?")).to_have_attribute("aria-current", "true")
+        page.select_option("#away-person", label="Anna Nowak")
+        expect(page.locator("#away-from")).to_have_value("2026-11-16")  # the first day counted
+        page.fill("#away-back", "2026-11-24")
+        page.get_by_role("button", name="Sprawdź wpływ").click()
+        impact = page.locator("#whatif-impact")
+        expect(impact.locator(".chips")).to_contain_text("Szansa 39 →")
+        assert int(number(impact.inner_text(), r"Szansa 39 → (\d+) na 100")) < 39
+        expect(impact).to_contain_text("Nic nie zostało zapisane.")
+        page.get_by_role("link", name="Dodaj do raportu").click()
+        page.wait_for_url(re.compile(r"/report\?"))
+        card = page.locator("#cards-lab [data-card]")
+        expect(card).to_have_count(1)
+        expect(card).to_contain_text("Anna Nowak: nieobecność od pon. 16 lis")
+        assert card.locator("input[type=checkbox]").is_checked()
+        expect(page.locator("#impact .chips")).to_contain_text("Szansa 39 →")
+        expect(page.get_by_role("button", name="Zapisz raport")).to_be_enabled()
+        chromium.close()
+
+
+def test_the_calendar_feed(demo: Server) -> None:
+    """Kalendarz (8.9): a link made on request, copied, read by a calendar without the
+    visitor's session, and revoked."""
+    from icalendar import Calendar
+
+    with sync_api.sync_playwright() as playwright:
+        chromium, page, overview = showcase_page(demo, playwright)
+        page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+        page.goto(overview + "/settings")
+        expect(page.locator("#calendar")).to_contain_text(
+            "Kto ma ten link, widzi imiona osób i daty nieobecności."
+        )
+        page.get_by_role("button", name="Utwórz link do kalendarza").click()
+        page.wait_for_url(re.compile(r"done=calendar"))
+        link = page.locator("#calendar-link").input_value()
+        assert link.startswith(demo.base + "/calendar/") and ".ics" in link
+        page.get_by_role("button", name="Kopiuj link do kalendarza").click()
+        expect(page.locator("[data-copy-status]")).to_have_text("Skopiowano.")
+        assert page.evaluate("navigator.clipboard.readText()") == link
+        outsider = playwright.request.new_context()  # a calendar: no cookie, no session
+        feed = outsider.get(link)
+        assert feed.ok and feed.headers["content-type"].startswith("text/calendar")
+        parsed = Calendar.from_ical(feed.text())
+        names = {str(event.get("SUMMARY")) for event in parsed.walk("VEVENT")}
+        assert "Termin: Nowa odsłona sklepu internetowego" in names
+        assert "Nieobecność: Bartosz Kowalski" in names
+        page.get_by_role("button", name="Unieważnij link").click()
+        page.wait_for_url(re.compile(r"done=revoked"))
+        assert outsider.get(link).status == 404
+        outsider.dispose()
+        chromium.close()
+
+
 def _axe(page: Any) -> list[str]:
     page.add_script_tag(path=str(AXE))
     found = page.evaluate(
@@ -220,9 +325,18 @@ def test_the_v2_screens_have_no_serious_accessibility_violations(demo: Server, t
             ("start", "/v2", None),
             ("overview", href, None),
             ("report", href + "/report", "[data-planned]"),
+            ("report_form", href + "/report", "[data-toggle='form-panel']"),
             ("decisions", href + "/decisions", None),
+            ("log", href + "/log", "details.log-entry > summary"),
+            ("all_log", "/v2/log", None),
+            ("plan", href + "/plan", None),
+            ("plan_tasks", href + "/plan?view=tasks", "[data-toggle^='fix-']"),
+            ("plan_team", href + "/plan?view=team", None),
+            ("lab", "/v2/lab", None),
+            ("simulator", "/v2/lab?tab=sim", None),
+            ("settings", "/v2/settings", None),
+            ("project_settings", href + "/settings", "[data-toggle='delete-confirm']"),
             ("wizard", "/v2/new", None),
-            ("soon", href + "/plan", None),
         ]
         if decision is not None:
             screens.append(("decision", decision, "[data-toggle^='reject']"))
@@ -237,6 +351,17 @@ def test_the_v2_screens_have_no_serious_accessibility_violations(demo: Server, t
             found = _axe(page)
             if found:
                 problems[name] = found
+        page.goto(demo.base + "/v2/lab?tab=sim")
+        start = page.get_by_role("button", name="Uruchom symulację")
+        if start.count():  # the example projects are installed: a run's own page too
+            start.click()
+            page.wait_for_url(re.compile(r"/v2/lab/sim/"), timeout=120_000)
+            page.get_by_role("button", name="+1 dzień").click()
+            page.wait_for_url(re.compile(r"/v2/lab/sim/"), timeout=120_000)
+            expect(page.locator(".sim-day")).to_contain_text("Dzień 1", timeout=120_000)
+            found = _axe(page)
+            if found:
+                problems["simulation"] = found
         context.close()
         chromium.close()
     assert problems == {}

@@ -7,7 +7,7 @@ from sentinel.app.ui.core import Ui
 
 
 def mount(app: FastAPI, ui: Ui) -> None:
-    """Serve the v2 pages; the frame's catch-all project tab comes last."""
+    """Serve the v2 pages (the frame's routes last)."""
     from sentinel.app.ui.v2 import (
         calendar,
         decision,

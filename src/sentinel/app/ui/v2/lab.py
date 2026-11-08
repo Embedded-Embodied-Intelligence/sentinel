@@ -17,6 +17,7 @@ from fastapi.responses import Response
 
 from sentinel.app.calendar import WorkCalendar
 from sentinel.app.errors import AppError
+from sentinel.app.live import LiveProject
 from sentinel.app.simulator import SimulatorSpec, SimulatorView
 from sentinel.app.ui.core import Ui
 from sentinel.app.ui.forms import Form
@@ -38,6 +39,12 @@ def scenario_date(view: ProjectView) -> date:
     """The date of a scenario's dry run: the latest report's, so that no day passes and only
     the scenario moves the forecast (the project's start before the first report)."""
     return view.checkins[-1].date if view.checkins else view.definition.start
+
+
+def counted_from(project: LiveProject, day: date) -> date:
+    """The first day an absence of a report dated `day` counts in the forecast: the report's
+    day `t`; one starting later waits for a later report (spec section 11.3)."""
+    return project.calendar.date_of(project.calendar.checkin_day(day))
 
 
 def impact_chips(
@@ -132,9 +139,11 @@ def router(ui: Ui) -> APIRouter:
             values["chosen"] = chosen
             if chosen is not None:
                 view = services.live(ui.session(request), chosen, ui.language(request))
+                project = services.state(ui.session(request), chosen).project
+                day = scenario_date(view)
                 values["view"] = view
-                values["choices"] = choices(view)
-                values["day"] = scenario_date(view)
+                values["choices"] = choices(view, away_from=counted_from(project, day))
+                values["day"] = day
         else:
             available = [e for e in EXAMPLES if e.instance in services.instances(e.set_name)]
             values["examples"] = available
@@ -158,6 +167,7 @@ def router(ui: Ui) -> APIRouter:
         view = services.live(session, project_id, language)
         read = read_items(form, view)
         values: dict[str, Any] = {"project_id": project_id, "chips": [], "error": None}
+        values["later"] = None
         values["errors"] = errors_of(t, read)
         values["link"] = None
         if read.checkin is None:
@@ -173,6 +183,10 @@ def router(ui: Ui) -> APIRouter:
             values["error"] = " ".join(t.issues(exc))
             return page(ui, request, "_lab_impact.html", **values)
         values["chips"] = impact_chips(t, before, after, view.person_days)
+        first = counted_from(services.state(session, project_id).project, read.checkin.date)
+        later = sorted(a.first_day for a in read.checkin.absences if a.first_day > first)
+        if later:
+            values["later"] = t("v2.lab.later", date=t.date(later[0]), first=t.date(first))
         query = []
         for item in items:
             kind = {"AbsenceReport": "absence", "WorkIncreaseReport": "increase"}.get(

@@ -36,12 +36,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.tab.settings": ("Project settings", "Ustawienia projektu"),
     "v2.as_of": ("status at {moment}", "stan na {moment}"),
     "v2.report_button": ("Report", "Raport"),
-    "v2.soon.title": ("Coming soon", "Wkrótce"),
-    "v2.soon.text": (
-        "This part of the new look is being built. Until then it works in the previous look.",
-        "Ta część nowego wyglądu jest w budowie. Do tego czasu działa w poprzednim wyglądzie.",
-    ),
-    "v2.soon.open": ("Open in the previous look", "Otwórz w poprzednim wyglądzie"),
     "v2.banner.label": ("New events", "Nowe zdarzenia"),
     "v2.banner.decision": (
         "{project}: a new decision to make",
@@ -820,6 +814,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Fill in at least one row: who is absent, which task takes longer or a new task.",
         "Wypełnij co najmniej jeden wiersz: kto będzie nieobecny, które zadanie potrwa dłużej "
         "albo nowe zadanie.",
+    ),
+    "v2.lab.later": (
+        "An absence counts in the forecast from its first day, so one from {date} shows in the "
+        "report of that day. To see its effect now, set “From” to {first}.",
+        "Nieobecność liczy się w prognozie od swojego pierwszego dnia, więc ta od {date} pojawi "
+        "się w raporcie z tego dnia. Aby zobaczyć jej wpływ teraz, ustaw „Od” na {first}.",
     ),
     "v2.lab.not_saved": (
         "Nothing was saved. “Add to report” opens the report with these changes ticked.",

@@ -10,7 +10,7 @@
     <div class="field"><label for="away-person">{{ t("v2.scenario.who") }}</label>
       <select id="away-person" name="away_0_person"><option value="">{{ t("v2.scenario.pick") }}</option>{% for key, name in c.people %}<option value="{{ key }}"{% if kv('away_0_person') == key %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
     <div class="field"><label for="away-from">{{ t("v2.scenario.from") }}</label>
-      <input type="date" id="away-from" name="away_0_from" value="{{ kv('away_0_from') }}"{% if c.errors.get('away_0_from') %} aria-invalid="true" aria-describedby="away_0_from-error"{% endif %}>{{ err("away_0_from") }}</div>
+      <input type="date" id="away-from" name="away_0_from" value="{{ kv('away_0_from', choices.away_from.isoformat() if choices.away_from else '') }}"{% if c.errors.get('away_0_from') %} aria-invalid="true" aria-describedby="away_0_from-error"{% endif %}>{{ err("away_0_from") }}</div>
     <div class="field"><label for="away-back">{{ t("v2.scenario.back") }}</label>
       <input type="date" id="away-back" name="away_0_back" value="{{ kv('away_0_back') }}" aria-describedby="away-back-hint">
       <p class="hint" id="away-back-hint">{{ t("v2.scenario.back_hint") }}</p>{{ err("away_0_back") }}</div>

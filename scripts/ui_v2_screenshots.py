@@ -15,6 +15,7 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +27,10 @@ from ui_screenshots import LOCALES, language_env, serving
 from sentinel.app import showcase
 from sentinel.app.config import AppConfig
 from sentinel.app.services import Services
-from sentinel.app.store import LOCAL_SESSION
+from sentinel.app.simulator import SimulatorSpec
+from sentinel.app.store import LOCAL_SESSION, CalendarRow
+from sentinel.app.ui.sim import EXAMPLES
+from sentinel.app.ui.v2.text import TextsV2
 
 SIZES = ((1440, 900), (1280, 800))
 THEMES = ("light", "dark")
@@ -36,7 +40,8 @@ DRAFT = {"pl": "szkic", "en": "draft"}
 
 @dataclass(frozen=True)
 class Shot:
-    """A screen: its name, path, an element to wait for, one to click first, one to scroll to."""
+    """A screen: its name, path, an element to wait for, fields to fill ("select:" picks an
+    option by its value), elements to click, one to scroll to and one to wait for after."""
 
     name: str
     path: str
@@ -44,10 +49,13 @@ class Shot:
     clicks: tuple[str, ...] = ()
     scroll: str | None = None
     wait: str | None = None
+    fills: tuple[tuple[str, str], ...] = ()
 
 
 def seed(services: Services, language: Any) -> dict[str, str]:
-    """The showcase and a draft of it (team only, for the wizard); their ids."""
+    """The showcase with its calendar link, a draft of it (team only, for the wizard) and two
+    simulations, one five days in and one run to its end (about a minute and a half); their
+    ids."""
     services.local_session()
     showcase.install(services)
     assert services.showcase is not None
@@ -58,6 +66,26 @@ def seed(services: Services, language: Any) -> dict[str, str]:
         update={"name": f"{definition.name} ({DRAFT[language]})", "tasks": ()}
     )
     ids["draft"] = services.create(LOCAL_SESSION, draft, language).id
+    services.store.save_calendar(
+        LOCAL_SESSION, CalendarRow(ids["showcase"], LOCAL_SESSION, "screenshots")
+    )
+    if any(e.instance in services.instances(e.set_name) for e in EXAMPLES[:1]):
+        t = TextsV2(language)
+        example = EXAMPLES[0]
+        for key, days in (("sim", 5), ("sim_end", 10_000)):
+            spec = SimulatorSpec(
+                name=f"{t(f'sim.name.{example.size}')} · {t('v2.lab.level.high')}",
+                set_name=example.set_name,  # type: ignore[arg-type]
+                instance=example.instance,
+                scenario=example.scenario,
+                start=date(2026, 11, 9),
+                disruptions="turbulent",
+                policy="sentinel",
+            )
+            job = services.create_simulator(LOCAL_SESSION, spec, language)
+            assert job.project is not None
+            services.advance(LOCAL_SESSION, job.project, days, language)
+            ids[key] = job.project
     return ids
 
 
@@ -93,6 +121,21 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
             scroll="#form-title",
         ),
         Shot("plan", f"{live}/plan"),
+        Shot("project_settings", f"{live}/settings"),
+        Shot("project_settings_calendar", f"{live}/settings", scroll="#calendar-title"),
+        Shot("settings", "/v2/settings"),
+        Shot(
+            "lab",
+            "/v2/lab",
+            fills=(
+                ("select:#away-person", "ada"),  # Anna, by her key, from the day counted
+                ("#away-back", "2026-11-24"),
+            ),
+            clicks=("#whatif-form button[type=submit]",),
+            wait="#whatif-impact .chips",
+            scroll="#whatif-impact-title",
+        ),
+        Shot("lab_sim_setup", "/v2/lab?tab=sim"),
         Shot("plan_tasks", f"{live}/plan?view=tasks"),
         Shot("plan_team", f"{live}/plan?view=team"),
         Shot("log", "/v2/log"),
@@ -100,6 +143,14 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
         Shot("wizard_basics", "/v2/new"),
         Shot("wizard_team", f"/v2/new/{ids['draft']}/team"),
         Shot("wizard_tasks", f"/v2/new/{ids['draft']}/tasks"),
+        *(
+            [
+                Shot("lab_sim", f"/v2/lab/sim/{ids['sim']}"),
+                Shot("lab_sim_end", f"/v2/lab/sim/{ids['sim_end']}"),
+            ]
+            if "sim" in ids
+            else []
+        ),
     ]
 
 
@@ -136,6 +187,11 @@ def capture(
             page.wait_for_load_state("networkidle")
             if shot.ready is not None:
                 page.wait_for_selector(shot.ready)
+            for selector, value in shot.fills:
+                if selector.startswith("select:"):
+                    page.select_option(selector.removeprefix("select:"), value=value)
+                else:
+                    page.fill(selector, value)
             for click in shot.clicks:
                 page.locator(click).first.click()
                 page.wait_for_load_state("networkidle")
