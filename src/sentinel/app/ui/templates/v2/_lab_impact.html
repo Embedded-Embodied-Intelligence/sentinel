@@ -1,0 +1,8 @@
+{% import "v2/_macros.html" as m %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>
+{% for name, message in errors.items() %}<p class="error">{{ message }}</p>{% endfor %}
+{% else %}
+{{ m.effect_chips(t, chips) }}
+<p class="muted">{{ t("v2.lab.not_saved") }}</p>
+{% if link %}<p><a class="btn btn-primary" href="{{ link }}">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</a></p>{% endif %}
+{% endif %}

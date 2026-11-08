@@ -45,6 +45,7 @@ KINDS: dict[str, type[BaseModel]] = {
     "new": NewTaskReport,
 }
 HINTS = ("absent", "done", "longer", "new")
+MAX_ADDED = 10  # items of one kind the Laboratorium may bring to a report
 
 
 @dataclass(frozen=True)
@@ -333,6 +334,22 @@ def errors_of(t: TextsV2, read: CheckinForm) -> dict[str, str]:
     return {error.name: t(error.key, **error.values) for error in read.errors}
 
 
+def added_cards(t: TextsV2, view: ProjectView, request: Request) -> list[Card]:
+    """The items "Dodaj do raportu" of the Laboratorium brings (section 8.8), as cards: the
+    JSON of their reports in the address, as in the form; anything else is left out."""
+    names = {task.key: task.name for task in view.tasks}
+    people = {p.key: p.name for p in view.definition.team}
+    cards: list[Card] = []
+    for kind in ("absence", "increase", "new"):
+        for value in request.query_params.getlist(f"c_{kind}")[:MAX_ADDED]:
+            try:
+                item = KINDS[kind].model_validate_json(value)
+            except (ValidationError, ValueError):
+                continue
+            cards.append(card_of(t, item, names, people, None))
+    return cards
+
+
 def day_of(form: Form, view: ProjectView) -> date:
     """The report's date the form travels with (its default if the field is not a date)."""
     try:
@@ -359,6 +376,7 @@ def router(ui: Ui) -> APIRouter:
             ui,
             request,
             "report.html",
+            lab_cards=added_cards(t, view, request),
             title=t("v2.report.title"),
             nav="projects",
             tab="report",
@@ -371,7 +389,6 @@ def router(ui: Ui) -> APIRouter:
             kept=None,
             oob=False,
             nothing=False,
-            lab_cards=[],
         )
 
     @routes.post(PREFIX + "/projects/{project_id}/report/read")

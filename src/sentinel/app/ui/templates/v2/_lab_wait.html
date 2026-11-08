@@ -1,0 +1,7 @@
+{% if job.status == "failed" %}<p class="error" role="alert">{{ job.error.message if job.error else t("v2.failed") }}</p>
+{% else %}
+<div class="lab-wait" hx-get="{{ prefix }}/lab/wait?job={{ job.id }}&amp;next={{ target | urlencode }}&amp;label={{ label }}{% if total %}&amp;total={{ total }}{% endif %}" hx-trigger="load delay:1s" hx-swap="outerHTML">
+  <p class="computing">{{ t(label) }}{% if job.progress %} · {{ (100 * job.progress) | round | int }} %{% endif %}</p>
+  <span class="bar bar-wide" aria-hidden="true"><span style="width: {{ (100 * job.progress) | round(1) }}%"></span></span>
+</div>
+{% endif %}

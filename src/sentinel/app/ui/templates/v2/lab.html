@@ -1,0 +1,62 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.lab.title") }}</h1></header>
+<nav aria-label="{{ t('v2.lab.tabs') }}" class="log-tools">
+  <ul class="filters">
+    <li><a href="{{ prefix }}/lab?tab=whatif"{% if tab_shown == "whatif" %} aria-current="true"{% endif %}>{{ t("v2.lab.whatif") }}</a></li>
+    <li><a href="{{ prefix }}/lab?tab=sim"{% if tab_shown == "sim" %} aria-current="true"{% endif %}>{{ t("v2.lab.sim") }}</a></li>
+  </ul>
+</nav>
+{% if tab_shown == "whatif" %}
+<p class="muted">{{ t("v2.lab.whatif_intro") }}</p>
+{% if not projects %}
+<section class="card stack" aria-labelledby="whatif-none"><h2 id="whatif-none">{{ t("v2.lab.no_project") }}</h2><p>{{ t("v2.lab.no_project_text") }}</p><p><a class="btn btn-primary" href="{{ prefix }}/new">{{ icon("plus", 20) }}{{ t("v2.start.new") }}</a></p></section>
+{% else %}
+{% if projects | length > 1 %}
+<nav aria-label="{{ t('v2.lab.project') }}"><ul class="filters filters-quiet">{% for pid, name in projects %}<li><a href="{{ prefix }}/lab?tab=whatif&amp;project={{ pid }}"{% if pid == chosen %} aria-current="true"{% endif %}>{{ name }}</a></li>{% endfor %}</ul></nav>
+{% endif %}
+<form id="whatif-form" class="stack" hx-post="{{ prefix }}/lab/whatif/{{ chosen }}" hx-target="#whatif-impact" hx-swap="innerHTML">
+  <input type="hidden" name="date" value="{{ day.isoformat() }}">
+  <section class="card stack" aria-labelledby="whatif-title">
+    <div class="section-head"><h2 id="whatif-title">{{ view.name }}</h2><span class="muted">{{ t("v2.lab.as_of", date=t.date(day)) }}</span></div>
+    <p class="muted">{{ t("v2.lab.whatif_hint") }}</p>
+    {% include "v2/_scenario.html" %}
+    <div class="actions"><button type="submit" class="btn btn-primary btn-lg">{{ t("v2.lab.check") }}</button></div>
+  </section>
+  <section class="card step" aria-labelledby="whatif-impact-title">
+    <h2 id="whatif-impact-title">{{ t("v2.report.step3") }}</h2>
+    <div id="whatif-impact" aria-live="polite"><p class="muted">{{ t("v2.lab.impact_empty") }}</p></div>
+  </section>
+</form>
+{% endif %}
+{% else %}
+<p class="muted">{{ t("v2.lab.sim_intro") }}</p>
+{% if runs %}
+<section class="section" aria-labelledby="runs-title">
+  <h2 id="runs-title" class="overline">{{ t("v2.lab.runs") }}</h2>
+  <ul class="list">{% for run in runs %}<li><a class="todo" href="{{ run.href }}"><span class="what">{{ run.name }}</span><span class="valid">{% if run.finished %}{{ t("v2.lab.finished") }}{% else %}{{ t("sim.day_of", day=run.day, total=run.total) }}{% endif %}</span></a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+<section class="card stack section" aria-labelledby="sim-new-title">
+  <h2 id="sim-new-title">{{ t("v2.lab.new_sim") }}</h2>
+  {% if not examples %}<p class="muted">{{ t("sim.unavailable") }}</p>
+  {% else %}
+  <form class="stack" hx-post="{{ prefix }}/lab/sim" hx-target="#sim-start" hx-swap="innerHTML">
+    <fieldset class="scenario"><legend>{{ t("sim.example") }}</legend>
+      <div class="choices-row">{% for e in examples %}<label class="choice-pill"><input type="radio" name="example" value="{{ e.key }}"{% if loop.first %} checked{% endif %}>{{ t("sim.size." ~ e.set_name) }}</label>{% endfor %}</div>
+    </fieldset>
+    <fieldset class="scenario"><legend>{{ t("v2.lab.level") }}</legend>
+      <div class="choices-row">
+        <label class="choice-pill"><input type="radio" name="level" value="low" checked>{{ t("v2.lab.level.low") }}</label>
+        <label class="choice-pill"><input type="radio" name="level" value="high">{{ t("v2.lab.level.high") }}</label>
+      </div>
+      <p class="hint">{{ t("v2.lab.level_hint") }}</p>
+    </fieldset>
+    <p class="muted">{{ t("v2.lab.pair") }}</p>
+    <div class="actions"><button type="submit" class="btn btn-primary btn-lg">{{ icon("play", 20) }}{{ t("v2.lab.start") }}</button></div>
+    <div id="sim-start" aria-live="polite"></div>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

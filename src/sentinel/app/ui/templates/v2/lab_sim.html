@@ -1,0 +1,54 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<p class="back"><a href="{{ prefix }}/lab?tab=sim">‹ {{ t("v2.lab.sim") }}</a></p>
+<header class="v2-head"><div class="v2-head-text"><h1>{{ name }}</h1>{% if not waiting %}<p class="v2-asof">{{ t("v2.lab.pair_short") }}</p>{% endif %}</div></header>
+{% if waiting %}
+<section class="card">{% with job=waiting, label="v2.lab.preparing", total="" %}{% include "v2/_lab_wait.html" %}{% endwith %}</section>
+{% else %}
+{% if sim.finished %}
+<section class="card stack" aria-labelledby="sim-result-title">
+  <h2 id="sim-result-title" class="overline">{{ t("v2.lab.result") }}</h2>
+  <p class="big-result">{{ verdict }}</p>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th scope="col">{{ t("sim.col.measure") }}</th>{% for side in sides %}<th scope="col">{{ t("v2.lab.side." ~ side.policy) }}</th>{% endfor %}<th scope="col">{{ t("sim.col.difference") }}</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th>{% for value in row.values %}<td class="num">{{ value }}</td>{% endfor %}<td class="{% if row.tone %}tone-{{ row.tone }}{% endif %}">{{ row.difference }}</td></tr>{% endfor %}</tbody>
+  </table>
+  </div>
+  <p class="muted">{{ t("v2.lab.same_events") }}</p>
+</section>
+{% else %}
+<section class="card stack" aria-labelledby="sim-day-title">
+  <div class="section-head">
+    <h2 id="sim-day-title" class="sim-day num">{{ t("sim.day_of", day=sim.days, total=total) }}</h2>
+    {% if chance is not none %}<span class="chip chip-{{ 'good' if chance_state == 'good' else 'bad' if chance_state == 'bad' else 'neutral' }} num">{{ t("v2.lab.chance", n=chance, date=t.date(chance_date)) }}</span>{% endif %}
+  </div>
+  <span class="bar bar-wide" aria-hidden="true"><span style="width: {{ [100, 100 * sim.days / total] | min | round(1) }}%"></span></span>
+  <form class="actions" hx-post="{{ prefix }}/lab/sim/{{ sim_id }}/advance" hx-target="#advance-area" hx-swap="innerHTML">
+    <button type="submit" class="btn btn-lg" name="days" value="1">{{ t("v2.lab.step.1") }}</button>
+    <button type="submit" class="btn btn-primary btn-lg" name="days" value="5">{{ t("v2.lab.step.5") }}</button>
+    <button type="submit" class="btn btn-lg" name="days" value="end">{{ t("v2.lab.step.end") }}</button>
+  </form>
+  <div id="advance-area" aria-live="polite"></div>
+</section>
+{% endif %}
+<div class="grid-2 section">
+  {% for side in sides %}
+  <section class="card stack-sm" aria-labelledby="side-{{ loop.index }}">
+    <h2 id="side-{{ loop.index }}">{{ t("v2.lab.side." ~ side.policy) }}</h2>
+    <dl class="facts">
+      <dt>{{ t("v2.lab.tasks") }}</dt><dd class="num">{{ t("sim.tasks_short", done=side.done_tasks, total=side.tasks_total) }}</dd>
+      <dt>{{ t("sim.col.cost") }}</dt><dd class="num">{{ t("sim.cost_so_far", cost=t.cost_short(side.cost), share=t.pct(side.cost_ratio)) }}</dd>
+      <dt>{{ t("sim.col.changes") }}</dt><dd class="num">{{ side.plan_changes }}</dd>
+      {% if side.finished and side.finish %}<dt>{{ t("sim.col.finish") }}</dt><dd class="num">{{ t.date(side.finish) }} · {% if side.on_time %}{{ t("sim.on_time") }}{% else %}{{ t.plural("overview.days", side.late_days or 0) }} {{ t("v2.lab.late") }}{% endif %}</dd>{% endif %}
+    </dl>
+  </section>
+  {% endfor %}
+</div>
+<section class="card section" aria-labelledby="sim-events-title">
+  <h2 id="sim-events-title" class="overline">{{ t("v2.lab.events") }}</h2>
+  {% if entries %}<ul class="events">{% for e in entries %}<li><span class="time">{{ e.when }}</span><span class="actor">{{ icon(e.icon, 20) }}</span><span>{{ e.text }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ t("v2.lab.no_events") }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

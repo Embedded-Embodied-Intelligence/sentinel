@@ -27,7 +27,7 @@ BANNER_MOVE = 10  # a change of the chance in 100 the banner reports (section 7)
 # the page of the first interface that does their work meanwhile.
 TABS = ("overview", "report", "decisions", "log", "plan", "settings")
 SOON_TABS = {"settings": "settings"}
-SOON_PAGES = {"lab": "/simulator", "settings": "/settings"}
+SOON_PAGES = {"settings": "/settings"}
 
 
 def theme_of(request: Request) -> Theme:
@@ -177,10 +177,6 @@ def router(ui: Ui) -> APIRouter:
             old=old,
             **values,
         )
-
-    @routes.get(PREFIX + "/lab")
-    def lab_soon(request: Request) -> Response:
-        return soon(request, "lab", SOON_PAGES["lab"])
 
     @routes.get(PREFIX + "/settings")
     def settings_soon(request: Request) -> Response:

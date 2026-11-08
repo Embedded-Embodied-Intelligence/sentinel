@@ -790,6 +790,85 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.scenario.role": ("Who (role)", "Kto (rola)"),
     "v2.scenario.role_none": ("Nobody from the team", "Nikt z zespołu"),
     "v2.lab.add": ("Add to report", "Dodaj do raportu"),
+    # ---- Laboratorium (section 8.8, WP16)
+    "v2.lab.title": ("Lab", "Laboratorium"),
+    "v2.lab.tabs": ("Parts of the lab", "Części laboratorium"),
+    "v2.lab.whatif": ("What if?", "Co jeśli?"),
+    "v2.lab.sim": ("Simulator", "Symulator"),
+    "v2.lab.whatif_intro": (
+        "Try what a change would do to a project. Nothing is saved until you add it to a report.",
+        "Sprawdź, co zmiana zrobiłaby z projektem. Nic się nie zapisze, dopóki nie dodasz tego "
+        "do raportu.",
+    ),
+    "v2.lab.project": ("Project", "Projekt"),
+    "v2.lab.no_project": ("No project with a plan", "Brak projektu z planem"),
+    "v2.lab.no_project_text": (
+        "“What if?” works on a project with a plan. Start one, or open the example project.",
+        "„Co jeśli?” działa na projekcie z planem. Utwórz projekt albo otwórz przykładowy.",
+    ),
+    "v2.lab.as_of": ("as at the report of {date}", "według raportu z {date}"),
+    "v2.lab.whatif_hint": (
+        "Fill in one or more rows, then check the effect.",
+        "Wypełnij jeden lub więcej wierszy, potem sprawdź wpływ.",
+    ),
+    "v2.lab.check": ("Check the effect", "Sprawdź wpływ"),
+    "v2.lab.impact_empty": (
+        "The effect on the chance, the end and the budget appears here.",
+        "Tu pojawi się wpływ na szansę, koniec i budżet.",
+    ),
+    "v2.lab.nothing": (
+        "Fill in at least one row: who is absent, which task takes longer or a new task.",
+        "Wypełnij co najmniej jeden wiersz: kto będzie nieobecny, które zadanie potrwa dłużej "
+        "albo nowe zadanie.",
+    ),
+    "v2.lab.not_saved": (
+        "Nothing was saved. “Add to report” opens the report with these changes ticked.",
+        "Nic nie zostało zapisane. „Dodaj do raportu” otworzy raport z tymi zmianami zaznaczonymi.",
+    ),
+    "v2.lab.sim_intro": (
+        "Watch Sentinel run an example project day by day, next to the same project where nobody "
+        "reacts. Both meet the same events.",
+        "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu, obok tego samego "
+        "projektu, w którym nikt nie reaguje. Oba spotykają te same zdarzenia.",
+    ),
+    "v2.lab.runs": ("Your simulations", "Twoje symulacje"),
+    "v2.lab.finished": ("finished", "zakończona"),
+    "v2.lab.new_sim": ("New simulation", "Nowa symulacja"),
+    "v2.lab.level": ("Disruptions", "Zakłócenia"),
+    "v2.lab.level.low": ("Few disruptions", "Mało zakłóceń"),
+    "v2.lab.level.high": ("Many disruptions", "Dużo zakłóceń"),
+    "v2.lab.level_hint": (
+        "Absences, tasks longer than planned and new work, drawn at random but the same for "
+        "both runs.",
+        "Nieobecności, zadania dłuższe niż w planie i nowa praca, losowane, ale te same dla obu "
+        "przebiegów.",
+    ),
+    "v2.lab.pair": (
+        "Sentinel runs the project; beside it the same project runs with no reaction.",
+        "Sentinel prowadzi projekt; obok ten sam projekt toczy się bez reakcji.",
+    ),
+    "v2.lab.pair_short": ("Sentinel against no reaction", "Sentinel wobec braku reakcji"),
+    "v2.lab.start": ("Start the simulation", "Uruchom symulację"),
+    "v2.lab.preparing": ("Preparing the simulation…", "Przygotowuję symulację…"),
+    "v2.lab.running": ("Simulating the days…", "Symuluję kolejne dni…"),
+    "v2.lab.result": ("Result", "Wynik"),
+    "v2.lab.same_events": (
+        "Both runs met the same events: the difference is what Sentinel's decisions did.",
+        "Oba przebiegi spotkały te same zdarzenia: różnica to skutek decyzji Sentinela.",
+    ),
+    "v2.lab.chance": (
+        "Sentinel: {n} in 100 of meeting the deadline ({date})",
+        "Sentinel: {n} na 100, że zdążymy ({date})",
+    ),
+    "v2.lab.step.1": ("+1 day", "+1 dzień"),
+    "v2.lab.step.5": ("+5 days", "+5 dni"),
+    "v2.lab.step.end": ("To the end", "Do końca"),
+    "v2.lab.side.sentinel": ("Sentinel", "Sentinel"),
+    "v2.lab.side.no_reaction": ("No reaction", "Bez reakcji"),
+    "v2.lab.tasks": ("Tasks done", "Zadania skończone"),
+    "v2.lab.late": ("late", "po terminie"),
+    "v2.lab.events": ("What happened", "Co się wydarzyło"),
+    "v2.lab.no_events": ("Nothing has happened yet.", "Jeszcze nic się nie wydarzyło."),
     # ---- Dziennik (section 8.6, WP16)
     "v2.log.title": ("Log", "Dziennik"),
     "v2.log.filters": ("Kinds of entries", "Rodzaje wpisów"),

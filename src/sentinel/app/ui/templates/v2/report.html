@@ -49,7 +49,7 @@
 
   <section class="card step" aria-labelledby="step3-title">
     <div class="step-head"><span class="step-no">3</span><h2 id="step3-title">{{ t("v2.report.step3") }}</h2></div>
-    <div id="impact" hx-post="{{ prefix }}/projects/{{ view.id }}/report/impact" hx-include="#report-form" hx-trigger="change from:#report-form delay:600ms, cards from:body delay:100ms" hx-swap="innerHTML" hx-sync="this:replace" aria-live="polite">
+    <div id="impact" hx-post="{{ prefix }}/projects/{{ view.id }}/report/impact" hx-include="#report-form" hx-trigger="{% if lab_cards %}load, {% endif %}change from:#report-form delay:600ms, cards from:body delay:100ms" hx-swap="innerHTML" hx-sync="this:replace" aria-live="polite">
       {% with chips=[], error=none, blocked=false, ticked=0, can_save=false, stalled=0, last=last %}{% include "v2/_impact.html" %}{% endwith %}
     </div>
     <p><a href="#form-panel" data-open="form-panel">{{ t("v2.report.form") }} ›</a></p>

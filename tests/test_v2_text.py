@@ -38,6 +38,15 @@ FAMILIES = {
     "v2.hint.": ("absent", "done", "longer", "new"),
     "v2.new.step.": ("basics", "team", "tasks", "ready"),
     "v2.promise.": ("deadline", "budget", "settings", "replanned"),
+    "v2.log.filter.": ("all", "decisions", "reports", "plan"),
+    "v2.log.csv.": (
+        *("date", "time", "project", "who", "kind", "event"),
+        *("before", "after", "fate", "reason", "words"),
+    ),
+    "v2.plan.view.": ("schedule", "tasks", "team"),
+    "v2.lab.level.": ("low", "high"),
+    "v2.lab.side.": ("sentinel", "no_reaction"),
+    "v2.lab.step.": ("1", "5", "end"),
 }
 # The labels of the glossary (section 6), Polish and English, exactly.
 GLOSSARY = {

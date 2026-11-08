@@ -554,3 +554,14 @@ textarea.input { min-height: 132px; resize: vertical; }
 ul.plain { list-style: none; margin: 0; padding: 0; }
 .load { display: inline-flex; align-items: center; flex-wrap: wrap; }
 .nowrap { white-space: nowrap; }
+
+/* ---- Laboratorium (WP16, section 8.8) */
+.choices-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border: 1.5px solid var(--line-strong); border-radius: 12px; cursor: pointer; font-weight: 600; background: var(--surface); }
+.choice-pill input { width: 18px; height: 18px; accent-color: var(--accent); }
+.choice-pill:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.bar-wide { display: block; width: 100%; height: 10px; margin: 0; }
+.sim-day { font-size: 30px; line-height: 38px; font-weight: 750; }
+.tone-good { color: var(--good); font-weight: 650; }
+.tone-bad { color: var(--bad); font-weight: 650; }
+.lab-wait { display: grid; gap: 8px; }
