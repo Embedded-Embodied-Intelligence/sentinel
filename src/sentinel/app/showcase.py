@@ -173,11 +173,8 @@ def install(services: Any) -> None:
     events("pl")
 
     def seed(session: str, language: Language = "pl") -> None:
-        log = events(language)
-        store = services.store
-        name = definition(language).name
-        row = store.create_project(session, "live", name, log[0][0], log[0][1])
-        for event_type, payload in log[1:]:
-            store.append(session, row.id, event_type, payload)
+        services.store.create_project_with(
+            session, "live", definition(language).name, events(language)
+        )
 
     services.showcase = seed

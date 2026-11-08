@@ -330,6 +330,34 @@ class Store:
         assert project is not None
         return project
 
+    def create_project_with(
+        self,
+        session: str,
+        kind: ProjectKind,
+        name: str,
+        events: Sequence[tuple[str, Mapping[str, Any]]],
+    ) -> ProjectRow:
+        """A new project with its whole log in one transaction (one disk sync: a demo sandbox's
+        showcase, WP17)."""
+        project_id = new_id()
+        moment = _stamp(now())
+        with self._write() as db:
+            db.execute(
+                "INSERT INTO projects (id, session, kind, name, created, updated, seq) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (project_id, session, kind, name, moment, moment, len(events)),
+            )
+            db.executemany(
+                "INSERT INTO events (project, seq, type, payload, created) VALUES (?, ?, ?, ?, ?)",
+                [
+                    (project_id, seq, event_type, _dump(payload), moment)
+                    for seq, (event_type, payload) in enumerate(events, start=1)
+                ],
+            )
+        project = self.project(session, project_id)
+        assert project is not None
+        return project
+
     def projects(self, session: str) -> list[ProjectRow]:
         with self._connect() as db:
             rows = db.execute(

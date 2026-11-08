@@ -9,6 +9,8 @@ of every recommendation from it without any solver call or rollout. A simulator 
 holds its `simulator` spec and the days it was advanced (`advance`).
 """
 
+import hashlib
+import json
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -198,7 +200,10 @@ class LiveState:
     """A live project rebuilt from its log: the project, its recommendations, how it was
     created, the sequence number of its last event, of its last event that changed the project
     (every event but an explanation) and of its last event that can change a forecast (without a
-    recommendation or a decision that applied nothing either)."""
+    recommendation or a decision that applied nothing either). `fingerprint` and
+    `forecast_fingerprint` identify the contents of the log up to those two events, so two
+    projects with the same log (every demo visitor's copy of the showcase) share their
+    deterministic forecasts (WP17)."""
 
     project: LiveProject
     source: Source
@@ -206,6 +211,8 @@ class LiveState:
     recommendations: list[RecommendationEntry] = field(default_factory=list)
     last_change: int = 0
     last_forecast_change: int = 0
+    fingerprint: str = ""
+    forecast_fingerprint: str = ""
 
     def recommendation(self, seq: int) -> RecommendationEntry | None:
         return next((r for r in self.recommendations if r.seq == seq), None)
@@ -262,9 +269,20 @@ def replay(rows: Sequence[EventRow]) -> LiveState:
     first = Created.model_validate(rows[0].payload)
     state = LiveState(LiveProject(first.definition), first.source, rows[0].seq)
     state.last_change = state.last_forecast_change = rows[0].seq
+    state.fingerprint = state.forecast_fingerprint = _digest("", rows[0])
     for row in rows[1:]:
         apply(state, row.seq, parse(row))
+        if state.last_change == row.seq:
+            state.fingerprint = _digest(state.fingerprint, row)
+        if state.last_forecast_change == row.seq:
+            state.forecast_fingerprint = state.fingerprint
     return state
+
+
+def _digest(before: str, row: EventRow) -> str:
+    """The fingerprint of a log after `row`: its type and payload, not its ids or times."""
+    text = json.dumps(row.payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(f"{before}|{row.type}|{text}".encode()).hexdigest()
 
 
 def apply(state: LiveState, seq: int, event: _Event) -> None:

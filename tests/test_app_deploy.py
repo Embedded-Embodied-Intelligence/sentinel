@@ -8,15 +8,18 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
 import uvicorn
 from fastapi.testclient import TestClient
 
+from sentinel.app import planning, showcase
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits, load_config
 from sentinel.app.security import client_address, is_local
+from sentinel.app.services import Services
 
 ROOT = Path(__file__).resolve().parents[1]
 PROXY = ("127.0.0.1", 40000)  # the funnel's proxy connects from the server itself
@@ -152,6 +155,35 @@ def test_a_sandbox_is_made_only_for_a_client_that_keeps_cookies(tmp_path: Path) 
         assert page.status_code == 200 and str(page.url).endswith("/v2?lang=pl")
         assert sessions() == 1 and "sentinel_probe" not in client.cookies
         assert client.get("/robots.txt").text == "User-agent: *\nDisallow: /\n"
+
+
+def test_copies_of_the_showcase_share_their_forecasts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """WP17: a forecast is deterministic for the log's contents, so every visitor's copy of the
+    showcase reuses the first one's (keyed by the log's fingerprint, not the project's id)."""
+    config = AppConfig(data_dir=tmp_path, demo=True, inline_jobs=True)
+    services = Services(config)
+    showcase.install(services)
+    calls: list[int] = []
+    original = planning.forecast
+
+    def counted(project: Any, *args: Any, **kwargs: Any) -> Any:
+        calls.append(1)
+        return original(project, *args, **kwargs)
+
+    monkeypatch.setattr(planning, "forecast", counted)
+    chances = []
+    for _ in range(2):
+        session = services.new_session("pl").id
+        project = services.projects(session)[0].id
+        summary = services.forecast_summary(session, project, "pl")
+        assert summary is not None
+        chances.append(summary.forecast.p_on_time)
+    assert len(calls) == 2 and chances[0] == chances[1]  # now and before the last check-in
+    first, again = (services.state(session, project) for _ in range(2))  # rebuilt, then cached
+    assert first.fingerprint and again.fingerprint == first.fingerprint
+    assert again.forecast_fingerprint == first.forecast_fingerprint != ""
 
 
 def test_every_response_carries_the_security_headers(tmp_path: Path) -> None:

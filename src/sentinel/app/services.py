@@ -18,7 +18,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from functools import partial
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -97,7 +97,8 @@ from sentinel.simulation.state import Observation
 from sentinel.wbs.extract import Extraction
 
 SIMULATIONS_KEPT = 8  # simulator projects kept in memory; others are re-simulated
-FORECASTS_KEPT = 128  # forecasts and threat lists kept in memory, by project and last change
+T = TypeVar("T")
+FORECASTS_KEPT = 128  # forecasts, threat lists, causes and validities kept, by the log's contents
 CLAUSES_KEPT = 64  # messages whose clauses a review may still show, kept in memory only
 VALIDITY_JOB = "validity"  # the validity of a pending decision (11.8), outside the job limit
 THREATS_JOB = "threats"  # the job of a threat list: the pages' own, outside the demo's job limit
@@ -226,10 +227,12 @@ class Services:
         self._locks: dict[str, threading.RLock] = {}
         self._live: OrderedDict[str, tuple[int, LiveState]] = OrderedDict()
         self._sims: OrderedDict[str, tuple[int, simulator.Simulation]] = OrderedDict()
-        self._forecasts: OrderedDict[tuple[str, int], planning.ForecastResult] = OrderedDict()
+        self._forecasts: OrderedDict[str, planning.ForecastResult] = OrderedDict()
         self._drafts: OrderedDict[tuple[str, int, str], ForecastView] = OrderedDict()
-        self._threats: OrderedDict[tuple[str, int], planning.ThreatList] = OrderedDict()
-        self._causes: OrderedDict[tuple[str, int], planning.Causes | None] = OrderedDict()
+        self._threats: OrderedDict[str, planning.ThreatList] = OrderedDict()
+        self._causes: OrderedDict[str, planning.Causes | None] = OrderedDict()
+        self._validities: OrderedDict[str, decisions.ValidityResult] = OrderedDict()
+        self._flights: dict[tuple[str, str], threading.Lock] = {}
         self._clauses: OrderedDict[str, tuple[str, ...]] = OrderedDict()
         # set by the web layer (demo): seeds a sandbox with the showcase in a language
         self.showcase: Callable[[str, Language], None] | None = None
@@ -557,8 +560,15 @@ class Services:
                 return {}
             progress(0.05, "simulating")
             label = entry.recommendation.record.chosen
+            key = f"{current.fingerprint}|{label}"  # the same log, the same answer (WP17)
+            recommendation = entry.recommendation
             try:
-                found = decisions.validity(current.project, entry.recommendation)
+                found = self._once(
+                    "validity",
+                    self._validities,
+                    key,
+                    lambda: decisions.validity(current.project, recommendation),
+                )
             except ValueError:
                 return {}  # no longer the recommendation of the current observation
             with self._lock(project_id):
@@ -851,22 +861,41 @@ class Services:
         """The chance of meeting the deadline if the forecast of `state` is cached, else None:
         what a page can show without calculating anything."""
         with self._guard:
-            found = self._forecasts.get((project_id, state.last_change))
+            found = self._forecasts.get(forecast_key(state))
         return None if found is None else found.p_on_time
 
     def _forecast(self, project_id: str, state: LiveState) -> planning.ForecastResult:
-        key = (project_id, state.last_change)
+        # The same log, the same forecast, in any sandbox (WP17).
+        return self._once(
+            "forecast",
+            self._forecasts,
+            forecast_key(state),
+            lambda: planning.forecast(state.project),
+        )
+
+    def _once(self, kind: str, cache: OrderedDict[str, T], key: str, compute: Callable[[], T]) -> T:
+        """`cache[key]`, computed once even when several requests ask for it at the same time
+        (WP17: many demo visitors opening the same showcase); the oldest go beyond
+        `FORECASTS_KEPT`."""
+        if not key:  # a state without its log's fingerprint is never shared
+            return compute()
         with self._guard:
-            found = self._forecasts.get(key)
-            if found is not None:
-                self._forecasts.move_to_end(key)
-                return found
-        result = planning.forecast(state.project)
-        with self._guard:
-            self._forecasts[key] = result
-            while len(self._forecasts) > FORECASTS_KEPT:
-                self._forecasts.popitem(last=False)
-        return result
+            if key in cache:
+                cache.move_to_end(key)
+                return cache[key]
+            flight = self._flights.setdefault((kind, key), threading.Lock())
+        with flight:
+            with self._guard:
+                if key in cache:
+                    cache.move_to_end(key)
+                    return cache[key]
+            result = compute()
+            with self._guard:
+                cache[key] = result
+                while len(cache) > FORECASTS_KEPT:
+                    cache.popitem(last=False)
+                self._flights.pop((kind, key), None)
+            return result
 
     def _with_causes(
         self, view: ForecastView, project_id: str, state: LiveState, rows: Sequence[EventRow]
@@ -876,7 +905,7 @@ class Services:
         checkins = [row for row in rows if row.type == "checkin"]
         if not checkins or view.p_on_time is None:
             return view
-        key = (project_id, checkins[-1].seq)
+        key = forecast_key(replay([row for row in rows if row.seq <= checkins[-1].seq]))
         with self._guard:
             if key not in self._causes:
                 return view.model_copy(update={"causes_pending": True})
@@ -905,44 +934,34 @@ class Services:
         if not checkins:
             return None
         seq = checkins[-1].seq
-        key = (project_id, seq)
-        with self._guard:
-            if key in self._causes:
-                return self._causes[key]
         before = replay([row for row in rows if row.seq < seq])
         after = replay([row for row in rows if row.seq <= seq])
-        result = None
-        if _forecastable(before.project) and _forecastable(after.project):
+
+        def compute() -> planning.Causes | None:
+            if not (_forecastable(before.project) and _forecastable(after.project)):
+                return None
             p_before = self._forecast(project_id, before).p_on_time
             p_after = self._forecast(project_id, after).p_on_time
-            if p_before is not None and p_after is not None:
-                checkin = CheckinDone.model_validate(checkins[-1].payload).checkin
-                result = planning.causes(before.project, checkin, p_before, p_after)
-        with self._guard:
-            self._causes[key] = result
-            while len(self._causes) > FORECASTS_KEPT:
-                self._causes.popitem(last=False)
-        return result
+            if p_before is None or p_after is None:
+                return None
+            checkin = CheckinDone.model_validate(checkins[-1].payload).checkin
+            return planning.causes(before.project, checkin, p_before, p_after)
+
+        return self._once("causes", self._causes, forecast_key(after), compute)
 
     def _known_threats(self, project_id: str, state: LiveState) -> planning.ThreatList | None:
         with self._guard:
-            return self._threats.get((project_id, state.last_forecast_change))
+            return self._threats.get(threat_key(state))
 
     def _threat_list(self, project_id: str, state: LiveState) -> planning.ThreatList:
         """The threat list of `state`, deterministic for it and kept while nothing changes that
         a forecast reads: long enough to matter, it outlives a recommendation or a refusal."""
-        key = (project_id, state.last_forecast_change)
-        with self._guard:
-            found = self._threats.get(key)
-            if found is not None:
-                self._threats.move_to_end(key)
-                return found
-        result = planning.threats(state.project, rollouts=planning.THREAT_ROLLOUTS)
-        with self._guard:
-            self._threats[key] = result
-            while len(self._threats) > FORECASTS_KEPT:
-                self._threats.popitem(last=False)
-        return result
+        return self._once(
+            "threats",
+            self._threats,
+            threat_key(state),
+            lambda: planning.threats(state.project, rollouts=planning.THREAT_ROLLOUTS),
+        )
 
     def read_message(
         self, session: str, project_id: str, text: str, when: date, language: Language
@@ -1407,6 +1426,18 @@ def _ready(project: LiveProject, *, need_deadline: bool = True) -> None:
         raise AppError("project_finished", "conflict")
 
 
+def forecast_key(state: LiveState) -> str:
+    """A forecast's key: the log's contents and the number of futures (WP17)."""
+    return f"{state.fingerprint}|{planning.FORECAST_ROLLOUTS}" if state.fingerprint else ""
+
+
+def threat_key(state: LiveState) -> str:
+    """A threat list's key: the log's contents and the rule's settings (WP17)."""
+    if not state.forecast_fingerprint:
+        return ""
+    return f"{state.forecast_fingerprint}|{planning.THREAT_ROLLOUTS}|{planning.THREAT_SENSITIVITY}"
+
+
 def _copy(state: LiveState) -> LiveState:
     """A copy of a cached state that an operation may change."""
     return LiveState(
@@ -1416,6 +1447,8 @@ def _copy(state: LiveState) -> LiveState:
         [*state.recommendations],
         state.last_change,
         state.last_forecast_change,
+        state.fingerprint,
+        state.forecast_fingerprint,
     )
 
 
