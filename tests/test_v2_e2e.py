@@ -308,6 +308,35 @@ def _axe(page: Any) -> list[str]:
     return list(found)
 
 
+def test_a_phone_and_a_small_laptop_never_scroll_sideways(demo: Server) -> None:
+    """WP17: below 900 px the sidebar is a bar on top and every grid one column; at 1024 px
+    the layout narrows. No screen of the demo path scrolls sideways at 390 or 1024 px."""
+    with sync_api.sync_playwright() as playwright:
+        chromium = browser(playwright)
+        for width, height in ((390, 844), (1024, 768)):
+            context = chromium.new_context(viewport={"width": width, "height": height})
+            page = context.new_page()
+            page.goto(demo.base + "/v2")
+            project = page.locator("a.tile", has_text="Nowa odsłona").first.get_attribute("href")
+            assert project is not None
+            for path in (
+                "/v2",
+                project,
+                f"{project}/decisions",
+                f"{project}/report",
+                f"{project}/log",
+                f"{project}/plan?view=tasks",
+                "/v2/lab",
+                "/v2/new",
+            ):
+                page.goto(demo.base + path)
+                page.wait_for_load_state("networkidle")
+                wide = page.evaluate("document.documentElement.scrollWidth")
+                assert wide <= width, (width, path, wide)
+            context.close()
+        chromium.close()
+
+
 def test_a_wide_window_scales_the_layout_up(demo: Server) -> None:
     """WP16 hotfix: a wide window (here 2096 px, a retina screen at 80 % zoom) scales the
     layout of 1440 up instead of pinning it to the left; 1440 stays as designed; no horizontal

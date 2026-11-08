@@ -1,9 +1,11 @@
 """The frame of the v2 pages (docs/design/v2-spec.md, sections 5 and 7; ADR-0033): the theme
 remembered in a cookie, the sidebar, the project header and tabs, and the live banner."""
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
@@ -78,15 +80,26 @@ class BannerItem:
     href: str
 
 
+def showing(request: Request) -> str | None:
+    """The project whose Pulpit or decision page polls the banner (HTMX names the page in
+    `HX-Current-URL`): that page shows its decision and chance itself."""
+    page_path = urlparse(request.headers.get("hx-current-url", "")).path
+    found = re.fullmatch(rf"{PREFIX}/projects/([^/]+)(?:/decisions(?:/\d+)?)?/?", page_path)
+    return None if found is None else found.group(1)
+
+
 def banner_items(ui: Ui, request: Request, since: datetime) -> list[BannerItem]:
     """What happened since `since` that the banner reports (section 7): a new decision still
-    waiting, and a report that moved the chance by at least 10 in 100 or changed the state."""
+    waiting, and a report that moved the chance by at least 10 in 100 or changed the state;
+    not for the project whose own Pulpit or decision page is open, which shows them already
+    (WP17: a report saved here is not announced twice)."""
     t = texts(request)
     services = ui.services
     session = ui.session(request)
+    here = showing(request)
     found: list[BannerItem] = []
     for summary in services.projects(session):
-        if summary.kind != "live" or summary.updated < since:
+        if summary.kind != "live" or summary.updated < since or summary.id == here:
             continue
         rows = services.store.events(session, summary.id)
         fresh = [row for row in rows if row.created > since]

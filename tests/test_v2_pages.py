@@ -301,6 +301,22 @@ def test_the_theme_is_remembered_in_a_cookie(site: Site) -> None:
     assert bad.headers["location"] == "/v2"
 
 
+def test_the_banner_is_quiet_where_the_page_shows_it_already(site: Site) -> None:
+    """WP17: the banner reports a new decision elsewhere, not on the project's own Pulpit or
+    decision page, which show it themselves (a saved report was announced twice)."""
+    pid = site.project
+    since = {"since": "2000-01-01T00:00:00+00:00", "lang": "pl"}
+
+    def banner(page: str) -> str:
+        current = {"HX-Current-URL": f"http://testserver{page}", "HX-Request": "true"}
+        return text_of(site.client.get("/v2/banner", params=since, headers=current).text)
+
+    elsewhere = banner("/v2") + banner(f"/v2/projects/{pid}/plan")
+    assert elsewhere.count("nowa decyzja do podjęcia") == 2
+    here = banner(f"/v2/projects/{pid}") + banner(f"/v2/projects/{pid}/decisions/6")
+    assert "nowa decyzja" not in here
+
+
 def test_the_first_interface_links_to_v2(site: Site) -> None:
     assert 'href="/v2?look=v2"' in site.client.get("/", params={"lang": "pl"}).text
 

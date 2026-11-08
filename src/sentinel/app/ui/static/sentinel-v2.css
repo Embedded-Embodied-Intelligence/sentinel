@@ -132,7 +132,7 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   zoom: var(--zoom);
-  min-width: 1180px;
+  min-width: 320px;
   font: 400 17px/1.5 var(--font);
   color: var(--text);
   background: radial-gradient(1200px 600px at 0 0, var(--page-glow), transparent 70%), var(--page);
@@ -596,3 +596,54 @@ a.choice-pill { color: var(--text); text-decoration: none; }
 .sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .sides > .card { margin-top: 0; }
 .sides .facts dd { white-space: normal; }
+
+/* ---- narrower windows (WP17): a small laptop, a tablet, a phone. 1280 and wider are as
+   designed; below 900 px the sidebar becomes a bar on top and every grid one column. */
+.table-wrap, table.table, .g-scroll { position: relative; }  /* hidden labels stay inside */
+textarea { max-width: 100%; }
+@media (max-width: 1179px) {
+  .v2-shell { grid-template-columns: 208px minmax(0, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .effects { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .v2-main { padding: 20px 24px 48px; }
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+}
+@media (max-width: 900px) {
+  .v2-shell { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .v2-side {
+    position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
+    gap: 8px 12px; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--glass-line);
+  }
+  .v2-nav { order: 3; width: 100%; }
+  .v2-nav ul { display: flex; gap: 4px; overflow-x: auto; }
+  .v2-nav a { min-height: 40px; padding: 6px 10px; white-space: nowrap; }
+  .v2-side-foot { margin: 0 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0; }
+  .v2-side-foot .stack-sm { display: block; }
+  .v2-switch-label, .v2-version, .v2-old { display: none; }
+  .v2-side-foot .stack-sm + .stack-sm { display: none; }  /* the theme follows the system */
+  .v2-main { padding: 16px 16px 40px; }
+  .v2-head { flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+  .v2-tabs { overflow-x: auto; }
+  .v2-tabs a { white-space: nowrap; padding: 8px 10px; }
+  .grid-3, .grid-2, .effects, .first-cards, .choice-cards, .choice-cards-2, .form-grid, .sides {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .brief-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .todo { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .events li { grid-template-columns: auto minmax(0, 1fr); }
+  .events li > :last-child { grid-column: 1 / -1; }
+  .stack, .stack-sm, .step { grid-template-columns: minmax(0, 1fr); }
+  .section-head { flex-wrap: wrap; gap: 8px 16px; }
+  .wizard-steps { flex-wrap: wrap; }
+  table.table { display: block; overflow-x: auto; max-width: 100%; }
+  .log-entry > summary, .log-flat { grid-template-columns: 48px auto minmax(0, 1fr); }
+  .log-entry > summary > :nth-child(4), .log-flat > :nth-child(4) { grid-column: 2 / -1; justify-self: start; }
+  .gantt2 { grid-template-columns: minmax(120px, 38%) minmax(0, 1fr); }
+  .week li { grid-template-columns: 88px minmax(0, 1fr); }
+  .confirm { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .confirm-edit .field { min-width: 0; }
+  .hero { font-size: 40px; line-height: 44px; }
+  .sim-events li { grid-template-columns: 88px 24px minmax(0, 1fr); }
+  .days-off li { max-width: none; }
+  .card { padding: 16px; }
+}
