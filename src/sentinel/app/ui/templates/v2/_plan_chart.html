@@ -1,0 +1,2 @@
+{% if waiting %}<p class="computing" hx-get="{{ prefix }}/projects/{{ view.id }}/plan/chart" hx-trigger="load delay:2s" hx-target="#plan-chart" hx-swap="innerHTML">{{ t("v2.plan.risks_wait") }}</p>{% endif %}
+{% include "v2/_gantt.html" %}

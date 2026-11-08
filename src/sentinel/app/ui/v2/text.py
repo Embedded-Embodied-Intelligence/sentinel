@@ -833,6 +833,89 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.log.csv.fate": ("decision status", "stan decyzji"),
     "v2.log.csv.reason": ("reason", "powód"),
     "v2.log.csv.words": ("words", "słowa"),
+    # ---- Plan (section 8.7, WP16)
+    "v2.plan.title": ("Plan", "Plan"),
+    "v2.plan.views": ("Views of the plan", "Widoki planu"),
+    "v2.plan.view.schedule": ("Schedule", "Harmonogram"),
+    "v2.plan.view.tasks": ("Tasks", "Zadania"),
+    "v2.plan.view.team": ("Team", "Zespół"),
+    "v2.plan.download": ("Download the plan (CSV)", "Pobierz plan (CSV)"),
+    "v2.plan.none": ("No plan yet", "Brak planu"),
+    "v2.plan.none_text": (
+        "Add the team and the tasks, then Sentinel lays out the plan.",
+        "Dodaj zespół i zadania, a Sentinel ułoży plan.",
+    ),
+    "v2.plan.make": ("Finish the project", "Dokończ projekt"),
+    "v2.plan.band": (
+        "Forecast: most likely {likely}, in a bad case {bad}",
+        "Prognoza: najpewniej {likely}, w złym razie {bad}",
+    ),
+    "v2.plan.risks_wait": ("Looking for the main risks…", "Szukam głównych ryzyk…"),
+    "v2.plan.risk": ("risk", "ryzyko"),
+    "v2.plan.risk_tip": (
+        "“{name}” is one of the main risks: the longer it takes, the later the project ends.",
+        "„{name}” to jedno z głównych ryzyk: im dłużej trwa, tym później koniec projektu.",
+    ),
+    "v2.plan.legend": ("Legend", "Legenda"),
+    "v2.plan.legend.running": ("In progress", "W toku"),
+    "v2.plan.legend.band": (
+        "Forecast: most likely to bad case",
+        "Prognoza: od najpewniej do złego razu",
+    ),
+    "v2.plan.crew": ("{n} × {role}", "{n} × {role}"),
+    "v2.plan.col.task": ("Task", "Zadanie"),
+    "v2.plan.col.state": ("State", "Stan"),
+    "v2.plan.col.end": ("End", "Koniec"),
+    "v2.plan.col.people": ("Who", "Kto"),
+    "v2.plan.col.after": ("Depends on", "Zależy od"),
+    "v2.plan.col.fix": ("Correction", "Poprawka"),
+    "v2.plan.fix_hint": (
+        "A task not started yet can be corrected.",
+        "Zadanie, które się jeszcze nie zaczęło, możesz poprawić.",
+    ),
+    "v2.plan.fix_later": (
+        "Tasks not started yet can be corrected here after the first report.",
+        "Zadania, które się jeszcze nie zaczęły, poprawisz tu po pierwszym raporcie.",
+    ),
+    "v2.plan.days": ("Working days", "Dni robocze"),
+    "v2.plan.people_of": ("People: {role}", "Osoby: {role}"),
+    "v2.plan.after_which": ("Starts after", "Zaczyna się po"),
+    "v2.plan.optional": (
+        "Optional (can be dropped if time runs short)",
+        "Opcjonalne (można z niego zrezygnować, gdy zabraknie czasu)",
+    ),
+    "v2.plan.save_fix": ("Save the correction", "Zapisz poprawkę"),
+    "v2.plan.days_error": (
+        "Give whole working days, 1 or more.",
+        "Podaj liczbę dni roboczych: 1 lub więcej.",
+    ),
+    "v2.plan.crew_error": (
+        "Give a whole number, 0 or more.",
+        "Podaj liczbę całkowitą: 0 lub więcej.",
+    ),
+    "v2.plan.corrected": (
+        "Correction saved. The forecast follows it.",
+        "Zapisano poprawkę. Prognoza ją uwzględnia.",
+    ),
+    "v2.plan.week": ("Next week: {first} – {last}", "Przyszły tydzień: {first} – {last}"),
+    "v2.plan.team_hint": (
+        "“Next week”: on how many working days the plan needs the person's role, per person "
+        "present. Workload comes from the plan; Sentinel measures nobody's performance.",
+        "„Przyszły tydzień”: w ilu dniach roboczych plan potrzebuje roli tej osoby, na osobę "
+        "obecną. Obciążenie wynika z planu; Sentinel nie mierzy niczyjej wydajności.",
+    ),
+    "v2.plan.col.person": ("Person", "Osoba"),
+    "v2.plan.col.away": ("Absences", "Nieobecności"),
+    "v2.plan.col.now": ("Now", "Teraz"),
+    "v2.plan.col.next": ("Next for the role", "Następne dla roli"),
+    "v2.plan.col.load": ("Next week", "Przyszły tydzień"),
+    "v2.plan.temporary": ("temporary", "tymczasowo"),
+    "v2.plan.away": ("{first} – back {back}", "{first} – wraca {back}"),
+    "v2.plan.away_open": ("from {first}, return unknown", "od {first}, powrót nieznany"),
+    "v2.plan.load_away": ("absent all week", "nieobecność cały tydzień"),
+    "v2.plan.load.one": ("about {busy} of {n} day", "ok. {busy} z {n} dnia"),
+    "v2.plan.load.few": ("about {busy} of {n} days", "ok. {busy} z {n} dni"),
+    "v2.plan.load.many": ("about {busy} of {n} days", "ok. {busy} z {n} dni"),
 }
 
 

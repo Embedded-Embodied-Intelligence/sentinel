@@ -1,0 +1,92 @@
+{% extends "v2/base.html" %}
+{% macro kv(name, default="") %}{{ kept.get(name, default) if kept else default }}{% endmacro %}
+{% block content %}
+<div class="log-tools">
+  <nav aria-label="{{ t('v2.plan.views') }}">
+    <ul class="filters">
+      {% for key in views %}<li><a href="{{ prefix }}/projects/{{ view.id }}/plan?view={{ key }}"{% if shown == key %} aria-current="true"{% endif %}>{{ t("v2.plan.view." ~ key) }}</a></li>{% endfor %}
+    </ul>
+  </nav>
+  {% if has_plan %}<a class="btn" href="/api/projects/{{ view.id }}/plan.csv?lang={{ t.lang }}" download>{{ icon("download", 20) }}{{ t("v2.plan.download") }}</a>{% endif %}
+</div>
+{% if not has_plan %}
+<section class="card stack" aria-labelledby="no-plan-title">
+  <h2 id="no-plan-title">{{ t("v2.plan.none") }}</h2>
+  <p>{{ t("v2.plan.none_text") }}</p>
+  <p><a class="btn btn-primary" href="{{ prefix }}/new/{{ view.id }}">{{ t("v2.plan.make") }}</a></p>
+</section>
+{% elif shown == "schedule" %}
+<section class="card stack" aria-labelledby="schedule-title">
+  <div class="section-head"><h2 id="schedule-title" class="overline">{{ t("v2.plan.view.schedule") }}</h2>
+  {% if forecast %}<span class="muted">{{ t("v2.plan.band", likely=t.date(forecast.p50), bad=t.date(forecast.p90)) }}</span>{% endif %}</div>
+  <div id="plan-chart">{% include "v2/_plan_chart.html" %}</div>
+</section>
+{% elif shown == "tasks" %}
+<section class="card stack" aria-labelledby="tasks-title">
+  <div class="section-head"><h2 id="tasks-title" class="overline">{{ t("v2.plan.view.tasks") }}</h2>
+  <span class="muted">{% if tracking %}{{ t("v2.plan.fix_hint") }}{% else %}{{ t("v2.plan.fix_later") }}{% endif %}</span></div>
+  <div class="table-wrap">
+  <table class="table plan-tasks">
+    <thead><tr><th scope="col">{{ t("v2.plan.col.task") }}</th><th scope="col">{{ t("v2.plan.col.state") }}</th><th scope="col">{{ t("v2.plan.col.end") }}</th><th scope="col">{{ t("v2.plan.col.people") }}</th><th scope="col">{{ t("v2.plan.col.after") }}</th><th scope="col"><span class="vh">{{ t("v2.plan.col.fix") }}</span></th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+    <tr id="task-{{ row.key }}" class="{% if row.risk %}is-risk{% endif %}{% if row.state == 'removed' %} is-removed{% endif %}">
+      <th scope="row">{% if row.risk %}<span class="risk-word">{{ icon("alert", 16) }}{{ t("v2.plan.risk") }}</span> {% endif %}{{ row.name }}{% if row.added %} <span class="muted">{{ t("chart.new") }}</span>{% endif %}</th>
+      <td><span class="tstate tstate-{{ row.state }}">{{ row.state_text }}</span>{% if row.percent is not none and row.state != "done" %}<span class="nowrap"><span class="bar" aria-hidden="true"><span style="width: {{ row.percent }}%"></span></span><span class="num">{{ row.percent }} %</span></span>{% endif %}</td>
+      <td class="nowrap">{% if row.end %}{{ t.date(row.end) }}{% else %}–{% endif %}</td>
+      <td>{{ row.people or "–" }}</td>
+      <td>{{ row.after or "–" }}</td>
+      <td>{% if row.task %}<button type="button" class="btn btn-quiet" data-toggle="fix-{{ row.key }}" aria-expanded="{{ 'true' if editing == row.key else 'false' }}" aria-controls="fix-{{ row.key }}">{{ icon("pencil", 20) }}{{ t("v2.adjust") }}</button>{% endif %}</td>
+    </tr>
+    {% if row.task %}
+    <tr id="fix-{{ row.key }}" class="fix-row"{% if editing != row.key %} hidden{% endif %}><td colspan="6">
+      <form class="stack-sm" hx-post="{{ prefix }}/projects/{{ view.id }}/plan/tasks/{{ row.key }}" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+        {% set mine = editing == row.key %}
+        {% if mine and errors.get("form") %}<p class="error" role="alert">{{ errors.get("form") }}</p>{% endif %}
+        <div class="form-grid">
+          <div class="field"><label for="days-{{ row.key }}">{{ t("v2.plan.days") }}</label>
+            <input type="number" id="days-{{ row.key }}" name="duration" min="1" step="1" value="{{ kv('duration', row.task.duration) if mine else row.task.duration }}"{% if mine and errors.get('duration') %} aria-invalid="true" aria-describedby="days-{{ row.key }}-error"{% endif %}>
+            {% if mine and errors.get("duration") %}<p class="error" id="days-{{ row.key }}-error">{{ errors.get("duration") }}</p>{% endif %}</div>
+          {% for role in roles %}
+          <div class="field"><label for="crew-{{ row.key }}-{{ loop.index0 }}">{{ t("v2.plan.people_of", role=role) }}</label>
+            <input type="number" id="crew-{{ row.key }}-{{ loop.index0 }}" name="crew_{{ loop.index0 }}" min="0" step="1" value="{{ kv('crew_' ~ loop.index0, row.task.crew.get(role, 0)) if mine else row.task.crew.get(role, 0) }}">
+            {% if mine and errors.get("crew_" ~ loop.index0) %}<p class="error">{{ errors.get("crew_" ~ loop.index0) }}</p>{% endif %}</div>
+          {% endfor %}
+        </div>
+        <fieldset class="scenario"><legend>{{ t("v2.plan.after_which") }}</legend>
+          <div class="checks">{% for key, name in choices if key != row.key %}<label class="check"><input type="checkbox" name="after" value="{{ key }}"{% if key in row.task.predecessors %} checked{% endif %}>{{ name }}</label>{% endfor %}</div>
+        </fieldset>
+        <label class="check"><input type="checkbox" name="optional"{% if row.task.optional %} checked{% endif %}>{{ t("v2.plan.optional") }}</label>
+        <div class="actions"><button type="submit" class="btn btn-primary">{{ t("v2.plan.save_fix") }}</button><button type="button" class="btn btn-quiet" data-toggle="fix-{{ row.key }}">{{ t("v2.reject.cancel") }}</button></div>
+      </form>
+    </td></tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% else %}
+<section class="card stack" aria-labelledby="team-title">
+  <div class="section-head"><h2 id="team-title" class="overline">{{ t("v2.plan.view.team") }}</h2>
+  <span class="muted">{% if week %}{{ t("v2.plan.week", first=t.date(week[0]), last=t.date(week[-1])) }}{% endif %}</span></div>
+  <p class="muted">{{ t("v2.plan.team_hint") }}</p>
+  <div class="table-wrap">
+  <table class="table plan-team">
+    <thead><tr><th scope="col">{{ t("v2.plan.col.person") }}</th><th scope="col">{{ t("v2.plan.col.away") }}</th><th scope="col">{{ t("v2.plan.col.now") }}</th><th scope="col">{{ t("v2.plan.col.next") }}</th><th scope="col">{{ t("v2.plan.col.load") }}</th></tr></thead>
+    <tbody>
+    {% for p in people %}
+    <tr>
+      <th scope="row">{{ p.name }}<span class="muted">{{ p.role }}{% if p.temporary %} · {{ t("v2.plan.temporary") }}{% endif %}</span></th>
+      <td>{% if p.absences %}<ul class="plain">{% for a in p.absences %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
+      <td>{% if p.now %}<ul class="plain">{% for name in p.now %}<li>{{ name }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
+      <td>{% if p.next %}<ul class="plain">{% for name in p.next %}<li>{{ name }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
+      <td>{% if not week %}–{% elif p.days == 0 %}{{ t("v2.plan.load_away") }}{% else %}<span class="load"><span class="bar" aria-hidden="true"><span style="width: {{ (100 * p.busy / p.days) | round | int }}%"></span></span>{{ t.plural("v2.plan.load", p.days, busy=p.busy) }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

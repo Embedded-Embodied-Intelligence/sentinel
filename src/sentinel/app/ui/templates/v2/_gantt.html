@@ -1,0 +1,45 @@
+{# The Gantt chart of the v2 Plan (section 8.7); its geometry comes from `charts.layout`: done tasks
+   grey, running blue, planned light, the tasks of "Główne ryzyka" amber with an icon and a word,
+   absences hatched, the status, today and deadline lines, the forecast's band. #}
+<div class="gantt2" style="--g-top: {{ g.top }}px; --g-min: {{ g.min_width }}px">
+  <ol class="g-names">
+    {% for item in g.rows %}{% set row = item.row %}
+    <li class="{% if row.threat %}g-risk{% endif %}{% if row.state == 'removed' %} g-removed{% endif %}" title="{{ row.tip }}">
+      {% if row.threat %}{{ icon("alert", 16) }}{% elif row.state == "absence" %}{{ icon("person-off", 16) }}{% endif %}
+      <span class="g-name">{{ row.label }}{% if row.added %} {{ t("chart.new") }}{% endif %}</span>
+      {% if row.threat %}<span class="g-word">{{ t("v2.plan.risk") }}</span>{% elif row.state == "absence" %}<span class="g-word">{{ t("chart.legend.away") }}</span>{% endif %}
+      <span class="vh">{{ row.threat ~ " " if row.threat else "" }}{{ row.tip }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+  <div class="g-scroll" data-open-at="{{ g.open_at }}">
+    <svg class="g-plot" width="100%" height="{{ g.height }}" role="img" aria-labelledby="g-title g-desc">
+      <title id="g-title">{{ g.title }}</title>
+      <desc id="g-desc">{{ g.desc }}</desc>
+      <defs><pattern id="g-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="g-hatch-bg" width="6" height="6"/><line class="g-hatch-fg" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
+      {% for item in g.rows %}{% if loop.index0 % 2 == 0 %}<rect class="g-band" x="0" y="{{ item.y }}" width="100%" height="32"/>{% endif %}{% endfor %}
+      {% if g.window %}<rect class="g-window" x="{{ g.window[0] }}%" y="{{ g.top }}" width="{{ g.window[1] }}%" height="{{ g.bottom - g.top }}"/>{% endif %}
+      {% for tick in g.ticks %}
+      <line class="g-grid" x1="{{ tick.x }}%" x2="{{ tick.x }}%" y1="{{ g.top - 4 }}" y2="{{ g.bottom }}"/>
+      {% if tick.label %}<text class="g-tick" x="{{ tick.x }}%" y="{{ g.top - 7 }}" text-anchor="{{ tick.anchor }}">{{ tick.label }}</text>{% endif %}
+      {% endfor %}
+      {% for item in g.rows %}
+      <g class="{% if item.row.threat %}g-risk{% endif %}"><title>{{ item.row.tip }}</title>{% for bar in item.bars %}<rect class="{{ bar.cls }}" x="{{ bar.x }}%" y="{{ bar.y }}" width="{{ bar.width }}%" height="{{ bar.height }}" rx="{{ 2 if bar.height < 10 else 4 }}"/>{% endfor %}</g>
+      {% endfor %}
+      {% for line in g.lines %}<line class="{{ line.cls }}" x1="{{ line.x }}%" x2="{{ line.x }}%" y1="{{ line.tier * 22 + 20 }}" y2="{{ g.bottom }}"/>{% endfor %}
+      {% for line in g.lines %}
+      <svg x="{{ line.x }}%" y="{{ line.tier * 22 + 2 }}" overflow="visible"><rect class="g-flag-bg {{ line.cls }}-flag" x="{{ -line.width if line.flip else 0 }}" y="0" width="{{ line.width }}" height="18" rx="4"/><text class="g-flag-text" x="{{ -line.width + 8 if line.flip else 8 }}" y="13">{{ line.label }}</text></svg>
+      {% endfor %}
+    </svg>
+  </div>
+</div>
+{% if g.note %}<p class="muted">{{ g.note }}</p>{% endif %}
+<ul class="g-legend" aria-label="{{ t('v2.plan.legend') }}">
+  <li><span class="sw sw-done"></span>{{ t("chart.legend.done") }}</li>
+  <li><span class="sw sw-running"></span>{{ t("v2.plan.legend.running") }}</li>
+  <li><span class="sw sw-planned"></span>{{ t("chart.legend.planned") }}</li>
+  <li><span class="sw sw-risk"></span>{{ icon("alert", 16) }}{{ t("v2.plan.risk") }}</li>
+  <li><span class="sw sw-away"></span>{{ t("chart.legend.away") }}</li>
+  <li><span class="sw sw-window"></span>{{ t("v2.plan.legend.band") }}</li>
+  <li><span class="sw sw-deadline"></span>{{ t("chart.legend.deadline") }}</li>
+</ul>

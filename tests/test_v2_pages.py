@@ -142,6 +142,42 @@ def test_the_log_reads_as_the_record(site: Site) -> None:
     assert rows[6][3:5] == ["Sentinel", "Decyzje"] and rows[6][6:9] == ["39", "57", "oczekuje"]
 
 
+def test_the_plan_shows_the_schedule_tasks_and_team(site: Site) -> None:
+    """Plan (8.7): the Gantt chart with the forecast's band and the main risk marked in words,
+    the tasks with a correction only for those not started, and the team's absences by date and
+    next week's workload from the plan, never anyone's performance."""
+    base = f"/v2/projects/{site.project}/plan"
+    schedule = site.client.get(base, params={"lang": "pl"}).text
+    shown = text_of(schedule)
+    assert "Prognoza: najpewniej wt. 22 gru, w złym razie wt. 5 sty 2027" in shown
+    assert "API katalogu produktów ryzyko" in shown and "Pobierz plan (CSV)" in shown
+    assert 'class="bar-away' in schedule and 'class="g-window"' in schedule
+    tasks = site.client.get(base, params={"lang": "pl", "view": "tasks"}).text
+    rows = re.findall(r'<tr id="task-([^"]+)"[^>]*>(.*?)</tr>', tasks, re.S)
+    fixable = {key for key, row in rows if "data-toggle" in row}
+    assert fixable and all("nierozpoczęte" in row for key, row in rows if key in fixable)
+    team = text_of(site.client.get(base, params={"lang": "pl", "view": "team"}).text)
+    assert "Przyszły tydzień: pon. 16 lis – pt. 20 lis" in team
+    assert "Bartosz Kowalski Programista backendu czw. 12 lis – wraca pon. 23 lis" in team
+    assert "nieobecność cały tydzień" in team and "ok. 5 z 5 dni" in team
+    assert "Sentinel nie mierzy niczyjej wydajności" in team
+
+
+@pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
+def test_a_task_not_started_is_corrected_from_the_plan(fresh: Site) -> None:
+    pid, client, headers = fresh.project, fresh.client, fresh.headers
+    path = f"/v2/projects/{pid}/plan/tasks/T4"  # "Integracja płatności", not started, 5 days
+    form = {"duration": "0", "crew_0": "1", "after": "T3"}
+    refused = client.post(path, data=form, headers=headers)
+    assert refused.status_code == 422 and "Podaj liczbę dni roboczych" in text_of(refused.text)
+    saved = client.post(path, data={**form, "duration": "7"}, headers=headers)
+    assert saved.headers["HX-Redirect"].endswith("/plan?view=tasks&done=corrected")
+    log = text_of(client.get(f"/v2/projects/{pid}/log").text)
+    assert "Ty Poprawiono „Integracja płatności”: szacunek 5 → 7 dni" in log
+    started = client.post(f"/v2/projects/{pid}/plan/tasks/T3", data=form, headers=headers)
+    assert started.status_code == 422  # a task under way keeps its definition
+
+
 def test_a_log_cell_is_never_a_formula() -> None:
     item = LogItem(datetime(2026, 11, 9, 9, tzinfo=UTC), "Ty", "=HYPERLINK(1)", "/", "checkin")
     row = list(csv.reader(io.StringIO(csv_of(TextsV2("en"), [item]))))[1]

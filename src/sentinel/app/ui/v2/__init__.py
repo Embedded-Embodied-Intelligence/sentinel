@@ -8,7 +8,17 @@ from sentinel.app.ui.core import Ui
 
 def mount(app: FastAPI, ui: Ui) -> None:
     """Serve the v2 pages; the frame's catch-all project tab comes last."""
-    from sentinel.app.ui.v2 import decision, log, overview, report, shell, start, voice, wizard
+    from sentinel.app.ui.v2 import (
+        decision,
+        log,
+        overview,
+        plan,
+        report,
+        shell,
+        start,
+        voice,
+        wizard,
+    )
 
-    for module in (start, wizard, overview, decision, report, log, voice, shell):
+    for module in (start, wizard, overview, decision, report, log, plan, voice, shell):
         app.include_router(module.router(ui))

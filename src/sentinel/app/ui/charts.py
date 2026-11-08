@@ -112,13 +112,16 @@ class Gantt:
     note: str | None = None  # the gap between the plan's end and the forecast window
 
 
-def flags_in_tiers(lines: Sequence[Line], min_width: int, percent: float = 100.0) -> list[Line]:
+def flags_in_tiers(
+    lines: Sequence[Line], min_width: int, percent: float = 100.0, char: float = FLAG_CHAR
+) -> list[Line]:
     """The lines with their flags placed: each flag on the lowest tier where it overlaps no other,
-    turned to the left of its line if it would run over the plot's end."""
+    turned to the left of its line if it would run over the plot's end; `char` is the width of
+    a character of the flag's text in px."""
     placed: list[Line] = []
     taken: list[list[tuple[float, float]]] = []
     for line in lines:
-        width = (len(line.label) * FLAG_CHAR + 2 * FLAG_PAD) / min_width * percent
+        width = (len(line.label) * char + 2 * FLAG_PAD) / min_width * percent
         flip = line.x + width > percent
         left, right = (line.x - width, line.x) if flip else (line.x, line.x + width)
         tier = next(
@@ -128,7 +131,7 @@ def flags_in_tiers(lines: Sequence[Line], min_width: int, percent: float = 100.0
         if tier == len(taken):
             taken.append([])
         taken[tier].append((left, right))
-        pixels = len(line.label) * FLAG_CHAR + 2 * FLAG_PAD
+        pixels = len(line.label) * char + 2 * FLAG_PAD
         placed.append(
             Line(line.day, line.cls, line.label, line.x, tier, width=pixels, flip=flip),
         )
@@ -147,6 +150,7 @@ def layout(
     ends: Sequence[int] = (),
     px_per_day: int = PX_PER_DAY,
     min_plot: int = MIN_PLOT,
+    flag_char: float = FLAG_CHAR,
 ) -> Gantt:
     """The chart's geometry: the range runs from the project's start to a week after the latest
     thing it shows (the bad case, when there is a forecast)."""
@@ -165,7 +169,9 @@ def layout(
         return round(max(0.0, min(day, horizon)) / horizon * 100, 3)
 
     flags = flags_in_tiers(
-        [Line(day, cls, label, x(day)) for day, cls, label in lines if day <= horizon], min_width
+        [Line(day, cls, label, x(day)) for day, cls, label in lines if day <= horizon],
+        min_width,
+        char=flag_char,
     )
     tiers = 1 + max((f.tier for f in flags), default=0)
     top = tiers * TIER + AXIS
@@ -359,8 +365,10 @@ def live_gantt(
     today: date | None = None,
     window: tuple[date, date] | None = None,
     threats: Mapping[str, str] | None = None,
+    flag_char: float = FLAG_CHAR,
 ) -> Gantt:
-    """The chart of a live project; `window` is the forecast's most likely and bad-case finish."""
+    """The chart of a live project; `window` is the forecast's most likely and bad-case finish;
+    `flag_char` the width in px of a character of the flags (the v2 pages write them larger)."""
     calendar = project.calendar
     current = residual_plan(project)
     rows = rows_of(project, texts, threats, current)
@@ -402,7 +410,9 @@ def live_gantt(
     ends = [current.end]
     if project.baseline is not None:
         ends.append(project.baseline.makespan)
-    gantt = layout(rows, calendar, t, lines, days, texts("chart.title"), desc, texts, ends)
+    gantt = layout(
+        rows, calendar, t, lines, days, texts("chart.title"), desc, texts, ends, flag_char=flag_char
+    )
     if window is not None and calendar.finish_date(current.end) < window[0]:
         # One line on the gap between the plan's end and the forecast window (WP12 test).
         end = texts.date(calendar.finish_date(current.end))

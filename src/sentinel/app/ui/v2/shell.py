@@ -26,7 +26,7 @@ BANNER_MOVE = 10  # a change of the chance in 100 the banner reports (section 7)
 # The tabs of a project (section 7) and the screens of WP16 that are placeholders for now, with
 # the page of the first interface that does their work meanwhile.
 TABS = ("overview", "report", "decisions", "log", "plan", "settings")
-SOON_TABS = {"plan": "report", "settings": "settings"}
+SOON_TABS = {"settings": "settings"}
 SOON_PAGES = {"lab": "/simulator", "settings": "/settings"}
 
 

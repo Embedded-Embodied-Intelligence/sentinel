@@ -92,6 +92,9 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
             clicks=("[data-toggle='form-panel']",),
             scroll="#form-title",
         ),
+        Shot("plan", f"{live}/plan"),
+        Shot("plan_tasks", f"{live}/plan?view=tasks"),
+        Shot("plan_team", f"{live}/plan?view=team"),
         Shot("log", "/v2/log"),
         Shot("project_log", f"{live}/log", clicks=("details.log-entry > summary",)),
         Shot("wizard_basics", "/v2/new"),
@@ -103,7 +106,10 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
 def save(page: Any, target: Path) -> int:
     page.screenshot(path=str(target))
     with Image.open(target) as image:
-        reduced = image.convert("RGB").quantize(COLOURS, dither=Image.Dither.NONE)
+        # Octree keeps the small status colours (bars, dots) that median cut merges away.
+        reduced = image.convert("RGB").quantize(
+            COLOURS, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE
+        )
     reduced.save(target, optimize=True)
     return target.stat().st_size
 
