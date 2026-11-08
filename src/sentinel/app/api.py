@@ -300,17 +300,6 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         )
 
     @app.middleware("http")
-    async def security_headers(
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
-        response = await call_next(request)
-        for name, value in SECURITY_HEADERS.items():
-            response.headers.setdefault(name, value)
-        if config.secure_cookies:
-            response.headers.setdefault("Strict-Transport-Security", HSTS)
-        return response
-
-    @app.middleware("http")
     async def guard(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
@@ -384,6 +373,19 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         token = csrf_token(key, session_id)
         if request.cookies.get(CSRF_COOKIE) != token:
             response.set_cookie(CSRF_COOKIE, token, samesite="strict", secure=config.secure_cookies)
+        return response
+
+    # Added after the guard, so it wraps it: its own answers (a refusal, the probe's redirect,
+    # the page without a sandbox) carry the headers too.
+    @app.middleware("http")
+    async def security_headers(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        response = await call_next(request)
+        for name, value in SECURITY_HEADERS.items():
+            response.headers.setdefault(name, value)
+        if config.secure_cookies:
+            response.headers.setdefault("Strict-Transport-Security", HSTS)
         return response
 
     @app.exception_handler(AppError)

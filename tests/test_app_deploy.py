@@ -200,6 +200,12 @@ def test_every_response_carries_the_security_headers(tmp_path: Path) -> None:
             assert headers["referrer-policy"] == "same-origin"
             assert "microphone=(self)" in headers["permissions-policy"]
             assert headers["strict-transport-security"].startswith("max-age=")
+        client.cookies.clear()  # the guard's own answers: the probe and the page without a sandbox
+        probe = client.get("/v2", follow_redirects=False)
+        preview = client.get("/v2", headers={"user-agent": "Slackbot-LinkExpanding 1.1"})
+        refused = client.post("/v2/projects/x/report", follow_redirects=False)
+        for answer in (probe, preview, refused):
+            assert "frame-ancestors 'none'" in answer.headers["content-security-policy"]
 
 
 def test_the_compose_file_and_the_image() -> None:
