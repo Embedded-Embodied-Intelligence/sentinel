@@ -3,9 +3,12 @@ showcase project: every screen in Polish and English without internal terms, mis
 codes or ISO dates, the theme cookie, the decisions taken from the overview and the decision
 page with the promised numbers shown after an approval (the WP12 guarantee, spec 11.5)."""
 
+import csv
+import io
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,6 +19,8 @@ from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig
 from sentinel.app.services import Services
 from sentinel.app.store import LOCAL_SESSION
+from sentinel.app.ui.v2.log import LogItem, csv_of
+from sentinel.app.ui.v2.text import TextsV2
 
 LANGUAGES = ("pl", "en")
 
@@ -107,6 +112,42 @@ def test_the_overview_says_the_spec_example(site: Site) -> None:
     assert 'data-theme="light"' in html
 
 
+def test_the_log_reads_as_the_record(site: Site) -> None:
+    """Dziennik (8.6): who did what, the effect chips, the pending proposal's brief and fate,
+    the chance over time with a dot per report linked to its entry, the filters and the CSV."""
+    pid = site.project
+    html = site.client.get(f"/v2/projects/{pid}/log", params={"lang": "pl"}).text
+    text = text_of(html)
+    assert "Szansa w czasie" in text and "Pobierz dziennik (CSV)" in text
+    assert "Ty Zapisano raport z pt. 13 lis Szansa 92 → 39 na 100 ▼ gorzej" in text
+    assert "Decyzja w tamtej chwili Szansa 39 → 57 na 100" in text
+    assert "Stan decyzji oczekuje" in text
+    labels = re.findall(r'aria-label="([^"]+)" data-open-entry', html.replace("\xa0", " "))
+    assert labels == [
+        "Plan gotowy: 83 na 100",
+        "Zapisano raport z pt. 6 lis: 92 na 100",
+        "Zapisano raport z pt. 13 lis: 39 na 100",
+    ]
+    anchors = re.findall(r'<a href="#(e-[^"]+)" aria-label', html)
+    assert len(anchors) == 3 and all(f'id="{anchor}"' in html for anchor in anchors)
+    params = {"lang": "pl", "show": "decisions"}
+    only = text_of(site.client.get(f"/v2/projects/{pid}/log", params=params).text)
+    listed = only[only.index("Wpisy") : only.index("Menu główne", only.index("Wpisy"))]
+    assert "Nowa propozycja" in listed and "Zapisano raport" not in listed
+    table = site.client.get(f"/v2/projects/{pid}/log.csv", params={"lang": "pl"})
+    assert table.headers["content-disposition"] == 'attachment; filename="dziennik.csv"'
+    rows = list(csv.reader(io.StringIO(table.text)))
+    assert rows[0][:6] == ["data", "godzina", "projekt", "kto", "rodzaj", "zdarzenie"]
+    assert rows[5][3:8] == ["Ty", "Raporty", "Zapisano raport z pt. 13 lis", "92", "39"]
+    assert rows[6][3:5] == ["Sentinel", "Decyzje"] and rows[6][6:9] == ["39", "57", "oczekuje"]
+
+
+def test_a_log_cell_is_never_a_formula() -> None:
+    item = LogItem(datetime(2026, 11, 9, 9, tzinfo=UTC), "Ty", "=HYPERLINK(1)", "/", "checkin")
+    row = list(csv.reader(io.StringIO(csv_of(TextsV2("en"), [item]))))[1]
+    assert row[5] == "'=HYPERLINK(1)"
+
+
 def test_the_theme_is_remembered_in_a_cookie(site: Site) -> None:
     response = site.client.get("/v2/theme/dark", params={"next": "/v2"}, follow_redirects=False)
     assert response.status_code == 303 and response.headers["location"] == "/v2"
@@ -191,6 +232,9 @@ def test_rejection_needs_a_reason_and_keeps_it(fresh: Site) -> None:
     assert "odrzucona" in archive and f"Powód: Inny powód: „{words}”" in archive
     overview = text_of(fresh.client.get(f"/v2/projects/{fresh.project}").text)
     assert "Nic nie czeka na Twoją decyzję" in overview
+    log = text_of(fresh.client.get(f"/v2/projects/{fresh.project}/log").text)
+    assert "Ty Odrzucono: Zastępstwo" in log and "(inny powód)" in log  # the fate in the log
+    assert log.count(f"Stan decyzji odrzucona Powód: Inny powód: „{words}”") == 2  # 8.6
 
 
 @pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)

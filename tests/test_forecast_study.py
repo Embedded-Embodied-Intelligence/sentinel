@@ -249,6 +249,7 @@ def test_config_rejects_invalid_values(
         ForecastStudyConfig.model_validate(raw)
 
 
+@pytest.mark.slow  # 2-4 s: out of the default run since WP16 (90 s budget), in -m slow
 def test_smoke_run_writes_all_outputs_and_reproduces_wp2b(
     fake_study: Path, fake_wp2b: Path, tmp_path: Path
 ) -> None:
@@ -711,6 +712,7 @@ def test_reference_rows_are_joined_checked_and_marked(
     ]
 
 
+@pytest.mark.slow  # 2-4 s: out of the default run since WP16 (90 s budget), in -m slow
 def test_summariser_never_writes_its_inputs(synthetic_run: Path) -> None:
     """forecasts.csv.gz and manifest.json stay byte-identical with their modification times,
     even when read-only, and the summary manifest records their SHA-256."""

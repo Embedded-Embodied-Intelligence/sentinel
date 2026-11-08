@@ -343,6 +343,7 @@ def intervention_day(instance: ProjectInstance, plan: Schedule, seed: int) -> in
     return later[len(later) // 2] if later else None
 
 
+@pytest.mark.slow  # 2-4 s: out of the default run since WP16 (90 s budget), in -m slow
 def test_operations_act_alike_in_a_resumed_run_and_in_the_world(build: Builder) -> None:
     """A run rebuilt at an epoch from the observation and the true hidden state, continued with
     a copy of the policy, the world's streams and its D2 counters, applies the same SUBST and

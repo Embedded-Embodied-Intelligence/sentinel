@@ -1,0 +1,69 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% macro query(show_value, project_value) %}?show={{ show_value }}{% if project_value %}&amp;project={{ project_value }}{% endif %}{% endmacro %}
+{% block content %}
+{% if not project %}<header class="v2-head"><h1>{{ t("v2.log.title") }}</h1></header>{% endif %}
+<div class="log-tools">
+  <nav aria-label="{{ t('v2.log.filters') }}">
+    <ul class="filters">
+      {% for key in filters %}<li><a href="{{ base }}{{ query(key, picked) }}"{% if show == key %} aria-current="true"{% endif %}>{{ t("v2.log.filter." ~ key) }}</a></li>{% endfor %}
+    </ul>
+  </nav>
+  <a class="btn" href="{{ base }}.csv{{ query(show, picked) }}" download>{{ icon("download", 20) }}{{ t("v2.log.download") }}</a>
+</div>
+{% if projects | length > 1 %}
+<nav aria-label="{{ t('v2.log.projects') }}">
+  <ul class="filters filters-quiet">
+    <li><a href="{{ base }}{{ query(show, none) }}"{% if not picked %} aria-current="true"{% endif %}>{{ t("v2.log.all_projects") }}</a></li>
+    {% for pid, name in projects %}<li><a href="{{ base }}{{ query(show, pid) }}"{% if picked == pid %} aria-current="true"{% endif %}>{{ name }}</a></li>{% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% if not chart and projects | length > 1 and not picked %}<p class="muted">{{ t("v2.log.chart.pick") }}</p>{% endif %}
+{% if chart %}
+<section class="card section" aria-labelledby="chance-time-title">
+  <div class="section-head"><h2 id="chance-time-title" class="overline">{{ t("v2.log.chart.title") }}</h2><span class="muted small">{{ t("v2.log.chart.hint") }}</span></div>
+  <svg class="chance-time" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="group" aria-labelledby="chance-time-title">
+    <rect class="zone-good" x="{{ chart.left }}" y="{{ chart.top }}" width="{{ chart.right - chart.left }}" height="{{ chart.lines[0][1] - chart.top }}"/>
+    <rect class="zone-warn" x="{{ chart.left }}" y="{{ chart.lines[0][1] }}" width="{{ chart.right - chart.left }}" height="{{ chart.lines[1][1] - chart.lines[0][1] }}"/>
+    <rect class="zone-bad" x="{{ chart.left }}" y="{{ chart.lines[1][1] }}" width="{{ chart.right - chart.left }}" height="{{ chart.bottom - chart.lines[1][1] }}"/>
+    {% for n, y in chart.lines %}<line class="threshold" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ y }}" y2="{{ y }}"/><text class="axis-label" x="{{ chart.left - 8 }}" y="{{ y + 5 }}" text-anchor="end">{{ n }}</text>{% endfor %}
+    <text class="axis-label" x="{{ chart.left - 8 }}" y="{{ chart.bottom + 5 }}" text-anchor="end">0</text>
+    <path class="trend" d="{{ chart.path }}"/>
+    {% for p in chart.points %}
+    <a href="#{{ p.anchor }}" aria-label="{{ p.name }}" data-open-entry="{{ p.anchor }}">
+      <circle class="pt pt-{{ p.state }}{% if loop.last %} pt-last{% endif %}" cx="{{ p.x }}" cy="{{ p.y }}" r="{{ 9 if loop.last else 7 }}"/>
+      <text class="pt-value" x="{{ p.x }}" y="{{ p.y - 14 }}" text-anchor="middle">{{ p.n }}</text>
+    </a>
+    <text class="axis-label" x="{{ p.x }}" y="{{ chart.bottom + 24 }}" text-anchor="{{ 'start' if p.x < chart.left + 30 else 'end' if p.x > chart.right - 30 else 'middle' }}">{{ p.label }}</text>
+    {% endfor %}
+  </svg>
+</section>
+{% endif %}
+<section class="section" aria-labelledby="entries-title">
+  <h2 id="entries-title" class="vh">{{ t("v2.log.entries") }}</h2>
+  {% for day in days %}
+  <h3 class="overline log-day">{% if day.day == today %}{{ t("v2.log.today") }}{% else %}{{ t.date(day.day) }}{% endif %}</h3>
+  <ul class="card log">
+    {% for item in day.items %}{% set local = item.when.astimezone() %}{% set d = item.detail %}
+    <li{% if item.anchor %} id="{{ item.anchor }}"{% endif %}>
+      {% if d and (d.lines or d.chips or d.fate) %}
+      <details class="log-entry">
+        <summary><span class="time num">{{ local.strftime("%H:%M") }}</span><span class="actor">{{ item.actor }}</span><span class="what">{{ item.text }}</span>{% if item.chip %}{{ m.chip(t, item.chip) }}{% endif %}</summary>
+        <div class="log-detail stack-sm">
+          {% if d.lines %}<ul class="bullets">{% for line in d.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% endif %}
+          {% if d.chips %}<p class="label">{{ t("v2.log.brief") }}</p>{{ m.effect_chips(t, d.chips) }}{% endif %}
+          {% if d.valid or (d.delay and d.delay >= 1) %}<p class="muted">{% if d.valid %}{{ t("v2.decision.valid", date=t.date(d.valid)) | capitalize }}.{% endif %}{% if d.delay and d.delay >= 1 %} {{ t("v2.dec.delay_text", n=d.delay) }}{% endif %}</p>{% endif %}
+          {% if d.fate %}<p class="row"><span class="label">{{ t("v2.log.fate") }}</span>{{ m.life_badge(t, d.fate) }}{% if d.reason %}<span>{{ t("v2.decisions.reason", reason=d.reason) }}{% if d.note %}: „{{ d.note }}”{% endif %}</span>{% endif %}</p>{% endif %}
+          {% if "/decisions/" in item.href %}<p><a href="{{ item.href }}">{{ t("v2.log.open_decision") }} ›</a></p>{% endif %}
+        </div>
+      </details>
+      {% else %}
+      <div class="log-entry log-flat"><span class="time num">{{ local.strftime("%H:%M") }}</span><span class="actor">{{ item.actor }}</span><a class="what" href="{{ item.href }}">{{ item.text }}</a>{% if item.chip %}{{ m.chip(t, item.chip) }}{% endif %}</div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="card muted">{% if total %}{{ t("v2.log.none_shown") }}{% else %}{{ t("v2.log.empty") }}{% endif %}</p>{% endfor %}
+</section>
+{% endblock %}

@@ -3,16 +3,17 @@ every project sorted by their validity date (a hard date, never an AI's judgemen
 tiles, the recent events of the log, and three large cards on the first visit."""
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
 from sentinel.app import showcase
-from sentinel.app.events import OPEN, Decided, LiveState, parse
+from sentinel.app.events import OPEN
 from sentinel.app.ui.core import Ui
 from sentinel.app.ui.text import MINUS
 from sentinel.app.ui.v2.decision import Validity, validity_view
+from sentinel.app.ui.v2.log import LogItem, entries
 from sentinel.app.ui.v2.numbers import per_hundred
 from sentinel.app.ui.v2.shell import PREFIX, page, texts
 from sentinel.app.ui.v2.status import Status, status
@@ -45,14 +46,6 @@ class Todo:
     order: tuple[int, date]
 
 
-@dataclass(frozen=True)
-class FeedItem:
-    when: datetime
-    actor: str
-    text: str
-    href: str
-
-
 def effect_of(t: TextsV2, view: ProjectView, seq: int) -> str:
     rec = next((r for r in view.recommendations if r.seq == seq), None)
     if rec is None or rec.with_action is None or rec.without is None:
@@ -61,93 +54,11 @@ def effect_of(t: TextsV2, view: ProjectView, seq: int) -> str:
     return t("v2.chance.value", n=f"{gain:+d}".replace("-", MINUS))
 
 
-def feed(t: TextsV2, view: ProjectView, state: LiveState, rows: list) -> list[FeedItem]:  # type: ignore[type-arg]
-    """The project's log as people read it (sections 3 and 8.1): who did what, and when."""
-    you, sentinel = t("v2.actor.you"), t("v2.actor.sentinel")
-    base = f"{PREFIX}/projects/{view.id}"
-    titles = {r.seq: r.title for r in view.recommendations}
-    acts = {r.seq for r in view.recommendations if r.acts}
-    found: list[FeedItem] = []
-    checkin_times = [row.created for row in rows if row.type == "checkin"]
-    for row in rows:
-        kind = row.type
-        name = f"{view.name}: "
-        if kind == "created":
-            found.append(FeedItem(row.created, you, name + t("v2.event.created"), base))
-        elif kind == "baseline":
-            found.append(FeedItem(row.created, sentinel, name + t("v2.event.plan"), base))
-        elif kind == "checkin":
-            day = date.fromisoformat(row.payload["checkin"]["date"])
-            found.append(
-                FeedItem(row.created, you, name + t("v2.event.report", date=t.date(day)), base)
-            )
-        elif kind == "recommendation":
-            title = titles.get(row.seq, "")
-            entry = state.recommendation(row.seq)
-            if entry is not None and entry.status == "auto":
-                text = t("v2.event.auto", title=title)
-            elif row.seq in acts:
-                text = t("v2.event.proposal", title=title)
-            else:
-                text = t("v2.event.no_change")
-            found.append(
-                FeedItem(
-                    row.created,
-                    sentinel,
-                    name + text,
-                    f"{base}/decisions/{row.seq}" if row.seq in acts else base,
-                )
-            )
-            if entry is not None and entry.status == "superseded":
-                later = next((when for when in checkin_times if when > row.created), None)
-                if later is not None:
-                    text = t("v2.event.superseded", title=title)
-                    found.append(
-                        FeedItem(later, sentinel, name + text, f"{base}/decisions/{row.seq}")
-                    )
-        elif kind in ("decision", "correction", "expiry", "undo"):
-            event = parse(row)
-            seq = getattr(event, "recommendation", 0)
-            title = titles.get(seq, "")
-            href = f"{base}/decisions/{seq}"
-            if isinstance(event, Decided):
-                if event.verdict == "approve":
-                    key = "v2.event.discarded" if event.discarded else "v2.event.approved"
-                    text = t(key, title=title)
-                elif event.verdict == "reject":
-                    if event.reason is not None:
-                        text = t(
-                            "v2.event.rejected_why",
-                            title=title,
-                            reason=t(f"v2.reject.{event.reason}").lower(),
-                        )
-                    else:
-                        text = t("v2.event.rejected", title=title)
-                else:
-                    text = t("v2.event.postponed", title=title)
-                found.append(FeedItem(row.created, you, name + text, href))
-            elif kind == "correction":
-                found.append(
-                    FeedItem(row.created, you, name + t("v2.event.adjusted", title=title), href)
-                )
-            elif kind == "expiry":
-                found.append(
-                    FeedItem(row.created, sentinel, name + t("v2.event.expired", title=title), href)
-                )
-            else:
-                found.append(
-                    FeedItem(row.created, you, name + t("v2.event.undone", title=title), href)
-                )
-        elif kind == "definition":
-            found.append(FeedItem(row.created, you, name + t("v2.event.definition"), base))
-    return found
-
-
 @dataclass(frozen=True)
 class Overview:
     tiles: list[Tile]
     todos: list[Todo]
-    events: list[FeedItem]
+    events: list[LogItem]
 
 
 def overview(ui: Ui, request: Request, with_feed: bool = True) -> Overview:
@@ -159,7 +70,7 @@ def overview(ui: Ui, request: Request, with_feed: bool = True) -> Overview:
     today = date.today()
     tiles: list[Tile] = []
     todos: list[Todo] = []
-    events: list[FeedItem] = []
+    events: list[LogItem] = []
     for summary in services.projects(session):
         if summary.kind != "live":
             continue
@@ -189,7 +100,7 @@ def overview(ui: Ui, request: Request, with_feed: bool = True) -> Overview:
             )
         if with_feed:
             rows = services.store.events(session, summary.id)
-            events += feed(t, view, state, rows)
+            events += entries(t, view, state, rows)
     todos.sort(key=lambda todo: todo.order)
     rank = {id(item): i for i, item in enumerate(events)}  # the log's order breaks ties
     events.sort(key=lambda item: (item.when, rank[id(item)]), reverse=True)

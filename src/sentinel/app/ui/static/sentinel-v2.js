@@ -53,6 +53,15 @@
     if (first) first.focus({ preventScroll: true });
   });
 
+  // A dot of "Szansa w czasie" opens its entry of the log as it scrolls to it (section 8.6).
+  document.addEventListener("click", function (event) {
+    var dot = event.target.closest && event.target.closest("[data-open-entry]");
+    if (!dot) return;
+    var entry = document.getElementById(dot.getAttribute("data-open-entry"));
+    var details = entry && entry.querySelector("details");
+    if (details) details.open = true;
+  });
+
   // The fields of a panel inside a form that are not the form's own (the per-task form in the
   // report) do not recompute what the form shows.
   document.querySelectorAll("[data-quiet]").forEach(function (panel) {

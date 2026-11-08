@@ -50,6 +50,10 @@ PATHS = {
     "calendar": '<rect x="4" y="5" width="16" height="15" rx="2"/>'
     '<path d="M4 10h16M9 3v4M15 3v4"/>',
     "upload": '<path d="M12 16V4M7 9l5-5 5 5M5 20h14"/>',
+    "download": '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',
+    "link": '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/>'
+    '<path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    "trash": '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     "x": '<path d="M6 6l12 12M18 6L6 18"/>',
 }
 SIZES = (12, 14, 16, 20, 24, 40)

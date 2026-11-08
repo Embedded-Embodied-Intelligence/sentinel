@@ -19,3 +19,7 @@
 {% macro life_badge(t, state) -%}
 <span class="life life-{{ state }}">{{ t("v2.life." ~ state) }}</span>
 {%- endmacro %}
+
+{% macro chip(t, c) -%}
+<span class="chip chip-{{ c.tone }} num">{{ c.text }}{% if c.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif c.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</span>
+{%- endmacro %}

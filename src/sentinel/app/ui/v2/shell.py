@@ -26,8 +26,8 @@ BANNER_MOVE = 10  # a change of the chance in 100 the banner reports (section 7)
 # The tabs of a project (section 7) and the screens of WP16 that are placeholders for now, with
 # the page of the first interface that does their work meanwhile.
 TABS = ("overview", "report", "decisions", "log", "plan", "settings")
-SOON_TABS = {"log": "history", "plan": "report", "settings": "settings"}
-SOON_PAGES = {"log": "/", "lab": "/simulator", "settings": "/settings"}
+SOON_TABS = {"plan": "report", "settings": "settings"}
+SOON_PAGES = {"lab": "/simulator", "settings": "/settings"}
 
 
 def theme_of(request: Request) -> Theme:
@@ -177,10 +177,6 @@ def router(ui: Ui) -> APIRouter:
             old=old,
             **values,
         )
-
-    @routes.get(PREFIX + "/log")
-    def log_soon(request: Request) -> Response:
-        return soon(request, "log", SOON_PAGES["log"])
 
     @routes.get(PREFIX + "/lab")
     def lab_soon(request: Request) -> Response:

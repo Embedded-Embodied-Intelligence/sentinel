@@ -451,3 +451,40 @@ textarea.input { min-height: 132px; resize: vertical; }
 .task-form:has(input[value="in_progress"]:checked) .when-begun,
 .task-form:has(input[value="done"]:checked) .when-done,
 .task-form:has(input[value="done"]:checked) .when-begun { display: grid; }
+
+/* ---- Dziennik (WP16, section 8.6) */
+.log-tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.filters { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.filters a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--text); text-decoration: none; font-weight: 600; background: var(--surface); }
+.filters a:hover { border-color: var(--accent); color: var(--accent); }
+.filters a[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.filters-quiet { margin-bottom: 16px; }
+.filters-quiet a { font-weight: 500; }
+.chance-time { width: 100%; height: auto; display: block; margin-top: 8px; overflow: visible; }
+.chance-time .zone-good { fill: var(--zone-good); }
+.chance-time .zone-warn { fill: var(--zone-warn); }
+.chance-time .zone-bad { fill: var(--zone-bad); }
+.chance-time .threshold { stroke: var(--line-strong); stroke-dasharray: 4 4; }
+.chance-time .trend { fill: none; stroke: var(--text-2); stroke-width: 2.5; stroke-linejoin: round; }
+.chance-time .pt { stroke: var(--surface); stroke-width: 3; }
+.chance-time .pt-good { fill: var(--good); }
+.chance-time .pt-warn { fill: var(--warn); }
+.chance-time .pt-bad { fill: var(--bad); }
+.chance-time a:focus-visible .pt, .chance-time a:hover .pt { stroke: var(--focus); stroke-width: 4; }
+.chance-time a:focus-visible { outline: none; }
+.chance-time .pt-value { font: 700 16px var(--font); fill: var(--text); font-variant-numeric: tabular-nums; }
+.chance-time .axis-label { font: 500 14px var(--font); fill: var(--muted); }
+.log-day { margin: 24px 0 8px; }
+.log { list-style: none; padding: 4px 24px; margin: 0; }
+.log > li { border-bottom: 1px solid var(--line); scroll-margin-top: 24px; }
+.log > li:last-child { border-bottom: 0; }
+.log > li:target { background: var(--accent-soft); border-radius: 12px; margin: 0 -12px; padding: 0 12px; }
+.log-entry > summary, .log-flat { display: grid; grid-template-columns: 56px 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; min-height: 48px; }
+.log-entry > summary { cursor: pointer; list-style: none; }
+.log-entry > summary::-webkit-details-marker { display: none; }
+.log-entry > summary .what::before { content: "▸"; display: inline-block; width: 18px; color: var(--muted); }
+.log-entry[open] > summary .what::before { content: "▾"; }
+.log-flat .what { padding-left: 18px; }
+.log-entry .time, .log-flat .time { color: var(--muted); }
+.log-entry .actor, .log-flat .actor { font-weight: 650; }
+.log-detail { padding: 0 0 16px 182px; }
