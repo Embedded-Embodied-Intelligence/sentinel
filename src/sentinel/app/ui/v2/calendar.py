@@ -63,7 +63,7 @@ def entries_of(
             else:
                 last = max(first, absence.return_date - timedelta(days=1))
                 found.append(Entry(uid, t("v2.cal.away", name=person.name), first, last))
-    titles = {rec.seq: rec.title for rec in view.recommendations}
+    titles = {rec.seq: rec.headline or rec.title for rec in view.recommendations}
     for seq, day in valid.items():
         summary = t("v2.cal.valid", title=titles.get(seq, ""))
         found.append(Entry(f"{pid}-valid-{seq}@sentinel", summary, day, day))

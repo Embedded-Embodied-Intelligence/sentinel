@@ -17,6 +17,7 @@ from sentinel.app.events import LiveState, LlmExplanation, RecommendationEntry, 
 from sentinel.app.live import AppliedAction, Issue, LiveProject, Tracked, validate_definition
 from sentinel.app.messages import render
 from sentinel.app.models import Language, ProjectDefinition
+from sentinel.app.names import accusative
 from sentinel.app.planning import (
     ForecastResult,
     Impact,
@@ -137,10 +138,13 @@ class ChangeView(View):
 
 class AlternativeView(View):
     """An option compared with the recommended action; `dropped`: racing set it aside early in
-    the deliberation (spec section 6)."""
+    the deliberation (spec section 6); `headline` its short title and `action` its kind of
+    action (`action_of`)."""
 
     label: str
     title: str
+    headline: str = ""
+    action: str = ""
     p_on_time: float
     tardiness: float
     expected_cost: float
@@ -166,7 +170,10 @@ class RecommendationView(View):
     automatic plan change can be undone. `compared`: its figures come from the comparison on
     the forecast's simulated futures (v2.0.2), not from the deliberation's own; `options`: the
     number of candidates Sentinel weighed; `tie`: an alternative shown has a higher chance than
-    the action, so the page says why in one sentence (v2.0.4)."""
+    the action, so the page says why in one sentence (v2.0.4). `headline`: the action's short
+    title, `action`: its kind of action (`action_of`), `eps_d` and `eps_t`: the materiality
+    thresholds of the chance and the expected delay (spec section 6), for the reasoning of v2.
+    """
 
     seq: int
     day: int
@@ -177,6 +184,10 @@ class RecommendationView(View):
     label: str
     kind: str
     title: str
+    headline: str = ""
+    action: str = ""
+    eps_d: float = 0.02
+    eps_t: float = 0.5
     acts: bool
     level: int
     needs_approval: bool
@@ -560,6 +571,91 @@ def _lower_first(text: str) -> str:
     return text[:1].lower() + text[1:]
 
 
+TITLE_LIMIT = 60  # characters of a decision's short title (WP16 hotfix)
+PLAN_KINDS = frozenset({"shift", "reseq"})
+
+
+def action_of(decision: Decision) -> str:
+    """A decision's kind of action (WP16 hotfix): its operations other than a plan change
+    ("subst", "overtime", "descope", joined by "+"), "plan" for a plan change alone, "noop" for
+    none; the same action with a re-plan is the same kind."""
+    kinds = sorted({op.kind for op in decision.operations if op.kind not in PLAN_KINDS})
+    if kinds:
+        return "+".join(kinds)
+    return "plan" if decision.operations else "noop"
+
+
+def first_names(project: LiveProject) -> dict[str, str]:
+    """A team member's first word of their name, where no one else in the team shares it."""
+    words = {p.key: p.name.split()[0] for p in project.definition.team if p.name.split()}
+    counts: dict[str, int] = {}
+    for word in words.values():
+        counts[word] = counts.get(word, 0) + 1
+    return {key: word for key, word in words.items() if counts[word] == 1}
+
+
+def headline(
+    decision: Decision,
+    project: LiveProject,
+    day: int,
+    language: Language,
+    applied: AppliedAction | None = None,
+) -> str:
+    """A decision's short title (WP16 hotfix): its first operation that is not a plan change in
+    a few plain words, by first names, the person stood in for declined in Polish ("Cezary
+    zastępuje Bartosza w „API katalogu produktów”"), without the task if that keeps it within
+    `TITLE_LIMIT` characters, "(+n)" for the further operations; a plan change alone by its
+    kind. The full wording (`describe`) is listed under "Kogo dotyczy"."""
+    if not decision.operations:
+        return render("action_noop", language)
+    model = project.require_model()
+    keys = {j: key for key, j in project.activity_ids().items()}
+    nodes = project.nodes()
+    names = person_names(project, language)
+    short = first_names(project)
+    parts: list[tuple[str, str]] = []  # with the task, without it
+    plan = None
+    for op in decision.operations:
+        match op:
+            case Subst():
+                task = nodes[keys[op.activity]].name
+                for worker, absent in replaced_members(project, op, day, applied):
+                    values = {"worker": short.get(worker, names.get(worker, worker)), "task": task}
+                    if absent is None:
+                        code = "headline_join"
+                    else:
+                        whom = accusative(short[absent], language) if absent in short else None
+                        code = "headline_subst" if whom is not None else "headline_subst_named"
+                        values["absent"] = whom or names.get(absent, absent)
+                    parts.append(
+                        (render(code, language, values), render(f"{code}_short", language, values))
+                    )
+            case Overtime():
+                code = "headline_overtime_one" if op.workers == 1 else "headline_overtime_many"
+                hire = {"count": op.workers, "role": model.role_names[op.role], "days": op.days}
+                bare = render(f"{code}_short", language, hire)
+                parts.append((render(code, language, hire), bare))
+            case Descope():
+                values = {"task": nodes[keys[op.activity]].name}
+                parts.append(
+                    (
+                        render("headline_descope", language, values),
+                        render("headline_descope_short", language),
+                    )
+                )
+            case Shift():
+                plan = render("headline_shift", language)
+            case Reseq():
+                plan = render("headline_reseq", language)
+    if not parts:
+        return plan or render("action_noop", language)
+    full, brief = parts[0]
+    first = full if len(full) <= TITLE_LIMIT else brief
+    if len(parts) > 1:
+        return render("headline_more", language, {"first": first, "n": len(parts) - 1})
+    return first
+
+
 def replaced_members(
     project: LiveProject, op: Subst, day: int, applied: AppliedAction | None = None
 ) -> list[tuple[str, str | None]]:
@@ -681,11 +777,23 @@ def recommendation_view(
             return render("action_noop", language)
         return describe(c.decision, c.kind, project, recommendation.day, language, applied)
 
+    def short(label: str) -> str:
+        c = records.get(label)
+        if c is None:
+            return render("action_noop", language)
+        return headline(c.decision, project, recommendation.day, language, applied)
+
+    def action(label: str) -> str:
+        c = records.get(label)
+        return "noop" if c is None else action_of(c.decision)
+
     if recommendation.comparison is not None:
         alternatives = [
             AlternativeView(
                 label=i.label,
                 title=title(i.label),
+                headline=short(i.label),
+                action=action(i.label),
                 p_on_time=i.p_on_time,
                 tardiness=i.tardiness,
                 expected_cost=i.mean_cost,
@@ -700,6 +808,8 @@ def recommendation_view(
             AlternativeView(
                 label=c.label,
                 title=title(c.label),
+                headline=short(c.label),
+                action=action_of(c.decision),
                 p_on_time=c.p_on_time,
                 tardiness=c.tardiness,
                 expected_cost=c.mean_cost,
@@ -721,6 +831,10 @@ def recommendation_view(
         label=record.chosen,
         kind=kind,
         title=describe(decision, kind, project, recommendation.day, language, applied),
+        headline=headline(decision, project, recommendation.day, language, applied),
+        action=action_of(decision),
+        eps_d=params.eps_d,
+        eps_t=params.eps_t,
         acts=recommendation.acts,
         level=decision.level,
         needs_approval=needs_approval,

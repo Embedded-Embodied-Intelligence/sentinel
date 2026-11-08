@@ -2,15 +2,20 @@
 demo's per-visitor limits, the Docker files and the scripts."""
 
 import re
+import socket
 import subprocess
+import threading
+import time
 from pathlib import Path
 
+import httpx
 import pytest
+import uvicorn
 from fastapi.testclient import TestClient
 
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig, Limits, load_config
-from sentinel.app.security import client_address
+from sentinel.app.security import client_address, is_local
 
 ROOT = Path(__file__).resolve().parents[1]
 PROXY = ("127.0.0.1", 40000)  # the funnel's proxy connects from the server itself
@@ -59,6 +64,68 @@ def test_the_demo_limits_each_visitor_by_the_address_the_proxy_saw(tmp_path: Pat
             for i in range(3)
         ]
         assert forged == [200, 200, 429]  # one bucket: the 404 above counted too
+
+
+def _own_address() -> str | None:
+    """This machine's address towards the outside, if it has a route (nothing is sent)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+        try:
+            probe.connect(("192.0.2.1", 9))
+        except OSError:
+            return None
+        return str(probe.getsockname()[0])
+
+
+def test_the_local_proxy_is_any_address_of_this_machine() -> None:
+    assert is_local("127.0.0.1") and is_local("127.0.0.2") and is_local("::1")
+    assert is_local("::ffff:127.0.0.1")
+    assert not is_local("192.0.2.1") and not is_local("198.51.100.4")
+    assert not is_local("0.0.0.0") and not is_local("?") and not is_local(None)
+    own = _own_address()
+    if own is not None and not own.startswith("127."):
+        # Under WSL2 with Docker a connection to 127.0.0.1 arrives from eth0's address.
+        assert is_local(own)
+        assert client_address(own, "203.0.113.7", True) == "203.0.113.7"
+        assert client_address(own, f"203.0.113.7, {own}", True) == "203.0.113.7"
+
+
+def test_the_running_demo_answers_the_local_proxy_with_the_forwarded_address(
+    tmp_path: Path,
+) -> None:
+    """Through a real socket, as `sentinel ui --demo` serves it (WP16 hotfix: the host
+    rewrote 127.0.0.1 to eth0's address, which the in-process test client never shows)."""
+    config = load_config(ROOT / "configs" / "app_demo.toml", data_dir=tmp_path, showcase=False)
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+    server = uvicorn.Server(
+        uvicorn.Config(  # as `sentinel ui` runs it: uvicorn's proxy handling off
+            create_app(config),
+            host="127.0.0.1",
+            port=port,
+            log_level="warning",
+            proxy_headers=False,
+        )
+    )
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    try:
+        deadline = time.monotonic() + 30
+        while not server.started and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert server.started, "the server did not start"
+        seen = httpx.get(
+            f"http://127.0.0.1:{port}/api/client-address",
+            headers={"X-Forwarded-For": "203.0.113.7"},
+            timeout=10,
+        )
+        assert seen.status_code == 200, seen.text
+        body = seen.json()
+        assert body["address"] == "203.0.113.7" and body["trusted"] and body["limited"]
+        assert is_local(body["peer"])
+    finally:
+        server.should_exit = True
+        thread.join(timeout=10)
 
 
 def test_the_compose_file_and_the_image() -> None:

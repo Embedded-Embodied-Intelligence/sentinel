@@ -151,13 +151,14 @@ Instead of tmux, `scripts/run_demo.sh start --systemd` installs and starts the u
 running after you log out only with `loginctl enable-linger $USER` (root, once).
 
 **Check the visitor addresses.** The limits (120 requests a minute per address) must see each
-visitor, not the proxy. The app trusts `X-Forwarded-For` only from 127.0.0.1, the funnel's
-local proxy, and takes the last address the proxy added, so a visitor cannot pick an address;
-uvicorn's own proxy handling is off. `scripts/run_demo.sh check` sends a request as the proxy
+visitor, not the proxy. The app trusts `X-Forwarded-For` only from this machine, the funnel's
+local proxy (127.0.0.1, or one of the machine's own addresses: under WSL2 with Docker a
+connection to 127.0.0.1 can arrive from eth0's address), and takes the last address the proxy
+added, so a visitor cannot pick an address; uvicorn's own proxy handling is off. `scripts/run_demo.sh check` sends a request as the proxy
 would and expects that address back. With the funnel on, open
 `https://<machine>.<tailnet>.ts.net/api/client-address` on a phone on mobile data (outside the
 tailnet): `"address"` must be the phone's public address and `"trusted": true`. The endpoint
-answers only requests that reach the app from 127.0.0.1 (a request from elsewhere gets 404) and
+answers only requests that reach the app from this machine (a request from elsewhere gets 404) and
 shows nothing but the requester's own address.
 
 ### The request log for the usability test

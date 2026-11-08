@@ -120,8 +120,18 @@
 /* ---- base */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* A wide window (an external screen, a zoomed-out browser) scales the layout of 1440 px up
+   instead of leaving it pinned to the left (WP16 hotfix); 1440 and 1280 are as designed. */
+:root { --zoom: 1; }
+@media (min-width: 1600px) { :root { --zoom: 1.1; } }
+@media (min-width: 1760px) { :root { --zoom: 1.2; } }
+@media (min-width: 1920px) { :root { --zoom: 1.3; } }
+@media (min-width: 2080px) { :root { --zoom: 1.4; } }
+@media (min-width: 2240px) { :root { --zoom: 1.5; } }
+@media (min-width: 2560px) { :root { --zoom: 1.7; } }
 body {
   margin: 0;
+  zoom: var(--zoom);
   min-width: 1180px;
   font: 400 17px/1.5 var(--font);
   color: var(--text);
@@ -149,9 +159,9 @@ a:hover { color: var(--accent-hover); }
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
 
 /* ---- shell: glass sidebar and the content */
-.v2-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.v2-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: calc(100vh / var(--zoom)); }
 .v2-side {
-  position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 24px;
+  position: sticky; top: 0; height: calc(100vh / var(--zoom)); display: flex; flex-direction: column; gap: 24px;
   padding: 24px 16px; background: var(--glass); border-right: 1px solid var(--glass-line);
   -webkit-backdrop-filter: saturate(160%) blur(18px); backdrop-filter: saturate(160%) blur(18px);
 }
@@ -174,7 +184,7 @@ a:hover { color: var(--accent-hover); }
 .v2-switch-label { font-size: 14px; color: var(--muted); font-weight: 600; }
 .v2-version { color: var(--muted); font-size: 14px; }
 .v2-old { font-size: 14px; }
-.v2-main { padding: 24px 48px 64px; max-width: 1240px; width: 100%; }
+.v2-main { padding: 24px 48px 64px; max-width: 1240px; width: 100%; margin-inline: auto; }
 .v2-demo { margin: 0 0 16px; padding: 8px 16px; border-radius: 12px; background: var(--neutral-bg); color: var(--text-2); font-size: 15px; }
 
 /* ---- page header and project tabs */
@@ -320,7 +330,7 @@ details.help p { margin-top: 8px; color: var(--text-2); font-size: 16px; }
 .effects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .effect { padding: 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
 .effect .label { color: var(--muted); font-size: 15px; font-weight: 600; }
-.effect .value { font-size: 19px; line-height: 26px; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
+.effect .value { font-size: 19px; line-height: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .effect .arrow { font-size: 18px; }
 .effect-good .arrow { color: var(--good); }
 .effect-bad .arrow { color: var(--bad); }

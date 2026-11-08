@@ -7,6 +7,7 @@ The PNGs go to docs/ui/v2/ as `<lang>_<theme>_<screen>_<width>.png` with a reduc
 Take them after a version bump: the sidebar shows the installed package's version.
 
     uv run python scripts/ui_v2_screenshots.py [--lang pl en] [--theme light dark] [--only overview]
+        [--size 2096x1165 390x844]   # other window sizes than 1440x900 and 1280x800
 """
 
 import argparse
@@ -166,9 +167,15 @@ def save(page: Any, target: Path) -> int:
 
 
 def capture(
-    browser: Any, base: str, shots: list[Shot], language: str, theme: str, out: Path
+    browser: Any,
+    base: str,
+    shots: list[Shot],
+    language: str,
+    theme: str,
+    out: Path,
+    sizes: tuple[tuple[int, int], ...] = SIZES,
 ) -> None:
-    for width, height in SIZES:
+    for width, height in sizes:
         context = browser.new_context(
             viewport={"width": width, "height": height},
             locale=LOCALES[language],
@@ -213,7 +220,11 @@ def main() -> int:
     parser.add_argument("--theme", nargs="+", choices=THEMES, default=list(THEMES))
     parser.add_argument("--out", type=Path, default=Path("docs/ui/v2"))
     parser.add_argument("--only", nargs="*", default=None, help="only these screens")
+    parser.add_argument("--size", nargs="+", default=None, help="window sizes as WIDTHxHEIGHT")
     args = parser.parse_args()
+    sizes = SIZES
+    if args.size:
+        sizes = tuple((int(w), int(h)) for w, h in (size.split("x") for size in args.size))
     from playwright.sync_api import sync_playwright
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -236,13 +247,13 @@ def main() -> int:
                 shots = [s for s in shots if s.name in args.only]
             with serving(config, services) as base:
                 for theme in args.theme:
-                    capture(browser, base, shots, language, theme, args.out)
+                    capture(browser, base, shots, language, theme, args.out, sizes)
                 if not args.only or "start_first" in args.only:
                     empty = AppConfig(data_dir=Path(tempfile.mkdtemp(prefix="sentinel-v2-ui-")))
                     with serving(empty, Services(empty)) as other:
                         for theme in args.theme:
                             first = [Shot("start_first", "/v2")]
-                            capture(browser, other, first, language, theme, args.out)
+                            capture(browser, other, first, language, theme, args.out, sizes)
             browser.close()
     total = sum(p.stat().st_size for p in args.out.glob("*.png"))
     print(f"total {total / 1024:.0f} kB")

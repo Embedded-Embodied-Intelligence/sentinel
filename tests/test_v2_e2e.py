@@ -177,12 +177,12 @@ def test_the_demo_path(demo: Server) -> None:
         page.wait_for_url(re.compile(r"done=report"))
         expect(page.locator(".notice")).to_contain_text("Raport zapisany.")
         pending = page.locator("#pending")
-        expect(pending).to_contain_text("Zastępstwo", timeout=120_000)
+        expect(pending).to_contain_text("zastępuje", timeout=120_000)
         pending.get_by_role("link", name=re.compile("Szczegóły")).click()
         effect = page.locator(".effects")
         expect(effect).to_contain_text("→")
-        chance = number(effect.inner_text(), r"\d+ → (\d+) na 100")
-        end = number(effect.inner_text(), r"Koniec projektu\s+\S+ \d+\s\S+ → (\S+ \d+\s\S+)")
+        chance = number(effect.inner_text(), r"\d+ → (\d+)\sna\s100")  # no break in "57 na 100"
+        end = number(effect.inner_text(), r"Koniec projektu\s+\S+\s\d+\s\S+\s+→\s+(\S+\s\d+\s\S+)")
         page.get_by_role("button", name="Zatwierdź").click()
         page.wait_for_url(re.compile(r"done=approved"))
         expect(page.locator(".notice")).to_contain_text("Zatwierdzono")
@@ -219,7 +219,7 @@ def test_the_log_shows_a_decision_and_its_fate(demo: Server) -> None:
         page.wait_for_url(re.compile(r"done=rejected"))
         page.goto(overview + "/log")
         log = page.locator(".log")
-        expect(log).to_contain_text("Odrzucono: Zastępstwo")
+        expect(log).to_contain_text(re.compile(r"Odrzucono: \w+ zastępuje"))
         expect(log).to_contain_text("(za drogo)")
         proposal = page.locator("details.log-entry", has_text="Nowa propozycja")
         proposal.locator("summary").click()
@@ -234,7 +234,7 @@ def test_the_log_shows_a_decision_and_its_fate(demo: Server) -> None:
         href = page.get_by_role("link", name="Pobierz dziennik (CSV)").get_attribute("href")
         assert href is not None
         table = page.request.get(demo.base + href)
-        assert table.ok and "Odrzucono: Zastępstwo" in table.text()
+        assert table.ok and re.search(r"Odrzucono: \w+ zastępuje", table.text())
         chromium.close()
 
 
@@ -306,6 +306,33 @@ def _axe(page: Any) -> list[str]:
                 + v.nodes.map(n => n.target.join(' ')).slice(0, 3).join(', '))"""
     )
     return list(found)
+
+
+def test_a_wide_window_scales_the_layout_up(demo: Server) -> None:
+    """WP16 hotfix: a wide window (here 2096 px, a retina screen at 80 % zoom) scales the
+    layout of 1440 up instead of pinning it to the left; 1440 stays as designed; no horizontal
+    scroll and the sidebar's foot stays in the window."""
+    with sync_api.sync_playwright() as playwright:
+        chromium = browser(playwright)
+        measured = {}
+        for width, height in ((1440, 900), (2096, 1165)):
+            context = chromium.new_context(viewport={"width": width, "height": height})
+            page = context.new_page()
+            page.goto(demo.base + "/v2")
+            measured[width] = page.evaluate(
+                """() => ({
+                  zoom: getComputedStyle(document.documentElement).getPropertyValue('--zoom'),
+                  scroll: document.documentElement.scrollWidth,
+                  foot: document.querySelector('.v2-side-foot').getBoundingClientRect().bottom,
+                  right: document.querySelector('.v2-main').getBoundingClientRect().right,
+                })"""
+            )
+            context.close()
+        chromium.close()
+    assert measured[1440]["zoom"].strip() == "1" and measured[1440]["right"] == 1440
+    wide = measured[2096]
+    assert wide["zoom"].strip() == "1.4" and wide["scroll"] == 2096
+    assert wide["right"] > 2096 - 48 and wide["foot"] <= 1165
 
 
 @pytest.mark.parametrize("theme", ["light", "dark"])

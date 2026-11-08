@@ -96,8 +96,14 @@ class Effect:
     tone: str
 
 
+def kept(text: str) -> str:
+    """`text` with no line break inside, so a narrow effect breaks only at its arrow."""
+    return text.replace(" ", "\u00a0").replace("-", "\u2011")
+
+
 def effects(t: TextsV2, rec: RecommendationView, person_days: bool) -> list[Effect]:
-    """The three effects (section 8.4): chance, end and budget before → after; green ▲ better."""
+    """The three effects (section 8.4): chance, end and budget before → after; green ▲ better.
+    Each side of the arrow stays on one line; the value wraps at the arrow (WP16 hotfix)."""
     before, after = rec.without, rec.with_action
     if before is None or after is None:
         return []
@@ -105,7 +111,7 @@ def effects(t: TextsV2, rec: RecommendationView, person_days: bool) -> list[Effe
     found = [
         Effect(
             t("v2.options.chance"),
-            f"{first} → {then} {t('v2.chance.value', n='').strip()}",
+            f"{first} → {kept(f'{then} {t("v2.chance.value", n="").strip()}')}",
             tone_of(then - first),
         )
     ]
@@ -113,10 +119,12 @@ def effects(t: TextsV2, rec: RecommendationView, person_days: bool) -> list[Effe
     end_after = after.likely_finish or after.expected_finish
     if end_before is not None and end_after is not None:
         tone = tone_of((end_after - end_before).days, better_up=False)
-        found.append(Effect(t("v2.end.title"), f"{t.date(end_before)} → {t.date(end_after)}", tone))
+        text = f"{kept(t.date(end_before))} → {kept(t.date(end_after))}"
+        found.append(Effect(t("v2.end.title"), text, tone))
     unit = t("v2.workdays", n="").strip() if person_days else t.plural("cost.units", 5, value="")
     cost = after.expected_cost - before.expected_cost
-    text = f"{t.money(before.expected_cost)} → {t.money(after.expected_cost)} {unit.strip()}"
+    spent = kept(f"{t.money(after.expected_cost)} {unit.strip()}")
+    text = f"{t.money(before.expected_cost)} → {spent}"
     found.append(Effect(t("v2.budget.title"), text, tone_of(cost, better_up=False, eps=0.5)))
     return found
 
@@ -127,9 +135,19 @@ def workdays(t: TextsV2, value: float, person_days: bool) -> str:
     return t.cost(value)
 
 
+def quoted(t: TextsV2, text: str) -> str:
+    """`text` in the language's quotation marks, its own quotes nested (Polish „…«…»…”)."""
+    if t.lang == "pl":
+        return "„" + text.replace("„", "«").replace("”", "»") + "”"
+    return "“" + text.replace("“", "\u2018").replace("”", "\u2019") + "”"
+
+
 def reasoning(t: TextsV2, rec: RecommendationView, person_days: bool) -> list[str]:
     """The contrastive "Uzasadnienie" (Miller 2019), written by code from the numbers: what the
-    chosen option does against no change, then why not the best alternative (spec 11.5)."""
+    chosen option does against no change, then the best option of another kind of action
+    (WP16 hotfix: never the same action with a re-plan). Within the materiality threshold of
+    the chance (spec section 6, `eps_d`) it gave a similar result, and the choice stands by the
+    smaller expected delay or as the simpler option (spec 11.5)."""
     before, after = rec.without, rec.with_action
     if before is None or after is None:
         return []
@@ -146,29 +164,33 @@ def reasoning(t: TextsV2, rec: RecommendationView, person_days: bool) -> list[st
     else:
         key = "v2.why.even_same_end" if same_end else "v2.why.even"
     lines = [t(key, before=first, after=then, **ends)]
-    others = [a for a in rec.alternatives if a.label != "NOOP"]
-    alt = next((a for a in others if a.runner_up), others[0] if others else None)
-    if alt is None:
+    others = [a for a in rec.alternatives if a.action not in ("noop", rec.action)]
+    if not others:
         lines.append(t("v2.why.only", before=first))
         return lines
-    alt_n = per_hundred(alt.p_on_time)
-    price = workdays(t, max(0.0, alt.expected_cost - before.expected_cost), person_days)
-    cost = workdays(t, max(0.0, after.expected_cost - before.expected_cost), person_days)
-    if alt_n < then:
-        lines.append(t("v2.why.alt_less", option=alt.title, chance=alt_n, price=price))
-    elif alt_n == then and alt.expected_cost > after.expected_cost + 0.5:
-        lines.append(t("v2.why.alt_dearer", option=alt.title, chance=alt_n, price=price, cost=cost))
+    alt = max(others, key=lambda a: (a.p_on_time, -a.tardiness))
+    option = quoted(t, alt.headline or alt.title)
+    if abs(alt.p_on_time - after.p_on_time) < rec.eps_d:
+        delay = alt.tardiness - after.tardiness >= rec.eps_t
+        part = t("why.tie.by.tardiness") if delay else t("v2.why.simpler")
+        lines.append(t("v2.why.alt_close", option=option, part=part))
+    elif alt.p_on_time < after.p_on_time:
+        price = workdays(t, max(0.0, alt.expected_cost - before.expected_cost), person_days)
+        alt_n = per_hundred(alt.p_on_time)
+        lines.append(t("v2.why.alt_less", option=option, chance=alt_n, price=price))
     else:
         tie = t.tie(rec.tie, rec.reason) if rec.tie is not None else rec.reason_text
-        lines.append(t("v2.why.alt_similar", option=alt.title, chance=alt_n, tie=tie))
+        alt_n = per_hundred(alt.p_on_time)
+        lines.append(t("v2.why.alt_similar", option=option, chance=alt_n, tie=tie))
     return lines
 
 
 def who(
     t: TextsV2, project: LiveProject, entry: RecommendationEntry, rec: RecommendationView
 ) -> list[str]:
-    """Who is affected (section 8.4): substitutes and the people they stand in for, temporary
-    people, the dropped task and how many tasks get new dates."""
+    """Who is affected (section 8.4): the action in full words (WP16 hotfix: the title is its
+    short form), substitutes and the people they stand in for, temporary people, the dropped
+    task and how many tasks get new dates."""
     chosen = entry.recommendation.chosen
     if chosen is None:
         return []
@@ -178,7 +200,7 @@ def who(
     keys = {j: key for key, j in project.activity_ids().items()}
     nodes = project.nodes()
     model = project.require_model()
-    lines: list[str] = []
+    lines: list[str] = [rec.title] if rec.title != rec.headline else []
     for op in chosen.decision.operations:
         if isinstance(op, Subst):
             task = nodes[keys[op.activity]].name
@@ -398,7 +420,7 @@ def archive(
             note = event.note
             if event.brief is not None:
                 chips = brief_chips(t, state.project, event.brief, view.person_days)
-        past.append(Past(entry.seq, when, actor, rec.title, fate, reason, note, chips))
+        past.append(Past(entry.seq, when, actor, rec.headline, fate, reason, note, chips))
     past.sort(key=lambda p: p.when, reverse=True)
     return pending, past
 

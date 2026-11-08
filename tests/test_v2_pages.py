@@ -20,10 +20,13 @@ from ui_check import problems, visible_text
 from sentinel.app import planning, showcase
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig
+from sentinel.app.names import accusative, vocabulary
 from sentinel.app.services import Services
 from sentinel.app.store import LOCAL_SESSION
+from sentinel.app.ui.v2.decision import reasoning
 from sentinel.app.ui.v2.log import LogItem, csv_of
 from sentinel.app.ui.v2.text import TextsV2
+from sentinel.app.views import TITLE_LIMIT
 
 LANGUAGES = ("pl", "en")
 
@@ -315,8 +318,20 @@ def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
     assert "Dotyczy ludzi, dlatego wymaga Twojej zgody." in text
     assert "Szansa 39 → 57 na 100" in text and "Budżet 92 → 94 dni pracy" in text
     assert "Ta zmiana podnosi szansę z 39 do 57 na 100" in text  # written by code (8.4)
-    assert "dałaby mniej (56 na 100)" in text
-    assert "Cezary Mazur: przejmuje „API katalogu produktów”" in text
+    # The short title; the full wording heads "Kogo dotyczy" (WP16 hotfix).
+    assert (
+        "Decyzja do podjęcia" in text
+        and "Cezary zastępuje Bartosza w „API katalogu produktów”" in text
+    )
+    who = text[text.index("Kogo dotyczy") :]
+    assert who.startswith("Kogo dotyczy Zastępstwo: Cezary Mazur przejmuje udział osoby nieobecnej")
+    assert "Cezary Mazur: przejmuje „API katalogu produktów”" in who
+    # The contrast is the best option of another kind, never the same one with a re-plan (56).
+    assert (
+        "Najlepsza możliwość innego rodzaju, „Rezygnacja z «Karty podarunkowe»”, dałaby mniej "
+        "(39 na 100) przy koszcie 0 dni pracy." in text
+    )
+    assert "56 na 100" not in text[: text.index("Kogo dotyczy")]
     assert "Każdy dzień czekania to ok. \u22125 na 100." in text
     assert "ważna do czw. 19 lis" in text
     assert "Bez zmian 39 na 100" in text  # every option, "Bez zmian" included
@@ -326,6 +341,68 @@ def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
     state = site.services.state(LOCAL_SESSION, site.project)
     validity = state.recommendation(seq).validity  # type: ignore[union-attr]
     assert validity is not None and validity.valid_day == 12 and validity.chances[0] == 0.57
+
+
+def test_decision_titles_are_short_on_the_pulpit_and_the_start(site: Site) -> None:
+    """WP16 hotfix: a decision's title is short and plain, by first names, the person stood in
+    for declined in Polish; the Pulpit card and the Start list show it too."""
+    title = "Cezary zastępuje Bartosza w „API katalogu produktów”"
+    overview = text_of(site.client.get(f"/v2/projects/{site.project}", params={"lang": "pl"}).text)
+    start = text_of(site.client.get("/v2", params={"lang": "pl"}).text)
+    assert title in overview and title in start
+    assert "przejmuje udział" not in overview + start
+    english = site.client.get(f"/v2/projects/{site.project}", params={"lang": "en"}).text
+    assert "Cezary stands in for Bartosz on “API katalogu produktów”" in text_of(english)
+    for language in LANGUAGES:
+        for rec in site.services.live(LOCAL_SESSION, site.project, language).recommendations:
+            shown = [rec.headline, *(a.headline for a in rec.alternatives)]
+            assert all(0 < len(words) <= TITLE_LIMIT for words in shown), shown
+
+
+def test_polish_first_names_are_declined_for_a_title() -> None:
+    expected = {
+        "Bartosz": "Bartosza",
+        "Anna": "Annę",
+        "Cezary": "Cezarego",
+        "Antoni": "Antoniego",
+        "Marek": "Marka",
+        "Paweł": "Pawła",
+        "Staś": "Stasia",
+        "Aleksander": "Aleksandra",
+        "Julia": "Julię",
+    }
+    assert {name: accusative(name, "pl") for name in expected} == expected
+    assert all(accusative(name, "pl") for name in vocabulary("pl").simulator.first_names)
+    assert accusative("Tester 1", "pl") is None and accusative("Anna Nowak", "pl") is None
+    assert accusative("Bartosz", "en") == "Bartosz"
+
+
+def test_the_reasoning_contrasts_another_kind_of_action(site: Site) -> None:
+    """WP16 hotfix: "Uzasadnienie" contrasts the best option of another kind of action, never
+    the same action with a re-plan; within the materiality threshold of the chance it says that
+    a similar result was possible and why the choice stands."""
+    view = site.services.live(LOCAL_SESSION, site.project, "pl")
+    rec = next(r for r in view.recommendations if r.action == "subst")
+    assert rec.with_action is not None
+    p, delay = rec.with_action.p_on_time, rec.with_action.tardiness
+    t = TextsV2("pl")
+    same = next(a for a in rec.alternatives if a.action == "subst")  # with a re-plan
+    other = next(a for a in rec.alternatives if a.action == "descope")
+    better_same = same.model_copy(update={"p_on_time": p + 0.1})
+    close = other.model_copy(update={"p_on_time": p - 0.01, "tardiness": delay})
+
+    def second(*alternatives: object) -> str:
+        return reasoning(t, rec.model_copy(update={"alternatives": list(alternatives)}), True)[1]
+
+    assert second(better_same, close) == (
+        "Podobny wynik dałoby też „Rezygnacja z «Karty podarunkowe»”; wybrano prostsze rozwiązanie."
+    )
+    slower = close.model_copy(update={"tardiness": delay + 1.0})
+    assert second(slower).endswith("; wybrano wariant z mniejszym oczekiwanym opóźnieniem.")
+    assert second(close.model_copy(update={"p_on_time": p - rec.eps_d})).startswith(
+        "Najlepsza możliwość innego rodzaju, „Rezygnacja z «Karty podarunkowe»”, dałaby mniej"
+    )
+    assert "Cezary" not in second(better_same)  # only the same kind: no contrast with it
 
 
 @pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
@@ -368,7 +445,9 @@ def test_rejection_needs_a_reason_and_keeps_it(fresh: Site) -> None:
     overview = text_of(fresh.client.get(f"/v2/projects/{fresh.project}").text)
     assert "Nic nie czeka na Twoją decyzję" in overview
     log = text_of(fresh.client.get(f"/v2/projects/{fresh.project}/log").text)
-    assert "Ty Odrzucono: Zastępstwo" in log and "(inny powód)" in log  # the fate in the log
+    assert (
+        "Ty Odrzucono: Cezary zastępuje Bartosza" in log and "(inny powód)" in log
+    )  # the fate in the log
     assert log.count(f"Stan decyzji odrzucona Powód: Inny powód: „{words}”") == 2  # 8.6
 
 
@@ -400,7 +479,9 @@ def test_start_lists_decisions_by_validity_and_the_latest_events(site: Site) -> 
     assert "+18 na 100" in text and "ważna do czw. 19 lis" in text
     assert "Nie zdążymy bez zmian" in text and "1 decyzja" in text
     events = text[text.index("Ostatnie zdarzenia") :]
-    assert events.index("Nowa propozycja: Zastępstwo") < events.index("Utworzono projekt")
+    assert events.index("Nowa propozycja: Cezary zastępuje Bartosza") < events.index(
+        "Utworzono projekt"
+    )
     assert "Sentinel Nowa odsłona sklepu internetowego: Nowa propozycja" in events
 
 
@@ -515,7 +596,9 @@ def test_the_feed_is_valid_icalendar_with_the_project_dates(site: Site) -> None:
     deadline = found["Termin: Nowa odsłona sklepu internetowego"]
     assert deadline == [(date(2026, 12, 18), date(2026, 12, 19))]
     assert found["Nieobecność: Bartosz Kowalski"] == [(date(2026, 11, 12), date(2026, 11, 23))]
-    assert any(name.startswith("Decyzja ważna do dziś: Zastępstwo") for name in found)
+    assert any(
+        name.startswith("Decyzja ważna do dziś: Cezary zastępuje Bartosza") for name in found
+    )
     valid = next(v for k, v in found.items() if k.startswith("Decyzja ważna do dziś"))
     assert valid == [(date(2026, 11, 19), date(2026, 11, 20))]
     assert "Start: Integracja płatności" in found and "Koniec: API katalogu produktów" in found

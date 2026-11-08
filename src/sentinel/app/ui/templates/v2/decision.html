@@ -10,14 +10,14 @@
       · {{ m.life_badge(t, life) }}
       {% if validity and validity.expires_tomorrow %}<span class="expires">{{ icon("clock", 16) }} {{ t("v2.decision.expires") }}</span>{% endif %}
     </p>
-    <h2 id="dec-title" class="decision-title" style="font-size:24px;line-height:32px">{{ rec.title }}</h2>
+    <h2 id="dec-title" class="decision-title" style="font-size:24px;line-height:32px">{{ rec.headline if rec.headline is defined else rec.title }}</h2>
     {% if pending %}<p class="notice">{{ icon("info", 20) }}<span>{{ t("v2.dec.need." ~ need) }}</span></p>{% endif %}
   </header>
   <section class="brief-row" aria-labelledby="effect-title">
     <h3 id="effect-title" class="overline">{{ t("v2.dec.effect") }}</h3>
     <div class="effects">
       {% for e in effects %}
-      <div class="effect effect-{{ e.tone }}"><p class="label">{{ e.label }}</p><p class="value">{{ e.text }} {% if e.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif e.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</p></div>
+      <div class="effect effect-{{ e.tone }}"><p class="label">{{ e.label }}</p><p class="value">{{ e.text }}{% if e.tone in ("good", "bad") %}&nbsp;{% endif %}{% if e.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif e.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</p></div>
       {% endfor %}
     </div>
   </section>

@@ -13,7 +13,7 @@ settings endpoints, which never return the key, do not exist in the demo; no end
 files, settings or another session's data, and no page shows a stack trace: an unexpected error
 is logged with a reference id, which the page or the JSON error names. The client address of
 the limits is the TCP peer, or behind the local proxy of the demo its X-Forwarded-For
-(`security.client_address`); `/api/client-address` reports it to requests from 127.0.0.1 only.
+(`security.client_address`); `/api/client-address` reports it to requests from this machine only.
 """
 
 import json
@@ -46,13 +46,13 @@ from sentinel.app.models import CheckIn, Language, ProjectDefinition
 from sentinel.app.security import (
     CSRF_COOKIE,
     CSRF_HEADER,
-    LOCAL_PROXY,
     SESSION_COOKIE,
     UNSAFE_METHODS,
     RateLimiter,
     client_address,
     csrf_token,
     csrf_valid,
+    is_local,
     load_key,
     sign,
     unsign,
@@ -364,10 +364,10 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
 
     @app.get("/api/client-address", response_model=ClientAddress)
     def client(request: Request) -> ClientAddress:
-        """The address the limits count for this request; only for requests from 127.0.0.1
-        (the server itself, or the demo's local proxy), others get 404."""
+        """The address the limits count for this request; only for requests from this machine
+        (the server itself, or the demo's local proxy, `is_local`), others get 404."""
         peer = request.client.host if request.client else None
-        if peer != LOCAL_PROXY:
+        if not is_local(peer):
             raise StarletteHTTPException(status_code=404)
         forwarded = request.headers.get("x-forwarded-for")
         address = str(request.state.address)

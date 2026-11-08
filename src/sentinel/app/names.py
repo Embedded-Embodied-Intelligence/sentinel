@@ -87,3 +87,36 @@ def task_names(observation: Observation, seed: int, language: Language) -> dict[
     """The names of the real activities of an observation, new ones included (`names_of` with
     the language's task words)."""
     return names_of(observation, seed, vocabulary(language).simulator.vocabulary)
+
+
+SOFT_ENDINGS = {"ś": "si", "ć": "ci", "ń": "ni", "ź": "zi"}
+HARD_ENDINGS = frozenset("bcdfghjklłmnprstwzż")
+
+
+def accusative(name: str, language: Language) -> str | None:
+    """A first name as the object of "zastępuje" (WP16 hotfix): Polish by its regular endings
+    (Anna → Annę, Cezary → Cezarego, Marek → Marka, Paweł → Pawła, Staś → Stasia, Bartosz →
+    Bartosza); None for a name the rules do not cover (several words, a digit, another ending),
+    which the caller words without declining. English names stay as they are."""
+    if language != "pl":
+        return name
+    if not name.isalpha() or not name[:1].isupper() or len(name) < 3:
+        return None
+    low = name.lower()
+    if low.endswith("a"):
+        return name[:-1] + "ę"
+    if low.endswith("y"):
+        return name[:-1] + "ego"
+    if low.endswith("i"):
+        return name + "ego"
+    if low.endswith("ek"):
+        return name[:-2] + "ka"
+    if low.endswith("eł"):
+        return name[:-2] + "ła"
+    if low.endswith("ander"):
+        return name[:-2] + "ra"
+    if low[-1] in SOFT_ENDINGS:
+        return name[:-1] + SOFT_ENDINGS[low[-1]] + "a"
+    if low[-1] in HARD_ENDINGS:
+        return name + "a"
+    return None

@@ -5,7 +5,7 @@
     <h2 id="pending-title" class="overline">{{ t("v2.decision.title") }}{% if lifecycle and lifecycle.valid %} · <span class="valid">{{ t("v2.decision.valid", date=t.date(lifecycle.valid)) }}</span>{% endif %}</h2>
     {% if lifecycle and lifecycle.expires_tomorrow %}<span class="expires">{{ icon("clock", 16) }} {{ t("v2.decision.expires") }}</span>{% endif %}
   </div>
-  <p class="decision-title">{{ pending.title }}</p>
+  <p class="decision-title">{{ pending.headline if pending.headline is defined else pending.title }}</p>
   {{ m.effect_chips(t, chips) }}
   {% with seq=pending.seq, project_id=view.id, back="overview" %}{% include "v2/_decide.html" %}{% endwith %}
   {% elif thinking %}

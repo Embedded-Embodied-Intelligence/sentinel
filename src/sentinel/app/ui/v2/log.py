@@ -181,7 +181,7 @@ def entries(
             add(row, you, text, chip=chip, detail=Detail(lines), chances=chances, day=checkin.date)
         elif kind == "recommendation":
             rec, entry = recs.get(row.seq), by_seq.get(row.seq)
-            title = rec.title if rec is not None else ""
+            title = (rec.headline or rec.title) if rec is not None else ""
             href = f"{base}/decisions/{row.seq}" if row.seq in acts else base
             if entry is not None and entry.status == "auto":
                 text = t("v2.event.auto", title=title)
@@ -212,7 +212,7 @@ def entries(
             event = parse(row)
             seq = int(getattr(event, "recommendation", 0))
             rec = recs.get(seq)
-            title = rec.title if rec is not None else ""
+            title = (rec.headline or rec.title) if rec is not None else ""
             href = f"{base}/decisions/{seq}"
             day = None if rec is None else rec.as_of
             if isinstance(event, Decided):

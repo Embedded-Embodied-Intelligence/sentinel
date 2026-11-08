@@ -11,6 +11,7 @@ Laboratorium (section 8.8) use its rows for an absence, a longer task and a new 
 
 import json
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any
@@ -20,6 +21,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 
 from sentinel.app.errors import AppError
+from sentinel.app.live import LiveProject
 from sentinel.app.message_reader import MessageDraft
 from sentinel.app.models import (
     AbsenceReport,
@@ -97,10 +99,31 @@ def default_date(view: ProjectView, today: date) -> date:
     return max(today, after)
 
 
+def counted_in(project: LiveProject, day: date) -> Callable[[date], date | None]:
+    """For a report dated `day`: the date of the first report that counts an absence from a
+    given first day, if it starts after the report's day `t` (spec section 11.3: it waits for a
+    later report, the one whose next working day it starts on); None if this report counts it."""
+    calendar = project.calendar
+    counted = calendar.date_of(calendar.checkin_day(day))
+
+    def later(first_day: date) -> date | None:
+        if first_day <= counted:
+            return None
+        return calendar.date_of(calendar.last(first_day - timedelta(days=1)))
+
+    return later
+
+
 def card_of(
-    t: TextsV2, item: BaseModel, names: dict[str, str], people: dict[str, str], note: str | None
+    t: TextsV2,
+    item: BaseModel,
+    names: dict[str, str],
+    people: dict[str, str],
+    note: str | None,
+    later: Callable[[date], date | None] | None = None,
 ) -> Card:
-    """The card of a report, with its words and the fields its ✎ edits."""
+    """The card of a report, with its words and the fields its ✎ edits; `later` (`counted_in`)
+    adds to an absence that starts after the report's day when it starts to count."""
     value = item.model_dump_json()
     if isinstance(item, TaskReport):
         name = names.get(item.task, item.task)
@@ -136,6 +159,13 @@ def card_of(
             )
         else:
             text = t("v2.card.absence_open", name=person, first=t.date(item.first_day))
+        waits = later(item.first_day) if later is not None else None
+        if waits is not None:
+            shown = t.date(waits)
+            if t.lang == "pl":  # "z czw. 19 lis", "ze śr. 18 lis"
+                shown = ("ze " if shown[:1] == "ś" else "z ") + shown
+            words = t("v2.card.absence_later", date=shown)
+            note = words if note is None else f"{note} {words}"
         return Card("absence", value, text, "person-off", edits, note)
     if isinstance(item, WorkIncreaseReport):
         task = names.get(item.task, item.task)
@@ -155,10 +185,17 @@ def card_of(
 
 
 def message_cards(
-    ui: Ui, request: Request, project_id: str, found: MessageDraft, clauses: tuple[str, ...]
+    ui: Ui,
+    request: Request,
+    project_id: str,
+    found: MessageDraft,
+    clauses: tuple[str, ...],
+    day: date,
 ) -> dict[str, Any]:
-    """The cards, questions and unrecognised parts of a message read by the AI (WP14)."""
+    """The cards, questions and unrecognised parts of a message read by the AI (WP14) for a
+    report dated `day`."""
     t = texts(request)
+    later = counted_in(ui.services.state(ui.session(request), project_id).project, day)
     values = message_values(ui, request, project_id, found)
     names, people = values["names"], values["people"]
     unchecked = t("checkin.message_unchecked")
@@ -173,7 +210,7 @@ def message_cards(
             if i in found.doubtful
             else (unchecked if i in found.unchecked_absences else None)
         )
-        cards.append(card_of(t, absence, names, people, note))
+        cards.append(card_of(t, absence, names, people, note, later))
     cards += [card_of(t, item, names, people, None) for item in found.increases]
     cards += [card_of(t, item, names, people, None) for item in found.new_tasks]
 
@@ -327,18 +364,28 @@ def items_of(checkin: CheckIn) -> list[BaseModel]:
     return [*checkin.tasks, *checkin.absences, *checkin.increases, *checkin.new_tasks]
 
 
-def cards_of(t: TextsV2, view: ProjectView, checkin: CheckIn) -> list[Card]:
+def cards_of(
+    t: TextsV2,
+    view: ProjectView,
+    checkin: CheckIn,
+    later: Callable[[date], date | None] | None = None,
+) -> list[Card]:
     """The cards of a check-in's items, with the names of the tasks and the people."""
     names = {task.key: task.name for task in view.tasks}
     people = {p.key: p.name for p in view.definition.team}
-    return [card_of(t, item, names, people, None) for item in items_of(checkin)]
+    return [card_of(t, item, names, people, None, later) for item in items_of(checkin)]
 
 
 def errors_of(t: TextsV2, read: CheckinForm) -> dict[str, str]:
     return {error.name: t(error.key, **error.values) for error in read.errors}
 
 
-def added_cards(t: TextsV2, view: ProjectView, request: Request) -> list[Card]:
+def added_cards(
+    t: TextsV2,
+    view: ProjectView,
+    request: Request,
+    later: Callable[[date], date | None] | None = None,
+) -> list[Card]:
     """The items "Dodaj do raportu" of the Laboratorium brings (section 8.8), as cards: the
     JSON of their reports in the address, as in the form; anything else is left out."""
     names = {task.key: task.name for task in view.tasks}
@@ -350,7 +397,7 @@ def added_cards(t: TextsV2, view: ProjectView, request: Request) -> list[Card]:
                 item = KINDS[kind].model_validate_json(value)
             except (ValidationError, ValueError):
                 continue
-            cards.append(card_of(t, item, names, people, None))
+            cards.append(card_of(t, item, names, people, None, later))
     return cards
 
 
@@ -380,7 +427,12 @@ def router(ui: Ui) -> APIRouter:
             ui,
             request,
             "report.html",
-            lab_cards=added_cards(t, view, request),
+            lab_cards=added_cards(
+                t,
+                view,
+                request,
+                counted_in(services.state(ui.session(request), project_id).project, day),
+            ),
             title=t("v2.report.title"),
             nav="projects",
             tab="report",
@@ -411,6 +463,7 @@ def router(ui: Ui) -> APIRouter:
             "_cards.html",
             project_id=project_id,
             job=job.id,
+            day=day,
             cards=[],
             questions=[],
             unparsed=[],
@@ -423,10 +476,15 @@ def router(ui: Ui) -> APIRouter:
         session, language = ui.session(request), ui.language(request)
         job_id = request.query_params.get("job", "")
         job = services.job(session, job_id, language)
+        try:  # the report's date, which the polling carries (`_cards.html`)
+            day = date.fromisoformat(request.query_params.get("date", ""))
+        except ValueError:
+            day = date.today()
         values: dict[str, Any] = {"cards": [], "questions": [], "unparsed": [], "failed": None}
         if job.status == "done":
             found = MessageDraft.model_validate(job.result or {})
-            values = message_cards(ui, request, project_id, found, services.message_clauses(job_id))
+            clauses = services.message_clauses(job_id)
+            values = message_cards(ui, request, project_id, found, clauses, day)
             values["failed"] = None
             if not (values["cards"] or values["questions"] or values["unparsed"]):
                 values["failed"] = texts(request)("checkin.message_nothing")
@@ -441,6 +499,7 @@ def router(ui: Ui) -> APIRouter:
             "_cards.html",
             project_id=project_id,
             job=job_id if waiting else None,
+            day=day,
             source="message",
             **values,
         )
@@ -546,7 +605,8 @@ def router(ui: Ui) -> APIRouter:
                 nothing=False,
                 **values,
             )
-        cards = cards_of(t, view, read.checkin)
+        project = services.state(ui.session(request), project_id).project
+        cards = cards_of(t, view, read.checkin, counted_in(project, read.checkin.date))
         return page(
             ui,
             request,

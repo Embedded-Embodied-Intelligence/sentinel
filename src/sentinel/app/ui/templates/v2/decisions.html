@@ -6,7 +6,7 @@
   {% for rec, chips, validity in cards %}
   <article class="card decision">
     <p class="overline">{{ t("v2.decision.title") }}{% if validity and validity.valid %} · {{ t("v2.decision.valid", date=t.date(validity.valid)) }}{% endif %}{% if validity and validity.expires_tomorrow %} · <span class="expires">{{ t("v2.decision.expires") }}</span>{% endif %}</p>
-    <p class="decision-title">{{ rec.title }}</p>
+    <p class="decision-title">{{ rec.headline if rec.headline is defined else rec.title }}</p>
     {{ m.effect_chips(t, chips) }}
     {% with seq=rec.seq, project_id=view.id, back="decisions" %}{% include "v2/_decide.html" %}{% endwith %}
   </article>

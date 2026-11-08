@@ -6,13 +6,15 @@ cannot forge or guess another session. Every state-changing request carries the 
 token in the `X-CSRF-Token` header (double submit: the token is also a cookie that the page's
 script reads); the token is an HMAC of the session id, so a cross-site page can neither read nor
 compute it. Requests are limited per client address with a token bucket; behind a local proxy
-(Tailscale Funnel) the address comes from X-Forwarded-For, trusted only from 127.0.0.1.
+(Tailscale Funnel) the address comes from X-Forwarded-For, trusted only from this machine.
 """
 
 import hashlib
 import hmac
+import ipaddress
 import os
 import secrets
+import socket
 import threading
 import time
 from collections.abc import Callable
@@ -22,19 +24,42 @@ SESSION_COOKIE = "sentinel_session"
 CSRF_COOKIE = "sentinel_csrf"
 CSRF_HEADER = "X-CSRF-Token"
 UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
-LOCAL_PROXY = "127.0.0.1"  # the only peer whose X-Forwarded-For is trusted (WP9c)
+
+
+def is_local(address: str | None) -> bool:
+    """Whether a TCP peer is this machine itself: a loopback address or one of its own, the
+    source the routing table picks for that address. Some hosts rewrite the source of a
+    connection to 127.0.0.1 to their main interface's address (WSL2 with Docker: the local
+    proxy arrives as eth0's address), so 127.0.0.1 alone is not enough (WP16 hotfix)."""
+    try:
+        ip = ipaddress.ip_address(address or "")
+    except ValueError:
+        return False
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
+        ip = ip.ipv4_mapped
+    if ip.is_loopback:
+        return True
+    if ip.is_unspecified or ip.is_multicast:
+        return False
+    family = socket.AF_INET6 if ip.version == 6 else socket.AF_INET
+    with socket.socket(family, socket.SOCK_DGRAM) as probe:
+        try:
+            probe.connect((str(ip), 9))  # a datagram socket sends nothing on connect
+            return bool(probe.getsockname()[0] == str(ip))
+        except OSError:
+            return False
 
 
 def client_address(peer: str | None, forwarded: str | None, trust_proxy: bool) -> str:
     """The address a request is counted under (WP9c): its TCP peer, or, with `trust_proxy` and
-    the local proxy as the peer, the last X-Forwarded-For hop that is not the proxy itself, the
-    address the proxy saw (a client's own header comes before it). A header from any other peer
-    is ignored, so a remote client cannot pick its address."""
+    the local proxy (this machine, `is_local`) as the peer, the last X-Forwarded-For hop that is
+    not this machine, the address the proxy saw (a client's own header comes before it). A
+    header from any other peer is ignored, so a remote client cannot pick its address."""
     address = peer or "?"
-    if not trust_proxy or address != LOCAL_PROXY or not forwarded:
+    if not trust_proxy or not forwarded or not is_local(address):
         return address
     hops = [hop.strip() for hop in forwarded.split(",") if hop.strip()]
-    outside = [hop for hop in hops if hop != LOCAL_PROXY]
+    outside = [hop for hop in hops if not is_local(hop)]
     return outside[-1] if outside else address
 
 

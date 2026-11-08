@@ -80,7 +80,7 @@ def overview(ui: Ui, request: Request, with_feed: bool = True) -> Overview:
         href = f"{PREFIX}/projects/{summary.id}" if view.has_plan else f"{PREFIX}/new/{summary.id}"
         pending = [entry for entry in state.recommendations if entry.status in OPEN]
         tiles.append(Tile(summary.id, view.name, href, status(ui, request, view, t), len(pending)))
-        titles = {r.seq: r.title for r in view.recommendations}
+        titles = {r.seq: r.headline or r.title for r in view.recommendations}
         if any(entry.validity is None for entry in pending):
             services.validity_job(session, summary.id, language)  # computed in the background
             state = services.state(session, summary.id)

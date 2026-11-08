@@ -341,18 +341,19 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "zmniejsza oczekiwane opóźnienie.",
     ),
     "v2.why.alt_less": (
-        "The next best option, “{option}”, would give less ({chance} in 100) at a cost of {price}.",
-        "Następna możliwość, „{option}”, dałaby mniej ({chance} na 100) przy koszcie {price}.",
+        "The best option of another kind, {option}, would give less ({chance} in 100) at a cost "
+        "of {price}.",
+        "Najlepsza możliwość innego rodzaju, {option}, dałaby mniej ({chance} na 100) przy "
+        "koszcie {price}.",
     ),
-    "v2.why.alt_dearer": (
-        "The next best option, “{option}”, would give a similar chance ({chance} in 100) but cost "
-        "more ({price} against {cost}).",
-        "Następna możliwość, „{option}”, dałaby podobną szansę ({chance} na 100), ale kosztowałaby "
-        "więcej ({price} wobec {cost}).",
+    "v2.why.alt_close": (
+        "{option} would give a similar result too; {part}.",
+        "Podobny wynik dałoby też {option}; {part}.",
     ),
+    "v2.why.simpler": ("the simpler option was chosen", "wybrano prostsze rozwiązanie"),
     "v2.why.alt_similar": (
-        "The next best option, “{option}”, would give {chance} in 100; {tie}.",
-        "Następna możliwość, „{option}”, dałaby {chance} na 100; {tie}.",
+        "The best option of another kind, {option}, would give {chance} in 100; {tie}.",
+        "Najlepsza możliwość innego rodzaju, {option}, dałaby {chance} na 100; {tie}.",
     ),
     "v2.why.only": (
         "Without a change the chance stays {before} in 100; no other option helps as much.",
@@ -542,6 +543,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.card.absence": (
         "{name}: away from {first}, back {back}",
         "{name}: nieobecność od {first}, wraca {back}",
+    ),
+    "v2.card.absence_later": (
+        "This absence will start to count in the report of {date}.",
+        "Ta nieobecność zacznie się liczyć w raporcie {date}.",
     ),
     "v2.card.absence_open": (
         "{name}: away from {first}, return not known",
