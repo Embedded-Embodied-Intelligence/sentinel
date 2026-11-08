@@ -7,7 +7,7 @@ sprawdza każdą możliwość na setkach symulowanych scenariuszy przyszłości 
 które dotyczą ludzi, pieniędzy albo zakresu, zawsze czekają na Twoją decyzję.
 
 Przewodnik jest dla osoby, która prowadzi projekt. Instalacja dla działu IT jest na
-[końcu](#9-instalacja-dla-działu-it). Wersja angielska: [user-guide-en.md](user-guide-en.md).
+[końcu](#10-instalacja-dla-działu-it). Wersja angielska: [user-guide-en.md](user-guide-en.md).
 
 **Spis treści:**
 [1. Czym jest Sentinel](#1-czym-jest-sentinel) ·
@@ -17,8 +17,9 @@ Przewodnik jest dla osoby, która prowadzi projekt. Instalacja dla działu IT je
 [5. Rekomendacje i autonomia](#5-rekomendacje-i-autonomia) ·
 [6. Symulator](#6-symulator) ·
 [7. Prywatność](#7-prywatność) ·
-[8. Najczęstsze pytania](#8-najczęstsze-pytania) ·
-[9. Instalacja dla działu IT](#9-instalacja-dla-działu-it)
+[8. Nowy wygląd (v2)](#8-nowy-wygląd-v2) ·
+[9. Najczęstsze pytania](#9-najczęstsze-pytania) ·
+[10. Instalacja dla działu IT](#10-instalacja-dla-działu-it)
 
 ## 1. Czym jest Sentinel
 
@@ -354,7 +355,45 @@ przebieg to jeden możliwy los projektu; przypadek też ma znaczenie, więc wart
   oraz czy formularz został odrzucony (nigdy adresu ani treści formularza); zapis znika razem z
   piaskownicą.
 
-## 8. Najczęstsze pytania
+## 8. Nowy wygląd (v2)
+
+Pod adresem `/v2` działa nowy wygląd na tych samych danych (link „Nowy wygląd (v2)” na stronie
+startowej; „Poprzedni wygląd” w menu wraca do dotychczasowego). Projekt otwarty w jednym
+wyglądzie widać w drugim. Kolory pokazują stan, ale zawsze z ikoną i słowem; szansę podajemy
+jako „39 na 100” z siatką 10 × 10 kropek.
+
+- **Start** — wszystkie decyzje do podjęcia, ułożone według daty ważności, kafelki projektów
+  i ostatnie zdarzenia.
+- **Pulpit** projektu — werdykt („Nie zdążymy bez zmian · Spóźnimy się o ok. 2 dni robocze”),
+  szansa na termin, koniec projektu i budżet w dniach pracy, a pod spodem decyzja do podjęcia.
+- **Raport** — opisz lub podyktuj, co się wydarzyło (🎤), a Sentinel zamieni to na karty do
+  potwierdzenia; „Postęp zgodny z planem” albo „Wypełnij formularz” to inne drogi. „Wpływ na
+  projekt” pokazuje skutek, zanim cokolwiek zapiszesz.
+- **Decyzja** — skutek, uzasadnienie, kogo dotyczy i koszt zwłoki; „Zatwierdź”, „Odrzuć” (z
+  powodem), „Popraw” albo „Odłóż decyzję”. **Każdą zmianę zatwierdzasz Ty**: w nowym wyglądzie
+  Sentinel niczego nie zmienia sam.
+- **Dziennik** — kto (Ty albo Sentinel) i co zrobił, dzień po dniu, z filtrami; rozwiń wpis
+  (▸), by zobaczyć decyzję w tamtej chwili i jej los; wykres „Szansa w czasie” i „Pobierz
+  dziennik (CSV)”.
+- **Plan** — „Harmonogram” (wykres Gantta z dniem dzisiejszym, terminem i pasem prognozy;
+  zadania z głównych ryzyk na pomarańczowo, nieobecności zakreskowane), „Zadania” (zadanie,
+  które się jeszcze nie zaczęło, poprawisz przyciskiem „Popraw”) i „Zespół” (nieobecności,
+  bieżące i następne zadania, obciążenie w przyszłym tygodniu — **nigdy ocena czyjejś pracy**).
+- **Laboratorium** — „Co jeśli?” sprawdza na wybranym projekcie nieobecność, dłuższe zadanie
+  albo nowe zadanie i niczego nie zapisuje; „Dodaj do raportu” przenosi te zmiany do raportu.
+  „Symulator” pokazuje przykładowy projekt dzień po dniu: Sentinel obok tego samego projektu
+  bez reakcji, „+1 dzień”, „+5 dni” albo „Do końca”, a na końcu jedno zdanie z wynikiem.
+- **Ustawienia** — wygląd (jasny, ciemny, systemowy), język i model AI („Chmura (zalecany)”
+  albo „Lokalny”; klucze tylko we własnej instalacji). **Ustawienia projektu** — podstawy,
+  zespół, dni wolne w firmie, **kalendarz**, przypomnienie o raporcie (domyślnie czwartek
+  17:00), eksport i „Usuń projekt”.
+- **Kalendarz** — „Utwórz link do kalendarza” daje tajny link, który dodasz w Kalendarzu Google
+  („Inne kalendarze” → „+” → „Z adresu URL”) albo w iCloud (Plik → Nowa subskrypcja
+  kalendarza). Kalendarz pokaże termin, początki i końce zadań, nieobecności (same daty, nigdy
+  powód), daty ważności decyzji i przypomnienie o raporcie. **Kto ma ten link, widzi imiona
+  osób i daty nieobecności** — „Unieważnij link” natychmiast go wyłącza.
+
+## 9. Najczęstsze pytania
 
 **Skąd Sentinel wie, ile potrwają zadania?** Z Twoich szacunków i z tego, jak pewne one są
 (krok 1). W każdym scenariuszu zadanie trwa trochę krócej albo dłużej, tak jak w życiu.
@@ -380,7 +419,7 @@ zespołu: jedna strona z prognozą, planem i historią, do druku albo wysłania.
 **Czy AI może coś zmienić samo?** Nie. AI może tylko odczytać tekst (który i tak sprawdzasz)
 i objaśnić decyzję; objaśnienie ma oznaczenie, czy zgadza się z danymi.
 
-## 9. Instalacja dla działu IT
+## 10. Instalacja dla działu IT
 
 Szczegóły, kopie zapasowe i wersja demonstracyjna: [deploy.md](deploy.md) (po angielsku).
 

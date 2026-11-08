@@ -250,6 +250,33 @@ def test_project_settings_are_saved_and_the_project_deleted(fresh: Site) -> None
     assert "Usunięto projekt." in text_of(client.get(gone.headers["HX-Redirect"]).text)
 
 
+def test_the_new_screens_have_calm_empty_states(tmp_path: Path) -> None:
+    """No project, or a draft without a plan: every WP16 screen says what to do next."""
+    config = AppConfig(data_dir=tmp_path, inline_jobs=True)
+    services = Services(config)
+    services.local_session()
+    with TestClient(create_app(config, services)) as client:
+        expected = {
+            "/v2/log": "Dziennik jest pusty",
+            "/v2/lab": "Brak projektu z planem",
+            "/v2/settings": "Model AI",
+        }
+        for path, words in expected.items():
+            response = client.get(path, params={"lang": "pl"})
+            assert response.status_code == 200 and problems(response.text) == [], path
+            assert words in text_of(response.text), path
+        draft = showcase.definition("pl").model_copy(update={"tasks": ()})
+        pid = services.create(LOCAL_SESSION, draft, "pl").id
+        for tab, words in (
+            ("plan", "Brak planu"),
+            ("log", "Utworzono projekt"),
+            ("settings", "Podstawy"),
+        ):
+            response = client.get(f"/v2/projects/{pid}/{tab}", params={"lang": "pl"})
+            assert response.status_code == 200 and problems(response.text) == [], tab
+            assert words in text_of(response.text), tab
+
+
 def test_a_log_cell_is_never_a_formula() -> None:
     item = LogItem(datetime(2026, 11, 9, 9, tzinfo=UTC), "Ty", "=HYPERLINK(1)", "/", "checkin")
     row = list(csv.reader(io.StringIO(csv_of(TextsV2("en"), [item]))))[1]

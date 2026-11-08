@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% block content %}
 <p class="back"><a href="{{ prefix }}/lab?tab=sim">‹ {{ t("v2.lab.sim") }}</a></p>
 <header class="v2-head"><div class="v2-head-text"><h1>{{ name }}</h1>{% if not waiting %}<p class="v2-asof">{{ t("v2.lab.pair_short") }}</p>{% endif %}</div></header>
@@ -21,7 +22,7 @@
 <section class="card stack" aria-labelledby="sim-day-title">
   <div class="section-head">
     <h2 id="sim-day-title" class="sim-day num">{{ t("sim.day_of", day=sim.days, total=total) }}</h2>
-    {% if chance is not none %}<span class="chip chip-{{ 'good' if chance_state == 'good' else 'bad' if chance_state == 'bad' else 'neutral' }} num">{{ t("v2.lab.chance", n=chance, date=t.date(chance_date)) }}</span>{% endif %}
+    {% if chance is not none %}<p class="row">{{ m.state_badge(t, chance_state) }}<span class="num">{{ t("v2.lab.chance", n=chance, date=t.date(chance_date)) }}</span></p>{% endif %}
   </div>
   <span class="bar bar-wide" aria-hidden="true"><span style="width: {{ [100, 100 * sim.days / total] | min | round(1) }}%"></span></span>
   <form class="actions" hx-post="{{ prefix }}/lab/sim/{{ sim_id }}/advance" hx-target="#advance-area" hx-swap="innerHTML">
@@ -32,13 +33,13 @@
   <div id="advance-area" aria-live="polite"></div>
 </section>
 {% endif %}
-<div class="grid-2 section">
+<div class="sides section">
   {% for side in sides %}
   <section class="card stack-sm" aria-labelledby="side-{{ loop.index }}">
     <h2 id="side-{{ loop.index }}">{{ t("v2.lab.side." ~ side.policy) }}</h2>
     <dl class="facts">
       <dt>{{ t("v2.lab.tasks") }}</dt><dd class="num">{{ t("sim.tasks_short", done=side.done_tasks, total=side.tasks_total) }}</dd>
-      <dt>{{ t("sim.col.cost") }}</dt><dd class="num">{{ t("sim.cost_so_far", cost=t.cost_short(side.cost), share=t.pct(side.cost_ratio)) }}</dd>
+      <dt>{{ t("sim.col.cost") }}</dt><dd class="num">{{ t("v2.lab.cost", cost=t.cost_short(side.cost), share=t.pct(side.cost_ratio)) }}</dd>
       <dt>{{ t("sim.col.changes") }}</dt><dd class="num">{{ side.plan_changes }}</dd>
       {% if side.finished and side.finish %}<dt>{{ t("sim.col.finish") }}</dt><dd class="num">{{ t.date(side.finish) }} · {% if side.on_time %}{{ t("sim.on_time") }}{% else %}{{ t.plural("overview.days", side.late_days or 0) }} {{ t("v2.lab.late") }}{% endif %}</dd>{% endif %}
     </dl>
@@ -47,7 +48,7 @@
 </div>
 <section class="card section" aria-labelledby="sim-events-title">
   <h2 id="sim-events-title" class="overline">{{ t("v2.lab.events") }}</h2>
-  {% if entries %}<ul class="events">{% for e in entries %}<li><span class="time">{{ e.when }}</span><span class="actor">{{ icon(e.icon, 20) }}</span><span>{{ e.text }}</span></li>{% endfor %}</ul>
+  {% if entries %}<ul class="events sim-events">{% for e in entries %}<li><span class="time">{{ e.when }}</span><span class="actor">{{ icon(e.icon, 20) }}</span><span>{{ e.text }}</span></li>{% endfor %}</ul>
   {% else %}<p class="muted">{{ t("v2.lab.no_events") }}</p>{% endif %}
 </section>
 {% endif %}

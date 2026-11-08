@@ -7,7 +7,7 @@ every option on hundreds of simulated futures of the project. Changes that affec
 money or scope always wait for your decision.
 
 This guide is for the person who runs the project. Installation for IT is at the
-[end](#9-installation-for-it). Polish version: [user-guide-pl.md](user-guide-pl.md).
+[end](#10-installation-for-it). Polish version: [user-guide-pl.md](user-guide-pl.md).
 
 **Contents:**
 [1. What Sentinel is](#1-what-sentinel-is) ·
@@ -17,8 +17,9 @@ This guide is for the person who runs the project. Installation for IT is at the
 [5. Recommendations and autonomy](#5-recommendations-and-autonomy) ·
 [6. The simulator](#6-the-simulator) ·
 [7. Privacy](#7-privacy) ·
-[8. Frequently asked questions](#8-frequently-asked-questions) ·
-[9. Installation for IT](#9-installation-for-it)
+[8. The new look (v2)](#8-the-new-look-v2) ·
+[9. Frequently asked questions](#9-frequently-asked-questions) ·
+[10. Installation for IT](#10-installation-for-it)
 
 ## 1. What Sentinel is
 
@@ -346,7 +347,46 @@ theirs. One run is one possible fate of the project; chance plays a part, so try
   pages were opened and when, and whether a form was refused (never an address or what a form
   held); the note goes with the sandbox.
 
-## 8. Frequently asked questions
+## 8. The new look (v2)
+
+At `/v2` a new look runs on the same data (the link "Nowy wygląd (v2)" on the start page;
+"Previous look" in the menu goes back). A project opened in one look is seen in the other.
+Colours show the state, always with an icon and a word; the chance is given as "39 in 100" with
+a 10 × 10 dot grid.
+
+- **Start** — every decision to make, sorted by its validity date, the project tiles and the
+  recent events.
+- A project's **Overview** — the verdict ("Late without changes · about 2 working days late"),
+  the chance of the deadline, the project end and the budget in work-days, and below them the
+  decision to make.
+- **Report** — describe or dictate what happened (🎤) and Sentinel turns it into cards to
+  confirm; "Progress as planned" and "Fill in the form" are the other ways. "Effect on the
+  project" shows the result before anything is saved.
+- **Decision** — the effect, the reasoning, who is affected and the cost of delay; "Approve",
+  "Reject" (with a reason), "Adjust" or "Postpone". **You approve every change**: in the new look
+  Sentinel changes nothing by itself.
+- **Log** — who (you or Sentinel) did what, day by day, with filters; expand an entry (▸) to see
+  the decision as it was and its fate; the "Chance over time" chart and "Download the log
+  (CSV)".
+- **Plan** — "Schedule" (a Gantt chart with today, the deadline and the forecast's band; tasks
+  of the main risks in amber, absences hatched), "Tasks" (a task not started yet is corrected
+  with "Adjust") and "Team" (absences, current and next tasks, next week's workload — **never a
+  rating of anyone's work**).
+- **Lab** — "What if?" tries an absence, a longer task or a new task on a chosen project and
+  saves nothing; "Add to report" carries these changes to a report. "Simulator" runs an example
+  project day by day: Sentinel beside the same project with no reaction, "+1 day", "+5 days" or
+  "To the end", and one sentence with the result at the end.
+- **Settings** — appearance (light, dark, system), language and the AI model ("Cloud
+  (recommended)" or "Local"; keys only in your own installation). **Project settings** — the
+  basics, the team, company days off, the **calendar**, the report reminder (Thursday 17:00 by
+  default), exports and "Delete project".
+- **Calendar** — "Create the calendar link" gives a secret link to add in Google Calendar
+  ("Other calendars" → "+" → "From URL") or iCloud (File → New Calendar Subscription). The
+  calendar shows the deadline, task starts and ends, absences (dates only, never a reason),
+  decision validity dates and the report reminder. **Whoever has the link sees people's names and
+  the dates of their absences** — "Revoke the link" switches it off at once.
+
+## 9. Frequently asked questions
 
 **How does Sentinel know how long tasks take?** From your estimates and how sure they are
 (step 1). In each future a task takes a little less or more, as in real life.
@@ -373,7 +413,7 @@ send.
 **Can the AI change anything by itself?** No. The AI only reads text (which you check anyway)
 and explains a decision; the explanation is marked with whether it agrees with the data.
 
-## 9. Installation for IT
+## 10. Installation for IT
 
 Details, backups and the public demo: [deploy.md](deploy.md).
 

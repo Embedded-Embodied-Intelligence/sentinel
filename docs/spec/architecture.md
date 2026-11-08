@@ -26,7 +26,8 @@ src/sentinel/
   policies/              # WP4: NoReaction, AlwaysSubstitute, FullResolve, StableResolve
   agent/                 # WP5: needs, candidates, rollout selector, permission gate
   llm/                   # WP6: clients (Ollama; Groq and OpenRouter through one OpenAI-compatible
-                         #   client), record/replay cache, schemas, prompts (English)
+                         #   client), record/replay cache, schemas, prompts (English); WP14:
+                         #   whisper.py (Groq's Whisper for recordings, nothing stored, ADR-0031)
   wbs/                   # WP6a: narrator, extraction, validation, scores (RQ1)
   interpret/             # WP6b: event parser, action grammar and compiler, explanations (§10)
   experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
@@ -38,12 +39,26 @@ src/sentinel/
                          #   views.py, api.py (FastAPI, `sentinel ui`), security.py (demo
                          #   sessions, CSRF, client addresses), showcase.py, names.py and
                          #   vocabulary/<lang>.toml (names of the example projects per language)
+    llm.py               # the application's LLM service: settings, keys (mode 0600), the daily
+                         #   cap, explanations and recordings (WP11, WP14)
+    message_reader.py    # WP14: the reader of a check-in message: items of the form, unparsed
+                         #   parts and questions (spec 11.3, ADR-0032)
+    date_words.py        # WP14: dates named by the model in words, settled by code on the
+                         #   project calendar (ADR-0032)
+    calendar.py          # WP12: working days with Polish holidays and company days off (11.1)
+    decisions.py         # WP15: validity date, cost of delay, corrections, brief (spec 11.8)
+    feed.py              # WP16: the iCalendar text of a project's calendar feed (ADR-0035)
     ui/                  # WP9b: the pages: Jinja2 templates, text.py (catalogue PL/EN), forms,
                          #   charts (SVG), routes per screen; static/ (CSS, vendored HTMX)
-      v2/                # WP15: the v2 interface under /v2 (ADR-0033): shell, numbers (states,
-                         #   "na 100", time reserve), overview, decision, report, voice, start,
-                         #   wizard; text.py (its catalogue); templates/v2/, sentinel-v2.css/js
-    decisions.py         # WP15: validity date, cost of delay, corrections, brief (spec 11.8)
+      v2/                # the v2 interface under /v2 (ADR-0033; docs/design/v2-spec.md):
+                         #   WP15: shell (frame, theme, live banner), numbers (states, "na 100",
+                         #   time reserve), status, overview (Pulpit), decision (Decyzja and
+                         #   Decyzje), report (Raport, its per-task form and the cards; WP16),
+                         #   voice, start (Start, Projekty), wizard (Nowy projekt);
+                         #   WP16: log (Dziennik, CSV), plan (Harmonogram, Zadania, Zespół),
+                         #   lab (Co jeśli?, Symulator), settings (Ustawienia, project settings),
+                         #   calendar (secret link and feed, ADR-0035);
+                         #   text.py (its catalogue); templates/v2/, sentinel-v2.css/js
 scripts/                 # one-off utilities, e.g. fetch_psplib.py; run_demo.sh (public demo),
                          #   setup_e2e_libs.sh (Chromium libraries without root)
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
@@ -89,9 +104,11 @@ web stack (FastAPI, uvicorn, Jinja2; a test enforces both, ADR-0022).
   study (gitignored); a run commits its replay bundle
 - the application's data directory (`sentinel ui --data-dir`, default
   `$XDG_DATA_HOME/sentinel`, outside the repository; `/data`, a named volume, in Docker):
-  `sentinel.db` (SQLite: projects, the event log, sessions, jobs), `settings.json` (the LLM
-  provider and its key, mode 0600, never returned by the API), `secret.key` (cookie signing
-  key) and `llm_cache/` (caches without prompts, spec section 10)
+  `sentinel.db` (SQLite: projects, the event log, sessions, jobs, the demo's request log, and
+  each project's calendar row: report reminder and the nonce of its link, ADR-0035),
+  `settings.json` (the LLM provider and its keys, mode 0600, never returned by the API),
+  `secret.key` (the key that signs cookies and derives calendar links) and `llm_cache/` (caches
+  without prompts, spec section 10)
 
 ## Application (WP9)
 
@@ -102,6 +119,12 @@ rebuilt from their event log in the store (`app/store.py`, ADR-0023); long opera
 forecast, recommendation, simulator advance, cockpit) run in a background worker
 (`app/jobs.py`) with a job id and progress. With `--demo` every visitor gets an anonymous
 sandbox (signed cookie, limits, 24 h expiry, CSRF tokens; ADR-0024).
+
+Two interfaces share these services (ADR-0033): the first at `/` (WP9b–WP14) and v2 at `/v2`
+(WP15–WP16: Start, Projekty, Pulpit, Raport, Decyzje and Decyzja, Dziennik, Plan, Laboratorium,
+Ustawienia and the project settings with its calendar, Nowy projekt). A calendar fetches a
+project's feed at `/calendar/{project}/{token}.ics` without a session; the link's token, derived
+from the server key, is its only key (ADR-0035).
 
 ### Deployment options (WP9c, ADR-0026)
 

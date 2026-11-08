@@ -867,6 +867,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.lab.side.no_reaction": ("No reaction", "Bez reakcji"),
     "v2.lab.tasks": ("Tasks done", "Zadania skończone"),
     "v2.lab.late": ("late", "po terminie"),
+    "v2.lab.cost": ("{cost} ({share} of the budget)", "{cost} ({share} budżetu)"),
     "v2.lab.events": ("What happened", "Co się wydarzyło"),
     "v2.lab.no_events": ("Nothing has happened yet.", "Jeszcze nic się nie wydarzyło."),
     # ---- Ustawienia (section 8.10, WP16)
