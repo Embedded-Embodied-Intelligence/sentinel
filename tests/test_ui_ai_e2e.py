@@ -264,7 +264,7 @@ def test_every_form_says_when_the_model_fails_and_works_again(
     # The explanation: a failure, an invalid answer, then a good one.
     page.goto(f"{local.base}/projects/{project}")
     page.wait_for_load_state("networkidle")
-    page.wait_for_function("!document.querySelector('.job')", timeout=WAIT)  # the analysis
+    page.wait_for_function("() => !document.querySelector('.job')", timeout=WAIT)  # the analysis
     page.wait_for_load_state("networkidle")
     waiting = page.get_by_role("link", name="Przejrzyj i zdecyduj")
     if waiting.count():

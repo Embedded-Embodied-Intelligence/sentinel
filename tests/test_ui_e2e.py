@@ -311,7 +311,8 @@ def test_a_check_in_by_keyboard_only(browser: Any, local: Server) -> None:
 
 
 def _axe(page: Any) -> list[str]:
-    page.add_script_tag(path=str(AXE))
+    # Through the DevTools protocol: the page's content policy allows no inline script (WP17).
+    page.evaluate("() => {" + AXE.read_text(encoding="utf-8") + "\n}")
     found = page.evaluate(
         """async () => (await axe.run(document, {resultTypes: ['violations']})).violations
             .map(v => ({id: v.id, impact: v.impact, nodes: v.nodes.length, help: v.help}))"""

@@ -159,7 +159,7 @@ def test_the_five_tasks_of_the_usability_protocol(server: Server) -> None:
         context.set_default_timeout(30_000)
         page = context.new_page()
         recorder = Recorder()
-        page.goto(server.base + "/")
+        page.goto(server.base + "/?look=v1")  # the protocol is v1's
 
         with recorder.task("Utwórz projekt z szablonu CSV") as task:
             create_project(page, task, NAME)
@@ -322,10 +322,10 @@ def test_task_3_by_message_and_by_voice_in_demo_mode(talking: Server) -> None:
         context = browser.new_context(viewport={"width": 1280, "height": 800}, locale="pl-PL")
         context.set_default_timeout(30_000)
         page = context.new_page()
-        page.goto(talking.base + "/")
+        page.goto(talking.base + "/?look=v1")
         timings = {}
         for code, way in (("P1", "message"), ("P2", "voice")):
-            page.goto(talking.base + "/")
+            page.goto(talking.base + "/?look=v1")
             create_project(page, Task(0, "setup"), f"{code} Aplikacja rezerwacji wizyt")
             page.get_by_role("link", name="Raport statusu").first.click()
             page.get_by_label("Stan na koniec dnia").fill("2026-11-04")

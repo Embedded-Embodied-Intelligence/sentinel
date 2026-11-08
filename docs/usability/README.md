@@ -26,7 +26,8 @@ dated 4 Nov whatever the real date is).
    `uv run python scripts/usability_logs.py --data-dir ~/.local/share/sentinel-demo --code P0`
    and read `docs/usability/logs/P0.md` (delete it afterwards).
 3. The instruction for each tester, besides the protocol's five task cards, says:
-   - the link, to be opened in a **private window** (a fresh sandbox), in **one tab**, on a
+   - the link with `/?look=v1` (the protocol's tasks are the first interface's; the demo's `/`
+     opens v2 since 1.8.0), to be opened in a **private window** (a fresh sandbox), in **one tab**, on a
      computer with a window at least 1280 px wide; the whole test in one sitting;
    - to name the project with their code, e.g. **"P1 Aplikacja rezerwacji wizyt"** (P2, P3 for
      the others; the log export finds the project by it);

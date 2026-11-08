@@ -298,7 +298,8 @@ def test_the_calendar_feed(demo: Server) -> None:
 
 
 def _axe(page: Any) -> list[str]:
-    page.add_script_tag(path=str(AXE))
+    # Through the DevTools protocol: the page's content policy allows no inline script (WP17).
+    page.evaluate("() => {" + AXE.read_text(encoding="utf-8") + "\n}")
     found = page.evaluate(
         """async () => (await axe.run(document, {resultTypes: ['violations']})).violations
               .filter(v => v.impact === 'serious' || v.impact === 'critical')
