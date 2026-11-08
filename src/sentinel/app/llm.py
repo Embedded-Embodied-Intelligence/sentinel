@@ -102,6 +102,8 @@ EXTRACTION = ExtractionSettings(prompt_version="v1", max_tokens=4096, max_repair
 EXPLANATION = ExplainSettings(prompt_version="v1", max_tokens=2048)
 PROPOSALS = ProposalSettings(prompt_version="v1", max_tokens=2048)
 USAGE_KEY = "llm"
+VOICE_KEY = "voice_s"  # seconds of audio sent to Whisper
+VOICE_MIN_S = 10  # the shortest request a provider bills (Groq)
 EXPLAIN_LIVE_PROMPT = "explain_live"  # the explanation in the page's language (WP12, ADR-0029)
 LANGUAGE_NAMES = {"en": "English", "pl": "Polish"}
 WBS_LIVE_PROMPT = "wbs_live"  # the application's addendum to the extraction prompt (WP12)
@@ -266,6 +268,9 @@ class LlmService:
         *,
         mode: Literal["on", "capped", "off"] = "on",
         daily_cap: int | None = None,
+        session_cap: int | None = None,
+        voice_cap: int | None = None,
+        voice_session_cap: int | None = None,
         factory: ClientFactory = make_client,
         transcriber: TranscriberFactory = make_transcriber,
     ) -> None:
@@ -274,6 +279,9 @@ class LlmService:
         self.store = store
         self.mode = mode
         self.daily_cap = daily_cap
+        self.session_cap = session_cap
+        self.voice_cap = voice_cap
+        self.voice_session_cap = voice_session_cap
         self.factory = factory
         self.transcriber = transcriber
 
@@ -339,12 +347,24 @@ class LlmService:
         os.chmod(self.settings_file, 0o600)
         return self.view()
 
-    def client(self) -> LlmClient:
-        """The client for one feature request, counted against the daily cap."""
+    def _limits(
+        self, key: str, cap: int | None, session_cap: int | None, session: str | None
+    ) -> list[tuple[str, int | None]]:
+        """The usage keys of a request with their caps: server-wide, and per visitor when
+        capped (the public demo, WP17: one visitor cannot use up everyone's AI)."""
+        capped = self.mode == "capped"
+        limits = [(key, cap if capped else None)]
+        if capped and session is not None and session_cap is not None:
+            limits.append((f"{key}:{session}", session_cap))
+        return limits
+
+    def client(self, session: str | None = None) -> LlmClient:
+        """The client for one feature request, counted against the daily caps."""
         if not self.available:
             raise AppError("llm_disabled", "unavailable")
-        cap = self.daily_cap if self.mode == "capped" else None
-        if not self.store.use(USAGE_KEY, cap):
+        if not self.store.use_all(
+            self._limits(USAGE_KEY, self.daily_cap, self.session_cap, session)
+        ):
             raise AppError("llm_cap", "limit")
         settings = self.settings()
         cache = RequestCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
@@ -358,32 +378,48 @@ class LlmService:
         language: str | None,
         vocabulary: str = "",
         preview: bool = False,
+        session: str | None = None,
     ) -> Transcript:
         """A recording written out by Groq's Whisper (ADR-0031), counted against the daily cap
         as a feature request, except a live preview of a recording still running (v2, WP15);
-        neither the audio nor the text is kept."""
+        every request, previews too, counts its seconds of audio against the voice caps (at
+        least the 10 s a request is billed; WP17). Neither the audio nor the text is kept."""
         key = _voice_key(self.settings())
         if not self.available or key is None:
             raise AppError("voice_disabled", "unavailable")
-        cap = self.daily_cap if self.mode == "capped" else None
-        if not preview and not self.store.use(USAGE_KEY, cap):
+        if not preview and not self.store.use_all(
+            self._limits(USAGE_KEY, self.daily_cap, self.session_cap, session)
+        ):
             raise AppError("llm_cap", "limit")
+        seconds = self._limits(VOICE_KEY, self.voice_cap, self.voice_session_cap, session)
+        if not self.store.use_all(seconds, amount=VOICE_MIN_S):
+            raise AppError("voice_cap", "limit")
         try:
-            return self.transcriber(key).transcribe(
+            found = self.transcriber(key).transcribe(
                 audio, content_type, language=language, prompt=vocabulary
             )
         except LlmError as exc:
             raise voice_failure(exc) from exc
+        if found.seconds is not None and found.seconds > VOICE_MIN_S:
+            extra = int(found.seconds - VOICE_MIN_S + 0.999)
+            self.store.use_all([(k, None) for k, _ in seconds], amount=extra)
+        return found
 
     def test_voice(self) -> str:
         """Write out a second of a quiet tone (a connection test of recordings); the model's
         name, or AppError with the reason."""
         return self.transcribe(silent_wav(), "audio/wav", language="en").model
 
-    def extract(self, text: str, seed: int, roles: Mapping[str, int] | None = None) -> Session:
+    def extract(
+        self,
+        text: str,
+        seed: int,
+        roles: Mapping[str, int] | None = None,
+        session: str | None = None,
+    ) -> Session:
         """WP6a extraction with up to three repair rounds (spec section 10); the roles of the
         project's team, if it has one, follow the description."""
-        client = self.client()
+        client = self.client(session)
         try:
             return extract_live(
                 client, with_team_roles(text, roles), seed=seed, settings=EXTRACTION
@@ -424,6 +460,7 @@ class LlmService:
         language: str = "en",
         names: Mapping[str, str] | None = None,
         reason: str = "",
+        session: str | None = None,
     ) -> LlmExplanation:
         """An LLM explanation of a recommendation with its faithfulness check (10.4), in the
         page's `language` with the actions named as the page names them (`names` by label) and
@@ -431,7 +468,7 @@ class LlmService:
         has one too, the page keeps the template explanation alone. The prompts stay English
         (ADR-0029)."""
         rendered = render_record(record, observation, params, roles)
-        client = self.client()
+        client = self.client(session)
         base = load_prompt(EXPLAIN_PROMPT, EXPLANATION.prompt_version)
         addendum = load_prompt(EXPLAIN_LIVE_PROMPT, EXPLANATION.prompt_version)
         system = f"{base.text}\n\n{addendum.render(language=LANGUAGE_NAMES[language])}"
@@ -492,12 +529,19 @@ class LlmService:
             max_tokens=EXPLANATION.max_tokens,
         )
 
-    def read_message(self, project: LiveProject, text: str, when: date, seed: int) -> MessageDraft:
+    def read_message(
+        self,
+        project: LiveProject,
+        text: str,
+        when: date,
+        seed: int,
+        session: str | None = None,
+    ) -> MessageDraft:
         """The reports of a manager's check-in message dated `when` (spec section 11.3, v2.3.0:
         the application's reader with its repair rounds, dates settled by code), for the manager
         to confirm one by one; never a reason for an absence (invariant 7)."""
         context = MessageContext(project, when, text)
-        client = self.client()
+        client = self.client(session)
         try:
             reading = read(client, context, seed=seed)
         except LlmError as exc:

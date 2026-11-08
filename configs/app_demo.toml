@@ -9,6 +9,7 @@ llm = "capped"             # the server's LLM provider with a daily cap ("off": 
                            # the demo's is OpenRouter with gpt-oss-120b, stored with its key in the
                            # demo's settings.json (docs/deploy.md, public demo, step 3)
 showcase = true            # a seeded showcase project in every new sandbox
+home = "v2"                # "/" opens the v2 interface; "Poprzedni wygląd" leads to v1
 request_log = true         # each sandbox's requests (time, method, path template, status; no
                            # address, no form content) for the usability test's log export
                            # (docs/usability/README.md); deleted with the sandbox
@@ -21,4 +22,7 @@ concurrent_jobs = 1        # per session
 requests_per_minute = 120  # per client address
 upload_kb = 512
 llm_calls_per_day = 200    # server-wide; an extraction or an explanation counts once
+llm_calls_per_session = 30 # per visitor and day, so one visitor cannot use up the rest
+voice_seconds_per_day = 7200  # seconds of audio to Whisper, previews too (at least 10 s each)
+voice_seconds_per_session = 900
 sandbox_hours = 24

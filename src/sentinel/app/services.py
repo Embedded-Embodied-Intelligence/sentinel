@@ -215,6 +215,9 @@ class Services:
             self.store,
             mode=config.llm,
             daily_cap=config.limits.llm_calls_per_day,
+            session_cap=config.limits.llm_calls_per_session,
+            voice_cap=config.limits.voice_seconds_per_day,
+            voice_session_cap=config.limits.voice_seconds_per_session,
             factory=llm_factory or partial(make_client, timeout_s=config.llm_timeout_s),
             transcriber=transcriber or make_transcriber,
         )
@@ -957,7 +960,7 @@ class Services:
         def work(progress: Progress) -> Mapping[str, Any]:
             progress(0.05, "reading")
             _, current = self._state(session, project_id)
-            draft = self.llm.read_message(current.project, text, when, seed)
+            draft = self.llm.read_message(current.project, text, when, seed, session)
             return draft.model_dump(mode="json")
 
         job = self._submit(session, project_id, "message", work, language)
@@ -998,7 +1001,12 @@ class Services:
             names = [p.name for p in definition.team] + [t.name for t in definition.tasks]
             vocabulary = ", ".join(dict.fromkeys(n for n in names if n))
         found = self.llm.transcribe(
-            audio, content_type, language=language, vocabulary=vocabulary, preview=preview
+            audio,
+            content_type,
+            language=language,
+            vocabulary=vocabulary,
+            preview=preview,
+            session=session,
         )
         if not found.text:
             raise AppError("voice_nothing", "invalid")
@@ -1057,6 +1065,7 @@ class Services:
                 language=language,
                 names=names,
                 reason=shown.reason_text,
+                session=session,
             )
             with self._lock(project_id):
                 self._append(
@@ -1147,7 +1156,7 @@ class Services:
 
         def work(progress: Progress) -> Mapping[str, Any]:
             progress(0.05, "reading")
-            found = self.llm.extract(text, seed, roles)
+            found = self.llm.extract(text, seed, roles, session)
             final = found.final
             if final.response.value is None:
                 detail = (

@@ -16,7 +16,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -545,19 +545,28 @@ class Store:
 
     def use(self, key: str, limit: int | None, day: str | None = None) -> bool:
         """Count one use of `key` today; False (and not counted) if `limit` uses were made."""
+        return self.use_all([(key, limit)], day=day)
+
+    def use_all(
+        self, limits: Sequence[tuple[str, int | None]], amount: int = 1, day: str | None = None
+    ) -> bool:
+        """Count `amount` uses of every key today, in one transaction; False (and nothing
+        counted) if any key has reached its limit (a per-visitor and a server-wide cap)."""
         today = day or now().date().isoformat()
         with self._write() as db:
-            row = db.execute(
-                "SELECT count FROM usage WHERE day = ? AND key = ?", (today, key)
-            ).fetchone()
-            count = 0 if row is None else int(row["count"])
-            if limit is not None and count >= limit:
-                return False
-            db.execute(
-                "INSERT INTO usage (day, key, count) VALUES (?, ?, 1) "
-                "ON CONFLICT(day, key) DO UPDATE SET count = count + 1",
-                (today, key),
-            )
+            for key, limit in limits:
+                row = db.execute(
+                    "SELECT count FROM usage WHERE day = ? AND key = ?", (today, key)
+                ).fetchone()
+                count = 0 if row is None else int(row["count"])
+                if limit is not None and count >= limit:
+                    return False
+            for key, _ in limits:
+                db.execute(
+                    "INSERT INTO usage (day, key, count) VALUES (?, ?, ?) "
+                    "ON CONFLICT(day, key) DO UPDATE SET count = count + excluded.count",
+                    (today, key, amount),
+                )
             return True
 
     # ---- request log (demo sandboxes, ADR-0030)

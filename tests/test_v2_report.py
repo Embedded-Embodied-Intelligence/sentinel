@@ -16,6 +16,7 @@ from test_app_voice import WAV, Scripted, app, project
 from test_v2_pages import Site, _site, text_of
 
 from sentinel.app import planning
+from sentinel.app.config import Limits
 from sentinel.app.store import LOCAL_SESSION
 
 
@@ -157,6 +158,30 @@ def test_the_form_adds_ticked_cards_and_keeps_its_errors(site_report: Site) -> N
 def send(client: TestClient, path: str, csrf: dict[str, str], seconds: str, body: bytes) -> Any:
     headers = {"content-type": "audio/webm", "x-recording-seconds": seconds, **csrf}
     return client.post(path, content=body, headers=headers)
+
+
+def test_a_visitor_cannot_use_up_the_ai_or_the_recordings(tmp_path: Path) -> None:
+    """WP17: the public demo caps each visitor's AI calls and seconds of audio a day, previews
+    included (each at least the 10 s a provider bills); another visitor keeps their own."""
+    scripted = Scripted("Interfejs skończony.")  # 15.1 s each: 16 s counted
+    limits = Limits(
+        llm_calls_per_day=100,
+        llm_calls_per_session=1,
+        voice_seconds_per_day=1000,
+        voice_seconds_per_session=40,
+    )
+    with app(tmp_path, scripted, cap=100, limits=limits) as first:
+        pid, csrf = project(first)
+        path = f"/v2/transcribe?project={pid}&preview=1"
+        codes = [send(first, path, csrf, "15", WAV).status_code for _ in range(4)]
+        assert codes == [200, 200, 200, 429]  # 16, 32, 48 s: the fourth is refused
+        refused = send(first, path, csrf, "15", WAV).json()["error"]
+        assert "limit" in refused.lower()
+        with TestClient(first.app) as second:
+            pid, csrf = project(second)
+            final = f"/v2/transcribe?project={pid}&preview=0"
+            assert send(second, final, csrf, "15", WAV).status_code == 200
+            assert send(second, final, csrf, "15", WAV).status_code == 429  # one AI call a day
 
 
 def test_the_live_preview_is_outside_the_cap_and_nothing_is_stored(tmp_path: Path) -> None:

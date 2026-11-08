@@ -32,6 +32,9 @@ class Limits(BaseModel):
     requests_per_minute: PositiveInt | None = None  # per client address
     upload_kb: PositiveInt = 5120
     llm_calls_per_day: int | None = Field(default=None, ge=0)  # server-wide
+    llm_calls_per_session: int | None = Field(default=None, ge=0)  # per visitor and day
+    voice_seconds_per_day: int | None = Field(default=None, ge=0)  # server-wide, previews too
+    voice_seconds_per_session: int | None = Field(default=None, ge=0)  # per visitor and day
     sandbox_hours: float = Field(default=24.0, gt=0)
 
 
@@ -50,6 +53,7 @@ class AppConfig(BaseModel):
     llm_timeout_s: PositiveFloat | None = None  # one AI call; None: by provider (`app.llm`)
     showcase: bool = True
     request_log: bool = False  # demo only: each sandbox's requests for the usability test
+    home: Literal["v1", "v2"] = "v1"  # the interface "/" opens; the other stays a link away
     psplib_root: Path = DEFAULT_ROOT
     baseline_cache: Path = DEFAULT_CACHE_ROOT
     inline_jobs: bool = False

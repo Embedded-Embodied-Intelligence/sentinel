@@ -22,6 +22,7 @@ from sentinel.app.ui.text import Texts
 
 LOG = logging.getLogger("sentinel.app")
 LANG_COOKIE = "sentinel_lang"
+LOOK_COOKIE = "sentinel_look"  # "v1": the visitor went back to the first interface
 DEFAULT_LANGUAGE: Language = "pl"
 STATIC_DIR = Path(__file__).parent / "static"
 VOICE_LIMIT_S = 90  # seconds of one recording (WP14): the page stops it, the server refuses more
@@ -194,6 +195,14 @@ class Ui:
         """A full page, or a fragment template (names starting with "_")."""
         html = self.render(request, template, values)
         return HTMLResponse(html, status_code=status, headers=dict(headers or {}))
+
+    def look_v1(self, request: Request) -> bool:
+        """Whether "/" shows the first interface: it is the home, or the visitor chose it with
+        "Poprzedni wygląd" (`?look=v1`, kept in a cookie until v1's link to v2; WP17)."""
+        if self.config.home == "v1":
+            return True
+        look = request.query_params.get("look") or request.cookies.get(LOOK_COOKIE)
+        return look == "v1"
 
     def redirect(self, request: Request, url: str, **query: str) -> Response:
         """Go to `url` (a full page load): HX-Redirect for HTMX requests, else 303."""

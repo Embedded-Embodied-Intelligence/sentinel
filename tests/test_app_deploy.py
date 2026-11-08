@@ -128,6 +128,22 @@ def test_the_running_demo_answers_the_local_proxy_with_the_forwarded_address(
         thread.join(timeout=10)
 
 
+def test_every_response_carries_the_security_headers(tmp_path: Path) -> None:
+    """WP17: a strict content policy (scripts only from the server, no framing), no MIME
+    sniffing, no referrer to other sites, the microphone for this site only; HSTS over HTTPS."""
+    config = load_config(ROOT / "configs" / "app_demo.toml", data_dir=tmp_path, showcase=False)
+    with TestClient(create_app(config), base_url="https://testserver", client=PROXY) as client:
+        for path in ("/v2", "/api/health", "/static/sentinel-v2.css", "/nowhere"):
+            headers = client.get(path).headers
+            policy = headers["content-security-policy"]
+            assert "script-src 'self';" in policy and "frame-ancestors 'none'" in policy, path
+            assert headers["x-content-type-options"] == "nosniff"
+            assert headers["x-frame-options"] == "DENY"
+            assert headers["referrer-policy"] == "same-origin"
+            assert "microphone=(self)" in headers["permissions-policy"]
+            assert headers["strict-transport-security"].startswith("max-age=")
+
+
 def test_the_compose_file_and_the_image() -> None:
     yaml = pytest.importorskip("yaml")  # PyYAML comes with the dev tools (pre-commit)
     compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))

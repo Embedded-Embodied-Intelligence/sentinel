@@ -302,7 +302,22 @@ def test_the_theme_is_remembered_in_a_cookie(site: Site) -> None:
 
 
 def test_the_first_interface_links_to_v2(site: Site) -> None:
-    assert 'href="/v2"' in site.client.get("/", params={"lang": "pl"}).text
+    assert 'href="/v2?look=v2"' in site.client.get("/", params={"lang": "pl"}).text
+
+
+def test_the_home_can_be_v2_and_v1_stays_a_link_away(tmp_path: Path) -> None:
+    """WP17: with `home = "v2"` (the public demo) "/" opens v2; "Poprzedni wygląd" shows v1
+    and keeps it until v1's link back to v2."""
+    config = AppConfig(data_dir=tmp_path, home="v2", showcase=False)
+    with TestClient(create_app(config)) as client:
+        first = client.get("/", params={"lang": "en"}, follow_redirects=False)
+        assert first.status_code == 303 and first.headers["location"] == "/v2?lang=en"
+        assert 'href="/?look=v1"' in client.get("/v2").text
+        old = client.get("/", params={"look": "v1"}, follow_redirects=False)
+        assert old.status_code == 200 and client.cookies.get("sentinel_look") == "v1"
+        assert client.get("/", follow_redirects=False).status_code == 200  # remembered
+        client.get("/v2", params={"look": "v2"})
+        assert client.get("/", follow_redirects=False).status_code == 303
 
 
 def seq_of(site: Site) -> int:
@@ -323,13 +338,14 @@ def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
         "Decyzja do podjęcia" in text
         and "Cezary zastępuje Bartosza w „API katalogu produktów”" in text
     )
-    who = text[text.index("Kogo dotyczy") :]
+    who = text[text.index("Kogo dotyczy") : text.index("Koszt zwłoki")]
     assert who.startswith("Kogo dotyczy Zastępstwo: Cezary Mazur przejmuje udział osoby nieobecnej")
-    assert "Cezary Mazur: przejmuje „API katalogu produktów”" in who
+    assert "Bartosz Kowalski: po powrocie wraca do swoich zadań" in who
+    assert "za osobę" not in who and who.count("Cezary") == 1  # nothing twice (WP17)
     # The contrast is the best option of another kind, never the same one with a re-plan (56).
     assert (
         "Najlepsza możliwość innego rodzaju, „Rezygnacja z «Karty podarunkowe»”, dałaby mniej "
-        "(39 na 100) przy koszcie 0 dni pracy." in text
+        "(39 na 100), choć bez dodatkowego kosztu." in text
     )
     assert "56 na 100" not in text[: text.index("Kogo dotyczy")]
     assert "Każdy dzień czekania to ok. \u22125 na 100." in text
@@ -565,7 +581,7 @@ def link_of(client: TestClient, project: str, headers: dict[str, str]) -> str:
     client.post(f"/v2/projects/{project}/calendar", headers=headers)
     page = client.get(f"/v2/projects/{project}/settings", params={"lang": "pl"}).text
     assert "Kto ma ten link, widzi imiona osób i daty nieobecności." in page
-    found = re.search(r'id="calendar-link" value="http://testserver([^"]+)"', page)
+    found = re.search(r'id="calendar-link" value="https?://testserver([^"]+)"', page)
     assert found is not None
     return html.unescape(found.group(1))
 

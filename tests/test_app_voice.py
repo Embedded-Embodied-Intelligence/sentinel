@@ -51,13 +51,15 @@ def app(
     groq_key: str | None = KEY,
     demo: bool = True,
     cap: int | None = None,
+    limits: Limits | None = None,
 ) -> TestClient:
     settings: dict[str, Any] = {"provider": "ollama"}
     if groq_key:
         settings["groq_key"] = groq_key
     tmp_path.mkdir(parents=True, exist_ok=True)
     (tmp_path / "settings.json").write_text(json.dumps({"llm": settings}), encoding="utf-8")
-    limits = Limits(llm_calls_per_day=cap) if cap is not None else Limits()
+    if limits is None:
+        limits = Limits(llm_calls_per_day=cap) if cap is not None else Limits()
     config = AppConfig(
         data_dir=tmp_path,
         demo=demo,

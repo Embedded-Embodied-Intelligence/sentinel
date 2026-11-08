@@ -504,8 +504,9 @@ textarea.input { min-height: 132px; resize: vertical; }
 .gantt2 { display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); align-items: start; }
 .g-names { list-style: none; margin: 0; padding: var(--g-top) 12px 0 0; }
 .g-names li { height: 32px; display: flex; align-items: center; gap: 6px; font-size: 15px; white-space: nowrap; overflow: hidden; }
-.g-name { overflow: hidden; text-overflow: ellipsis; }
-.g-word { font-size: 14px; font-weight: 700; color: var(--warn); }
+.g-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.g-word { flex: none; font-size: 14px; font-weight: 700; color: var(--warn); }
+.g-names li > .icon { flex: none; }
 .g-names .g-risk { color: var(--text); }
 .g-names .g-risk .icon { color: var(--warn); }
 .g-names .g-removed .g-name { text-decoration: line-through; color: var(--muted); }

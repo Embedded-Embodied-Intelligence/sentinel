@@ -346,6 +346,12 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Najlepsza możliwość innego rodzaju, {option}, dałaby mniej ({chance} na 100) przy "
         "koszcie {price}.",
     ),
+    "v2.why.alt_less_free": (
+        "The best option of another kind, {option}, would give less ({chance} in 100), though "
+        "at no extra cost.",
+        "Najlepsza możliwość innego rodzaju, {option}, dałaby mniej ({chance} na 100), choć bez "
+        "dodatkowego kosztu.",
+    ),
     "v2.why.alt_close": (
         "{option} would give a similar result too; {part}.",
         "Podobny wynik dałoby też {option}; {part}.",
@@ -359,33 +365,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Without a change the chance stays {before} in 100; no other option helps as much.",
         "Bez zmian szansa zostaje {before} na 100; żadna inna możliwość nie pomaga tak bardzo.",
     ),
-    "v2.who.subst": (
-        "{person}: takes over “{task}” in place of {absent}",
-        "{person}: przejmuje „{task}” w zastępstwie, za osobę {absent}",
-    ),
     "v2.who.absent": (
         "{absent}: back to their own tasks after returning",
         "{absent}: po powrocie wraca do swoich zadań",
-    ),
-    "v2.who.temp.one": (
-        "A temporary person: {role} for {n} day",
-        "Osoba tymczasowa: {role} na {n} dzień",
-    ),
-    "v2.who.temp.few": (
-        "A temporary person: {role} for {n} days",
-        "Osoba tymczasowa: {role} na {n} dni",
-    ),
-    "v2.who.temp.many": (
-        "A temporary person: {role} for {n} days",
-        "Osoba tymczasowa: {role} na {n} dni",
-    ),
-    "v2.who.temps": (
-        "{u} temporary people: {role} for {n} days",
-        "{u} osoby tymczasowe: {role} na {n} dni",
-    ),
-    "v2.who.descope": (
-        "“{task}”: dropped, nobody works on it",
-        "„{task}”: rezygnujemy, nikt nad nim nie pracuje",
     ),
     "v2.who.moved.one": ("{n} task gets new dates", "{n} zadanie dostaje nowe terminy"),
     "v2.who.moved.few": ("{n} tasks get new dates", "{n} zadania dostają nowe terminy"),

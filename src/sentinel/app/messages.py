@@ -279,6 +279,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "limit_jobs": "Please wait until the running computation has finished.",
         "llm_disabled": "No AI model is set up.",
         "llm_cap": "The daily limit of AI requests is reached; try again tomorrow.",
+        "voice_cap": "The daily limit of recordings is reached; type the report instead.",
         "llm_failed": "The AI did not answer; try again later.",
         "llm_timeout": "The AI did not answer in time; try again, or fill in the form by hand.",
         "llm_unreachable": "The AI provider cannot be reached; check its address on the Settings "
@@ -556,6 +557,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "limit_jobs": "Poczekaj, aż zakończą się trwające obliczenia.",
         "llm_disabled": "Nie skonfigurowano modelu AI.",
         "llm_cap": "Osiągnięto dzienny limit zapytań do AI; spróbuj jutro.",
+        "voice_cap": "Osiągnięto dzienny limit nagrań; wpisz raport tekstem.",
         "llm_failed": "AI nie odpowiedziało; spróbuj później.",
         "llm_timeout": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz "
         "ręcznie.",

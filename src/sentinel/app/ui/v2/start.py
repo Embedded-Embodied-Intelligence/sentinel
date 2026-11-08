@@ -10,7 +10,7 @@ from fastapi.responses import Response
 
 from sentinel.app import showcase
 from sentinel.app.events import OPEN
-from sentinel.app.ui.core import Ui
+from sentinel.app.ui.core import LOOK_COOKIE, Ui
 from sentinel.app.ui.text import MINUS
 from sentinel.app.ui.v2.decision import Validity, validity_view
 from sentinel.app.ui.v2.log import LogItem, entries
@@ -118,7 +118,7 @@ def router(ui: Ui) -> APIRouter:
     def start(request: Request) -> Response:
         t = texts(request)
         found = overview(ui, request)
-        return page(
+        response = page(
             ui,
             request,
             "start.html",
@@ -130,6 +130,9 @@ def router(ui: Ui) -> APIRouter:
             today=date.today(),
             notice=deleted_notice(t) if request.query_params.get("done") == "deleted" else None,
         )
+        if request.query_params.get("look") == "v2":  # v1's link: "/" is v2 again (WP17)
+            response.delete_cookie(LOOK_COOKIE)
+        return response
 
     @routes.get(PREFIX + "/projects")
     def projects(request: Request) -> Response:

@@ -157,4 +157,8 @@ def link_of(ui: Ui, request: Request, row: CalendarRow) -> str | None:
         return None
     token = calendar_token(load_key(ui.config.secret_file), row.project, row.nonce)
     base = str(request.base_url).rstrip("/")
+    if ui.config.secure_cookies and base.startswith("http://"):
+        # Served over HTTPS behind a local proxy that speaks HTTP to the app (the demo's
+        # Tailscale Funnel answers only HTTPS): the link a calendar fetches is https (WP17).
+        base = "https://" + base.removeprefix("http://")
     return base + feed_path(row.project, token, ui.language(request))

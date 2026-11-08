@@ -52,6 +52,8 @@ def test_the_feed_needs_no_session_and_lives_with_the_sandbox(tmp_path: Path) ->
         visitor.post("/v2/example", headers=headers)  # "Otwórz projekt przykładowy"
         project = str(rows("SELECT id FROM projects WHERE kind = 'live'")[0][0])
         path = link_of(visitor, project, headers)
+        shown = visitor.get(f"/v2/projects/{project}/settings").text
+        assert 'value="http://testserver/calendar/' in shown  # served over HTTP: as it came
     sessions = rows("SELECT COUNT(*) FROM sessions")
     with TestClient(create_app(config, services)) as calendar_app:  # no cookie at all
         assert calendar_app.get(path).status_code == 200
@@ -59,3 +61,23 @@ def test_the_feed_needs_no_session_and_lives_with_the_sandbox(tmp_path: Path) ->
     services.store.expire(datetime.now().astimezone() + timedelta(days=1))
     with TestClient(create_app(config, services)) as calendar_app:
         assert calendar_app.get(path).status_code == 404  # gone with its sandbox
+
+
+def test_behind_an_https_proxy_the_link_is_https(tmp_path: Path) -> None:
+    """WP17: the demo is served over HTTPS (secure cookies) by a proxy that speaks HTTP to the
+    app; the link a calendar fetches must be https, not the app's own http."""
+    config = AppConfig(data_dir=tmp_path, demo=True, inline_jobs=True, secure_cookies=True)
+    services = Services(config)
+    with TestClient(create_app(config, services), base_url="https://demo.example") as visitor:
+        visitor.get("/v2")
+        token = visitor.get("/api/session").json()["csrf_token"]
+        headers = {"X-CSRF-Token": token, "HX-Request": "true"}
+        visitor.post("/v2/example", headers=headers)
+        with sqlite3.connect(services.store.path) as db:
+            project = str(db.execute("SELECT id FROM projects WHERE kind = 'live'").fetchone()[0])
+        visitor.post(f"/v2/projects/{project}/calendar", headers=headers)
+        session = visitor.cookies["sentinel_session"]  # the proxy passes it over plain HTTP
+    with TestClient(create_app(config, services), base_url="http://demo.example") as proxied:
+        cookie = {"cookie": f"sentinel_session={session}"}
+        page = proxied.get(f"/v2/projects/{project}/settings", headers=cookie).text
+    assert 'value="https://demo.example/calendar/' in page

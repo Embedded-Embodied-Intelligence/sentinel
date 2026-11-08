@@ -84,6 +84,26 @@ EXPIRY_CHECK_S = 60.0
 UNLIMITED = ("/api/health", "/favicon.ico")  # neither limited nor given a session
 SESSIONLESS = ("/api/client-address",)  # rate-limited, but no sandbox is made for it
 FEED_PREFIX = "/calendar/"  # a project's calendar feed, opened by its secret link (ADR-0035)
+# Security headers of every response (WP17): scripts and connections only from this server, no
+# framing (an approve button cannot be clicked through someone else's page), no MIME sniffing,
+# no address sent to other sites, the microphone for this site only. Styles may be inline
+# (style attributes, htmx's indicator style). The simulator's cockpit is one self-contained
+# page with its own script and sets its own policy.
+POLICY = (
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; "
+    "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+)
+COCKPIT_POLICY = POLICY.replace("script-src 'self'", "script-src 'self' 'unsafe-inline'")
+SECURITY_HEADERS = {
+    "Content-Security-Policy": POLICY,
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
+    "Permissions-Policy": "microphone=(self), camera=(), geolocation=(), payment=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+}
+HSTS = "max-age=15552000"  # only when served over HTTPS (secure cookies)
 
 
 def _version() -> str:
@@ -220,6 +240,17 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
             status,
             getattr(request.state, "log_seconds", None),  # a recording's length (ADR-0031)
         )
+
+    @app.middleware("http")
+    async def security_headers(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        response = await call_next(request)
+        for name, value in SECURITY_HEADERS.items():
+            response.headers.setdefault(name, value)
+        if config.secure_cookies:
+            response.headers.setdefault("Strict-Transport-Security", HSTS)
+        return response
 
     @app.middleware("http")
     async def guard(
@@ -580,7 +611,10 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         row = services.job_row(sid(request), job_id)
         if row.kind != "cockpit" or row.result is None:
             raise AppError("job_not_done", "conflict")
-        return HTMLResponse(str(row.result.get("html", "")))
+        return HTMLResponse(
+            str(row.result.get("html", "")),
+            headers={"Content-Security-Policy": COCKPIT_POLICY},
+        )
 
     from sentinel.app.ui.core import mount
 

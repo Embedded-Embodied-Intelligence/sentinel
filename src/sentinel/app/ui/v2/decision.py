@@ -32,7 +32,7 @@ from sentinel.app.ui.v2.overview import Chip, decision_chips, escape, signed, ta
 from sentinel.app.ui.v2.shell import GATE, PREFIX, header, page, texts
 from sentinel.app.ui.v2.text import TextsV2
 from sentinel.app.views import ProjectView, RecommendationView, replaced_members
-from sentinel.policies.base import Descope, Overtime, Subst
+from sentinel.policies.base import Subst
 
 REASONS: tuple[RejectReason, ...] = ("too_expensive", "unavailable", "no_budget", "other")
 NEEDS = {"subst": "people", "overtime": "money", "descope": "scope"}
@@ -175,9 +175,13 @@ def reasoning(t: TextsV2, rec: RecommendationView, person_days: bool) -> list[st
         part = t("why.tie.by.tardiness") if delay else t("v2.why.simpler")
         lines.append(t("v2.why.alt_close", option=option, part=part))
     elif alt.p_on_time < after.p_on_time:
-        price = workdays(t, max(0.0, alt.expected_cost - before.expected_cost), person_days)
+        extra = max(0.0, alt.expected_cost - before.expected_cost)
         alt_n = per_hundred(alt.p_on_time)
-        lines.append(t("v2.why.alt_less", option=option, chance=alt_n, price=price))
+        if extra < 0.5:  # shown as 0: no price to name
+            lines.append(t("v2.why.alt_less_free", option=option, chance=alt_n))
+        else:
+            price = workdays(t, extra, person_days)
+            lines.append(t("v2.why.alt_less", option=option, chance=alt_n, price=price))
     else:
         tie = t.tie(rec.tie, rec.reason) if rec.tie is not None else rec.reason_text
         alt_n = per_hundred(alt.p_on_time)
@@ -189,34 +193,20 @@ def who(
     t: TextsV2, project: LiveProject, entry: RecommendationEntry, rec: RecommendationView
 ) -> list[str]:
     """Who is affected (section 8.4): the action in full words (WP16 hotfix: the title is its
-    short form), substitutes and the people they stand in for, temporary people, the dropped
-    task and how many tasks get new dates."""
+    short form), then what follows from it and the words do not say (WP17: nothing twice): the
+    people stood in for return to their own tasks, how many tasks get new dates."""
     chosen = entry.recommendation.chosen
     if chosen is None:
         return []
     from sentinel.app.views import person_names
 
     names = person_names(project, t.lang)
-    keys = {j: key for key, j in project.activity_ids().items()}
-    nodes = project.nodes()
-    model = project.require_model()
-    lines: list[str] = [rec.title] if rec.title != rec.headline else []
+    lines: list[str] = [rec.title]
     for op in chosen.decision.operations:
         if isinstance(op, Subst):
-            task = nodes[keys[op.activity]].name
-            for worker, absent in replaced_members(project, op, entry.recommendation.day):
-                gone = names.get(absent, absent) if absent is not None else "?"
-                person = names.get(worker, worker)
-                lines.append(t("v2.who.subst", person=person, task=task, absent=gone))
-                lines.append(t("v2.who.absent", absent=gone))
-        elif isinstance(op, Overtime):
-            role = model.role_names[op.role]
-            if op.workers == 1:
-                lines.append(t.plural("v2.who.temp", op.days, role=role))
-            else:
-                lines.append(t("v2.who.temps", u=op.workers, role=role, n=op.days))
-        elif isinstance(op, Descope):
-            lines.append(t("v2.who.descope", task=nodes[keys[op.activity]].name))
+            for _, absent in replaced_members(project, op, entry.recommendation.day):
+                if absent is not None:
+                    lines.append(t("v2.who.absent", absent=names.get(absent, absent)))
     if rec.changes:
         lines.append(t.plural("v2.who.moved", len(rec.changes)))
     return lines or [t("v2.who.nobody")]

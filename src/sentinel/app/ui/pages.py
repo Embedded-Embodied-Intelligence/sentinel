@@ -15,7 +15,15 @@ from sentinel.app.errors import AppError
 from sentinel.app.llm import LlmSettingsUpdate, Provider
 from sentinel.app.services import JobView
 from sentinel.app.simulator import SimulatorSpec
-from sentinel.app.ui.core import LANG_COOKIE, STATIC_DIR, Ui, chance_level, local_path, nav_rank
+from sentinel.app.ui.core import (
+    LANG_COOKIE,
+    LOOK_COOKIE,
+    STATIC_DIR,
+    Ui,
+    chance_level,
+    local_path,
+    nav_rank,
+)
 from sentinel.app.ui.forms import Form
 from sentinel.app.views import ForecastSummary
 from sentinel.llm.ollama import DEFAULT_HOST, HOST_VARIABLE
@@ -83,6 +91,9 @@ def router(ui: Ui) -> APIRouter:
 
     @routes.get("/")
     def start(request: Request) -> Response:
+        if not ui.look_v1(request):  # the home is v2 (the public demo, WP17)
+            lang = request.query_params.get("lang")
+            return ui.redirect(request, "/v2", **({"lang": lang} if lang else {}))
         session = ui.session(request)
         cards = []
         for summary in services.projects(session):
@@ -123,7 +134,7 @@ def router(ui: Ui) -> APIRouter:
                     step=2 if project.definition.team else 1,
                 )
             )
-        return ui.page(
+        response = ui.page(
             request,
             "start.html",
             title=ui.texts(request)("start.title"),
@@ -132,6 +143,9 @@ def router(ui: Ui) -> APIRouter:
             drafts=[c for c in cards if c.kind == "live" and not c.planned],
             examples=[c for c in cards if c.kind == "simulator"],
         )
+        if request.query_params.get("look") == "v1":
+            response.set_cookie(LOOK_COOKIE, "v1", max_age=365 * 24 * 3600, samesite="lax")
+        return response
 
     @routes.get("/projects/{project_id}/chance")
     def chance(request: Request, project_id: str) -> Response:
