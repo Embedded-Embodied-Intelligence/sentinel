@@ -42,8 +42,8 @@ def scenario_date(view: ProjectView) -> date:
 
 
 def counted_from(project: LiveProject, day: date) -> date:
-    """The first day an absence of a report dated `day` counts in the forecast: the report's
-    day `t`; one starting later waits for a later report (spec section 11.3)."""
+    """The first day a report dated `day` observes, `t`: the "Od" the form suggests (an absence
+    from a later day counts from that day, spec section 11.3, v2.4.1)."""
     return project.calendar.date_of(project.calendar.checkin_day(day))
 
 
@@ -167,7 +167,6 @@ def router(ui: Ui) -> APIRouter:
         view = services.live(session, project_id, language)
         read = read_items(form, view)
         values: dict[str, Any] = {"project_id": project_id, "chips": [], "error": None}
-        values["later"] = None
         values["errors"] = errors_of(t, read)
         values["link"] = None
         if read.checkin is None:
@@ -183,10 +182,6 @@ def router(ui: Ui) -> APIRouter:
             values["error"] = " ".join(t.issues(exc))
             return page(ui, request, "_lab_impact.html", **values)
         values["chips"] = impact_chips(t, before, after, view.person_days)
-        first = counted_from(services.state(session, project_id).project, read.checkin.date)
-        later = sorted(a.first_day for a in read.checkin.absences if a.first_day > first)
-        if later:
-            values["later"] = t("v2.lab.later", date=t.date(later[0]), first=t.date(first))
         query = []
         for item in items:
             kind = {"AbsenceReport": "absence", "WorkIncreaseReport": "increase"}.get(

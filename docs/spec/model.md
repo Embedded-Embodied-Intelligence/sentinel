@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.4.0)
+# Sentinel — formal model (v2.4.1)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -108,7 +108,10 @@ tasks matched to the message's words tolerantly; the words of a date limited to 
 (WP15) the v2 interface of the application (§11.8): its deliberations at `Λ = 0` (a note in
 §4), the chance in 100, the three states and their verdict, the time-reserve chart, the
 lifecycle of a decision with its validity date, cost of delay and corrections; §1–§10 and the
-research runs are unchanged.
+research runs are unchanged. v2.4.1 (WP17, the owner's audit item 10) an announced absence that
+starts after the check-in's day is known at once (§11.3): the observation lists it, the belief
+draws its length and every simulated future starts it on its first day; the studies have no
+such absence, so §1–§10 and the research runs are unchanged (`sentinel reproduce --check`).
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -987,7 +990,12 @@ or before `d` (`−1` before `date(0)`).
     day `first(r)`, so `L_low = first(r) − s ≥ 1` (§2.2); without a return date `L_low = 1`
     (§10.2) and the absence lasts until a check-in gives its return date. The person is absent
     on day `t` iff an absence covers `t`: `present = false`, `absent_since = s` and
-    `announced = L_low`. An absence that starts after `t` waits for a later check-in.
+    `announced = L_low`. An absence that starts after `t` (an announced one, v2.4.1) is known
+    from the check-in on: the observation lists it as `(w, s, L_low)`; the belief draws its true
+    length `L ≥ L_low` from the posterior of §5.1, as for an absence under way, after every other
+    draw of the world; every rollout starts it on day `s` (if `w` is absent then, the absence
+    that ends later counts), and a D1 onset of a worker who is absent is skipped. The
+    deterministic plan of §5.2 takes `L = L_low`.
   - *Work increases.* `×F` with `F > 1` is used as given; `+N` working days (`N > 0`) gives
     `F = (R + N) / R`, with `R` the deterministic remaining work of §5.2 in full-crew days after
     the check-in's progress. The shock `(j, e_j, F)` is appended to the observed shocks (§3).

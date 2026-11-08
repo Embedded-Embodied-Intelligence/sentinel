@@ -49,7 +49,15 @@ class Belief:
     SUBST handovers enter the replay of the observed work like D2 shocks (`_remaining`).
     """
 
-    __slots__ = ("_durations", "_fixed", "_returns", "fallbacks", "n_activities", "n_workers")
+    __slots__ = (
+        "_durations",
+        "_fixed",
+        "_returns",
+        "_scheduled",
+        "fallbacks",
+        "n_activities",
+        "n_workers",
+    )
 
     def __init__(self, observation: Observation) -> None:
         instance, pert = observation.instance, observation.pert
@@ -103,9 +111,19 @@ class Belief:
                 self.fallbacks += 1
                 posterior = IntegerPmf(least, (1.0,))
             self._returns.append(_Return(w, start, posterior))
+        # A known future absence (the application, spec section 11.3): its true length given
+        # the announced L_low, as for an absence under way.
+        self._scheduled: list[IntegerPmf] = []
+        for _, _, announced in observation.scheduled_absences:
+            posterior = absence_posterior(q, announced)
+            if posterior is None:
+                self.fallbacks += 1
+                posterior = IntegerPmf(announced, (1.0,))
+            self._scheduled.append(posterior)
 
     def sample(self, rng: np.random.Generator) -> SampledWorld:
-        """One world: remaining work of every activity and the return day of every worker."""
+        """One world: remaining work of every activity, the return day of every worker and the
+        length of every known future absence."""
         uniforms = rng.random(self.n_activities + self.n_workers).tolist()
         remaining = self._fixed.copy()
         for j, pmf, table in self._durations:
@@ -114,7 +132,11 @@ class Belief:
         n = self.n_activities
         for w, start, pmf in self._returns:
             return_day[w] = start + pmf.sample(uniforms[n + w])
-        return SampledWorld(tuple(remaining), tuple(return_day), self.fallbacks)
+        lengths: tuple[int, ...] = ()
+        if self._scheduled:  # drawn after the rest, so a world without them is unchanged
+            extra = rng.random(len(self._scheduled)).tolist()
+            lengths = tuple(pmf.sample(u) for pmf, u in zip(self._scheduled, extra, strict=True))
+        return SampledWorld(tuple(remaining), tuple(return_day), self.fallbacks, lengths)
 
     def expected_remaining(self) -> tuple[float, ...]:
         """E[remaining work] of every activity under the belief, in crew-member days."""

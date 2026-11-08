@@ -526,10 +526,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "{name}: away from {first}, back {back}",
         "{name}: nieobecność od {first}, wraca {back}",
     ),
-    "v2.card.absence_later": (
-        "This absence will start to count in the report of {date}.",
-        "Ta nieobecność zacznie się liczyć w raporcie {date}.",
-    ),
     "v2.card.absence_open": (
         "{name}: away from {first}, return not known",
         "{name}: nieobecność od {first}, powrót nieznany",
@@ -801,12 +797,6 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Fill in at least one row: who is absent, which task takes longer or a new task.",
         "Wypełnij co najmniej jeden wiersz: kto będzie nieobecny, które zadanie potrwa dłużej "
         "albo nowe zadanie.",
-    ),
-    "v2.lab.later": (
-        "An absence counts in the forecast from its first day, so one from {date} shows in the "
-        "report of that day. To see its effect now, set “From” to {first}.",
-        "Nieobecność liczy się w prognozie od swojego pierwszego dnia, więc ta od {date} pojawi "
-        "się w raporcie z tego dnia. Aby zobaczyć jej wpływ teraz, ustaw „Od” na {first}.",
     ),
     "v2.lab.not_saved": (
         "Nothing was saved. “Add to report” opens the report with these changes ticked.",

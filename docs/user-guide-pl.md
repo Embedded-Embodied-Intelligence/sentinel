@@ -195,7 +195,9 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    zakończenie z datą („skończył się wczoraj”), rozpoczęcie („ruszyło w poniedziałek”),
    nieobecności, wydłużone i nowe zadania. Daty liczy aplikacja według kalendarza projektu (ze
    świętami), nie AI: „od jutra” to następny dzień roboczy, „do środy” — nieobecność przez całą
-   środę i powrót w następnym dniu roboczym, „wraca w środę” — powrót tego dnia. Nazwy zadań
+   środę i powrót w następnym dniu roboczym, „wraca w środę” — powrót tego dnia. Nieobecność
+   zapowiedziana na później (np. urlop za dwa tygodnie) liczy się w prognozie od razu, od swojego
+   pierwszego dnia. Nazwy zadań
    mogą być odmienione i pisane małą literą („z bazy danych i API”). Pod **Tak to rozumiem:**
    widać pozycje do potwierdzenia, np. „Bartosz Kowalski: nieobecność od czw. 5 lis, wraca pon.
    16 lis (6 dni roboczych)”; zaznaczone zadania od razu wypełniają swoje wiersze formularza,
@@ -383,6 +385,8 @@ jako „39 na 100” z siatką 10 × 10 kropek.
   albo nowe zadanie i niczego nie zapisuje; „Dodaj do raportu” przenosi te zmiany do raportu.
   „Symulator” pokazuje przykładowy projekt dzień po dniu: Sentinel obok tego samego projektu
   bez reakcji, „+1 dzień”, „+5 dni” albo „Do końca”, a na końcu jedno zdanie z wynikiem.
+- **Na telefonie i tablecie** nowy wygląd mieści się na ekranie: menu jest u góry, karty jedna
+  pod drugą, tabele i zakładki przewija się w bok. Na dużym monitorze widok się powiększa.
 - **Ustawienia** — wygląd (jasny, ciemny, systemowy), język i model AI („Chmura (zalecany)”
   albo „Lokalny”; klucze tylko we własnej instalacji). **Ustawienia projektu** — podstawy,
   zespół, dni wolne w firmie, **kalendarz**, przypomnienie o raporcie (domyślnie czwartek

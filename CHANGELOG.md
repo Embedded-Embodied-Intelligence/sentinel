@@ -5,6 +5,26 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.8.0 — 2026-11-08 (WP17, fixes from the audit)
+
+- **Announced absences count at once** (spec v2.4.1, §11.3): an absence reported for a later
+  day enters the forecast, the recommendations and "Co jeśli?" from its first day, instead of
+  waiting for a later report. Research results are unchanged.
+- **The public demo holds a crowd**: forecasts, threat lists, causes and validity dates are kept
+  by the contents of a project's log and computed once for concurrent requests, and the showcase
+  is copied in one transaction (15 visitors at once: 34.5 s → about 5 s).
+- **Fair use of the demo's AI**: per-visitor caps of AI requests and of seconds of audio, the
+  live preview counted; a sandbox only for a browser that keeps cookies (no sandbox for link
+  previews, `HEAD` requests or bots), `robots.txt`.
+- **Security headers** on every response: a strict content policy, no framing, `nosniff`,
+  same-origin referrer, the microphone for this site only, HSTS over HTTPS.
+- **v2 on every screen**: below 1180 px a narrower sidebar, below 900 px a bar on top and one
+  column with scrolling tables and tabs; wide windows scale the layout up (the 1.7.0 hotfix).
+- `/` opens v2 in the demo (`home = "v2"`); "Poprzedni wygląd" still leads to v1.
+- The calendar link is https behind the demo's HTTPS proxy; the banner is quiet for the project
+  whose Pulpit or decision page is open; "Kogo dotyczy" says nothing twice and a free option is
+  "bez dodatkowego kosztu"; the Gantt chart's names shrink before the absence word.
+
 ## 1.7.0 — 2026-11-08 (WP16, interface v2, part 2)
 
 - **Dziennik**, for all projects and per project: who ("Ty" or "Sentinel") did what, one

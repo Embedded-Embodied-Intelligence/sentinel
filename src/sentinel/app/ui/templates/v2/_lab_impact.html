@@ -3,7 +3,6 @@
 {% for name, message in errors.items() %}<p class="error">{{ message }}</p>{% endfor %}
 {% else %}
 {{ m.effect_chips(t, chips) }}
-{% if later %}<p class="notice notice-warn">{{ icon("info", 20) }}<span>{{ later }}</span></p>{% endif %}
 <p class="muted">{{ t("v2.lab.not_saved") }}</p>
 {% if link %}<p><a class="btn" href="{{ link }}">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</a></p>{% endif %}
 {% endif %}

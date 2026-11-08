@@ -191,7 +191,9 @@ when something important changes. Click **New check-in**.
    with its date ("finished yesterday"), a start ("started on Monday"), absences, growing tasks
    and new tasks. The app, not the AI, works out the dates on the project's calendar with its
    holidays: "from tomorrow" is the next working day, "until Wednesday" means away through
-   Wednesday and back on the next working day, "back on Wednesday" means back that day. Task
+   Wednesday and back on the next working day, "back on Wednesday" means back that day. An
+   absence announced for later (a holiday in two weeks) counts in the forecast at once, from its
+   first day. Task
    names may be inflected or in lower case. Under **This is how I read it:** you see the items to
    confirm, e.g. "Bartosz Kowalski: away from Thu 5 Nov, back on Mon 16 Nov (6 working days)";
    the ticked tasks fill their rows of the form at once, where you can change them. When a
@@ -376,6 +378,8 @@ a 10 × 10 dot grid.
   saves nothing; "Add to report" carries these changes to a report. "Simulator" runs an example
   project day by day: Sentinel beside the same project with no reaction, "+1 day", "+5 days" or
   "To the end", and one sentence with the result at the end.
+- **On a phone or a tablet** the new look fits the screen: the menu is on top, cards one
+  under another, tables and tabs scroll sideways. On a large monitor the view grows.
 - **Settings** — appearance (light, dark, system), language and the AI model ("Cloud
   (recommended)" or "Local"; keys only in your own installation). **Project settings** — the
   basics, the team, company days off, the **calendar**, the report reminder (Thursday 17:00 by

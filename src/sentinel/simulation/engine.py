@@ -611,8 +611,9 @@ def _absences(
     returns: dict[int, list[int]],
     events: list[Event] | None,
 ) -> tuple[bool, list[int]]:
-    """D1: returns of day t, then onsets; returns (any return or onset, activities whose crew
-    changed). Both make day t a decision epoch (spec section 3.1 g)."""
+    """D1: returns of day t, then the known future absences that start on it (the application,
+    spec section 11.3), then onsets of present workers; returns (any return or onset, activities
+    whose crew changed). Both make day t a decision epoch (spec section 3.1 g)."""
     present, idle, role, busy = state.present, state.idle, state.role, state.busy
     crews: list[int] = []
     back = returns.pop(t, [])
@@ -626,20 +627,44 @@ def _absences(
         else:
             state.changed = True
             insort(idle[role[w]], w)
-    onsets = streams.absence_onsets(t)
+    known = state.scheduled.get(t, [])
+    for w, length, announced in known:  # a known future absence starts (spec 11.3, v2.4.1)
+        if not present[w]:  # already away: the longer absence counts
+            end = max(state.return_day[w], t + length)
+            if end != state.return_day[w]:
+                returns[state.return_day[w]].remove(w)
+                returns.setdefault(end, []).append(w)
+                state.return_day[w] = end
+            continue
+        _absence_onset(state, t, w, length, announced, returns, crews, events)
+    onsets = [draw for draw in streams.absence_onsets(t) if present[draw[0]]]
     for w, length, announced in onsets:
-        present[w] = False
-        state.return_day[w] = t + length
-        state.absent_since[w] = t
-        state.announced[w] = announced
-        returns.setdefault(t + length, []).append(w)
-        if busy[w] >= 0:
-            crews.append(busy[w])  # stays reserved for its crew
-        else:
-            idle[role[w]].remove(w)
-        if events is not None:
-            events.append(Absence(day=t, worker=w, length=length, announced=announced))
-    return bool(back or onsets), crews
+        _absence_onset(state, t, w, length, announced, returns, crews, events)
+    return bool(back or onsets or known), crews
+
+
+def _absence_onset(
+    state: EngineState,
+    t: int,
+    w: int,
+    length: int,
+    announced: int,
+    returns: dict[int, list[int]],
+    crews: list[int],
+    events: list[Event] | None,
+) -> None:
+    """Worker w is absent from day t for `length` days, `announced` told (spec section 2.2)."""
+    state.present[w] = False
+    state.return_day[w] = t + length
+    state.absent_since[w] = t
+    state.announced[w] = announced
+    returns.setdefault(t + length, []).append(w)
+    if state.busy[w] >= 0:
+        crews.append(state.busy[w])  # stays reserved for its crew
+    else:
+        state.idle[state.role[w]].remove(w)
+    if events is not None:
+        events.append(Absence(day=t, worker=w, length=length, announced=announced))
 
 
 def _update_crew(state: EngineState, j: int, t: int) -> None:

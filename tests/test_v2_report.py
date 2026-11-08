@@ -133,18 +133,16 @@ def test_the_form_adds_ticked_cards_and_keeps_its_errors(site_report: Site) -> N
     assert "Anna Nowak: nieobecność od wt. 17 lis, wraca pt. 20 lis" in shown
     assert "Nowe zadanie „Testy płatności”, 3 dni" in shown
     assert len(re.findall(r'name="c_[a-z]+" value="[^"]+" checked', added)) == 3
-    assert "zacznie się liczyć" not in shown  # from the report's next working day: counted
-    # An absence from a later day waits for the report of the working day before it (11.3).
-    later = {**base, "away_0_person": "ada", "away_0_from": "2026-11-19"}
-    waits = text_of(
-        client.post(f"/v2/projects/{pid}/report/form", data=later, headers=headers).text
+    # An announced absence from a later day counts at once (spec 11.3, v2.4.1): Anna away
+    # from Thu 19 Nov lowers the chance in a report of Mon 16 Nov.
+    away = '{"person":"ada","first_day":"2026-11-19","return_date":"2026-11-27"}'
+    impact = client.post(
+        f"/v2/projects/{pid}/report/impact",
+        data={"date": "2026-11-16", "c_absence": away},
+        headers=headers,
     )
-    assert "Ta nieobecność zacznie się liczyć w raporcie ze śr. 18 lis." in waits
-    later["away_0_from"] = "2026-11-23"  # a Monday: the Friday before
-    waits = text_of(
-        client.post(f"/v2/projects/{pid}/report/form", data=later, headers=headers).text
-    )
-    assert "Ta nieobecność zacznie się liczyć w raporcie z pt. 20 lis." in waits
+    chance = re.search(r"Szansa (\d+) → (\d+) na 100", text_of(impact.text))
+    assert chance is not None and int(chance.group(2)) < int(chance.group(1))
     assert 'id="form-panel-body" class="stack" hx-swap-oob="true"' in added
     wrong = {**base, "grow_0_task": "T3", "grow_0_days": "-2"}
     kept = client.post(f"/v2/projects/{pid}/report/form", data=wrong, headers=headers).text

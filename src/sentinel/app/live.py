@@ -856,6 +856,14 @@ class LiveProject:
                 present[w] = False
                 absent_since[w] = absence.start
                 announced[w] = absence.announced
+        # An announced absence that starts after t is known now and starts on its first day
+        # in every simulated future (spec section 11.3, v2.4.1).
+        index = {person.key: w for w, person in enumerate(self.definition.team)}
+        scheduled = sorted(
+            (index[a.person], a.start, a.announced)
+            for a in self.absences
+            if a.start > t and a.person in index
+        )
         cost = 0.0
         for i, temp in enumerate(self.temps):
             left = self.temp_left(temp)
@@ -933,6 +941,7 @@ class LiveProject:
             present=tuple(present),
             absent_since=tuple(absent_since),
             announced=tuple(announced),
+            scheduled_absences=tuple(scheduled),
             cost=cost,
             deadline=model.deadline,
             pert=settings.pert(),

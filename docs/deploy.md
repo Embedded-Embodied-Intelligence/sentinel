@@ -37,7 +37,7 @@ reverse proxy.
 ```bash
 docker compose up -d --build                    # build and start (the first build took 57 s)
 docker compose ps                               # STATUS shows "(healthy)" after about 8 s
-curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.7.0","demo":false}
+curl -s http://127.0.0.1:8000/api/health        # {"status":"ok","version":"1.8.0","demo":false}
 docker compose logs -f sentinel                 # the log
 docker compose down                             # stop; the data stay in the volume
 ```
@@ -160,6 +160,20 @@ would and expects that address back. With the funnel on, open
 tailnet): `"address"` must be the phone's public address and `"trusted": true`. The endpoint
 answers only requests that reach the app from this machine (a request from elsewhere gets 404) and
 shows nothing but the requester's own address.
+
+### What protects the demo (WP17)
+
+`configs/app_demo.toml` opens v2 at `/` (`home = "v2"`; "Poprzedni wygląd" still leads to v1)
+and caps each visitor as well as the server: `llm_calls_per_session` AI requests a day,
+`voice_seconds_per_day` and `voice_seconds_per_session` seconds of audio to Whisper, the live
+preview included, each request counted at least 10 s (the shortest a provider bills). A sandbox
+is made only for a browser that keeps cookies: a first page request gets a probe cookie and the
+same address with `?c=1`; a link preview (Slack, Teams, Messenger), a `HEAD` request or a client
+that drops cookies gets a short page and no sandbox, and `/robots.txt` keeps search engines
+out. Every response carries a strict content policy (scripts from this server only, no
+framing), `nosniff`, a same-origin referrer policy, the microphone for this site only and,
+over HTTPS, HSTS. Forecasts are kept by the contents of a project's log, so every visitor's copy
+of the showcase reuses the first one's: 15 new visitors at once are served in about 5 s.
 
 ### The request log for the usability test
 

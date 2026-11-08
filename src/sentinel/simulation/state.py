@@ -6,7 +6,14 @@ from bisect import insort
 from collections.abc import Collection, Sequence
 from typing import Final, Literal, NamedTuple
 
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeFloat, NonNegativeInt
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveInt,
+)
 
 from sentinel.model.instance import ProjectInstance
 from sentinel.model.schedule import Schedule
@@ -69,6 +76,7 @@ class SampledWorld(NamedTuple):
     remaining: tuple[float, ...]
     return_day: tuple[int, ...]
     fallbacks: int = 0
+    scheduled_length: tuple[int, ...] = ()  # true L of each known future absence (11.3)
 
 
 class InsertedActivity(BaseModel):
@@ -151,6 +159,11 @@ class Observation(BaseModel):
     overtime_costs: tuple[float, ...] = ()
     optional: tuple[NonNegativeInt, ...] = Field(default=(), exclude_if=_unset)
     overtime_floor: NonNegativeInt = Field(default=0, exclude_if=_unset)
+    # Known future absences (worker, first day > day, announced L_low) of the application
+    # (spec section 11.3, v2.4.1); the studies never have any.
+    scheduled_absences: tuple[tuple[NonNegativeInt, NonNegativeInt, PositiveInt], ...] = Field(
+        default=(), exclude_if=_unset
+    )
 
 
 def worker_roles(observation: Observation) -> list[int]:
@@ -220,6 +233,7 @@ class EngineState:
         "role",
         "role_costs",
         "running",
+        "scheduled",
         "segments",
         "shock_factor",
         "sink",
@@ -299,6 +313,7 @@ class EngineState:
         n_workers = len(self.role)
         self.present = [True] * n_workers
         self.return_day = [-1] * n_workers
+        self.scheduled: dict[int, list[tuple[int, int, int]]] = {}  # day -> (w, L, L_low)
         self.absent_since: list[int | None] = [None] * n_workers
         self.announced: list[int | None] = [None] * n_workers
         self.busy = [-1] * n_workers  # activity whose crew the worker is in, -1 if none
@@ -630,6 +645,9 @@ def state_from_observation(
 
     present = state.present = list(observation.present)
     state.return_day = list(world.return_day)
+    for i, (w, first, announced) in enumerate(observation.scheduled_absences):
+        length = world.scheduled_length[i] if i < len(world.scheduled_length) else announced
+        state.scheduled.setdefault(first, []).append((w, length, announced))
     state.absent_since = list(observation.absent_since)
     state.announced = list(observation.announced)
     role, busy = state.role, state.busy

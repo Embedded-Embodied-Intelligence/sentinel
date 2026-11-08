@@ -1,5 +1,5 @@
 {% if job %}
-<p class="computing" hx-get="{{ prefix }}/projects/{{ project_id }}/report/read?job={{ job }}{% if day is defined and day %}&amp;date={{ day.isoformat() }}{% endif %}" hx-trigger="load delay:1s" hx-target="this" hx-swap="outerHTML">{{ t("v2.report.reading") }}</p>
+<p class="computing" hx-get="{{ prefix }}/projects/{{ project_id }}/report/read?job={{ job }}" hx-trigger="load delay:1s" hx-target="this" hx-swap="outerHTML">{{ t("v2.report.reading") }}</p>
 {% else %}
 <div class="stack-sm" data-cards-loaded>
 {% if failed %}<p class="muted">{{ failed }}</p>{% endif %}
