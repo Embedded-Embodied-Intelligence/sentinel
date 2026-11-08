@@ -436,3 +436,18 @@ textarea.input { min-height: 132px; resize: vertical; }
 .table-input input, .table-input select { min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface); color: var(--text); font: 400 16px var(--font); width: 100%; }
 .big-result { font-size: 30px; line-height: 38px; font-weight: 750; }
 .table-input input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; accent-color: var(--accent); }
+
+/* ---- the report's per-task form and the scenarios of the lab (WP16, sections 8.3 and 8.8) */
+.task-form, .scenario { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 0; min-width: 0; }
+.task-form legend, .scenario legend { padding: 0 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.segmented { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; margin: 4px 0 12px; }
+.segmented label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; cursor: pointer; border-right: 1px solid var(--line); }
+.segmented label:last-child { border-right: 0; }
+.segmented input { accent-color: var(--accent); width: 18px; height: 18px; }
+.segmented label:has(input:checked) { background: var(--accent-soft); font-weight: 650; }
+.segmented label:has(input:disabled) { color: var(--muted); cursor: not-allowed; }
+.task-form .when-progress, .task-form .when-done, .task-form .when-begun { display: none; }
+.task-form:has(input[value="in_progress"]:checked) .when-progress,
+.task-form:has(input[value="in_progress"]:checked) .when-begun,
+.task-form:has(input[value="done"]:checked) .when-done,
+.task-form:has(input[value="done"]:checked) .when-begun { display: grid; }

@@ -2,9 +2,15 @@
 by the AI into cards to confirm (unchecked by default, each editable and removable), questions
 that block saving, the parts not recognised, "Postęp zgodny z planem", the effect of the draft on
 the project as a dry-run forecast, and the save, after which Sentinel deliberates at the v2 gate.
-Items travel in the form as the JSON of their reports, as in the first interface (WP14)."""
+Items travel in the form as the JSON of their reports, as in the first interface (WP14).
+
+"Wypełnij formularz" (WP16) is the per-task form, whose fields are named as in the first
+interface's check-in form and read by its reader (`forms.read_checkin`), so both validate alike;
+what it says becomes cards, ticked, since the manager entered it. The scenarios of the
+Laboratorium (section 8.8) use its rows for an absence, a longer task and a new task."""
 
 import json
+import secrets
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any
@@ -24,13 +30,13 @@ from sentinel.app.models import (
 )
 from sentinel.app.planning import planned_reports
 from sentinel.app.ui.core import Ui
-from sentinel.app.ui.forms import Form
-from sentinel.app.ui.project import message_values
+from sentinel.app.ui.forms import CheckinForm, Form, read_checkin
+from sentinel.app.ui.project import message_values, shown_tasks
 from sentinel.app.ui.v2.numbers import per_hundred
 from sentinel.app.ui.v2.overview import Chip, tone_of
 from sentinel.app.ui.v2.shell import GATE, PREFIX, header, page, texts
 from sentinel.app.ui.v2.text import TextsV2
-from sentinel.app.views import ProjectView
+from sentinel.app.views import ProjectView, TaskView
 
 KINDS: dict[str, type[BaseModel]] = {
     "task": TaskReport,
@@ -272,6 +278,69 @@ def stalled_tasks(view: ProjectView, checkin: CheckIn) -> int:
     )
 
 
+@dataclass(frozen=True)
+class Choices:
+    """What the selects of the form and the scenarios offer: the tasks the form asks about, the
+    people, the roles, the tasks that can still take longer and those a new task can follow,
+    and the fields to correct with their messages."""
+
+    tasks: list[TaskView]
+    people: list[tuple[str, str]]
+    roles: list[str]
+    open_tasks: list[TaskView]
+    all_tasks: list[TaskView]
+    errors: dict[str, str] = field(default_factory=dict)
+
+
+def choices(view: ProjectView, errors: dict[str, str] | None = None) -> Choices:
+    first, _ = shown_tasks(view)
+    tasks = [task for task in view.tasks if task.state != "removed"]
+    return Choices(
+        tasks=first,
+        people=[(p.key, p.name) for p in view.definition.team],
+        roles=sorted({p.role for p in view.definition.team}),
+        open_tasks=[task for task in tasks if task.state != "done"],
+        all_tasks=tasks,
+        errors=errors or {},
+    )
+
+
+def read_items(form: Form, view: ProjectView) -> CheckinForm:
+    """The form's fields as a check-in: only changes are reported, as in the first form; a share
+    is compared as the form shows it, in whole per cent, so an untouched field is no change."""
+    current = {
+        task.key: (
+            task.state if task.state != "paused" else "in_progress",
+            None if task.percent is None else float(round(task.percent)),
+        )
+        for task in view.tasks
+    }
+    return read_checkin(form, current)
+
+
+def items_of(checkin: CheckIn) -> list[BaseModel]:
+    return [*checkin.tasks, *checkin.absences, *checkin.increases, *checkin.new_tasks]
+
+
+def cards_of(t: TextsV2, view: ProjectView, checkin: CheckIn) -> list[Card]:
+    """The cards of a check-in's items, with the names of the tasks and the people."""
+    names = {task.key: task.name for task in view.tasks}
+    people = {p.key: p.name for p in view.definition.team}
+    return [card_of(t, item, names, people, None) for item in items_of(checkin)]
+
+
+def errors_of(t: TextsV2, read: CheckinForm) -> dict[str, str]:
+    return {error.name: t(error.key, **error.values) for error in read.errors}
+
+
+def day_of(form: Form, view: ProjectView) -> date:
+    """The report's date the form travels with (its default if the field is not a date)."""
+    try:
+        return date.fromisoformat(form.get("date"))
+    except ValueError:
+        return default_date(view, date.today())
+
+
 def router(ui: Ui) -> APIRouter:
     routes = APIRouter()
     services = ui.services
@@ -298,6 +367,11 @@ def router(ui: Ui) -> APIRouter:
             day=day,
             last=view.checkins[-1].date if view.checkins else None,
             hints=[(key, t(f"v2.hint.{key}"), t(f"v2.hint.{key}.text")) for key in HINTS],
+            choices=choices(view),
+            kept=None,
+            oob=False,
+            nothing=False,
+            lab_cards=[],
         )
 
     @routes.post(PREFIX + "/projects/{project_id}/report/read")
@@ -429,6 +503,45 @@ def router(ui: Ui) -> APIRouter:
             can_save=can_save,
             stalled=stalled,
             last=last,
+        )
+
+    @routes.post(PREFIX + "/projects/{project_id}/report/form")
+    async def add_from_form(request: Request, project_id: str) -> Response:
+        """ "Wypełnij formularz" → "Dodaj do raportu": the form's items as ticked cards and the
+        form emptied again, or kept with what needs a correction."""
+        form = await Form.read(request)
+        t = texts(request)
+        view = live(request, project_id)
+        read = read_items(form, view)
+        values: dict[str, Any] = {"view": view, "day": day_of(form, view), "oob": True}
+        if read.checkin is None:
+            return page(
+                ui,
+                request,
+                "_form_result.html",
+                cards=[],
+                choices=choices(view, errors_of(t, read)),
+                kept=form,
+                nothing=False,
+                **values,
+            )
+        cards = cards_of(t, view, read.checkin)
+        return page(
+            ui,
+            request,
+            "_form_result.html",
+            cards=cards,
+            choices=choices(view),
+            kept=None,
+            nothing=not cards,
+            project_id=project_id,
+            job=None,
+            questions=[],
+            unparsed=[],
+            failed=None,
+            source=f"form-{secrets.token_hex(3)}",
+            checked=True,
+            **values,
         )
 
     @routes.post(PREFIX + "/projects/{project_id}/report")

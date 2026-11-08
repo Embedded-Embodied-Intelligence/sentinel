@@ -744,6 +744,52 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.new.budget_save": ("Save the budget", "Zapisz budżet"),
     "v2.new.open": ("Go to the overview", "Przejdź do pulpitu"),
     "v2.new.saved": ("Saved.", "Zapisano."),
+    # ---- the report's form (section 8.3, WP16)
+    "v2.form.title": ("Form", "Formularz"),
+    "v2.form.hint": (
+        "Change what is different from the plan. “Add to report” puts it in step 2, ticked.",
+        "Zmień to, co różni się od planu. „Dodaj do raportu” umieści to w kroku 2, zaznaczone.",
+    ),
+    "v2.form.close": ("Close the form", "Zamknij formularz"),
+    "v2.form.tasks": ("Tasks in progress and next", "Zadania w toku i najbliższe"),
+    "v2.form.no_tasks": (
+        "No task is in progress or about to start.",
+        "Żadne zadanie nie trwa ani nie zaczyna się wkrótce.",
+    ),
+    "v2.form.percent": ("Share done (%)", "Wykonana część (%)"),
+    "v2.form.start_hint": (
+        "Leave it empty if it started on the report's date.",
+        "Zostaw puste, jeśli zaczęło się w dniu raportu.",
+    ),
+    "v2.form.fix": ("Correct the marked fields.", "Popraw zaznaczone pola."),
+    "v2.form.nothing": (
+        "The form changes nothing yet: set a task's state or fill in a row.",
+        "Formularz jeszcze niczego nie zmienia: ustaw stan zadania albo wypełnij wiersz.",
+    ),
+    # ---- scenarios: the form's rows and "Co jeśli?" (sections 8.3 and 8.8, WP16)
+    "v2.scenario.absence": ("Person absent", "Osoba nieobecna"),
+    "v2.scenario.who": ("Who", "Kto"),
+    "v2.scenario.pick": ("Choose…", "Wybierz…"),
+    "v2.scenario.from": ("From", "Od"),
+    "v2.scenario.back": ("Back on", "Wraca"),
+    "v2.scenario.back_hint": (
+        "The first day back at work; leave it empty if nobody knows yet.",
+        "Pierwszy dzień z powrotem w pracy; zostaw puste, jeśli jeszcze nie wiadomo.",
+    ),
+    "v2.scenario.longer": ("Task takes longer", "Zadanie potrwa dłużej"),
+    "v2.scenario.which": ("Which task", "Które zadanie"),
+    "v2.scenario.more_days": ("Working days longer", "O ile dni roboczych dłużej"),
+    "v2.scenario.more_days_example": ("e.g. 3", "np. 3"),
+    "v2.scenario.new": ("New task", "Nowe zadanie"),
+    "v2.scenario.name": ("Name", "Nazwa"),
+    "v2.scenario.name_example": ("e.g. Payment tests", "np. Testy płatności"),
+    "v2.scenario.days": ("Working days", "Dni robocze"),
+    "v2.scenario.days_example": ("e.g. 4", "np. 4"),
+    "v2.scenario.after": ("After", "Po czym"),
+    "v2.scenario.after_none": ("Can start at once", "Może zacząć się od razu"),
+    "v2.scenario.role": ("Who (role)", "Kto (rola)"),
+    "v2.scenario.role_none": ("Nobody from the team", "Nikt z zespołu"),
+    "v2.lab.add": ("Add to report", "Dodaj do raportu"),
 }
 
 

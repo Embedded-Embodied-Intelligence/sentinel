@@ -1,0 +1,43 @@
+{# The rows for an absence, a longer task and a new task (section 8.3 form, section 8.8 "Co jeśli?"),
+   named as in the first interface's check-in form; `c` the choices, `kv` a kept value. #}
+{% set c = choices %}
+{% macro kv(name, default="") %}{{ kept.get(name, default) if kept else default }}{% endmacro %}
+{% macro err(name) %}{% if choices.errors.get(name) %}<p class="error" id="{{ name }}-error">{{ choices.errors.get(name) }}</p>{% endif %}{% endmacro %}
+<fieldset class="scenario">
+  <legend>{{ icon("person-off", 20) }}{{ t("v2.scenario.absence") }}</legend>
+  <input type="hidden" name="away_rows" value="0">
+  <div class="form-grid">
+    <div class="field"><label for="away-person">{{ t("v2.scenario.who") }}</label>
+      <select id="away-person" name="away_0_person"><option value="">{{ t("v2.scenario.pick") }}</option>{% for key, name in c.people %}<option value="{{ key }}"{% if kv('away_0_person') == key %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="away-from">{{ t("v2.scenario.from") }}</label>
+      <input type="date" id="away-from" name="away_0_from" value="{{ kv('away_0_from') }}"{% if c.errors.get('away_0_from') %} aria-invalid="true" aria-describedby="away_0_from-error"{% endif %}>{{ err("away_0_from") }}</div>
+    <div class="field"><label for="away-back">{{ t("v2.scenario.back") }}</label>
+      <input type="date" id="away-back" name="away_0_back" value="{{ kv('away_0_back') }}" aria-describedby="away-back-hint">
+      <p class="hint" id="away-back-hint">{{ t("v2.scenario.back_hint") }}</p>{{ err("away_0_back") }}</div>
+  </div>
+</fieldset>
+<fieldset class="scenario">
+  <legend>{{ icon("clock", 20) }}{{ t("v2.scenario.longer") }}</legend>
+  <input type="hidden" name="grow_rows" value="0">
+  <div class="form-grid">
+    <div class="field"><label for="grow-task">{{ t("v2.scenario.which") }}</label>
+      <select id="grow-task" name="grow_0_task"><option value="">{{ t("v2.scenario.pick") }}</option>{% for task in c.open_tasks %}<option value="{{ task.key }}"{% if kv('grow_0_task') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="grow-days">{{ t("v2.scenario.more_days") }}</label>
+      <input type="number" id="grow-days" name="grow_0_days" min="1" step="1" placeholder="{{ t('v2.scenario.more_days_example') }}" value="{{ kv('grow_0_days') }}"{% if c.errors.get('grow_0_days') %} aria-invalid="true" aria-describedby="grow_0_days-error"{% endif %}>{{ err("grow_0_days") }}</div>
+  </div>
+</fieldset>
+<fieldset class="scenario">
+  <legend>{{ icon("plus", 20) }}{{ t("v2.scenario.new") }}</legend>
+  <input type="hidden" name="new_rows" value="0">
+  <div class="form-grid">
+    <div class="field"><label for="new-name">{{ t("v2.scenario.name") }}</label>
+      <input type="text" id="new-name" name="new_0_name" maxlength="120" placeholder="{{ t('v2.scenario.name_example') }}" value="{{ kv('new_0_name') }}"{% if c.errors.get('new_0_name') %} aria-invalid="true" aria-describedby="new_0_name-error"{% endif %}>{{ err("new_0_name") }}</div>
+    <div class="field"><label for="new-days">{{ t("v2.scenario.days") }}</label>
+      <input type="number" id="new-days" name="new_0_days" min="1" step="1" placeholder="{{ t('v2.scenario.days_example') }}" value="{{ kv('new_0_days') }}"{% if c.errors.get('new_0_days') %} aria-invalid="true" aria-describedby="new_0_days-error"{% endif %}>{{ err("new_0_days") }}</div>
+    <div class="field"><label for="new-after">{{ t("v2.scenario.after") }}</label>
+      <select id="new-after" name="new_0_after"><option value="">{{ t("v2.scenario.after_none") }}</option>{% for task in c.all_tasks %}<option value="{{ task.key }}"{% if kv('new_0_after') == task.key %} selected{% endif %}>{{ task.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="new-role">{{ t("v2.scenario.role") }}</label>
+      <select id="new-role" name="new_0_role_0"><option value="">{{ t("v2.scenario.role_none") }}</option>{% for role in c.roles %}<option value="{{ role }}"{% if kv('new_0_role_0') == role %} selected{% endif %}>{{ role }}</option>{% endfor %}</select>
+      <input type="hidden" name="new_0_crew_0" value="1"></div>
+  </div>
+</fieldset>

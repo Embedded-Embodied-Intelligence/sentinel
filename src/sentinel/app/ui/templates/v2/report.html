@@ -22,8 +22,16 @@
     <div class="actions">
       {% if llm %}<button type="button" class="btn btn-primary" data-read hx-post="{{ prefix }}/projects/{{ view.id }}/report/read" hx-include="#report-form" hx-target="#cards-message" hx-swap="innerHTML">{{ t("v2.report.read") }}</button>{% endif %}
       <button type="button" class="btn" data-planned hx-post="{{ prefix }}/projects/{{ view.id }}/report/planned" hx-include="#report-form" hx-target="#cards-planned" hx-swap="innerHTML">{{ t("v2.report.planned") }}</button>
+      <button type="button" class="btn btn-quiet" data-toggle="form-panel" aria-expanded="false" aria-controls="form-panel">{{ icon("pencil", 20) }}{{ t("v2.report.form") }}</button>
     </div>
     {% if not llm %}<p class="hint">{{ t("v2.report.no_ai") }}</p>{% endif %}
+  </section>
+
+  <section id="form-panel" class="card step" aria-labelledby="form-title" data-quiet hidden>
+    <div class="section-head"><h2 id="form-title">{{ t("v2.form.title") }}</h2>
+      <button type="button" class="btn btn-quiet" data-toggle="form-panel" aria-expanded="false" aria-controls="form-panel">{{ t("v2.form.close") }}</button></div>
+    <p class="muted">{{ t("v2.form.hint") }}</p>
+    {% include "v2/_form_body.html" %}
   </section>
 
   <section class="card step" aria-labelledby="step2-title">
@@ -32,9 +40,11 @@
       <button type="button" class="btn btn-quiet" data-tick-all>{{ t("v2.report.all") }}</button>
     </div>
     <p class="muted">{{ t("v2.report.step2_hint") }}</p>
+    <div id="cards-lab" data-cards>{% if lab_cards %}{% with cards=lab_cards, job=none, questions=[], unparsed=[], failed=none, source="lab", checked=true, project_id=view.id %}{% include "v2/_cards.html" %}{% endwith %}{% endif %}</div>
     <div id="cards-message" data-cards></div>
     <div id="cards-planned" data-cards></div>
-    <p class="muted" data-cards-empty>{{ t("v2.report.empty") }}</p>
+    <div id="cards-form" data-cards></div>
+    <p class="muted" data-cards-empty{% if lab_cards %} hidden{% endif %}>{{ t("v2.report.empty") }}</p>
   </section>
 
   <section class="card step" aria-labelledby="step3-title">
@@ -42,7 +52,7 @@
     <div id="impact" hx-post="{{ prefix }}/projects/{{ view.id }}/report/impact" hx-include="#report-form" hx-trigger="change from:#report-form delay:600ms, cards from:body delay:100ms" hx-swap="innerHTML" hx-sync="this:replace" aria-live="polite">
       {% with chips=[], error=none, blocked=false, ticked=0, can_save=false, stalled=0, last=last %}{% include "v2/_impact.html" %}{% endwith %}
     </div>
-    <p><a href="/projects/{{ view.id }}/checkin">{{ t("v2.report.form") }} ›</a></p>
+    <p><a href="#form-panel" data-open="form-panel">{{ t("v2.report.form") }} ›</a></p>
   </section>
 </form>
 {% endblock %}

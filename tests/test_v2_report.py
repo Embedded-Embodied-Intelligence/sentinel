@@ -106,6 +106,42 @@ def site_report(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Site]:
     yield from _site(tmp_path_factory)
 
 
+def test_the_form_adds_ticked_cards_and_keeps_its_errors(site_report: Site) -> None:
+    """ "Wypełnij formularz" (8.3, WP16): the first form's fields, read by its reader, become
+    ticked cards; a wrong value keeps the form with its message and adds nothing; an untouched
+    form adds nothing, a share shown in whole per cent included."""
+    pid, client, headers = site_report.project, site_report.client, site_report.headers
+    page = client.get(f"/v2/projects/{pid}/report", params={"lang": "pl"}).text
+    assert 'id="form-panel"' in page and "Zadania w toku i najbliższe" in text_of(page)
+    base = {"date": "2026-11-16", "away_rows": "0", "grow_rows": "0", "new_rows": "0"}
+    filled = {
+        **base,
+        "shown": "T3",
+        "status_T3": "done",
+        "finish_T3": "2026-11-16",
+        "away_0_person": "ada",
+        "away_0_from": "2026-11-17",
+        "away_0_back": "2026-11-20",
+        "new_0_name": "Testy płatności",
+        "new_0_days": "3",
+        "new_0_after": "T3",
+    }
+    added = client.post(f"/v2/projects/{pid}/report/form", data=filled, headers=headers).text
+    shown = text_of(added)
+    assert "„API katalogu produktów” skończone pon. 16 lis" in shown
+    assert "Anna Nowak: nieobecność od wt. 17 lis, wraca pt. 20 lis" in shown
+    assert "Nowe zadanie „Testy płatności”, 3 dni" in shown
+    assert len(re.findall(r'name="c_[a-z]+" value="[^"]+" checked', added)) == 3
+    assert 'id="form-panel-body" class="stack" hx-swap-oob="true"' in added
+    wrong = {**base, "grow_0_task": "T3", "grow_0_days": "-2"}
+    kept = client.post(f"/v2/projects/{pid}/report/form", data=wrong, headers=headers).text
+    assert "Podaj dodatkowe dni robocze jako liczbę większą od 0." in text_of(kept)
+    assert "data-card" not in kept and 'value="-2"' in kept
+    untouched = {**base, "shown": "T3", "status_T3": "in_progress", "percent_T3": "27"}
+    same = client.post(f"/v2/projects/{pid}/report/form", data=untouched, headers=headers).text
+    assert "Formularz jeszcze niczego nie zmienia" in text_of(same) and "data-card" not in same
+
+
 def send(client: TestClient, path: str, csrf: dict[str, str], seconds: str, body: bytes) -> Any:
     headers = {"content-type": "audio/webm", "x-recording-seconds": seconds, **csrf}
     return client.post(path, content=body, headers=headers)

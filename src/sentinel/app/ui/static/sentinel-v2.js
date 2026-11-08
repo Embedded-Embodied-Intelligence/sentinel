@@ -31,10 +31,32 @@
         b.setAttribute("aria-expanded", open ? "true" : "false");
       });
       if (open) {
-        var first = panel.querySelector("input, select, textarea, button");
+        var first = panel.querySelector("input:not([type=hidden]), select, textarea, button");
         if (first) first.focus();
       }
     }
+  });
+
+  // A link that opens a panel elsewhere on the page and brings it into view ("Dodaj ręcznie").
+  document.addEventListener("click", function (event) {
+    var opener = event.target.closest("[data-open]");
+    if (!opener) return;
+    var panel = document.getElementById(opener.getAttribute("data-open"));
+    if (!panel) return;
+    event.preventDefault();
+    panel.hidden = false;
+    document.querySelectorAll('[data-toggle="' + panel.id + '"][aria-expanded]').forEach(function (b) {
+      b.setAttribute("aria-expanded", "true");
+    });
+    panel.scrollIntoView({ block: "start" });
+    var first = panel.querySelector("input:not([type=hidden]), select, textarea, button");
+    if (first) first.focus({ preventScroll: true });
+  });
+
+  // The fields of a panel inside a form that are not the form's own (the per-task form in the
+  // report) do not recompute what the form shows.
+  document.querySelectorAll("[data-quiet]").forEach(function (panel) {
+    panel.addEventListener("change", function (event) { event.stopPropagation(); });
   });
 
   // "Inny powód" reveals the text box with the microphone (section 8.4).

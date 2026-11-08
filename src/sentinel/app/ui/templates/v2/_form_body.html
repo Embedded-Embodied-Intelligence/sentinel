@@ -1,0 +1,40 @@
+{# "Wypełnij formularz" (section 8.3): the tasks in progress and the next ones, then the rows for an
+   absence, a longer task and a new task; "Dodaj do raportu" turns what changed into ticked cards. #}
+{% macro kv(name, default="") %}{{ kept.get(name, default) if kept else default }}{% endmacro %}
+<div id="form-panel-body" class="stack"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% if nothing %}<p class="notice notice-warn" role="status">{{ icon("alert", 20) }}<span>{{ t("v2.form.nothing") }}</span></p>{% endif %}
+  {% if choices.errors %}<p class="error" role="alert">{{ t("v2.form.fix") }}</p>{% endif %}
+  <h3>{{ t("v2.form.tasks") }}</h3>
+  {% for task in choices.tasks %}
+  {% set key = task.key %}
+  {% set started = task.state in ("in_progress", "paused") %}
+  {% set status = kv("status_" ~ key, "in_progress" if started else "not_started") %}
+  {% set percent = (task.percent | round | int) if task.percent is not none else 0 %}
+  <fieldset class="task-form">
+    <legend><strong>{{ task.name }}</strong> <span class="muted">· {{ task.state_text }}{% if task.percent is not none %}, {{ t("checkin.done_share", percent=percent) }}{% endif %}</span></legend>
+    <input type="hidden" name="shown" value="{{ key }}">
+    <div class="segmented">
+      <label><input type="radio" name="status_{{ key }}" value="not_started"{% if status == "not_started" %} checked{% endif %}{% if started %} disabled{% endif %}>{{ t("checkin.status.not_started") }}</label>
+      <label><input type="radio" name="status_{{ key }}" value="in_progress"{% if status == "in_progress" %} checked{% endif %}>{{ t("checkin.status.in_progress") }}</label>
+      <label><input type="radio" name="status_{{ key }}" value="done"{% if status == "done" %} checked{% endif %}>{{ t("checkin.status.done") }}</label>
+    </div>
+    <div class="form-grid">
+      <div class="field when-progress"><label for="percent-{{ key }}">{{ t("v2.form.percent") }}</label>
+        <input type="number" id="percent-{{ key }}" name="percent_{{ key }}" min="0" max="99" step="1" value="{{ kv('percent_' ~ key, percent) }}"{% if choices.errors.get('percent_' ~ key) %} aria-invalid="true" aria-describedby="percent_{{ key }}-error"{% endif %}>
+        {% if choices.errors.get('percent_' ~ key) %}<p class="error" id="percent_{{ key }}-error">{{ choices.errors.get('percent_' ~ key) }}</p>{% endif %}</div>
+      <div class="field when-done"><label for="finish-{{ key }}">{{ t("checkin.finished_on") }}</label>
+        <input type="date" id="finish-{{ key }}" name="finish_{{ key }}" value="{{ kv('finish_' ~ key, day.isoformat()) }}"{% if choices.errors.get('finish_' ~ key) %} aria-invalid="true" aria-describedby="finish_{{ key }}-error"{% endif %}>
+        {% if choices.errors.get('finish_' ~ key) %}<p class="error" id="finish_{{ key }}-error">{{ choices.errors.get('finish_' ~ key) }}</p>{% endif %}</div>
+      {% if not started %}
+      <div class="field when-begun"><label for="start-{{ key }}">{{ t("checkin.started_on") }}</label>
+        <input type="date" id="start-{{ key }}" name="start_{{ key }}" value="{{ kv('start_' ~ key) }}" aria-describedby="start-{{ key }}-hint">
+        <p class="hint" id="start-{{ key }}-hint">{{ t("v2.form.start_hint") }}</p></div>
+      {% endif %}
+    </div>
+  </fieldset>
+  {% else %}<p class="muted">{{ t("v2.form.no_tasks") }}</p>{% endfor %}
+  {% include "v2/_scenario.html" %}
+  <div class="actions">
+    <button type="button" class="btn btn-primary" hx-post="{{ prefix }}/projects/{{ view.id }}/report/form" hx-include="#report-form" hx-target="#cards-form" hx-swap="beforeend">{{ icon("plus", 20) }}{{ t("v2.lab.add") }}</button>
+  </div>
+</div>
