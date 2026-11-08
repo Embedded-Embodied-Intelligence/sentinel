@@ -16,8 +16,10 @@ the limits is the TCP peer, or behind the local proxy of the demo its X-Forwarde
 (`security.client_address`); `/api/client-address` reports it to requests from this machine only.
 """
 
+import html
 import json
 import logging
+import re
 import secrets
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -25,11 +27,12 @@ from contextlib import asynccontextmanager
 from datetime import date, datetime
 from importlib.metadata import PackageNotFoundError, version
 from typing import Annotated, Any, Literal
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, File, Form, Query, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.responses import Response as FastResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
@@ -81,7 +84,18 @@ STATUS: dict[ErrorKind, int] = {
     "unavailable": 503,
 }
 EXPIRY_CHECK_S = 60.0
-UNLIMITED = ("/api/health", "/favicon.ico")  # neither limited nor given a session
+UNLIMITED = ("/api/health", "/favicon.ico", "/robots.txt")  # neither limited nor given a session
+# A demo sandbox is made only for a client that keeps cookies (WP17): a page request without a
+# session first gets a short probe cookie and the same address with `?c=1`; the browser comes
+# back with the cookie and gets its sandbox (and the address without `?c=1`). A client that
+# drops cookies, a HEAD request or a link preview gets a light page and no sandbox.
+PROBE_COOKIE = "sentinel_probe"
+PROBE_PARAM = "c"
+BOTS = re.compile(
+    r"bot\b|bot/|crawl|spider|slurp|facebookexternalhit|embedly|whatsapp|telegram|discord|"
+    r"slack|skypeuripreview|linkedin|preview",
+    re.IGNORECASE,
+)
 SESSIONLESS = ("/api/client-address",)  # rate-limited, but no sandbox is made for it
 FEED_PREFIX = "/calendar/"  # a project's calendar feed, opened by its secret link (ADR-0035)
 # Security headers of every response (WP17): scripts and connections only from this server, no
@@ -174,6 +188,12 @@ def _language(request: Request) -> Language:
     return language_of(request.headers.get("accept-language"))
 
 
+def _without_probe(request: Request) -> str:
+    """The request's address without the probe parameter of the cookie round trip."""
+    query = [(k, v) for k, v in request.query_params.multi_items() if k != PROBE_PARAM]
+    return request.url.path + ("?" + urlencode(query) if query else "")
+
+
 def _is_api(path: str) -> bool:
     return path.startswith("/api/")
 
@@ -219,6 +239,44 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
             return _error(code, status, language)
         request.state.language = language
         return ui.error(request, render(code, language), status)
+
+    def probe(request: Request) -> FastResponse:
+        """The cookie round trip before a sandbox (WP17): a probe cookie and the same address."""
+        query = [(k, v) for k, v in request.query_params.multi_items() if k != PROBE_PARAM]
+        target = request.url.path + "?" + urlencode([*query, (PROBE_PARAM, "1")])
+        response = RedirectResponse(target, status_code=303)
+        response.set_cookie(
+            PROBE_COOKIE,
+            "1",
+            max_age=600,
+            httponly=True,
+            samesite="lax",
+            secure=config.secure_cookies,
+        )
+        return response
+
+    def no_sandbox(request: Request, language: Language) -> FastResponse:
+        """A light page for a client that keeps no cookies, a HEAD request or a link preview:
+        what the demo is, and no sandbox made for it (WP17)."""
+        title, text = render("demo_title", language), render("demo_cookies", language)
+        retry = html.escape(_without_probe(request))
+        body = (
+            f'<!doctype html><html lang="{language}"><head><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            '<meta name="robots" content="noindex">'
+            f"<title>{html.escape(title)}</title>"
+            f'<meta property="og:title" content="{html.escape(title)}">'
+            f'<meta property="og:description" content="{html.escape(text)}">'
+            f"</head><body><h1>{html.escape(title)}</h1><p>{html.escape(text)}</p>"
+            f'<p><a href="{retry}">{html.escape(render("demo_retry", language))}</a></p>'
+            "</body></html>"
+        )
+        return HTMLResponse(body, headers={"Cache-Control": "no-store"})
+
+    @app.get("/robots.txt", response_class=PlainTextResponse)
+    def robots() -> str:
+        """The demo is not for search engines (every visit would make a sandbox)."""
+        return "User-agent: *\nDisallow: /\n" if config.demo else "User-agent: *\nDisallow:\n"
 
     log_requests = config.demo and config.request_log
 
@@ -268,6 +326,7 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         if path in SESSIONLESS or path.startswith(FEED_PREFIX):  # a calendar has no session
             return await call_next(request)
         new_session = None
+        strip_probe = False
         if config.demo:
             tick = time.monotonic()
             if tick - last_expiry[0] > EXPIRY_CHECK_S:
@@ -278,8 +337,17 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
             if session is None:
                 if request.method in UNSAFE_METHODS:  # a fresh sandbox has no token yet
                     return refuse(request, "csrf_failed", 403, language)
+                probed = request.query_params.get(PROBE_PARAM) == "1"
+                if not _is_api(path):
+                    held = request.cookies.get(PROBE_COOKIE) == "1"
+                    agent = request.headers.get("user-agent", "")
+                    if request.method == "HEAD" or BOTS.search(agent) or (probed and not held):
+                        return no_sandbox(request, language)
+                    if not held:
+                        return probe(request)
                 session = services.new_session(language)
                 new_session = session.id
+                strip_probe = probed
             session_id = session.id
         else:
             session_id = LOCAL_SESSION
@@ -290,7 +358,11 @@ def create_app(config: AppConfig, services: Services | None = None) -> FastAPI:
         request.state.session = session_id
         request.state.language = language
         request.state.csrf = csrf_token(key, session_id)
-        if not log_requests:
+        response: Response
+        if strip_probe:  # the sandbox is made: back to the address the visitor asked for
+            response = RedirectResponse(_without_probe(request), status_code=303)
+            response.delete_cookie(PROBE_COOKIE)
+        elif not log_requests:
             response = await call_next(request)
         else:
             arrived = now()

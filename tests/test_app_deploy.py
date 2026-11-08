@@ -3,6 +3,7 @@ demo's per-visitor limits, the Docker files and the scripts."""
 
 import re
 import socket
+import sqlite3
 import subprocess
 import threading
 import time
@@ -126,6 +127,31 @@ def test_the_running_demo_answers_the_local_proxy_with_the_forwarded_address(
     finally:
         server.should_exit = True
         thread.join(timeout=10)
+
+
+def test_a_sandbox_is_made_only_for_a_client_that_keeps_cookies(tmp_path: Path) -> None:
+    """WP17: a link preview, a HEAD request or a client that drops cookies gets a light page
+    and no sandbox; a browser comes back with the probe cookie and gets one, at the address it
+    asked for."""
+    config = AppConfig(data_dir=tmp_path, demo=True, showcase=False)
+
+    def sessions() -> int:
+        with sqlite3.connect(config.database) as db:
+            return int(db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0])
+
+    with TestClient(create_app(config)) as client:
+        preview = client.get("/v2", headers={"user-agent": "Slackbot-LinkExpanding 1.1"})
+        assert preview.status_code == 200 and 'content="noindex"' in preview.text
+        assert client.head("/v2").status_code == 200 and sessions() == 0
+        first = client.get("/v2", params={"lang": "pl"}, follow_redirects=False)
+        assert first.status_code == 303 and first.headers["location"] == "/v2?lang=pl&c=1"
+        client.cookies.clear()  # a client that keeps no cookies
+        dropped = client.get("/v2", params={"lang": "pl", "c": "1"}, follow_redirects=False)
+        assert dropped.status_code == 200 and "Otwórz demo" in dropped.text and sessions() == 0
+        page = client.get("/v2", params={"lang": "pl"})  # a browser: the round trip
+        assert page.status_code == 200 and str(page.url).endswith("/v2?lang=pl")
+        assert sessions() == 1 and "sentinel_probe" not in client.cookies
+        assert client.get("/robots.txt").text == "User-agent: *\nDisallow: /\n"
 
 
 def test_every_response_carries_the_security_headers(tmp_path: Path) -> None:

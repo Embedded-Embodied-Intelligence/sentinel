@@ -280,6 +280,10 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_disabled": "No AI model is set up.",
         "llm_cap": "The daily limit of AI requests is reached; try again tomorrow.",
         "voice_cap": "The daily limit of recordings is reached; type the report instead.",
+        "demo_title": "Sentinel: a demo of AI-supported project management",
+        "demo_cookies": "Every visitor gets their own sandbox with an example project, kept for 24 "
+        "hours. It needs one cookie with its identifier; nothing else is stored about you.",
+        "demo_retry": "Open the demo",
         "llm_failed": "The AI did not answer; try again later.",
         "llm_timeout": "The AI did not answer in time; try again, or fill in the form by hand.",
         "llm_unreachable": "The AI provider cannot be reached; check its address on the Settings "
@@ -558,6 +562,11 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_disabled": "Nie skonfigurowano modelu AI.",
         "llm_cap": "Osiągnięto dzienny limit zapytań do AI; spróbuj jutro.",
         "voice_cap": "Osiągnięto dzienny limit nagrań; wpisz raport tekstem.",
+        "demo_title": "Sentinel: demo zarządzania projektem ze wsparciem AI",
+        "demo_cookies": "Każdy gość dostaje własną piaskownicę z przykładowym projektem na 24 "
+        "godziny. Potrzebuje do tego jednego ciasteczka z jej identyfikatorem; nic więcej o "
+        "Tobie nie zapisujemy.",
+        "demo_retry": "Otwórz demo",
         "llm_failed": "AI nie odpowiedziało; spróbuj później.",
         "llm_timeout": "AI nie odpowiedziało na czas; spróbuj jeszcze raz albo wypełnij formularz "
         "ręcznie.",

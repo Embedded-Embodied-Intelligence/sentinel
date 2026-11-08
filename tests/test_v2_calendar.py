@@ -66,7 +66,9 @@ def test_the_feed_needs_no_session_and_lives_with_the_sandbox(tmp_path: Path) ->
 def test_behind_an_https_proxy_the_link_is_https(tmp_path: Path) -> None:
     """WP17: the demo is served over HTTPS (secure cookies) by a proxy that speaks HTTP to the
     app; the link a calendar fetches must be https, not the app's own http."""
-    config = AppConfig(data_dir=tmp_path, demo=True, inline_jobs=True, secure_cookies=True)
+    config = AppConfig(
+        data_dir=tmp_path, demo=True, inline_jobs=True, secure_cookies=True, showcase=False
+    )
     services = Services(config)
     with TestClient(create_app(config, services), base_url="https://demo.example") as visitor:
         visitor.get("/v2")
