@@ -24,7 +24,7 @@ only the text it reads).
 changed: [CHANGELOG.md](CHANGELOG.md). The release zip explains its own installation in
 `RELEASE.md`.
 
-> Status: release 1.8.0 (course project at Rzeszów University of Technology, 2026). The article
+> Status: release 1.9.0 (course project at Rzeszów University of Technology, 2026). The article
 > (English, LNCS) and the course report (Polish) are added to the release package.
 
 ## Research
@@ -218,7 +218,7 @@ would not return the same text, which is why the bundles are the reference.
 
 ## Release package
 
-`uv run sentinel release --version 1.8.0` writes `dist/sentinel-1.8.0.zip` from `git archive`
+`uv run sentinel release --version 1.9.0` writes `dist/sentinel-1.9.0.zip` from `git archive`
 of HEAD (tracked files only) with a generated `RELEASE.md`, refusing a dirty tree, and adds
 files given with `--include` (the final PDFs) under `docs/deliverables/`. It never tags or
 publishes; it prints the tag command.

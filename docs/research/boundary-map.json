@@ -1,0 +1,850 @@
+{
+  "version": "1.0",
+  "zones": {
+    "ai_samodzielnie": "AI samodzielnie",
+    "ai_z_czlowiekiem": "AI z człowiekiem",
+    "tylko_czlowiek": "tylko człowiek"
+  },
+  "criteria": [
+    {
+      "id": 1,
+      "name_pl": "Odwracalność i stawka",
+      "definition_pl": "Czy błąd da się tanio cofnąć, zanim wyrządzi szkodę, i ile kosztuje, jeśli się nie da.",
+      "question_pl": "Czy błąd AI w tym zadaniu da się cofnąć, zanim komuś zaszkodzi?",
+      "evidence": [
+        "E04",
+        "E07",
+        "E08",
+        "E09",
+        "E11",
+        "E12",
+        "E16",
+        "E23",
+        "E25",
+        "E26",
+        "E28",
+        "E30",
+        "E33",
+        "E40",
+        "E41",
+        "E44",
+        "E45",
+        "E50",
+        "E52"
+      ],
+      "normative": false
+    },
+    {
+      "id": 2,
+      "name_pl": "Weryfikowalność",
+      "definition_pl": "Czy człowiek albo kod może tanio i pewnie sprawdzić wynik, zanim zostanie użyty.",
+      "question_pl": "Czy wynik AI można szybko sprawdzić (kodem albo okiem człowieka)?",
+      "evidence": [
+        "E03",
+        "E04",
+        "E06",
+        "E07",
+        "E11",
+        "E13",
+        "E14",
+        "E29",
+        "E30",
+        "E36",
+        "E37",
+        "E39",
+        "E47",
+        "E49"
+      ],
+      "normative": false
+    },
+    {
+      "id": 3,
+      "name_pl": "Praca językowa czy liczby i osąd",
+      "definition_pl": "Czy to praca na języku wewnątrz granicy możliwości modelu (redakcja, streszczenie, tekst na dane), czy liczenie, nowy osąd lub strategia poza nią.",
+      "question_pl": "Czy to praca na tekście, czy liczenie, nowy osąd albo strategia?",
+      "evidence": [
+        "E01",
+        "E02",
+        "E05",
+        "E14",
+        "E15",
+        "E43",
+        "E44",
+        "E47",
+        "E48",
+        "E51"
+      ],
+      "normative": false
+    },
+    {
+      "id": 4,
+      "name_pl": "Wpływ na ludzi i pieniądze",
+      "definition_pl": "Czy wynik dotyczy oceny, warunków pracy lub pieniędzy konkretnych osób albo firmy.",
+      "question_pl": "Czy wynik wpływa na ocenę, pracę lub pieniądze konkretnych osób?",
+      "evidence": [
+        "E08",
+        "E18",
+        "E19",
+        "E20",
+        "E21",
+        "E22",
+        "E32",
+        "E43",
+        "E46"
+      ],
+      "normative": false
+    },
+    {
+      "id": 5,
+      "name_pl": "Wartości, relacje i wyczucie („smak”)",
+      "definition_pl": "Czy decyzja zależy od wartości, relacji lub wiedzy ukrytej, której nie da się sprawdzić danymi.",
+      "question_pl": "Czy decyzja zależy od wartości, relacji lub wyczucia, których nie sprawdzi żadna liczba?",
+      "evidence": [
+        "E17",
+        "E22",
+        "E27",
+        "E31",
+        "E45"
+      ],
+      "normative": true
+    },
+    {
+      "id": 6,
+      "name_pl": "Wrażliwość danych",
+      "definition_pl": "Czy zadanie wymaga danych szczególnych kategorii albo poufnych, które nie powinny trafić do modelu ani wyjść poza firmę.",
+      "question_pl": "Czy zadanie wymaga danych wrażliwych lub poufnych?",
+      "evidence": [
+        "E19",
+        "E23",
+        "E24",
+        "E25",
+        "E26",
+        "E32",
+        "E33",
+        "E42"
+      ],
+      "normative": false
+    }
+  ],
+  "processes": [
+    {
+      "id": "P01",
+      "name_pl": "Redakcja raportu napisanego przez człowieka",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Język to mocna strona modelu, ale redakcja może zmienić sens i fakty, więc każdą zmianę akceptuje autor.",
+      "sentinel_pl": "Raporty: śledzenie zmian i strażnik faktów (D14, D15).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Każda zmiana jest widoczna i odwracalna jednym kliknięciem.",
+          "evidence": [
+            "E04"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Kod sprawdza liczby i daty, ale zmianę sensu ocenia autor.",
+          "evidence": [
+            "E03",
+            "E43"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Redakcja tekstu leży wewnątrz granicy możliwości modelu.",
+          "evidence": [
+            "E01",
+            "E02"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Redakcja nie ocenia ludzi i nie przesuwa pieniędzy; to nie obszar wysokiego ryzyka.",
+          "evidence": [
+            "E18"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Co i jak podkreślić, decyduje autor; model nie dodaje ocen.",
+          "evidence": [
+            "E43",
+            "E27"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Raport bywa poufny: model lokalny albo dane bez treści w cache.",
+          "evidence": [
+            "E42"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P02",
+      "name_pl": "Wersje raportu dla działów",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Każda wersja to redakcja tekstu autora; dobór treści dla odbiorcy to osąd, więc wersje przegląda człowiek.",
+      "sentinel_pl": "Raporty: wersje dla odbiorców ze śledzeniem zmian (D16).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Wersja nie zastępuje oryginału i można ją odrzucić.",
+          "evidence": [
+            "E04"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Strażnik faktów sprawdza liczby; pominięcia ocenia człowiek.",
+          "evidence": [
+            "E03",
+            "E14"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Dostosowanie języka do odbiorcy to praca językowa.",
+          "evidence": [
+            "E01",
+            "E05"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Inne ujęcie dla innego działu może zmienić odbiór decyzji.",
+          "evidence": [
+            "E43"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Co dany dział powinien wiedzieć, to wyczucie autora.",
+          "evidence": [
+            "E27"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Wersje nie mogą przenosić poufnych danych między działami.",
+          "evidence": [
+            "E42"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P03",
+      "name_pl": "Streszczenie protokołu ze spotkania",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Streszczenie to praca językowa, ale model może zmyślić lub błędnie przypisać ustalenia, więc sprawdza je uczestnik.",
+      "sentinel_pl": "Raporty i Raport: szkic do potwierdzenia, nie gotowy protokół (D11, D14).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Streszczenie można poprawić przed rozesłaniem.",
+          "evidence": [
+            "E04"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Halucynacje i błędy transkrypcji trzeba sprawdzić z notatkami.",
+          "evidence": [
+            "E03",
+            "E39"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Streszczanie leży wewnątrz granicy możliwości modelu.",
+          "evidence": [
+            "E01",
+            "E02"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Przypisanie zobowiązań konkretnym osobom ich dotyczy.",
+          "evidence": [
+            "E20"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Streszczenie relacjonuje ustalenia, nie waży wartości.",
+          "evidence": [
+            "E17"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Protokół może zawierać dane osobowe i poufne.",
+          "evidence": [
+            "E42",
+            "E32"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P04",
+      "name_pl": "Zamiana wiadomości statusowych na dane o postępie",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Model dobrze zamienia tekst na dane, ale nie zawsze dokładnie, więc każda pozycja jest kartą do potwierdzenia.",
+      "sentinel_pl": "Raport: karty „Do potwierdzenia”, domyślnie niezaznaczone (D11, D23).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Błędny postęp można odwrócić w następnym raporcie.",
+          "evidence": [
+            "E41"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Dokładnie odczytane tylko 82 ze 100 wiadomości, więc człowiek potwierdza.",
+          "evidence": [
+            "E51",
+            "E47"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Tekst na dane to praca językowa, którą model robi dobrze.",
+          "evidence": [
+            "E47",
+            "E51"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Zapisuje się tylko dostępność, nie ocenę osób.",
+          "evidence": [
+            "E32"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Postęp zadań to fakty, nie wartości.",
+          "evidence": [
+            "E17"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Wiadomość może zdradzać powód nieobecności; schemat go nie zapisuje.",
+          "evidence": [
+            "E32",
+            "E51"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P05",
+      "name_pl": "Prognoza dotrzymania terminu",
+      "zone": "ai_samodzielnie",
+      "reason_pl": "Prognozę liczy symulacja, a nie model językowy; niczego nie zmienia i jest sprawdzalna, więc może działać sama.",
+      "sentinel_pl": "Pulpit: „N na 100” z symulacji Monte Carlo (D01, D13).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Prognoza informuje i niczego w projekcie nie zmienia.",
+          "evidence": [
+            "E49"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Trafność prognoz zmierzono: są dobrze skalibrowane.",
+          "evidence": [
+            "E49",
+            "E29"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Liczy symulacja i kod, nie model językowy.",
+          "evidence": [
+            "E48",
+            "E14"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Prognoza dotyczy projektu, nie oceny ludzi.",
+          "evidence": [
+            "E18"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Predykcja to nie osąd; osąd zostaje przy decyzji.",
+          "evidence": [
+            "E17"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Wystarcza dostępność osób, bez powodów nieobecności.",
+          "evidence": [
+            "E32"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P06",
+      "name_pl": "Wybór działania naprawczego w projekcie",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Symulacja ocenia możliwości i proponuje najlepszą, ale zmiana dotyczy ludzi i kompromisów, więc decyduje kierownik.",
+      "sentinel_pl": "Decyzja: propozycja z liczbami, Zatwierdź / Odrzuć / Popraw (D03, D05, D24).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Zmiana planu jest odwracalna, ale czekanie na zgodę kosztuje.",
+          "evidence": [
+            "E52",
+            "E11"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Skutki są policzone na symulowanych przyszłościach, nie zgadywane.",
+          "evidence": [
+            "E50"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Model językowy wybiera jak losowanie; wybiera symulacja i człowiek.",
+          "evidence": [
+            "E51",
+            "E44"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Działanie przesuwa zadania i obciążenie konkretnych osób.",
+          "evidence": [
+            "E08",
+            "E18"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Czy dzień terminu jest wart dni pracy budżetu, to osąd.",
+          "evidence": [
+            "E17",
+            "E45"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Wystarcza dostępność i role, bez danych szczególnych.",
+          "evidence": [
+            "E32"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P07",
+      "name_pl": "Streszczenie budżetu i odchyleń",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Liczby liczy kod, model tylko je opisuje; błąd w finansach jest kosztowny, więc streszczenie czyta człowiek.",
+      "sentinel_pl": "Finanse: podsumowanie bez prawa zatwierdzania (D17).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Streszczenie tylko informuje i niczego nie księguje.",
+          "evidence": [
+            "E16"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Strażnik faktów porównuje tekst z liczbami z kodu, potem czyta człowiek.",
+          "evidence": [
+            "E14",
+            "E03"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Liczby pochodzą z kodu, model tylko je opisuje.",
+          "evidence": [
+            "E15",
+            "E48"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Streszczenie nie przesuwa pieniędzy.",
+          "evidence": [
+            "E16"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_samodzielnie",
+          "reason_pl": "Opis odchyleń to fakty, nie wybór wartości.",
+          "evidence": [
+            "E17"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Dane finansowe są poufne.",
+          "evidence": [
+            "E42"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P08",
+      "name_pl": "Zatwierdzenie przesunięcia budżetu lub wydatku",
+      "zone": "tylko_czlowiek",
+      "reason_pl": "Wydanych pieniędzy nie da się cofnąć, a zatwierdzenie to odpowiedzialność osoby, więc AI może tylko przygotować liczby.",
+      "sentinel_pl": "Finanse: AI nie ma prawa zatwierdzać; decyzja i podpis należą do człowieka (D17, D19).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wydanych pieniędzy nie da się cofnąć; odpowiada osoba.",
+          "evidence": [
+            "E45",
+            "E40"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Liczby do decyzji przygotowuje i sprawdza kod.",
+          "evidence": [
+            "E14"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Kwoty liczy kod, ale zatwierdzenie to osąd.",
+          "evidence": [
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Decyzja przesuwa pieniądze firmy i ludzi.",
+          "evidence": [
+            "E08",
+            "E16"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wybór między celami to osąd i wartości.",
+          "evidence": [
+            "E17",
+            "E27"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Dane finansowe są poufne.",
+          "evidence": [
+            "E42"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P09",
+      "name_pl": "Ocena wydajności pracownika",
+      "zone": "tylko_czlowiek",
+      "reason_pl": "Ocena ludzi przez AI to system wysokiego ryzyka, psuje miary i bezpieczeństwo zespołu, więc Sentinel celowo jej nie robi.",
+      "sentinel_pl": "Ludzie: funkcja celowo nieistniejąca (D09, D18).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Skutki oceny dla kariery trudno odwrócić.",
+          "evidence": [
+            "E18",
+            "E46"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wydajności nie da się rzetelnie sprawdzić miarą; miara jako cel się psuje.",
+          "evidence": [
+            "E21",
+            "E20"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "To osąd o człowieku poza granicą możliwości modelu.",
+          "evidence": [
+            "E02",
+            "E44"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "AI Act zalicza ocenę pracowników do wysokiego ryzyka.",
+          "evidence": [
+            "E18",
+            "E46"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Ocena ciągła niszczy bezpieczeństwo psychologiczne zespołu.",
+          "evidence": [
+            "E22"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Grozi przetwarzaniem danych o zdrowiu i emocjach.",
+          "evidence": [
+            "E32",
+            "E19"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P10",
+      "name_pl": "Wybór osoby na zastępstwo",
+      "zone": "ai_z_czlowiekiem",
+      "reason_pl": "Symulacja pokazuje skutki zastępstwa według ról i dostępności, bez rankingu ludzi; kogo poprosić, wybiera kierownik.",
+      "sentinel_pl": "Decyzja: zastępstwo z Popraw (inna osoba), bez rankingu ludzi (D06, D18).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Przydział można zmienić następnego dnia.",
+          "evidence": [
+            "E41"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Skutki zastępstwa policzone na symulowanych przyszłościach.",
+          "evidence": [
+            "E50"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Symulacja liczy skutki; model językowy nie wybiera osoby.",
+          "evidence": [
+            "E51"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Przydział według ról i dostępności, nie cech osobowych.",
+          "evidence": [
+            "E18",
+            "E20"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Kto jest przeciążony i z kim pracuje, wie kierownik.",
+          "evidence": [
+            "E45"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Tylko dostępność, nigdy powód nieobecności.",
+          "evidence": [
+            "E32"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P11",
+      "name_pl": "Komunikat do zespołu o trudnej decyzji",
+      "zone": "tylko_czlowiek",
+      "reason_pl": "Treść i ton trudnej wiadomości budują zaufanie i relacje, za które odpowiada kierownik; AI może najwyżej podać fakty z kodu.",
+      "sentinel_pl": "Poza Sentinelem: aplikacja podaje liczby, nie pisze takich komunikatów (D13, D20).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Raz powiedzianego nie da się cofnąć.",
+          "evidence": [
+            "E45"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wpływu słów na ludzi nie sprawdzi się przed wysłaniem.",
+          "evidence": [
+            "E43"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Pisanie to praca językowa, ale treść to decyzja autora.",
+          "evidence": [
+            "E01",
+            "E43"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Komunikat dotyczy pracy konkretnych osób.",
+          "evidence": [
+            "E08",
+            "E22"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Relacje i wartości to granica normatywna „smaku”.",
+          "evidence": [
+            "E27",
+            "E31"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Treść może dotyczyć danych osobowych zespołu.",
+          "evidence": [
+            "E32"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P12",
+      "name_pl": "Decyzja strategiczna, np. wejście na nowy rynek",
+      "zone": "tylko_czlowiek",
+      "reason_pl": "To nowy osąd o wysokiej stawce, którego nie da się sprawdzić przed faktem, więc należy do ludzi; AI może dostarczyć fakty.",
+      "sentinel_pl": "Poza Sentinelem: aplikacja wspiera projekty, nie strategię (D20).",
+      "cells": [
+        {
+          "criterion": 1,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wysoka stawka i niska odwracalność.",
+          "evidence": [
+            "E45"
+          ]
+        },
+        {
+          "criterion": 2,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wyniku nie da się sprawdzić przed faktem.",
+          "evidence": [
+            "E06",
+            "E29"
+          ]
+        },
+        {
+          "criterion": 3,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Nowy osąd poza granicą możliwości modelu; w decyzjach zespoły z AI tracą.",
+          "evidence": [
+            "E02",
+            "E44"
+          ]
+        },
+        {
+          "criterion": 4,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Wpływa na ludzi i pieniądze, ale pośrednio.",
+          "evidence": [
+            "E08"
+          ]
+        },
+        {
+          "criterion": 5,
+          "zone": "tylko_czlowiek",
+          "reason_pl": "Wartości i wiedza ukryta to granica normatywna „smaku”.",
+          "evidence": [
+            "E31",
+            "E17"
+          ]
+        },
+        {
+          "criterion": 6,
+          "zone": "ai_z_czlowiekiem",
+          "reason_pl": "Plany strategiczne są poufne.",
+          "evidence": [
+            "E42"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -27,7 +27,8 @@ repos:
       - id: detect-secrets
         name: detect-secrets
         entry: uv run detect-secrets-hook --baseline .secrets.baseline
-        # Generated files full of SHA-256 digests: run and summary manifests, the paper
-        # artifacts' manifest, the regression digests of the engine and of Sentinel.
-        exclude: ^(results/.*/(summary_)?manifest\.json|paper/generated/MANIFEST\.json|tests/fixtures/(engine_regression|sentinel_identity)\.json)$
+        # Files full of SHA-256 digests: run and summary manifests, the paper artifacts'
+        # manifest, the regression digests of the engine and of Sentinel, and the evidence
+        # registry (the digest of each fetched source, WP18).
+        exclude: ^(results/.*/(summary_)?manifest\.json|paper/generated/MANIFEST\.json|tests/fixtures/(engine_regression|sentinel_identity)\.json|docs/research/evidence/registry\.json)$
         language: system

@@ -5,6 +5,26 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.9.0 — 2026-11-13 (WP18, the research layer of v3)
+
+No change to the interface or to research results. This release adds the evidence the v3
+interface and the presentation will show:
+
+- **Evidence registry** (`docs/research/evidence/registry.json`, package `sentinel.evidence`):
+  52 items for and against Sentinel's design decisions (35 from the research report, 11 new
+  ones, 6 results of Sentinel's own study, RQ1–RQ5), each with its stance, a summary, one
+  sentence on what follows for Sentinel and, for 40 of them, a verbatim quote of at most three
+  sentences **checked by code** against the fetched source text; the other 6 say why they
+  have no quote.
+- `scripts/fetch_evidence.py` downloads the open sources (arXiv, NBER, PubMed, OWASP, NIST,
+  W3C, the Official Journal in English and Polish, the Polish copyright act) into
+  `data/evidence/` (never committed), extracts their text and checks every quote.
+- **Decision catalogue** (`docs/research/decisions.md`): 24 decisions with their evidence and
+  its basis; **boundary criteria and map** (`docs/research/boundary-criteria.md`,
+  `boundary-map.json`): six criteria and twelve company processes in three zones.
+- Legal dates checked against the Official Journal: Regulation (EU) 2026/1744 applies the
+  high-risk obligations of Annex III from 2 December 2027 and replaced Article 4.
+
 ## 1.8.0 — 2026-11-08 (WP17, fixes from the audit)
 
 - **Announced absences count at once** (spec v2.4.1, §11.3): an absence reported for a later

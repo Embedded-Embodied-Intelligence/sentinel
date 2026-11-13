@@ -33,6 +33,9 @@ src/sentinel/
   experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
                          #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`)
   dashboard/             # WP8: project cockpit (`sentinel dashboard`), one self-contained HTML
+  evidence/              # WP18: the evidence registry of v3 (model.py, load.py), the quote check
+                         #   (verify.py: the documented normalisation) and page text (text.py);
+                         #   data in docs/research/ (registry.json, decisions.md, boundary-map.json)
   app/                   # WP9: the application (spec section 11): live projects (live.py),
                          #   planning.py (plan, forecast, recommendation and its comparison),
                          #   simulator.py, events.py and store.py (SQLite event log), services.py,
@@ -59,7 +62,8 @@ src/sentinel/
                          #   lab (Co jeśli?, Symulator), settings (Ustawienia, project settings),
                          #   calendar (secret link and feed, ADR-0035);
                          #   text.py (its catalogue); templates/v2/, sentinel-v2.css/js
-scripts/                 # one-off utilities, e.g. fetch_psplib.py; run_demo.sh (public demo),
+scripts/                 # one-off utilities, e.g. fetch_psplib.py, fetch_evidence.py (WP18: the
+                         #   registry's open sources, their text and the quote check); run_demo.sh (public demo),
                          #   setup_e2e_libs.sh (Chromium libraries without root)
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/
@@ -100,6 +104,9 @@ web stack (FastAPI, uvicorn, Jinja2; a test enforces both, ADR-0022).
 - `data/psplib/MANIFEST.json` — source URLs, download time, SHA-256 per archive
 - `data/derived/` — reproducible derived data (gitignored): baseline plans, recorded decision
   states (`decision_states/`, WP6b)
+- `data/evidence/` — the open sources of the evidence registry (WP18, ADR-0036; gitignored, never
+  committed): `raw/<file>` as downloaded (or put there by the owner for a paywalled article),
+  `text/<file>.txt` their plain text, `MANIFEST.json` (URL, time, size, SHA-256)
 - `data/llm_cache/` — record/replay caches of LLM calls, one JSON-lines file per backend and
   study (gitignored); a run commits its replay bundle
 - the application's data directory (`sentinel ui --data-dir`, default
