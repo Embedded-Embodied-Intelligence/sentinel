@@ -1,0 +1,21 @@
+{% import "v2/_macros.html" as m %}
+{% if job %}
+<p class="computing" hx-get="{{ prefix }}/finance/summary?job={{ job }}" hx-trigger="load delay:1s" hx-target="#fin-summary" hx-swap="innerHTML" role="status">{{ t("v2.fin.summary_wait") }}</p>
+{% elif failed %}
+<p class="notice notice-bad" role="alert">{{ failed }}</p>
+{% elif result %}
+<blockquote class="fin-summary-text">{{ result.text }}</blockquote>
+<p class="muted small">{{ t("v2.fin.summary_note") }} · {{ result.model }}</p>
+<div class="stack-sm guard">
+  <div class="titled"><h3>{{ t("v2.rep.guard") }}</h3>{{ m.dowod(t, "D15") }}</div>
+  <p class="small" id="summary-guard">{{ t("v2.rep.guard_counts", unchanged=result.guard.count("unchanged"), changed=result.guard.count("changed"), omitted=result.guard.count("omitted")) }}</p>
+  {% set changed = result.guard.checks | selectattr("state", "equalto", "changed") | list %}
+  {% if changed or result.guard.new %}
+  <ul class="facts">
+  {% for c in changed %}<li class="fact fact-changed"><span class="fact-icon" aria-hidden="true">⚠</span><span class="fact-word">{{ t("v2.rep.fact.changed") }}</span><span class="fact-text">{{ t("v2.rep.fact.was", before=c.fact.text, after=c.replaced_by.text) }}</span><span></span></li>{% endfor %}
+  {% for f in result.guard.new %}<li class="fact fact-new"><span class="fact-icon" aria-hidden="true">⚠</span><span class="fact-text">{{ t("v2.rep.new_facts") }}: {{ f.text }}</span><span></span></li>{% endfor %}
+  </ul>
+  {% endif %}
+  <p class="muted small">{{ t("v2.rep.words_note") }}</p>
+</div>
+{% endif %}

@@ -675,7 +675,6 @@ def test_a_wrong_or_revoked_link_finds_nothing(site: Site) -> None:
 
 POINT = re.compile(r'data-decision="(D\d\d)"[^>]*aria-label="[^"(]*\((\d+)\)"')
 QUOTE = re.compile(r'<blockquote class="ev-quote" lang="(\w+)">(.*?)</blockquote>', re.S)
-LATER = {"D14", "D15", "D16", "D17"}  # Raporty and Finanse come in WP20
 
 
 def test_every_decision_with_a_screen_has_its_point(site: Site) -> None:
@@ -700,6 +699,9 @@ def test_every_decision_with_a_screen_has_its_point(site: Site) -> None:
         "/v2/sources",
         "/v2/permissions",
         "/v2/people",
+        "/v2/reports",  # WP20: Raporty and Finanse
+        "/v2/reports/new",
+        "/v2/finance",
     ]
     counts = {d.id: len(d.evidence) for d in load_decisions()}
     found: dict[str, int] = {}
@@ -708,7 +710,7 @@ def test_every_decision_with_a_screen_has_its_point(site: Site) -> None:
             site.client.get(path + "&lang=pl" if "?" in path else path + "?lang=pl").text
         ):
             found[ident] = int(n)
-    assert set(found) == set(counts) - LATER
+    assert set(found) == set(counts)
     assert all(found[ident] == counts[ident] for ident in found)
 
 

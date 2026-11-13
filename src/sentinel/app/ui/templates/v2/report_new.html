@@ -25,6 +25,7 @@
     {% endfor %}
     </div>
   </fieldset>
+  <p class="small titled"><span><strong>{{ t("v2.rep.guard") }}:</strong> {{ t("v2.rep.guard_hint") }}</span>{{ m.dowod(t, "D15") }}</p>
   <p class="muted small">{{ icon("shield", 16) }} {{ t("v2.rep.privacy") }}</p>
   <p><button class="btn btn-primary btn-lg" type="submit"{% if not available %} disabled{% endif %}>{{ t("v2.rep.form.submit") }}</button></p>
 </form>

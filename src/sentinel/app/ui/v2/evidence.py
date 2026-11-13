@@ -30,9 +30,9 @@ MODULES = ("projekty", "raporty", "finanse", "ludzie", "uprawnienia", "mapa")
 ZONES = ("ai_samodzielnie", "ai_z_czlowiekiem", "tylko_czlowiek")
 TEXT_KINDS = ("law", "standard", "industry")  # "Co mówi ten tekst" instead of "Co zrobili badacze"
 # Where a process of the map lives in Sentinel: a project's tab, or a screen of the group "Zasady
-# AI"; Raporty and Finanse come in WP20, until then the process names the module without a link.
+# AI" (Raporty and Finanse since WP20).
 PROJECT_SCREENS = {"overview": "", "report": "/report", "decisions": "/decisions"}
-SCREENS = {"people": "/people"}
+SCREENS = {"people": "/people", "reports": "/reports", "finance": "/finance"}
 
 
 @dataclass(frozen=True)

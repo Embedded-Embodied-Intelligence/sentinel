@@ -164,6 +164,19 @@ def entries(
             assert isinstance(event, DefinitionChanged)
             lines = [] if current is None else definition_changes(current, event.definition, t)
             current = event.definition
+            if event.request is not None:  # an approved budget request (WP20)
+                move = event.request
+                amount = int(move.amount) if float(move.amount).is_integer() else move.amount
+                lines.insert(
+                    0,
+                    t(
+                        "v2.event.budget_request",
+                        amount=amount,
+                        source=move.source,
+                        target=move.target,
+                        reason=move.reason or "–",
+                    ),
+                )
             add(row, you, "; ".join(lines) if lines else t("v2.event.definition"))
         elif kind == "checkin":
             checkin = CheckIn.model_validate(row.payload["checkin"])

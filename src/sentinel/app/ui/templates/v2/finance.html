@@ -1,0 +1,72 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.fin.title") }} {{ m.dowod(t, "D17") }}</h1></header>
+<p class="lead">{{ t("v2.fin.lead") }}</p>
+{% if error %}<p class="notice notice-bad" role="alert">{{ error }}</p>{% endif %}
+<section class="card stack-sm" aria-labelledby="portfolio-title">
+  <div class="section-head"><h2 id="portfolio-title">{{ t("v2.fin.portfolio") }}</h2><span class="muted small">{{ t("v2.fin.unit") if person_days else t("v2.fin.unit_other") }}</span></div>
+  {% if rows %}
+  <div class="table-wrap">
+  <table class="table fin-table">
+    <thead><tr><th scope="col">{{ t("v2.fin.col.project") }}</th><th scope="col" class="num">{{ t("v2.fin.col.budget") }}</th><th scope="col" class="num">{{ t("v2.fin.col.spent") }}</th><th scope="col" class="num">{{ t("v2.fin.col.forecast") }}</th><th scope="col" class="num">{{ t("v2.fin.col.deviation") }}</th><th scope="col">{{ t("v2.fin.col.state") }}</th><th scope="col">{{ t("v2.fin.col.bar") }}</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <th scope="row"><a href="{{ prefix }}/projects/{{ r.id }}">{{ r.name }}</a></th>
+      <td class="num">{{ r.budget }}</td><td class="num">{{ r.spent }}</td><td class="num">{{ r.forecast }}</td>
+      <td class="num">{{ r.deviation }} <span class="muted small">({{ r.share }} %)</span></td>
+      <td><span class="fin-state fin-{{ r.tone }}">{% if r.tone == "good" %}{{ icon("check-circle", 16) }}{% elif r.tone == "warn" %}{{ icon("alert", 16) }}{% else %}{{ icon("cross-circle", 16) }}{% endif %}{{ t("v2.fin.state." ~ r.state) }}</span>{% if r.chance is not none %}<br><span class="muted small">{{ t("v2.fin.chance", n=r.chance) }}</span>{% endif %}</td>
+      <td><span class="fin-bar" role="img" aria-label="{{ t('v2.fin.bar', spent=r.spent, forecast=r.forecast, budget=r.budget) }}"><span class="fin-forecast fin-{{ r.tone }}" style="width: {{ r.forecast_w }}%"></span><span class="fin-spent" style="width: {{ r.spent_w }}%"></span><span class="fin-budget" style="left: {{ r.budget_x }}%"></span></span></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><th scope="row">{{ t("v2.fin.total") }}</th><td class="num">{{ total.budget }}</td><td class="num">{{ total.spent }}</td><td class="num">{{ total.forecast }}</td><td class="num">{{ total.forecast - total.budget }}</td><td></td><td></td></tr></tfoot>
+  </table>
+  </div>
+  <p class="muted small">{{ t("v2.fin.legend") }}</p>
+  {% else %}
+  <p class="muted">{{ t("v2.fin.none") }} <a href="{{ prefix }}">{{ t("v2.nav.start") }} ›</a></p>
+  {% endif %}
+</section>
+{% if rows %}
+<section class="card stack-sm section" aria-labelledby="summary-title">
+  <div class="titled"><h2 id="summary-title">{{ t("v2.fin.summary") }}</h2>{{ m.dowod(t, "D17") }}</div>
+  <p class="hint">{{ t("v2.fin.summary_hint") }}</p>
+  <div id="fin-summary">
+    {% if available %}<button class="btn btn-primary" type="button" hx-post="{{ prefix }}/finance/summary" hx-target="#fin-summary" hx-swap="innerHTML">{{ icon("robot", 18) }}{{ t("v2.fin.summary_make") }}</button>{% else %}<p class="notice notice-warn">{{ t("v2.rep.no_ai") }}</p>{% endif %}
+  </div>
+  <details><summary>{{ t("v2.fin.sheet") }}</summary><pre class="fin-sheet">{{ sheet }}</pre></details>
+</section>
+{% endif %}
+<section class="card stack-sm section" aria-labelledby="move-title">
+  <div class="titled"><h2 id="move-title">{{ t("v2.fin.move") }}</h2>{{ m.dowod(t, "D17") }}</div>
+  <p class="hint">{{ t("v2.fin.move_hint") }} <strong>{{ icon("shield", 16) }} {{ t("v2.fin.no_ai_right") }}</strong></p>
+  {% if rows | length >= 2 %}
+  <form id="move-form" class="stack-sm" hx-post="{{ prefix }}/finance/requests" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    <div class="grid-2">
+      <div class="field"><label class="label" for="move-source">{{ t("v2.fin.from") }}</label><select class="input" id="move-source" name="source">{% for r in rows %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label class="label" for="move-target">{{ t("v2.fin.to") }}</label><select class="input" id="move-target" name="target">{% for r in rows %}<option value="{{ r.id }}"{% if loop.index == 2 %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label class="label" for="move-amount">{{ t("v2.fin.amount") }}</label><input class="input" id="move-amount" name="amount" inputmode="decimal" value="5"></div>
+      <div class="field"><label class="label" for="move-reason">{{ t("v2.fin.reason") }}</label><input class="input" id="move-reason" name="reason" maxlength="300"></div>
+    </div>
+    <p><button class="btn btn-primary" type="submit">{{ t("v2.fin.file") }}</button></p>
+  </form>
+  {% else %}<p class="muted">{{ t("v2.fin.move_two") }}</p>{% endif %}
+  <h3 class="overline">{{ t("v2.fin.requests") }}</h3>
+  {% if requests %}
+  <ul class="fin-requests">
+  {% for r in requests %}
+    <li class="card-inner stack-sm" id="request-{{ r.request.id }}">
+      <p><strong>{{ r.line }}</strong>{% if r.request.reason %} — {{ r.request.reason }}{% endif %}</p>
+      <p class="small"><span class="tag">{{ t("v2.fin.status." ~ r.request.status) }}</span> <span class="muted">{{ r.filed }}{% if r.decided %} · {{ r.decided }}{% endif %}</span>{% if r.why %} · {{ r.why }}{% endif %}</p>
+      {% if r.request.status == "pending" %}
+      <p class="small">{{ icon("shield", 16) }} {{ t("v2.fin.no_ai_right") }}</p>
+      <div class="choices-row" id="decide-{{ r.request.id }}"><button class="btn btn-approve" type="button" hx-get="{{ prefix }}/finance/requests/{{ r.request.id }}/confirm" hx-target="#decide-{{ r.request.id }}" hx-swap="innerHTML">{{ t("v2.fin.approve") }}</button><button class="btn btn-reject" type="button" hx-post="{{ prefix }}/finance/requests/{{ r.request.id }}/reject">{{ t("v2.fin.reject") }}</button></div>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+  {% else %}<p class="muted small">{{ t("v2.fin.no_requests") }}</p>{% endif %}
+</section>
+{% endblock %}

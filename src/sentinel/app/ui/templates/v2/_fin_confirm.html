@@ -1,0 +1,4 @@
+<div class="notice notice-warn stack-sm" role="alert">
+  <p>{{ question }}</p>
+  <p class="choices-row"><button class="btn btn-approve" type="button" hx-post="{{ prefix }}/finance/requests/{{ request_id }}/approve">{{ t("v2.fin.confirm_yes") }}</button><a class="btn btn-quiet" href="{{ prefix }}/finance">{{ t("v2.fin.cancel") }}</a></p>
+</div>

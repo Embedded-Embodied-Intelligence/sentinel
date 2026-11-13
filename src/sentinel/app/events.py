@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from sentinel.app.finance import BudgetMove
 from sentinel.app.live import AppliedAction, Baseline, CheckinEffects, LiveProject
 from sentinel.app.models import CheckIn, ProjectDefinition
 from sentinel.app.planning import Recommendation
@@ -51,6 +52,7 @@ class Created(_Event):
 
 class DefinitionChanged(_Event):
     definition: ProjectDefinition
+    request: BudgetMove | None = None  # an approved budget request it applies (WP20)
 
 
 class BaselineSet(_Event):

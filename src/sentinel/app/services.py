@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 
 from sentinel.agent.candidates import Candidate
 from sentinel.agent.decide import DecisionRecord
-from sentinel.app import decisions, io, planning, reports, simulator
+from sentinel.app import decisions, finance, io, planning, reports, simulator
 from sentinel.app.config import AppConfig
 from sentinel.app.errors import AppError
 from sentinel.app.events import (
@@ -240,6 +240,7 @@ class Services:
         self._flights: dict[tuple[str, str], threading.Lock] = {}
         self._clauses: OrderedDict[str, tuple[str, ...]] = OrderedDict()
         self.drafts = reports.Drafts()  # Raporty's drafts, in memory until saved (WP20)
+        self._summaries: OrderedDict[str, tuple[str, str]] = OrderedDict()  # Finanse (WP20)
         # set by the web layer (demo): seeds a sandbox with the showcase in a language
         self.showcase: Callable[[str, Language], None] | None = None
 
@@ -1108,6 +1109,130 @@ class Services:
     def delete_report(self, session: str, report_id: str) -> None:
         if not self.store.delete_report(session, report_id):
             raise AppError("report_not_found", "not_found")
+
+    # ---- Finanse (v3 spec section 8; spec section 11.9)
+
+    def portfolio(self, session: str, language: Language) -> list[finance.Line]:
+        """Every live project with a plan and a budget: budget, cost so far, the forecast's
+        mean cost at the end and its chance within the budget (a finished project's cost is
+        final)."""
+        lines = []
+        for summary in self.projects(session):
+            if summary.kind != "live":
+                continue
+            view = self.live(session, summary.id, language)
+            if not view.has_plan or view.budget is None:
+                continue
+            spent = view.cost_so_far or 0.0
+            result = self.forecast_of(summary.id, self.state(session, summary.id))
+            forecast = spent if result is None else result.mean_cost
+            chance = None if result is None else result.p_within_budget
+            lines.append(
+                finance.Line(
+                    summary.id, view.name, view.budget, spent, forecast, chance, view.person_days
+                )
+            )
+        return lines
+
+    def board_summary(self, session: str, sheet: str, language: Language) -> JobView:
+        """Role 4 with the audience "summary" on a fact sheet that code wrote (the page's
+        portfolio); the summary is kept in memory only, never stored."""
+        if not self.llm.available:
+            raise AppError("llm_disabled", "unavailable")
+        key = new_id()
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            progress(0.1, "summary")
+            seed = derive_seed(0, "llm", "redact", "summary", sheet)
+            text, model = self.llm.redact(sheet, "summary", language, seed, session)
+            with self._guard:
+                self._summaries[key] = (text, model)
+                while len(self._summaries) > reports.MAX_DRAFTS:
+                    self._summaries.popitem(last=False)
+            return {"summary": key}
+
+        return self._submit(session, None, "summary", work, language)
+
+    def summary_of(self, key: str) -> tuple[str, str] | None:
+        with self._guard:
+            return self._summaries.get(key)
+
+    def budget_requests(self, session: str) -> list[finance.Request]:
+        return [
+            finance.Request.model_validate(r.payload) for r in self.store.budget_requests(session)
+        ]
+
+    def file_request(
+        self,
+        session: str,
+        source: str,
+        target: str,
+        amount: float,
+        reason: str,
+        language: Language,
+    ) -> finance.Request:
+        """A pending budget request between two projects of the portfolio."""
+        lines = {line.id: line for line in self.portfolio(session, language)}
+        if source not in lines or target not in lines:
+            raise AppError("budget_unknown")
+        try:
+            request = finance.new_request(new_id(), lines[source], lines[target], amount, reason)
+        except ValueError as exc:
+            raise AppError(str(exc)) from exc
+        self.store.save_budget_request(session, request.id, finance.as_payload(request))
+        return request
+
+    def decide_request(
+        self, session: str, request_id: str, approve: bool, language: Language
+    ) -> finance.Request:
+        """A person's decision on a pending request: rejected; or approved and applied as two
+        budget changes; or approved and not applied, with the reason (spec section 11.9)."""
+        row = self.store.budget_request(session, request_id)
+        if row is None:
+            raise AppError("request_not_found", "not_found")
+        request = finance.Request.model_validate(row.payload)
+        if request.status != "pending":
+            raise AppError("budget_decided", "conflict")
+        if not approve:
+            done = finance.decided(request, "rejected")
+        else:
+            lines = {line.id: line for line in self.portfolio(session, language)}
+            kinds = {p.id: p.kind for p in self.projects(session)}
+            why = finance.applicable(request, lines, kinds)
+            if why is not None:
+                spent = lines[request.source].spent if why == "below_spent" else None
+                done = finance.decided(request, "not_applied", why, spent)
+            else:
+                move = finance.BudgetMove(
+                    request=request.id,
+                    source=lines[request.source].name,
+                    target=lines[request.target].name,
+                    amount=request.amount,
+                    reason=request.reason,
+                )
+                self._move_budget(session, request.source, -request.amount, move)
+                self._move_budget(session, request.target, request.amount, move)
+                done = finance.decided(request, "approved")
+        self.store.save_budget_request(session, done.id, finance.as_payload(done))
+        return done
+
+    def _move_budget(
+        self, session: str, project_id: str, change: float, move: finance.BudgetMove
+    ) -> None:
+        """One project's budget changed by `change` as a definition change that carries the
+        request (a default budget becomes explicit)."""
+        with self._lock(project_id):
+            row, state = self._state(session, project_id)
+            project = state.project
+            budget = project.require_model().budget
+            assert budget is not None
+            definition = project.definition.model_copy(update={"budget": budget + change})
+            try:
+                project.set_definition(definition)
+            except LiveError as exc:
+                raise AppError.of(exc) from exc
+            event = DefinitionChanged(definition=definition, request=move)
+            self._append(session, row, "definition", event, name=definition.name or row.name)
 
     def transcribe(
         self,

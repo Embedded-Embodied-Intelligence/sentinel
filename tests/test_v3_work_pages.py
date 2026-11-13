@@ -99,7 +99,7 @@ def new_draft(site: Site, audiences: Sequence[str] = ("board",)) -> str:
 @pytest.mark.parametrize("language", LANGUAGES)
 def test_the_report_pages_are_clean(site: Site, language: str) -> None:
     base = new_draft(site, ("edit", "board"))
-    for path in ("/v2/reports", "/v2/reports/new", base, f"{base}?a=edit"):
+    for path in ("/v2/reports", "/v2/reports/new", base, f"{base}?a=edit", "/v2/finance"):
         response = site.client.get(path, params={"lang": language})
         assert response.status_code == 200, path
         assert problems(response.text) == [], path
@@ -178,3 +178,87 @@ def test_a_new_report_needs_text_and_an_audience(site: Site) -> None:
     form = {"title": "", "text": REPORT, "date": "2026-11-13"}
     response = site.client.post("/v2/reports/new", data=form, headers=site.headers)
     assert "Wybierz co najmniej jednego odbiorcę." in text_of(response.text)
+
+
+# ---- Finanse
+
+
+def test_the_portfolio_is_computed_by_code_and_the_summary_is_guarded(site: Site) -> None:
+    html = site.client.get("/v2/finance", params={"lang": "pl"}).text
+    text = text_of(html)
+    assert "Portfel projektów" in text and "Streszczenie dla zarządu (AI)" in text
+    assert "Nowa odsłona sklepu internetowego" in text and "na 100 w budżecie" in text
+    assert 'data-dowod="/v2/dowod/D17"' in html and "AI nie ma prawa zatwierdzać" in text
+    line = site.services.portfolio(LOCAL_SESSION, "pl")[0]
+    assert f">{round(line.budget)}<" in html.replace(" ", "")
+    started = site.client.post("/v2/finance/summary", headers=site.headers)
+    job = re.search(r"job=([\w-]+)", started.text)
+    assert job, started.text
+    done = text_of(site.client.get("/v2/finance/summary", params={"job": job[1]}).text)
+    assert "Strażnik faktów" in done and "Nowe w tej wersji: 7 %" in done
+    assert "nie jest zapisywane" in done
+
+
+@pytest.fixture
+def two(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Site]:
+    """Two live projects with a plan (the showcase twice, the second renamed)."""
+    data: Path = tmp_path_factory.mktemp("v3-finance")
+    config = AppConfig(data_dir=data, inline_jobs=True)
+    services = Services(config)
+    services.local_session()
+    showcase.install(services)
+    assert services.showcase is not None
+    services.showcase(LOCAL_SESSION, "pl")
+    services.showcase(LOCAL_SESSION, "pl")
+    first, second = (p.id for p in services.projects(LOCAL_SESSION))
+    definition = services.state(LOCAL_SESSION, second).project.definition
+    services.update_definition(
+        LOCAL_SESSION, second, definition.model_copy(update={"name": "Aplikacja mobilna"}), "pl"
+    )
+    with TestClient(create_app(config, services)) as client:
+        token = client.get("/api/session").json()["csrf_token"]
+        yield Site(client, {"X-CSRF-Token": token, "HX-Request": "true"}, services, first)
+
+
+def test_a_budget_request_changes_nothing_until_a_person_approves_it(two: Site) -> None:
+    lines = {line.name: line for line in two.services.portfolio(LOCAL_SESSION, "pl")}
+    shop, app = lines["Nowa odsłona sklepu internetowego"], lines["Aplikacja mobilna"]
+    form = {"source": shop.id, "target": app.id, "amount": "5", "reason": "Więcej testów"}
+    filed = two.client.post("/v2/finance/requests", data=form, headers=two.headers)
+    assert filed.headers["HX-Redirect"] == "/v2/finance"
+    after = {line.name: line.budget for line in two.services.portfolio(LOCAL_SESSION, "pl")}
+    assert after == {shop.name: shop.budget, app.name: app.budget}
+    text = text_of(two.client.get("/v2/finance").text)
+    assert "czeka na decyzję człowieka" in text and "AI nie ma prawa zatwierdzać" in text
+    (request,) = two.services.budget_requests(LOCAL_SESSION)
+    asked = two.client.get(f"/v2/finance/requests/{request.id}/confirm", headers=two.headers)
+    assert "Tak, zatwierdzam" in text_of(asked.text)
+    two.client.post(f"/v2/finance/requests/{request.id}/approve", headers=two.headers)
+    moved = {line.name: line.budget for line in two.services.portfolio(LOCAL_SESSION, "pl")}
+    assert moved == {shop.name: shop.budget - 5, app.name: app.budget + 5}
+    assert "zatwierdzony i zastosowany" in text_of(two.client.get("/v2/finance").text)
+    log = text_of(two.client.get("/v2/log", params={"lang": "pl"}).text)
+    assert "Budżet przesunięty zatwierdzonym wnioskiem" in log and "Więcej testów" in log
+    again = two.client.post(f"/v2/finance/requests/{request.id}/approve", headers=two.headers)
+    assert again.status_code == 409
+
+
+def test_a_request_the_source_cannot_afford_is_recorded_as_not_applied(two: Site) -> None:
+    lines = two.services.portfolio(LOCAL_SESSION, "pl")
+    source, target = lines
+    amount = str(round(source.budget - source.spent + 10))
+    form = {"source": source.id, "target": target.id, "amount": amount, "reason": ""}
+    two.client.post("/v2/finance/requests", data=form, headers=two.headers)
+    (request,) = two.services.budget_requests(LOCAL_SESSION)
+    two.client.post(f"/v2/finance/requests/{request.id}/approve", headers=two.headers)
+    (done,) = two.services.budget_requests(LOCAL_SESSION)
+    assert done.status == "not_applied" and done.why == "below_spent"
+    assert [line.budget for line in two.services.portfolio(LOCAL_SESSION, "pl")] == [
+        source.budget,
+        target.budget,
+    ]
+    text = text_of(two.client.get("/v2/finance").text)
+    assert "zatwierdzony, nie zastosowany" in text and "wydał już" in text
+    same = {"source": source.id, "target": source.id, "amount": "3", "reason": ""}
+    refused = two.client.post("/v2/finance/requests", data=same, headers=two.headers)
+    assert "Wybierz dwa różne projekty." in text_of(refused.text)
