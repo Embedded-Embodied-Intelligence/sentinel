@@ -10,7 +10,38 @@
   </ol>
   <p class="zone-legend"><span class="muted small">{{ t("v2.map.zones") }}</span> {% for z in zones %}{{ m.zone(t, z) }} {% endfor %}</p>
 </section>
-{% if survey %}{# WP20: "Nasza mapa" / "Co odpowiedzieli ludzie (N = …)" #}{% endif %}
+{% if survey %}
+<nav class="section" aria-label="{{ t('v2.map.view') }}"><ul class="v2-tabs">
+  <li><a href="{{ prefix }}/map"{% if not survey.shown %} aria-current="page"{% endif %}>{{ t("v2.map.ours") }}</a></li>
+  <li><a href="{{ prefix }}/map?view=survey"{% if survey.shown %} aria-current="page"{% endif %}>{{ t("v2.map.survey", n=survey.n) }}</a></li>
+</ul></nav>
+{% endif %}
+{% if survey and survey.shown %}
+<section class="card section stack-sm" aria-labelledby="survey-title">
+  <div class="section-head"><h2 id="survey-title" class="overline">{{ t("v2.map.survey_table") }}</h2><span class="muted small">{{ t("v2.map.survey_note") }}</span></div>
+  <p class="lead"><strong>{{ t("v2.map.agree", k=survey.agreement) }}</strong></p>
+  <div class="table-wrap">
+  <table class="table survey-table">
+    <thead><tr><th scope="col">{{ t("v2.map.process") }}</th><th scope="col">{{ t("v2.map.answers") }}</th><th scope="col">{{ t("v2.map.most") }}</th><th scope="col">{{ t("v2.map.ours_zone") }}</th><th scope="col">{{ t("v2.map.match") }}</th></tr></thead>
+    <tbody>
+    {% for row in survey.rows %}
+    <tr>
+      <th scope="row">{{ row.name }}</th>
+      <td><span class="survey-bar" aria-hidden="true">{% for answer, count, share in row.counts %}{% if count %}<span class="sv-{{ answer }}" style="width: {{ share | round(1) }}%"></span>{% endif %}{% endfor %}</span>
+        <ul class="plain small survey-counts">{% for answer, count, share in row.counts %}{% if count %}<li>{{ t("v2.map.share", zone=(t("v2.map.dont_know") if answer == "dont_know" else t("v2.zone.short." ~ answer)), n=count, total=row.total) }}</li>{% endif %}{% endfor %}</ul></td>
+      <td>{% if row.most %}{{ m.zone(t, row.most, small=True) }}{% else %}<span class="muted">{{ t("v2.map.tie") }}</span>{% endif %}</td>
+      <td>{{ m.zone(t, row.ours, small=True) }}</td>
+      <td>{% if row.agrees %}{{ icon("check", 16) }} {{ t("v2.map.agrees") }}{% else %}{{ icon("swap", 16) }} {{ t("v2.map.differs") }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <h3 class="overline">{{ t("v2.map.weights") }}</h3>
+  <ul class="plain">{% for c, mean in survey.weights %}<li>{{ c.id }}. {{ c.short_en if t.lang == "en" else c.short_pl }}: <strong>{{ "–" if mean is none else t.decimal(mean) }}</strong></li>{% endfor %}</ul>
+  <p class="muted small">{{ t("v2.map.survey_note") }}</p>
+</section>
+{% else %}
 <section class="card section map-card" aria-labelledby="map-table-title">
   <div class="section-head"><h2 id="map-table-title" class="overline">{{ t("v2.map.table") }}</h2><span class="muted small">{{ t("v2.map.hint") }}</span></div>
   <div class="table-wrap">
@@ -30,4 +61,5 @@
   </table>
   </div>
 </section>
+{% endif %}
 {% endblock %}

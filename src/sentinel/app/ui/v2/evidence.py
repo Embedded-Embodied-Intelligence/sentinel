@@ -23,6 +23,7 @@ from sentinel.evidence import (
     EvidenceItem,
     research,
 )
+from sentinel.evidence import survey as survey_data
 
 STANCES = ("wspiera", "podwaza", "niuansuje")  # the panel's order (section 2)
 KINDS = ("empirical", "theoretical", "law", "standard", "industry", "own")
@@ -260,6 +261,59 @@ def map_rows(ui: Ui, request: Request, lang: str) -> list[MapRow]:
     return rows
 
 
+@dataclass(frozen=True)
+class SurveyRow:
+    """A process in the survey's view: the count and share of each answer, the answer given
+    most often (None on a tie or without answers), the map's zone and whether they agree."""
+
+    name: str
+    counts: list[tuple[str, int, float]]
+    total: int
+    most: str | None
+    ours: str
+    agrees: bool
+
+
+@dataclass(frozen=True)
+class SurveyView:
+    n: int
+    shown: bool  # the survey's view is chosen (else only the switch)
+    rows: list[SurveyRow]
+    agreement: int
+    weights: list[tuple[Criterion, float | None]]
+
+
+def survey_view(boundary: Any, shown: bool, lang: str = "pl") -> SurveyView | None:
+    """Mapa granic's survey view (v3 spec section 3), None before the survey is imported."""
+    found = survey_data.load_survey(survey_data.SURVEY_PATH)
+    if found is None:
+        return None
+    rows = []
+    for process in boundary.processes:
+        counts = found.processes.get(process.id, {})
+        total = sum(counts.values())
+        most = survey_data.majority(counts)
+        shares = [
+            (answer, counts.get(answer, 0), 100 * counts.get(answer, 0) / total if total else 0.0)
+            for answer in survey_data.ANSWERS
+        ]
+        rows.append(
+            SurveyRow(
+                process.name_en if lang == "en" else process.name_pl,
+                shares,
+                total,
+                most,
+                process.zone,
+                most == process.zone,
+            )
+        )
+    weights = [
+        (c, None if str(c.id) not in found.criteria else found.criteria[str(c.id)].mean)
+        for c in boundary.criteria
+    ]
+    return SurveyView(found.n, shown, rows, survey_data.agreement(found, boundary), weights)
+
+
 def sources_filter(request: Request, cards: list[Card]) -> tuple[list[Card], dict[str, str]]:
     """Źródła's filters from the query (module, criterion, stance, kind, words); without
     JavaScript the form submits them, with it the list filters as you type."""
@@ -329,7 +383,7 @@ def router(ui: Ui) -> APIRouter:
             criteria=boundary.criteria,
             rows=map_rows(ui, request, t.lang),
             zones=ZONES,
-            survey=None,  # WP20: the survey's answers, when they exist
+            survey=survey_view(boundary, request.query_params.get("view") == "survey", t.lang),
         )
 
     return routes
