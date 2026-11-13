@@ -21,7 +21,7 @@
     </tr>
     {% endfor %}
     </tbody>
-    <tfoot><tr><th scope="row">{{ t("v2.fin.total") }}</th><td class="num">{{ total.budget }}</td><td class="num">{{ total.spent }}</td><td class="num">{{ total.forecast }}</td><td class="num">{{ total.forecast - total.budget }}</td><td></td><td></td></tr></tfoot>
+    <tfoot><tr><th scope="row">{{ t("v2.fin.total") }}</th><td class="num">{{ total.budget }}</td><td class="num">{{ total.spent }}</td><td class="num">{{ total.forecast }}</td><td class="num">{{ total.deviation }}</td><td></td><td></td></tr></tfoot>
   </table>
   </div>
   <p class="muted small">{{ t("v2.fin.legend") }}</p>

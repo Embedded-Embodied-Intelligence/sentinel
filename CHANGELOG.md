@@ -5,6 +5,34 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 2.0.0 — 2026-11-14 (WP20, v3 part 2: Raporty, Finanse, RQ6, the survey; the v3 interface complete)
+
+No change to the existing research results (`sentinel reproduce --check`: the 117 files of
+the earlier runs stay identical; RQ6 gets its own artifacts once its full run is pinned).
+
+- **Raporty** (spec v2.6.0, §11.9; ADR-0038): a person's report, pasted or dictated, edited by
+  AI for "Tylko redakcja", "Zarząd", "Finanse" or "Zespół" (a fourth narrow LLM role that
+  returns the edited text only). The tracked changes are a word-level diff computed by code,
+  each accepted or rejected on its own or all at once; the **"Strażnik faktów"** extracts the
+  numbers, percentages, amounts, dates (Polish month names and relative words), people, tasks
+  and projects and marks each "bez zmian", "zmienione" (with both values) or "pominięte", with
+  "Nowe w tej wersji" for facts AI added. Saving or exporting a version with a changed or new
+  fact asks first; Markdown, a page for printing, the clipboard. A report is stored only when
+  saved.
+- **Finanse**: the portfolio in work-days computed by code (budget, spent, forecast at the end,
+  deviation, state, a bar per project); "Streszczenie dla zarządu (AI)" from a fact sheet that
+  code built, checked by the fact guard and never stored; **"Przesuń budżet"** as a request that
+  only a person approves, with a confirmation step, applied as two budget changes shown in
+  Dziennik, or recorded with the reason it cannot be applied.
+- **Mapa granic**: the switch "Nasza mapa" / "Co odpowiedzieli ludzie (N = …)" once the survey
+  is imported (`scripts/import_survey.py`, aggregate counts only, `docs/research/survey.md`).
+- Every decision of the catalogue now has its "Dowód" point (D14–D17 on Raporty and Finanse);
+  the sidebar's "Praca" holds Start, Projekty, Raporty and Finanse.
+- **RQ6** (`configs/wp20_rq6.toml`): "Does AI editing for audiences preserve the facts?" on 30
+  synthetic Polish reports with their facts (`configs/wp20_rq6_corpus.json`), four audiences,
+  two models, the application's prompt and one that also asks for the list of changes, with
+  bootstrap intervals; the full run is the owner's (WP20 report).
+
 ## 1.10.0 — 2026-11-13 (WP19, v3 part 1: the research layer in the interface)
 
 No change to research results (`sentinel reproduce --check`). The v2 interface shows the

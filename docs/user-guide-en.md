@@ -390,6 +390,39 @@ a 10 × 10 dot grid.
   decision validity dates and the report reminder. **Whoever has the link sees people's names and
   the dates of their absences** — "Revoke the link" switches it off at once.
 
+### Version 3: AI rules, Reports and Finance (from 2.0.0)
+
+The menu has three groups: **Work** (Start, Projects, Reports, Finance), **AI rules** (Boundary
+map, AI permissions, People, Sources) and **Other**. Every feature that rests on a design
+decision has a point **ⓘ N**: it opens the "Evidence" panel with that decision and the studies
+for and against it (a quote is shown only when code found it in its source).
+
+- **Reports** — "New report": paste or dictate the text (🎤), choose the audiences ("Editing
+  only", "Board", "Finance", "Team") and click "Edit". AI writes a version for each audience.
+  **Code computes the changes, not AI**: deleted words are red and struck through, added ones
+  green and underlined; you accept (✓) or reject (✕) each change, or all at once. Beside it the
+  **"Fact guard"** checks numbers, percentages, amounts, dates (also "tomorrow", "by 16
+  November"), people, tasks and projects: ✓ "unchanged", ⚠ "changed" (with both values),
+  "omitted", and "New in this version" lists facts your text did not have. When a version has a
+  ⚠ or a new fact, "Save" and the export ask you to confirm. Export: Markdown, a page for
+  printing, the clipboard. **A report stays in Sentinel only when you click "Save"**; until
+  then the draft lives in the server's memory only. The text goes to the AI provider chosen in
+  Settings. Numbers written in words are not checked.
+- **Finance** — the portfolio in work-days: budget, spent, forecast at the end, deviation and
+  state ("Within budget", "At risk", "Over budget without changes", "Over budget"), all
+  computed by code. "Summary for the board (AI)" is written from a fact sheet that code computed
+  and checked by the fact guard; it is never stored. **"Move budget"** creates a request ("AI has
+  no right to approve"); only when you click "Approve the request" and confirm do both budgets
+  change, and Dziennik records it. A request that cannot be applied (e.g. the source has spent
+  more than it would keep) is recorded as "approved, not applied" with the reason.
+- **Boundary map** — twelve company processes in three zones ("AI alone", "AI with a person",
+  "person only") by six criteria. After the survey is imported (`docs/research/survey.md`) a
+  switch "Our map" / "What people answered (N = …)" shows the answers and the agreement with our
+  map (an opinion poll, a convenience sample).
+- **AI permissions**, **People**, **Sources** — what AI may and may not do (with an attack
+  test), what Sentinel deliberately lacks (e.g. performance scores) and every source with
+  filters.
+
 ## 9. Frequently asked questions
 
 **How does Sentinel know how long tasks take?** From your estimates and how sure they are

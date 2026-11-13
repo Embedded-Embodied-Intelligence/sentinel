@@ -4,7 +4,7 @@
 
 | Layer | Responsibility | Deterministic? |
 | --- | --- | --- |
-| Interpretation (LLM) | parse events, propose candidates in JSON grammar, explain decisions (spec §10) | via record/replay cache |
+| Interpretation (LLM) | parse events, propose candidates in JSON grammar, explain decisions (spec §10); edit a person's text for an audience (§11.9, ADR-0038) | via record/replay cache |
 | Decision | state model, Goal & Needs Engine, candidate selection, permission gate | yes |
 | Computation | validation, SGS heuristics, CP-SAT, Monte Carlo rollouts, simulator | yes (seeded) |
 
@@ -29,14 +29,18 @@ src/sentinel/
                          #   client), record/replay cache, schemas, prompts (English); WP14:
                          #   whisper.py (Groq's Whisper for recordings, nothing stored, ADR-0031)
   wbs/                   # WP6a: narrator, extraction, validation, scores (RQ1)
-  interpret/             # WP6b: event parser, action grammar and compiler, explanations (§10)
+  interpret/             # WP6b: event parser, action grammar and compiler, explanations (§10);
+                         #   WP20: redaction.py (role 4), tracked.py (the word-level diff of
+                         #   tracked changes), facts.py (the fact guard), spec 11.9
   experiments/           # runners, config loading, manifests, summaries, tables/figures; WP7:
-                         #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`)
+                         #   paper.py (`sentinel paper`), reproduce.py (`sentinel reproduce`);
+                         #   WP20: report_corpus.py, rq6_study.py (RQ6), paper_rq6.py
   dashboard/             # WP8: project cockpit (`sentinel dashboard`), one self-contained HTML
   evidence/              # WP18: the evidence registry of v3 (model.py, load.py), the quote check
                          #   (verify.py: the documented normalisation) and page text (text.py);
                          #   data/ (registry.json, decisions.json, boundary-map.json) ships with
-                         #   the package (WP19, ADR-0037); docs/research/ describes them
+                         #   the package (WP19, ADR-0037); docs/research/ describes them; WP20:
+                         #   survey.py (the survey's aggregate, data/survey.json once imported)
   app/                   # WP9: the application (spec section 11): live projects (live.py),
                          #   planning.py (plan, forecast, recommendation and its comparison),
                          #   simulator.py, events.py and store.py (SQLite event log), services.py,
@@ -54,6 +58,8 @@ src/sentinel/
     feed.py              # WP16: the iCalendar text of a project's calendar feed (ADR-0035)
     attack.py            # WP19: "Próba ataku" of Uprawnienia AI through the message flow, with
                          #   the recorded answer attack_replay.json (scripts/record_attack.py)
+    reports.py           # WP20: Raporty's drafts (memory only until saved), versions, export
+    finance.py           # WP20: Finanse's portfolio lines and budget requests (spec 11.9)
     ui/                  # WP9b: the pages: Jinja2 templates, text.py (catalogue PL/EN), forms,
                          #   charts (SVG), routes per screen; static/ (CSS, vendored HTMX)
       v2/                # the v2 interface under /v2 (ADR-0033; docs/design/v2-spec.md):
@@ -67,10 +73,13 @@ src/sentinel/
                          #   WP19 (docs/design/v3-spec.md): evidence (the "Dowód" point and
                          #   panel, Źródła, Mapa granic), rules (Uprawnienia AI, Ludzie),
                          #   text_v3.py; the decision page's "Twoja ocena" (spec 11.8);
+                         #   WP20: reports (Raporty), finance (Finanse), text_v3_work.py,
+                         #   Mapa granic's survey view;
                          #   text.py (its catalogue); templates/v2/, sentinel-v2.css/js
 scripts/                 # one-off utilities, e.g. fetch_psplib.py, fetch_evidence.py (WP18: the
                          #   registry's open sources, their text and the quote check); record_attack.py
-                         #   (WP19); ui_v3_screenshots.py (WP19); run_demo.sh (public demo),
+                         #   (WP19); ui_v3_screenshots.py (WP19, WP20); make_rq6_corpus.py and
+                         #   import_survey.py (WP20); run_demo.sh (public demo),
                          #   setup_e2e_libs.sh (Chromium libraries without root)
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/
@@ -121,6 +130,7 @@ web stack (FastAPI, uvicorn, Jinja2; a test enforces both, ADR-0022).
   `sentinel.db` (SQLite: projects, the event log, sessions, jobs, the demo's request log, and
   each project's calendar row: report reminder and the nonce of its link, ADR-0035),
   `settings.json` (the LLM provider and its keys, mode 0600, never returned by the API),
+  the saved reports and budget requests in `sentinel.db` (WP20, per session),
   `secret.key` (the key that signs cookies and derives calendar links) and `llm_cache/` (caches
   without prompts, spec section 10)
 
@@ -160,6 +170,10 @@ See the `experiment-run` skill.
   manifests and raw outputs. `sentinel paper` turns their summaries into `paper/generated/`:
   `numbers.tex` (LaTeX macros, each with its source cell), `tab_rq1.tex` … `tab_rq5.tex`,
   `fig_*.pdf`, the Polish versions in `pl/`, `numbers.md` and `MANIFEST.json` (ADR-0020).
+- RQ6 (WP20) has its own pinned config, `configs/paper_rq6.toml` (written by `sentinel paper
+  --pin-rq6 <run>` once the full run exists), and its own artifacts in `paper/generated/rq6/`, so
+  that the earlier artifacts stay byte for byte as they are; `sentinel paper` and `reproduce`
+  handle both.
 - `sentinel reproduce --check` regenerates every committed summary and `paper/generated/` in a
   temporary directory, without recomputation or LLM calls, and compares them byte for byte;
   `sentinel reproduce --commands` prints the commands that recompute each run.

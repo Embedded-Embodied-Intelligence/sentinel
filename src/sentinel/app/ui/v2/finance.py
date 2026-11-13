@@ -168,6 +168,7 @@ def router(ui: Ui) -> APIRouter:
                 "budget": sum(r.budget for r in rows),
                 "spent": sum(r.spent for r in rows),
                 "forecast": sum(r.forecast for r in rows),
+                "deviation": signed(sum(r.forecast - r.budget for r in rows)),
             },
             "sheet": sheet(t, rows) if rows else "",
             "requests": request_rows(t, services.budget_requests(session)),

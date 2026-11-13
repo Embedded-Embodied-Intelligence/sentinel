@@ -397,6 +397,39 @@ jako „39 na 100” z siatką 10 × 10 kropek.
   powód), daty ważności decyzji i przypomnienie o raporcie. **Kto ma ten link, widzi imiona
   osób i daty nieobecności** — „Unieważnij link” natychmiast go wyłącza.
 
+### Wersja 3: Zasady AI, Raporty i Finanse (od 2.0.0)
+
+Menu ma trzy grupy: **Praca** (Start, Projekty, Raporty, Finanse), **Zasady AI** (Mapa granic,
+Uprawnienia AI, Ludzie, Źródła) i **Inne**. Przy każdej funkcji, za którą stoi decyzja
+projektowa, jest punkt **ⓘ N**: otwiera panel „Dowód” z tą decyzją i badaniami za nią i przeciw
+niej (cytat pokazujemy tylko wtedy, gdy kod znalazł go w źródle).
+
+- **Raporty** — „Nowy raport”: wklej albo podyktuj tekst (🎤), wybierz odbiorców („Tylko
+  redakcja”, „Zarząd”, „Finanse”, „Zespół”) i kliknij „Redaguj”. Dla każdego odbiorcy AI
+  przygotuje wersję. **Zmiany wylicza kod, nie AI**: usunięte słowa są czerwone i przekreślone,
+  dodane zielone i podkreślone; każdą zmianę przyjmiesz (✓) albo odrzucisz (✕), także wszystkie
+  naraz. Obok **„Strażnik faktów”** sprawdza liczby, procenty, kwoty, daty (także „jutro”,
+  „do 16 listopada”), osoby, zadania i projekty: ✓ „bez zmian”, ⚠ „zmienione” (z obiema
+  wartościami), „pominięte”, a „Nowe w tej wersji” to fakty, których nie było w Twoim tekście.
+  Gdy wersja ma ⚠ albo nowy fakt, „Zapisz” i eksport pytają o potwierdzenie. Eksport: Markdown,
+  strona do druku, schowek. **Raport zostaje w Sentinelu dopiero po kliknięciu „Zapisz”**;
+  wcześniej szkic jest tylko w pamięci serwera. Tekst trafia do dostawcy AI wybranego w
+  Ustawieniach. Liczby zapisane słownie nie są sprawdzane.
+- **Finanse** — portfel projektów w dniach pracy: budżet, wydano, prognoza na koniec,
+  odchylenie i stan („W budżecie”, „Zagrożony”, „Przekroczenie bez zmian”, „Budżet
+  przekroczony”), wszystko policzone przez kod. „Streszczenie dla zarządu (AI)” powstaje z
+  arkusza faktów policzonego przez kod i jest sprawdzane strażnikiem faktów; nie jest zapisywane.
+  **„Przesuń budżet”** tworzy wniosek („AI nie ma prawa zatwierdzać”); dopiero Ty klikasz
+  „Zatwierdź wniosek” i potwierdzasz. Wtedy budżety obu projektów zmieniają się, a Dziennik to
+  zapisuje. Gdy wniosku nie da się zastosować (np. projekt wydał już więcej, niż by mu zostało),
+  zostaje zapisany jako „zatwierdzony, nie zastosowany” z powodem.
+- **Mapa granic** — dwanaście procesów firmy w trzech strefach („AI samodzielnie”, „AI z
+  człowiekiem”, „tylko człowiek”) według sześciu kryteriów. Po zaimportowaniu ankiety
+  (`docs/research/survey.md`) pojawia się przełącznik „Nasza mapa” / „Co odpowiedzieli ludzie
+  (N = …)” z odpowiedziami i zgodnością z naszą mapą (sondaż, próba wygodna).
+- **Uprawnienia AI**, **Ludzie**, **Źródła** — co AI może, a czego nie (z próbą ataku), czego
+  celowo nie ma w Sentinelu (np. oceny wydajności) i wszystkie źródła z filtrami.
+
 ## 9. Najczęstsze pytania
 
 **Skąd Sentinel wie, ile potrwają zadania?** Z Twoich szacunków i z tego, jak pewne one są

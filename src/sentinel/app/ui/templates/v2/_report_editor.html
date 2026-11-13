@@ -22,7 +22,7 @@
     <p class="hint">{{ t("v2.rep.guard_hint") }}</p>
     {% if e.facts %}
     <p class="small" id="guard-counts">{{ t("v2.rep.guard_counts", unchanged=e.counts.unchanged, changed=e.counts.changed, omitted=e.counts.omitted) }}</p>
-    <ul class="facts">
+    <ul class="guard-facts">
     {% for f in e.facts %}
       <li class="fact fact-{{ f.state }}"><span class="fact-icon" aria-hidden="true">{% if f.state == "unchanged" %}✓{% elif f.state == "changed" %}⚠{% else %}–{% endif %}</span><span class="fact-word">{{ t("v2.rep.fact." ~ f.state) }}</span><span class="fact-text">{% if f.state == "changed" %}{{ t("v2.rep.fact.was", before=f.text, after=f.after) }}{% else %}{{ f.text }}{% endif %}{% if f.count > 1 %} <span class="muted">{{ t("v2.rep.times", n=f.count) }}</span>{% endif %}</span><span class="fact-kind muted small">{{ f.kind }}</span></li>
     {% endfor %}
@@ -31,7 +31,7 @@
     <h3 class="overline">{{ t("v2.rep.new_facts") }}</h3>
     {% if e.new %}
     <p class="hint">{{ t("v2.rep.new_hint") }}</p>
-    <ul class="facts">{% for f in e.new %}<li class="fact fact-new"><span class="fact-icon" aria-hidden="true">⚠</span><span class="fact-text">{{ f.text }}</span><span class="fact-kind muted small">{{ f.kind }}</span></li>{% endfor %}</ul>
+    <ul class="guard-facts">{% for f in e.new %}<li class="fact fact-new"><span class="fact-icon" aria-hidden="true">⚠</span><span class="fact-text">{{ f.text }}</span><span class="fact-kind muted small">{{ f.kind }}</span></li>{% endfor %}</ul>
     {% else %}<p class="muted small">–</p>{% endif %}
     <p class="muted small">{{ t("v2.rep.words_note") }}{% if e.model_changed or e.model_new %} {{ t("v2.rep.model_all", changed=e.model_changed, new=e.model_new) }}{% endif %}</p>
   </section>

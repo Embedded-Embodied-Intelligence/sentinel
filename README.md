@@ -24,7 +24,7 @@ only the text it reads).
 changed: [CHANGELOG.md](CHANGELOG.md). The release zip explains its own installation in
 `RELEASE.md`.
 
-> Status: release 1.10.0 (course project at Rzeszów University of Technology, 2026). The article
+> Status: release 2.0.0 (course project at Rzeszów University of Technology, 2026). The article
 > (English, LNCS) and the course report (Polish) are added to the release package.
 
 ## Research
@@ -166,7 +166,12 @@ a calendar feed for Google Calendar or iCloud, and a four-step wizard; screensho
 against its decision (verified quotes only), and the group "Zasady AI" with Mapa granic (where
 AI may work alone, with a person, or not at all), Uprawnienia AI (what the model may and may
 not do, its calls as metadata only, and an attack test), Ludzie (what is deliberately absent,
-and the workload) and Źródła; screenshots in [`docs/ui/v3/`](docs/ui/v3/).
+and the workload) and Źródła; screenshots in [`docs/ui/v3/`](docs/ui/v3/). Release 2.0.0
+completes v3 with Raporty (AI edits a person's report for each audience; the tracked changes
+are a diff computed by code, each change accepted or rejected, and a fact guard checks that
+numbers, dates and names survive) and Finanse (the portfolio computed by code, a board summary
+checked against its fact sheet, and budget transfers that only a person approves), and the
+survey's view of Mapa granic.
 The pages use the JSON API's services (`/api/…`, the OpenAPI schema at `/api/openapi.json`);
 projects, settings (the optional AI provider and its key, never shown again) and caches live in
 `--data-dir` (default `$XDG_DATA_HOME/sentinel`, outside the repository).
@@ -223,7 +228,7 @@ would not return the same text, which is why the bundles are the reference.
 
 ## Release package
 
-`uv run sentinel release --version 1.10.0` writes `dist/sentinel-1.10.0.zip` from `git archive`
+`uv run sentinel release --version 2.0.0` writes `dist/sentinel-2.0.0.zip` from `git archive`
 of HEAD (tracked files only) with a generated `RELEASE.md`, refusing a dirty tree, and adds
 files given with `--include` (the final PDFs) under `docs/deliverables/`. It never tags or
 publishes; it prints the tag command.

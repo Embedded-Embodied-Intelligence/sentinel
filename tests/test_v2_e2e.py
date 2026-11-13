@@ -84,7 +84,25 @@ class Whisper:
         return Transcript(SAID, 6.0, self.model)
 
 
+REPORT = (
+    "Raport tygodniowy\n\n"
+    "Testy integracyjne są gotowe w 15 %. Budżet to 120 dni pracy, wydaliśmy 40 dni. "
+    "Ogólnie rzecz biorąc wszystko idzie dobrze, choć są pewne kwestie.\n\n"
+    "Odbiór planujemy do 16 listopada."
+)
+
+
 def reader(messages: Any) -> str:
+    """The scripted model: the reader of a check-in message; an edit of a report (WP20) drops
+    the filler and changes one figure; a board summary repeats the sheet's first line."""
+    system, text = messages[0].content, messages[-1].content
+    if system.startswith("You edit a text"):
+        if "fact sheet that code computed" in system:
+            return json.dumps({"text": text.split("\n")[0]}, ensure_ascii=False)
+        edited = text.replace(
+            " Ogólnie rzecz biorąc wszystko idzie dobrze, choć są pewne kwestie.", ""
+        )
+        return json.dumps({"text": edited.replace("15 %", "20 %")}, ensure_ascii=False)
     clauses = len(re.findall(r"^\[\d+\] ", messages[1].content, re.M))
     items = [{**item, "clause": min(item["clause"], clauses)} for item in ANSWER["items"]]
     return json.dumps({**ANSWER, "items": items}, ensure_ascii=False)
@@ -462,6 +480,9 @@ def test_the_v2_screens_have_no_serious_accessibility_violations(demo: Server, t
             ("permissions", "/v2/permissions", "[data-attack-run]"),
             ("people", "/v2/people", None),
             ("sources", "/v2/sources", "details.src-item > summary"),
+            ("reports", "/v2/reports", None),  # WP20
+            ("report_new", "/v2/reports/new", None),
+            ("finance", "/v2/finance", "details > summary"),
         ]
         if decision is not None:
             screens.append(("decision_assessment", decision, None))
@@ -491,3 +512,63 @@ def test_the_v2_screens_have_no_serious_accessibility_violations(demo: Server, t
         context.close()
         chromium.close()
     assert problems == {}
+
+
+def test_the_report_path(demo: Server) -> None:
+    """WP20 (v3 spec section 7): Raporty → Nowy raport → paste → Zarząd → Redaguj → tracked
+    changes → reject one change → the fact guard shows the changed number → export, confirmed."""
+    with sync_api.sync_playwright() as playwright:
+        chromium, page, _ = showcase_page(demo, playwright, accept_downloads=True)
+        page.get_by_role("link", name="Raporty").click()
+        page.get_by_role("link", name="Nowy raport").click()
+        page.get_by_label("Tytuł").fill("Tydzień 46")
+        page.locator("#rep-text").fill(REPORT)
+        page.get_by_label("Tylko redakcja").uncheck()
+        page.get_by_label("Zarząd").check()
+        page.get_by_role("button", name="Redaguj").click()
+        expect(page.get_by_role("heading", name="Śledzenie zmian · Zarząd")).to_be_visible()
+        expect(page.locator("#change-count")).to_contain_text("przyjęte: 2 z 2 zmian")
+        page.get_by_role("button", name="Odrzuć zmianę 2").click()
+        expect(page.locator("#change-count")).to_contain_text("przyjęte: 1 z 2 zmian")
+        guard = page.locator(".guard")
+        expect(guard).to_contain_text("15 % → 20 %")
+        expect(guard.locator(".fact-changed")).to_contain_text("zmienione")
+        assert _axe(page) == []
+        page.get_by_role("link", name="Eksportuj Markdown").click()
+        expect(page.get_by_role("heading", name="Niektóre fakty się zmieniły")).to_be_visible()
+        with page.expect_download() as info:
+            page.get_by_role("link", name="Eksportuj mimo to").click()
+        path = info.value.path()
+        text = Path(path).read_text(encoding="utf-8")
+        assert text.startswith("# Tydzień 46") and "20 %" in text and "Ogólnie" in text
+        chromium.close()
+
+
+def test_the_finance_request_waits_for_a_person(demo: Server) -> None:
+    """WP20 (v3 spec section 8): a second project, "Przesuń budżet" files a request that shows
+    "AI nie ma prawa zatwierdzać"; approving it asks first, then moves the budgets and logs it."""
+    import sqlite3
+
+    with sync_api.sync_playwright() as playwright:
+        chromium, page, _ = showcase_page(demo, playwright)
+        with sqlite3.connect(demo.config.database) as db:
+            (session,) = db.execute(
+                "SELECT id FROM sessions ORDER BY created DESC LIMIT 1"
+            ).fetchone()
+        assert demo.services.showcase is not None
+        demo.services.showcase(session, "pl")  # the visitor's second project
+        page.goto(demo.base + "/v2/finance")
+        expect(page.get_by_role("heading", name="Portfel projektów")).to_be_visible()
+        page.get_by_label("Dni pracy").fill("5")
+        page.get_by_label("Powód").fill("Więcej testów")
+        page.get_by_role("button", name="Złóż wniosek").click()
+        request = page.locator(".fin-requests li").first
+        expect(request).to_contain_text("czeka na decyzję człowieka")
+        expect(request).to_contain_text("AI nie ma prawa zatwierdzać")
+        assert _axe(page) == []
+        request.get_by_role("button", name="Zatwierdź wniosek").click()
+        request.get_by_role("button", name="Tak, zatwierdzam").click()
+        expect(page.locator(".fin-requests li").first).to_contain_text("zatwierdzony i zastosowany")
+        page.goto(demo.base + "/v2/log")
+        expect(page.locator("main")).to_contain_text("Budżet przesunięty zatwierdzonym wnioskiem")
+        chromium.close()
