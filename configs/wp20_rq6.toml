@@ -1,0 +1,67 @@
+# WP20 (RQ6): does AI editing for audiences preserve the facts? (spec section 11.9, ADR-0038)
+# Each report of the synthetic corpus (configs/wp20_rq6_corpus.json, written by
+# scripts/make_rq6_corpus.py) is edited for four audiences by each backend in two conditions:
+# "plain" (the application's prompt, the edited text only) and "self_report" (the same prompt
+# asking also for the model's list of changes). The fact guard compares each version with the
+# report, and the model's list is compared with the code diff.
+# Ollama run:  uv run python -m sentinel.experiments.rq6_study --config configs/wp20_rq6.toml --out results/wp20 --backend ollama
+# Both backends (Ollama replayed from its cache, OpenRouter live and resumable; Groq: --backend groq):
+#              uv run python -m sentinel.experiments.rq6_study --config configs/wp20_rq6.toml --out results/wp20 --replay ollama=data/llm_cache/rq6/ollama.jsonl
+# Smoke on the scripted editor: --backend fake --limit 2
+name = "wp20_rq6"
+base_seed = 2026          # LLM seed of an edit, shared by the backends and the conditions
+corpus = "configs/wp20_rq6_corpus.json"
+own_dir = "data/rq6/own"  # reports a person adds by hand (gitignored, never committed); with any, store_prompts must be false and the run writes no bundle
+cache_dir = "data/llm_cache/rq6"
+store_prompts = true      # synthetic reports: full cache records; false is mandatory for real data (spec section 10)
+backends = ["ollama", "openrouter"]
+audiences = ["edit", "board", "finance", "team"]
+conditions = ["plain", "self_report"]
+
+[redaction]
+prompt_version = "v1"     # src/sentinel/llm/prompts/redact*.v1.txt
+max_tokens = 8192
+temperature = 0.0
+
+[backend.ollama]          # as in configs/wp6_rq1.toml
+kind = "ollama"
+model = "qwen2.5:7b"
+digest = "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730"
+num_ctx = 8192            # a report has about 600 tokens, its prompt about 400, the answer up to 1500
+
+[backend.groq]
+kind = "groq"
+model = "openai/gpt-oss-120b"
+tokens_per_minute = 8000
+tokens_per_day = 200000
+response_format = "json_schema"
+max_wait_s = 900
+
+[backend.groq.options]
+reasoning_effort = "low"
+include_reasoning = false
+
+[backend.openrouter]      # gpt-oss-120b served by Groq via OpenRouter (ADR-0018), as in WP6c
+kind = "openrouter"
+model = "openai/gpt-oss-120b"
+response_format = "json_schema"
+max_wait_s = 900
+
+[backend.openrouter.provider]  # pinned to Groq; if Groq is unavailable, order = ["cerebras"]
+order = ["groq"]
+allow_fallbacks = false
+require_parameters = true
+
+[backend.openrouter.options]
+reasoning_effort = "low"
+include_reasoning = false
+
+[backend.fake]            # scripted editor: drops filler and repetitions, with seeded mistakes
+kind = "fake"
+model = "oracle-editor-v1"
+error_rate = 0.3
+
+[summary]
+bootstrap_resamples = 2000
+bootstrap_seed = 2026
+table = "table_wp20_rq6"

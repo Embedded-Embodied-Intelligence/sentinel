@@ -1,0 +1,5757 @@
+[
+ {
+  "id": "R01",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-11-13",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 13 listopada 2026 r.\n\nZadanie „Uruchomienie sklepu” zakończyliśmy 9 listopada. Zadanie „Infrastruktura w chmurze” jest gotowe w 90 %. Do końca zadania „Interfejs katalogu” zostało 9 dni pracy. Gabriela Kamińska przejmuje zadanie „Projekt UX procesu zakupu” do końca miesiąca. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Uruchomienie sklepu” jest już zakończone.\n\nBudżet projektu to 1,5 mln zł; do tej pory wydaliśmy 420 000 zł, czyli 28 % budżetu. Prognoza kosztu na koniec wynosi 1 680 000 zł, czyli o 12 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 1,5 mln zł.\n\nDawid Lewandowski wraca 20 listopada, więc zadanie „Interfejs procesu zakupu” może się przesunąć o 7 dni. Ryzyko: zadanie „Warsztat wymagań” jest opóźnione o 2 dni robocze. Proponuję dodać 2 osoby do zadania „Interfejs procesu zakupu” na 15 dni; koszt to około 14 000 zł. Decyzję potrzebujemy do 20 listopada.\n\nOdbiór projektu planujemy na 10 stycznia 2027 r.. Spotkanie zespołu odbędzie się jutro o 13:00. Zadaniem „Karty podarunkowe” zajmie się Bartosz Kowalski, a Gabriela Kamińska pomoże przy zadaniu „Testy wydajności”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-13",
+    "text": "13 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-09",
+    "text": "9 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90 %"
+   },
+   {
+    "kind": "number",
+    "value": "9",
+    "text": "9 dni"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "amount",
+    "value": "1500000 PLN",
+    "text": "1,5 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "420000 PLN",
+    "text": "420 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "28%",
+    "text": "28 %"
+   },
+   {
+    "kind": "amount",
+    "value": "1680000 PLN",
+    "text": "1 680 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "12%",
+    "text": "12 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-20",
+    "text": "20 listopada"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "14000 PLN",
+    "text": "14 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:00",
+    "text": "13:00"
+   },
+   {
+    "kind": "date",
+    "value": "2027-01-10",
+    "text": "10 stycznia 2027 r."
+   },
+   {
+    "kind": "task",
+    "value": "Uruchomienie sklepu",
+    "text": "Uruchomienie sklepu"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "person",
+    "value": "Gabriela Kamińska",
+    "text": "Gabriela Kamińska"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs procesu zakupu",
+    "text": "Interfejs procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "person",
+    "value": "Bartosz Kowalski",
+    "text": "Bartosz Kowalski"
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   }
+  ]
+ },
+ {
+  "id": "R02",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-11-06",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 6 listopada 2026 r.\n\nZadanie „Karty podarunkowe” zakończyliśmy 3 listopada. Zadanie „Interfejs procesu zakupu” jest gotowe w 30 proc.. Do końca zadania „Interfejs katalogu” zostało 11 dni pracy. Ewa Zielińska przejmuje zadanie „Testy integracyjne” jutro. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Karty podarunkowe” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 179 000 zł, czyli 56 proc. budżetu. Prognoza kosztu na koniec wynosi 332 000 zł, czyli o 4% więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nCezary Mazur wraca 17 listopada, więc zadanie „Uruchomienie sklepu” może się przesunąć o 2 dni. Ryzyko: zadanie „Integracja płatności” jest opóźnione o 4 dni robocze. Proponuję dodać 3 osoby do zadania „Uruchomienie sklepu” na 15 dni; koszt to około 18 tys. zł. Decyzję potrzebujemy do 14 listopada.\n\nOdbiór projektu planujemy na 14 grudnia 2026 r.. Spotkanie zespołu odbędzie się jutro o 10:30. Zadaniem „API katalogu produktów” zajmie się Dawid Lewandowski, a Ewa Zielińska pomoże przy zadaniu „Infrastruktura w chmurze”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-06",
+    "text": "6 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-03",
+    "text": "3 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "30%",
+    "text": "30 proc."
+   },
+   {
+    "kind": "number",
+    "value": "11",
+    "text": "11 dni"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "179000 PLN",
+    "text": "179 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "56%",
+    "text": "56 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "332000 PLN",
+    "text": "332 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "4%",
+    "text": "4%"
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-17",
+    "text": "17 listopada"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 osoby"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-14",
+    "text": "14 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:30",
+    "text": "10:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-14",
+    "text": "14 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs procesu zakupu",
+    "text": "Interfejs procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "person",
+    "value": "Ewa Zielińska",
+    "text": "Ewa Zielińska"
+   },
+   {
+    "kind": "task",
+    "value": "Testy integracyjne",
+    "text": "Testy integracyjne"
+   },
+   {
+    "kind": "person",
+    "value": "Cezary Mazur",
+    "text": "Cezary Mazur"
+   },
+   {
+    "kind": "task",
+    "value": "Uruchomienie sklepu",
+    "text": "Uruchomienie sklepu"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   },
+   {
+    "kind": "task",
+    "value": "API katalogu produktów",
+    "text": "API katalogu produktów"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   }
+  ]
+ },
+ {
+  "id": "R03",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-10-30",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 30 października 2026 r.\n\nZadanie „Potok CI/CD” zakończyliśmy 26 października. Zadanie „Integracja płatności” jest gotowe w 30%. Do końca zadania „Uruchomienie sklepu” zostało 3 dni pracy. Dawid Lewandowski przejmuje zadanie „Warsztat wymagań” jutro. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Potok CI/CD” jest już zakończone.\n\nBudżet projektu to 450 000 zł; do tej pory wydaliśmy 162 000 zł, czyli 36 % budżetu. Prognoza kosztu na koniec wynosi 477 000 zł, czyli o 6% więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 450 000 zł.\n\nCelina Wiśniewska wraca do końca miesiąca, więc zadanie „Interfejs procesu zakupu” może się przesunąć o 2 dni. Ryzyko: zadanie „Infrastruktura w chmurze” jest opóźnione o 4 dni robocze. Proponuję dodać 2 osoby do zadania „Interfejs procesu zakupu” na 5 dni; koszt to około 18 tys. zł. Decyzję potrzebujemy do 7 listopada.\n\nOdbiór projektu planujemy na 25 grudnia 2026 r.. Spotkanie zespołu odbędzie się 11 listopada o 10:00. Zadaniem „Projekt UX procesu zakupu” zajmie się Bartosz Kowalski, a Dawid Lewandowski pomoże przy zadaniu „Karty podarunkowe”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-30",
+    "text": "30 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-26",
+    "text": "26 października"
+   },
+   {
+    "kind": "percent",
+    "value": "30%",
+    "text": "30%"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "amount",
+    "value": "450000 PLN",
+    "text": "450 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "162000 PLN",
+    "text": "162 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "36%",
+    "text": "36 %"
+   },
+   {
+    "kind": "amount",
+    "value": "477000 PLN",
+    "text": "477 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6%"
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-07",
+    "text": "7 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "--11-11",
+    "text": "11 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:00",
+    "text": "10:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-25",
+    "text": "25 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Potok CI/CD",
+    "text": "Potok CI/CD"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   },
+   {
+    "kind": "task",
+    "value": "Uruchomienie sklepu",
+    "text": "Uruchomienie sklepu"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "person",
+    "value": "Celina Wiśniewska",
+    "text": "Celina Wiśniewska"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs procesu zakupu",
+    "text": "Interfejs procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Bartosz Kowalski",
+    "text": "Bartosz Kowalski"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   }
+  ]
+ },
+ {
+  "id": "R04",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-10-23",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 23 października 2026 r.\n\nZadanie „Interfejs katalogu” zakończyliśmy 21 października. Zadanie „Infrastruktura w chmurze” jest gotowe w 90 %. Do końca zadania „Projekt UX procesu zakupu” zostało 13 dni pracy. Ewa Zielińska przejmuje zadanie „Integracja płatności” 27 października. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Interfejs katalogu” jest już zakończone.\n\nBudżet projektu to 450 000 zł; do tej pory wydaliśmy 234 000 zł, czyli 52 proc. budżetu. Prognoza kosztu na koniec wynosi 504 000 zł, czyli o 12% więcej niż budżet. Na licencje potrzebujemy dodatkowo 3 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 450 000 zł.\n\nDawid Lewandowski wraca jutro, więc zadanie „Warsztat wymagań” może się przesunąć o 3 dni. Ryzyko: zadanie „Karty podarunkowe” jest opóźnione o 4 dni robocze. Proponuję dodać 2 osoby do zadania „Warsztat wymagań” na 10 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 28 października.\n\nOdbiór projektu planujemy na 19 listopada 2026 r.. Spotkanie zespołu odbędzie się w poniedziałek o 14:30. Zadaniem „Testy integracyjne” zajmie się Gabriela Kamińska, a Ewa Zielińska pomoże przy zadaniu „Testy wydajności”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-23",
+    "text": "23 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-21",
+    "text": "21 października"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90 %"
+   },
+   {
+    "kind": "number",
+    "value": "13",
+    "text": "13 dni"
+   },
+   {
+    "kind": "date",
+    "value": "--10-27",
+    "text": "27 października"
+   },
+   {
+    "kind": "amount",
+    "value": "450000 PLN",
+    "text": "450 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "234000 PLN",
+    "text": "234 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "52%",
+    "text": "52 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "504000 PLN",
+    "text": "504 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "12%",
+    "text": "12%"
+   },
+   {
+    "kind": "amount",
+    "value": "3000 PLN",
+    "text": "3 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 osoby"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-28",
+    "text": "28 października"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:0",
+    "text": "poniedziałek"
+   },
+   {
+    "kind": "date",
+    "value": "time:14:30",
+    "text": "14:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-19",
+    "text": "19 listopada 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Ewa Zielińska",
+    "text": "Ewa Zielińska"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "task",
+    "value": "Testy integracyjne",
+    "text": "Testy integracyjne"
+   },
+   {
+    "kind": "person",
+    "value": "Gabriela Kamińska",
+    "text": "Gabriela Kamińska"
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   }
+  ]
+ },
+ {
+  "id": "R05",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-10-16",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 16 października 2026 r.\n\nZadanie „Karty podarunkowe” zakończyliśmy 12 października. Zadanie „Warsztat wymagań” jest gotowe w 90 proc.. Do końca zadania „Projekt UX procesu zakupu” zostało 11 dni pracy. Filip Wójcik przejmuje zadanie „API katalogu produktów” jutro. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Karty podarunkowe” jest już zakończone.\n\nBudżet projektu to 2,4 mln zł; do tej pory wydaliśmy 1 224 000 zł, czyli 51 % budżetu. Prognoza kosztu na koniec wynosi 2 688 000 zł, czyli o 12 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 2,4 mln zł.\n\nAnna Nowak wraca za dwa tygodnie, więc zadanie „Interfejs katalogu” może się przesunąć o 6 dni. Ryzyko: zadanie „Testy wydajności” jest opóźnione o 4 dni robocze. Proponuję dodać 1 osobę do zadania „Interfejs katalogu” na 15 dni; koszt to około 14 000 zł. Decyzję potrzebujemy do 23 października.\n\nOdbiór projektu planujemy na 27 listopada 2026 r.. Spotkanie zespołu odbędzie się w piątek o 13:00. Zadaniem „Infrastruktura w chmurze” zajmie się Dawid Lewandowski, a Filip Wójcik pomoże przy zadaniu „Integracja płatności”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-16",
+    "text": "16 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-12",
+    "text": "12 października"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90 proc."
+   },
+   {
+    "kind": "number",
+    "value": "11",
+    "text": "11 dni"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "amount",
+    "value": "2400000 PLN",
+    "text": "2,4 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "1224000 PLN",
+    "text": "1 224 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "51%",
+    "text": "51 %"
+   },
+   {
+    "kind": "amount",
+    "value": "2688000 PLN",
+    "text": "2 688 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "12%",
+    "text": "12 %"
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "14000 PLN",
+    "text": "14 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-23",
+    "text": "23 października"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:4",
+    "text": "piątek"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:00",
+    "text": "13:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-27",
+    "text": "27 listopada 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Filip Wójcik",
+    "text": "Filip Wójcik"
+   },
+   {
+    "kind": "task",
+    "value": "API katalogu produktów",
+    "text": "API katalogu produktów"
+   },
+   {
+    "kind": "person",
+    "value": "Anna Nowak",
+    "text": "Anna Nowak"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   }
+  ]
+ },
+ {
+  "id": "R06",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-10-09",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 9 października 2026 r.\n\nZadanie „Uruchomienie sklepu” zakończyliśmy 7 października. Zadanie „Karty podarunkowe” jest gotowe w 80 proc.. Do końca zadania „Potok CI/CD” zostało 11 dni pracy. Cezary Mazur przejmuje zadanie „Testy wydajności” jutro. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Uruchomienie sklepu” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 195 000 zł, czyli 61% budżetu. Prognoza kosztu na koniec wynosi 332 000 zł, czyli o 4 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nCelina Wiśniewska wraca do końca miesiąca, więc zadanie „Interfejs procesu zakupu” może się przesunąć o 4 dni. Ryzyko: zadanie „Interfejs katalogu” jest opóźnione o 4 dni robocze. Proponuję dodać 1 osobę do zadania „Interfejs procesu zakupu” na 10 dni; koszt to około 14 tys. zł. Decyzję potrzebujemy do 13 października.\n\nOdbiór projektu planujemy na 24.11.2026. Spotkanie zespołu odbędzie się w piątek o 11:00. Zadaniem „Infrastruktura w chmurze” zajmie się Filip Wójcik, a Cezary Mazur pomoże przy zadaniu „Projekt UX procesu zakupu”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-09",
+    "text": "9 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-07",
+    "text": "7 października"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80 proc."
+   },
+   {
+    "kind": "number",
+    "value": "11",
+    "text": "11 dni"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "195000 PLN",
+    "text": "195 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "61%",
+    "text": "61%"
+   },
+   {
+    "kind": "amount",
+    "value": "332000 PLN",
+    "text": "332 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "4%",
+    "text": "4 %"
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "14000 PLN",
+    "text": "14 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-13",
+    "text": "13 października"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:4",
+    "text": "piątek"
+   },
+   {
+    "kind": "date",
+    "value": "time:11:00",
+    "text": "11:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-24",
+    "text": "24.11.2026"
+   },
+   {
+    "kind": "task",
+    "value": "Uruchomienie sklepu",
+    "text": "Uruchomienie sklepu"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "task",
+    "value": "Potok CI/CD",
+    "text": "Potok CI/CD"
+   },
+   {
+    "kind": "person",
+    "value": "Cezary Mazur",
+    "text": "Cezary Mazur"
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   },
+   {
+    "kind": "person",
+    "value": "Celina Wiśniewska",
+    "text": "Celina Wiśniewska"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs procesu zakupu",
+    "text": "Interfejs procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   },
+   {
+    "kind": "person",
+    "value": "Filip Wójcik",
+    "text": "Filip Wójcik"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   }
+  ]
+ },
+ {
+  "id": "R07",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-10-02",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 2 października 2026 r.\n\nZadanie „Testy wydajności” zakończyliśmy 30 września. Zadanie „Warsztat wymagań” jest gotowe w 30 %. Do końca zadania „Projekt UX procesu zakupu” zostało 6 dni pracy. Filip Wójcik przejmuje zadanie „Potok CI/CD” 21 października. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Testy wydajności” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 96 000 zł, czyli 30 % budżetu. Prognoza kosztu na koniec wynosi 368 000 zł, czyli o 15 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nGabriela Kamińska wraca w przyszłym tygodniu, więc zadanie „Interfejs procesu zakupu” może się przesunąć o 3 dni. Ryzyko: zadanie „Integracja płatności” jest opóźnione o 4 dni robocze. Proponuję dodać 3 osoby do zadania „Interfejs procesu zakupu” na 15 dni; koszt to około 18 tys. zł. Decyzję potrzebujemy do 9 października.\n\nOdbiór projektu planujemy na 30 października 2026 r.. Spotkanie zespołu odbędzie się w piątek o 9:00. Zadaniem „Testy integracyjne” zajmie się Anna Nowak, a Filip Wójcik pomoże przy zadaniu „Karty podarunkowe”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-02",
+    "text": "2 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--09-30",
+    "text": "30 września"
+   },
+   {
+    "kind": "percent",
+    "value": "30%",
+    "text": "30 %"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "date",
+    "value": "--10-21",
+    "text": "21 października"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "96000 PLN",
+    "text": "96 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "368000 PLN",
+    "text": "368 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "15%",
+    "text": "15 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-09",
+    "text": "9 października"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:4",
+    "text": "piątek"
+   },
+   {
+    "kind": "date",
+    "value": "time:09:00",
+    "text": "9:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-30",
+    "text": "30 października 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Filip Wójcik",
+    "text": "Filip Wójcik"
+   },
+   {
+    "kind": "task",
+    "value": "Potok CI/CD",
+    "text": "Potok CI/CD"
+   },
+   {
+    "kind": "person",
+    "value": "Gabriela Kamińska",
+    "text": "Gabriela Kamińska"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs procesu zakupu",
+    "text": "Interfejs procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   },
+   {
+    "kind": "task",
+    "value": "Testy integracyjne",
+    "text": "Testy integracyjne"
+   },
+   {
+    "kind": "person",
+    "value": "Anna Nowak",
+    "text": "Anna Nowak"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   }
+  ]
+ },
+ {
+  "id": "R08",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-09-25",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 25 września 2026 r.\n\nZadanie „Interfejs katalogu” zakończyliśmy 24 września. Zadanie „Testy wydajności” jest gotowe w 80 %. Do końca zadania „Potok CI/CD” zostało 14 dni pracy. Celina Wiśniewska przejmuje zadanie „Karty podarunkowe” w przyszłym tygodniu. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Interfejs katalogu” jest już zakończone.\n\nBudżet projektu to 600 000 zł; do tej pory wydaliśmy 258 000 zł, czyli 43 % budżetu. Prognoza kosztu na koniec wynosi 648 000 zł, czyli o 8 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 600 000 zł.\n\nFilip Wójcik wraca w przyszłym tygodniu, więc zadanie „Warsztat wymagań” może się przesunąć o 7 dni. Ryzyko: zadanie „Projekt UX procesu zakupu” jest opóźnione o 3 dni robocze. Proponuję dodać 1 osobę do zadania „Warsztat wymagań” na 5 dni; koszt to około 9 000 zł. Decyzję potrzebujemy do 30 września.\n\nOdbiór projektu planujemy na 17.10.2026. Spotkanie zespołu odbędzie się jutro o 9:30. Zadaniem „API katalogu produktów” zajmie się Gabriela Kamińska, a Celina Wiśniewska pomoże przy zadaniu „Integracja płatności”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-09-25",
+    "text": "25 września 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--09-24",
+    "text": "24 września"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80 %"
+   },
+   {
+    "kind": "number",
+    "value": "14",
+    "text": "14 dni"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "amount",
+    "value": "600000 PLN",
+    "text": "600 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "258000 PLN",
+    "text": "258 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "43%",
+    "text": "43 %"
+   },
+   {
+    "kind": "amount",
+    "value": "648000 PLN",
+    "text": "648 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 000 zł"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "9000 PLN",
+    "text": "9 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--09-30",
+    "text": "30 września"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:09:30",
+    "text": "9:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-17",
+    "text": "17.10.2026"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   },
+   {
+    "kind": "task",
+    "value": "Potok CI/CD",
+    "text": "Potok CI/CD"
+   },
+   {
+    "kind": "person",
+    "value": "Celina Wiśniewska",
+    "text": "Celina Wiśniewska"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "person",
+    "value": "Filip Wójcik",
+    "text": "Filip Wójcik"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "API katalogu produktów",
+    "text": "API katalogu produktów"
+   },
+   {
+    "kind": "person",
+    "value": "Gabriela Kamińska",
+    "text": "Gabriela Kamińska"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   }
+  ]
+ },
+ {
+  "id": "R09",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-09-18",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 18 września 2026 r.\n\nZadanie „Testy wydajności” zakończyliśmy 16 września. Zadanie „Projekt UX procesu zakupu” jest gotowe w 80 proc.. Do końca zadania „Potok CI/CD” zostało 6 dni pracy. Dawid Lewandowski przejmuje zadanie „Infrastruktura w chmurze” za dwa tygodnie. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Testy wydajności” jest już zakończone.\n\nBudżet projektu to 2,4 mln zł; do tej pory wydaliśmy 1 056 000 zł, czyli 44 % budżetu. Prognoza kosztu na koniec wynosi 2 544 000 zł, czyli o 6% więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 2,4 mln zł.\n\nAnna Nowak wraca w przyszłym tygodniu, więc zadanie „API katalogu produktów” może się przesunąć o 6 dni. Ryzyko: zadanie „Integracja płatności” jest opóźnione o 3 dni robocze. Proponuję dodać 2 osoby do zadania „API katalogu produktów” na 5 dni; koszt to około 9 000 zł. Decyzję potrzebujemy do 22 września.\n\nOdbiór projektu planujemy na 26 października 2026 r.. Spotkanie zespołu odbędzie się jutro o 13:30. Zadaniem „Interfejs procesu zakupu” zajmie się Celina Wiśniewska, a Dawid Lewandowski pomoże przy zadaniu „Interfejs katalogu”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-09-18",
+    "text": "18 września 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--09-16",
+    "text": "16 września"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80 proc."
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "amount",
+    "value": "2400000 PLN",
+    "text": "2,4 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "1056000 PLN",
+    "text": "1 056 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "44%",
+    "text": "44 %"
+   },
+   {
+    "kind": "amount",
+    "value": "2544000 PLN",
+    "text": "2 544 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6%"
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 osoby"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "9000 PLN",
+    "text": "9 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--09-22",
+    "text": "22 września"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:30",
+    "text": "13:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-26",
+    "text": "26 października 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Testy wydajności",
+    "text": "Testy wydajności"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "task",
+    "value": "Potok CI/CD",
+    "text": "Potok CI/CD"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Infrastruktura w chmurze",
+    "text": "Infrastruktura w chmurze"
+   },
+   {
+    "kind": "person",
+    "value": "Anna Nowak",
+    "text": "Anna Nowak"
+   },
+   {
+    "kind": "task",
+    "value": "API katalogu produktów",
+    "text": "API katalogu produktów"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs procesu zakupu",
+    "text": "Interfejs procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Celina Wiśniewska",
+    "text": "Celina Wiśniewska"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   }
+  ]
+ },
+ {
+  "id": "R10",
+  "source": "showcase",
+  "project": "Nowa odsłona sklepu internetowego",
+  "day": "2026-09-11",
+  "people": [
+   "Anna Nowak",
+   "Bartosz Kowalski",
+   "Cezary Mazur",
+   "Celina Wiśniewska",
+   "Dawid Lewandowski",
+   "Ewa Zielińska",
+   "Filip Wójcik",
+   "Gabriela Kamińska"
+  ],
+  "tasks": [
+   "Warsztat wymagań",
+   "Projekt UX procesu zakupu",
+   "API katalogu produktów",
+   "Integracja płatności",
+   "Interfejs procesu zakupu",
+   "Interfejs katalogu",
+   "Infrastruktura w chmurze",
+   "Potok CI/CD",
+   "Testy integracyjne",
+   "Testy wydajności",
+   "Karty podarunkowe",
+   "Uruchomienie sklepu"
+  ],
+  "projects": [
+   "Nowa odsłona sklepu internetowego"
+  ],
+  "text": "Raport tygodniowy: Nowa odsłona sklepu internetowego\n\nStan na 11 września 2026 r.\n\nZadanie „Warsztat wymagań” zakończyliśmy 6 września. Zadanie „Potok CI/CD” jest gotowe w 90 %. Do końca zadania „Karty podarunkowe” zostało 6 dni pracy. Cezary Mazur przejmuje zadanie „Interfejs katalogu” do końca miesiąca. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Warsztat wymagań” jest już zakończone.\n\nBudżet projektu to 240 000 zł; do tej pory wydaliśmy 139 000 zł, czyli 58 proc. budżetu. Prognoza kosztu na koniec wynosi 254 000 zł, czyli o 6 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 3 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 240 000 zł.\n\nAnna Nowak wraca jutro, więc zadanie „Integracja płatności” może się przesunąć o 4 dni. Ryzyko: zadanie „API katalogu produktów” jest opóźnione o 2 dni robocze. Proponuję dodać 1 osobę do zadania „Integracja płatności” na 5 dni; koszt to około 9 000 zł. Decyzję potrzebujemy do 20 września.\n\nOdbiór projektu planujemy na 24.10.2026. Spotkanie zespołu odbędzie się 29 września o 13:00. Zadaniem „Projekt UX procesu zakupu” zajmie się Dawid Lewandowski, a Cezary Mazur pomoże przy zadaniu „Uruchomienie sklepu”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Nowa odsłona sklepu internetowego",
+    "text": "Nowa odsłona sklepu internetowego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-09-11",
+    "text": "11 września 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--09-06",
+    "text": "6 września"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90 %"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "amount",
+    "value": "240000 PLN",
+    "text": "240 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "139000 PLN",
+    "text": "139 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "58%",
+    "text": "58 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "254000 PLN",
+    "text": "254 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 %"
+   },
+   {
+    "kind": "amount",
+    "value": "3000 PLN",
+    "text": "3 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "9000 PLN",
+    "text": "9 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--09-20",
+    "text": "20 września"
+   },
+   {
+    "kind": "date",
+    "value": "--09-29",
+    "text": "29 września"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:00",
+    "text": "13:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-24",
+    "text": "24.10.2026"
+   },
+   {
+    "kind": "task",
+    "value": "Warsztat wymagań",
+    "text": "Warsztat wymagań"
+   },
+   {
+    "kind": "task",
+    "value": "Potok CI/CD",
+    "text": "Potok CI/CD"
+   },
+   {
+    "kind": "task",
+    "value": "Karty podarunkowe",
+    "text": "Karty podarunkowe"
+   },
+   {
+    "kind": "person",
+    "value": "Cezary Mazur",
+    "text": "Cezary Mazur"
+   },
+   {
+    "kind": "task",
+    "value": "Interfejs katalogu",
+    "text": "Interfejs katalogu"
+   },
+   {
+    "kind": "person",
+    "value": "Anna Nowak",
+    "text": "Anna Nowak"
+   },
+   {
+    "kind": "task",
+    "value": "Integracja płatności",
+    "text": "Integracja płatności"
+   },
+   {
+    "kind": "task",
+    "value": "API katalogu produktów",
+    "text": "API katalogu produktów"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt UX procesu zakupu",
+    "text": "Projekt UX procesu zakupu"
+   },
+   {
+    "kind": "person",
+    "value": "Dawid Lewandowski",
+    "text": "Dawid Lewandowski"
+   },
+   {
+    "kind": "task",
+    "value": "Uruchomienie sklepu",
+    "text": "Uruchomienie sklepu"
+   }
+  ]
+ },
+ {
+  "id": "R11",
+  "source": "simulator",
+  "project": "Platforma rezerwacji wizyt",
+  "day": "2026-11-13",
+  "people": [
+   "Oskar",
+   "Teresa",
+   "Katarzyna",
+   "Agata",
+   "Filip",
+   "Dariusz"
+  ],
+  "tasks": [
+   "Aktualizacja magazynu artefaktów",
+   "Weryfikacja dostępności",
+   "Testy obsługi zamówień",
+   "Optymalizacja ogranicznika żądań",
+   "Konfiguracja certyfikatów TLS",
+   "Audyt procesu zamówienia",
+   "Przegląd koszyka zakupów",
+   "Walidacja migracji danych"
+  ],
+  "projects": [
+   "Platforma rezerwacji wizyt"
+  ],
+  "text": "Raport tygodniowy: Platforma rezerwacji wizyt\n\nStan na 13 listopada 2026 r.\n\nZadanie „Optymalizacja ogranicznika żądań” zakończyliśmy 9 listopada. Zadanie „Weryfikacja dostępności” jest gotowe w 45 proc.. Do końca zadania „Aktualizacja magazynu artefaktów” zostało 10 dni pracy. Katarzyna przejmuje zadanie „Konfiguracja certyfikatów TLS” w środę. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Optymalizacja ogranicznika żądań” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 204 000 zł, czyli 64% budżetu. Prognoza kosztu na koniec wynosi 345 000 zł, czyli o 8 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nDariusz wraca za dwa tygodnie, więc zadanie „Audyt procesu zamówienia” może się przesunąć o 6 dni. Ryzyko: zadanie „Walidacja migracji danych” jest opóźnione o 2 dni robocze. Proponuję dodać 2 osoby do zadania „Audyt procesu zamówienia” na 5 dni; koszt to około 9 tys. zł. Decyzję potrzebujemy do 18 listopada.\n\nOdbiór projektu planujemy na 02.01.2027. Spotkanie zespołu odbędzie się we wtorek o 9:30. Zadaniem „Przegląd koszyka zakupów” zajmie się Filip, a Katarzyna pomoże przy zadaniu „Testy obsługi zamówień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Platforma rezerwacji wizyt",
+    "text": "Platforma rezerwacji wizyt"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-13",
+    "text": "13 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-09",
+    "text": "9 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "45%",
+    "text": "45 proc."
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:2",
+    "text": "środę"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "204000 PLN",
+    "text": "204 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "64%",
+    "text": "64%"
+   },
+   {
+    "kind": "amount",
+    "value": "345000 PLN",
+    "text": "345 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8 %"
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "9000 PLN",
+    "text": "9 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-18",
+    "text": "18 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:1",
+    "text": "wtorek"
+   },
+   {
+    "kind": "date",
+    "value": "time:09:30",
+    "text": "9:30"
+   },
+   {
+    "kind": "date",
+    "value": "2027-01-02",
+    "text": "02.01.2027"
+   },
+   {
+    "kind": "task",
+    "value": "Optymalizacja ogranicznika żądań",
+    "text": "Optymalizacja ogranicznika żądań"
+   },
+   {
+    "kind": "task",
+    "value": "Weryfikacja dostępności",
+    "text": "Weryfikacja dostępności"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja magazynu artefaktów",
+    "text": "Aktualizacja magazynu artefaktów"
+   },
+   {
+    "kind": "person",
+    "value": "Katarzyna",
+    "text": "Katarzyna"
+   },
+   {
+    "kind": "task",
+    "value": "Konfiguracja certyfikatów TLS",
+    "text": "Konfiguracja certyfikatów TLS"
+   },
+   {
+    "kind": "person",
+    "value": "Dariusz",
+    "text": "Dariusz"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu zamówienia",
+    "text": "Audyt procesu zamówienia"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja migracji danych",
+    "text": "Walidacja migracji danych"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd koszyka zakupów",
+    "text": "Przegląd koszyka zakupów"
+   },
+   {
+    "kind": "person",
+    "value": "Filip",
+    "text": "Filip"
+   },
+   {
+    "kind": "task",
+    "value": "Testy obsługi zamówień",
+    "text": "Testy obsługi zamówień"
+   }
+  ]
+ },
+ {
+  "id": "R12",
+  "source": "simulator",
+  "project": "Platforma rezerwacji wizyt",
+  "day": "2026-11-06",
+  "people": [
+   "Oskar",
+   "Teresa",
+   "Katarzyna",
+   "Agata",
+   "Filip",
+   "Dariusz"
+  ],
+  "tasks": [
+   "Aktualizacja magazynu artefaktów",
+   "Weryfikacja dostępności",
+   "Testy obsługi zamówień",
+   "Optymalizacja ogranicznika żądań",
+   "Konfiguracja certyfikatów TLS",
+   "Audyt procesu zamówienia",
+   "Przegląd koszyka zakupów",
+   "Walidacja migracji danych"
+  ],
+  "projects": [
+   "Platforma rezerwacji wizyt"
+  ],
+  "text": "Raport tygodniowy: Platforma rezerwacji wizyt\n\nStan na 6 listopada 2026 r.\n\nZadanie „Przegląd koszyka zakupów” zakończyliśmy 4 listopada. Zadanie „Optymalizacja ogranicznika żądań” jest gotowe w 75%. Do końca zadania „Weryfikacja dostępności” zostało 11 dni pracy. Teresa przejmuje zadanie „Walidacja migracji danych” jutro. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Przegląd koszyka zakupów” jest już zakończone.\n\nBudżet projektu to 600 000 zł; do tej pory wydaliśmy 312 000 zł, czyli 52 proc. budżetu. Prognoza kosztu na koniec wynosi 648 000 zł, czyli o 8 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 600 000 zł.\n\nAgata wraca w czwartek, więc zadanie „Aktualizacja magazynu artefaktów” może się przesunąć o 5 dni. Ryzyko: zadanie „Audyt procesu zamówienia” jest opóźnione o 3 dni robocze. Proponuję dodać 1 osobę do zadania „Aktualizacja magazynu artefaktów” na 15 dni; koszt to około 18 000 zł. Decyzję potrzebujemy do 13 listopada.\n\nOdbiór projektu planujemy na 29 listopada. Spotkanie zespołu odbędzie się 14 listopada o 13:30. Zadaniem „Konfiguracja certyfikatów TLS” zajmie się Oskar, a Teresa pomoże przy zadaniu „Testy obsługi zamówień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Platforma rezerwacji wizyt",
+    "text": "Platforma rezerwacji wizyt"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-06",
+    "text": "6 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-04",
+    "text": "4 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "75%",
+    "text": "75%"
+   },
+   {
+    "kind": "number",
+    "value": "11",
+    "text": "11 dni"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "amount",
+    "value": "600000 PLN",
+    "text": "600 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "312000 PLN",
+    "text": "312 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "52%",
+    "text": "52 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "648000 PLN",
+    "text": "648 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8 %"
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:3",
+    "text": "czwartek"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-13",
+    "text": "13 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "--11-14",
+    "text": "14 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:30",
+    "text": "13:30"
+   },
+   {
+    "kind": "date",
+    "value": "--11-29",
+    "text": "29 listopada"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd koszyka zakupów",
+    "text": "Przegląd koszyka zakupów"
+   },
+   {
+    "kind": "task",
+    "value": "Optymalizacja ogranicznika żądań",
+    "text": "Optymalizacja ogranicznika żądań"
+   },
+   {
+    "kind": "task",
+    "value": "Weryfikacja dostępności",
+    "text": "Weryfikacja dostępności"
+   },
+   {
+    "kind": "person",
+    "value": "Teresa",
+    "text": "Teresa"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja migracji danych",
+    "text": "Walidacja migracji danych"
+   },
+   {
+    "kind": "person",
+    "value": "Agata",
+    "text": "Agata"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja magazynu artefaktów",
+    "text": "Aktualizacja magazynu artefaktów"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu zamówienia",
+    "text": "Audyt procesu zamówienia"
+   },
+   {
+    "kind": "task",
+    "value": "Konfiguracja certyfikatów TLS",
+    "text": "Konfiguracja certyfikatów TLS"
+   },
+   {
+    "kind": "person",
+    "value": "Oskar",
+    "text": "Oskar"
+   },
+   {
+    "kind": "task",
+    "value": "Testy obsługi zamówień",
+    "text": "Testy obsługi zamówień"
+   }
+  ]
+ },
+ {
+  "id": "R13",
+  "source": "simulator",
+  "project": "Platforma rezerwacji wizyt",
+  "day": "2026-10-30",
+  "people": [
+   "Oskar",
+   "Teresa",
+   "Katarzyna",
+   "Agata",
+   "Filip",
+   "Dariusz"
+  ],
+  "tasks": [
+   "Aktualizacja magazynu artefaktów",
+   "Weryfikacja dostępności",
+   "Testy obsługi zamówień",
+   "Optymalizacja ogranicznika żądań",
+   "Konfiguracja certyfikatów TLS",
+   "Audyt procesu zamówienia",
+   "Przegląd koszyka zakupów",
+   "Walidacja migracji danych"
+  ],
+  "projects": [
+   "Platforma rezerwacji wizyt"
+  ],
+  "text": "Raport tygodniowy: Platforma rezerwacji wizyt\n\nStan na 30 października 2026 r.\n\nZadanie „Audyt procesu zamówienia” zakończyliśmy 26 października. Zadanie „Weryfikacja dostępności” jest gotowe w 60 proc.. Do końca zadania „Przegląd koszyka zakupów” zostało 13 dni pracy. Dariusz przejmuje zadanie „Walidacja migracji danych” za dwa tygodnie. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Audyt procesu zamówienia” jest już zakończone.\n\nBudżet projektu to 180 000 zł; do tej pory wydaliśmy 99 tys. zł, czyli 55 proc. budżetu. Prognoza kosztu na koniec wynosi 190 000 zł, czyli o 6 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 180 000 zł.\n\nFilip wraca w przyszłym tygodniu, więc zadanie „Konfiguracja certyfikatów TLS” może się przesunąć o 7 dni. Ryzyko: zadanie „Optymalizacja ogranicznika żądań” jest opóźnione o 3 dni robocze. Proponuję dodać 2 osoby do zadania „Konfiguracja certyfikatów TLS” na 5 dni; koszt to około 18 000 zł. Decyzję potrzebujemy do 3 listopada.\n\nOdbiór projektu planujemy na 2026-12-21. Spotkanie zespołu odbędzie się jutro o 14:30. Zadaniem „Aktualizacja magazynu artefaktów” zajmie się Teresa, a Dariusz pomoże przy zadaniu „Testy obsługi zamówień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Platforma rezerwacji wizyt",
+    "text": "Platforma rezerwacji wizyt"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-30",
+    "text": "30 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-26",
+    "text": "26 października"
+   },
+   {
+    "kind": "percent",
+    "value": "60%",
+    "text": "60 proc."
+   },
+   {
+    "kind": "number",
+    "value": "13",
+    "text": "13 dni"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "amount",
+    "value": "180000 PLN",
+    "text": "180 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "99000 PLN",
+    "text": "99 tys. zł"
+   },
+   {
+    "kind": "percent",
+    "value": "55%",
+    "text": "55 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "190000 PLN",
+    "text": "190 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 %"
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 osoby"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-03",
+    "text": "3 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:14:30",
+    "text": "14:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-21",
+    "text": "2026-12-21"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu zamówienia",
+    "text": "Audyt procesu zamówienia"
+   },
+   {
+    "kind": "task",
+    "value": "Weryfikacja dostępności",
+    "text": "Weryfikacja dostępności"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd koszyka zakupów",
+    "text": "Przegląd koszyka zakupów"
+   },
+   {
+    "kind": "person",
+    "value": "Dariusz",
+    "text": "Dariusz"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja migracji danych",
+    "text": "Walidacja migracji danych"
+   },
+   {
+    "kind": "person",
+    "value": "Filip",
+    "text": "Filip"
+   },
+   {
+    "kind": "task",
+    "value": "Konfiguracja certyfikatów TLS",
+    "text": "Konfiguracja certyfikatów TLS"
+   },
+   {
+    "kind": "task",
+    "value": "Optymalizacja ogranicznika żądań",
+    "text": "Optymalizacja ogranicznika żądań"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja magazynu artefaktów",
+    "text": "Aktualizacja magazynu artefaktów"
+   },
+   {
+    "kind": "person",
+    "value": "Teresa",
+    "text": "Teresa"
+   },
+   {
+    "kind": "task",
+    "value": "Testy obsługi zamówień",
+    "text": "Testy obsługi zamówień"
+   }
+  ]
+ },
+ {
+  "id": "R14",
+  "source": "simulator",
+  "project": "Platforma rezerwacji wizyt",
+  "day": "2026-10-23",
+  "people": [
+   "Oskar",
+   "Teresa",
+   "Katarzyna",
+   "Agata",
+   "Filip",
+   "Dariusz"
+  ],
+  "tasks": [
+   "Aktualizacja magazynu artefaktów",
+   "Weryfikacja dostępności",
+   "Testy obsługi zamówień",
+   "Optymalizacja ogranicznika żądań",
+   "Konfiguracja certyfikatów TLS",
+   "Audyt procesu zamówienia",
+   "Przegląd koszyka zakupów",
+   "Walidacja migracji danych"
+  ],
+  "projects": [
+   "Platforma rezerwacji wizyt"
+  ],
+  "text": "Raport tygodniowy: Platforma rezerwacji wizyt\n\nStan na 23 października 2026 r.\n\nZadanie „Weryfikacja dostępności” zakończyliśmy 19 października. Zadanie „Konfiguracja certyfikatów TLS” jest gotowe w 75 %. Do końca zadania „Testy obsługi zamówień” zostało 6 dni pracy. Filip przejmuje zadanie „Optymalizacja ogranicznika żądań” w piątek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Weryfikacja dostępności” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 188 000 zł, czyli 59% budżetu. Prognoza kosztu na koniec wynosi 339 000 zł, czyli o 6 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nTeresa wraca za dwa tygodnie, więc zadanie „Audyt procesu zamówienia” może się przesunąć o 2 dni. Ryzyko: zadanie „Przegląd koszyka zakupów” jest opóźnione o 2 dni robocze. Proponuję dodać 2 osoby do zadania „Audyt procesu zamówienia” na 5 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 29 października.\n\nOdbiór projektu planujemy na 7 grudnia 2026 r.. Spotkanie zespołu odbędzie się w czwartek o 13:30. Zadaniem „Walidacja migracji danych” zajmie się Agata, a Filip pomoże przy zadaniu „Aktualizacja magazynu artefaktów”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Platforma rezerwacji wizyt",
+    "text": "Platforma rezerwacji wizyt"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-23",
+    "text": "23 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-19",
+    "text": "19 października"
+   },
+   {
+    "kind": "percent",
+    "value": "75%",
+    "text": "75 %"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:4",
+    "text": "piątek"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "188000 PLN",
+    "text": "188 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "59%",
+    "text": "59%"
+   },
+   {
+    "kind": "amount",
+    "value": "339000 PLN",
+    "text": "339 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-29",
+    "text": "29 października"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:3",
+    "text": "czwartek"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:30",
+    "text": "13:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-07",
+    "text": "7 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Weryfikacja dostępności",
+    "text": "Weryfikacja dostępności"
+   },
+   {
+    "kind": "task",
+    "value": "Konfiguracja certyfikatów TLS",
+    "text": "Konfiguracja certyfikatów TLS"
+   },
+   {
+    "kind": "task",
+    "value": "Testy obsługi zamówień",
+    "text": "Testy obsługi zamówień"
+   },
+   {
+    "kind": "person",
+    "value": "Filip",
+    "text": "Filip"
+   },
+   {
+    "kind": "task",
+    "value": "Optymalizacja ogranicznika żądań",
+    "text": "Optymalizacja ogranicznika żądań"
+   },
+   {
+    "kind": "person",
+    "value": "Teresa",
+    "text": "Teresa"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu zamówienia",
+    "text": "Audyt procesu zamówienia"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd koszyka zakupów",
+    "text": "Przegląd koszyka zakupów"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja migracji danych",
+    "text": "Walidacja migracji danych"
+   },
+   {
+    "kind": "person",
+    "value": "Agata",
+    "text": "Agata"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja magazynu artefaktów",
+    "text": "Aktualizacja magazynu artefaktów"
+   }
+  ]
+ },
+ {
+  "id": "R15",
+  "source": "simulator",
+  "project": "Platforma rezerwacji wizyt",
+  "day": "2026-10-16",
+  "people": [
+   "Oskar",
+   "Teresa",
+   "Katarzyna",
+   "Agata",
+   "Filip",
+   "Dariusz"
+  ],
+  "tasks": [
+   "Aktualizacja magazynu artefaktów",
+   "Weryfikacja dostępności",
+   "Testy obsługi zamówień",
+   "Optymalizacja ogranicznika żądań",
+   "Konfiguracja certyfikatów TLS",
+   "Audyt procesu zamówienia",
+   "Przegląd koszyka zakupów",
+   "Walidacja migracji danych"
+  ],
+  "projects": [
+   "Platforma rezerwacji wizyt"
+  ],
+  "text": "Raport tygodniowy: Platforma rezerwacji wizyt\n\nStan na 16 października 2026 r.\n\nZadanie „Konfiguracja certyfikatów TLS” zakończyliśmy 15 października. Zadanie „Przegląd koszyka zakupów” jest gotowe w 90 %. Do końca zadania „Walidacja migracji danych” zostało 10 dni pracy. Dariusz przejmuje zadanie „Aktualizacja magazynu artefaktów” w poniedziałek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Konfiguracja certyfikatów TLS” jest już zakończone.\n\nBudżet projektu to 1,2 mln zł; do tej pory wydaliśmy 432 000 zł, czyli 36% budżetu. Prognoza kosztu na koniec wynosi 1 296 000 zł, czyli o 8% więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 1,2 mln zł.\n\nKatarzyna wraca jutro, więc zadanie „Optymalizacja ogranicznika żądań” może się przesunąć o 5 dni. Ryzyko: zadanie „Testy obsługi zamówień” jest opóźnione o 4 dni robocze. Proponuję dodać 1 osobę do zadania „Optymalizacja ogranicznika żądań” na 10 dni; koszt to około 18 000 zł. Decyzję potrzebujemy do 23 października.\n\nOdbiór projektu planujemy na 6 listopada 2026 r.. Spotkanie zespołu odbędzie się 3 listopada o 13:30. Zadaniem „Weryfikacja dostępności” zajmie się Oskar, a Dariusz pomoże przy zadaniu „Audyt procesu zamówienia”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Platforma rezerwacji wizyt",
+    "text": "Platforma rezerwacji wizyt"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-16",
+    "text": "16 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-15",
+    "text": "15 października"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90 %"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:0",
+    "text": "poniedziałek"
+   },
+   {
+    "kind": "amount",
+    "value": "1200000 PLN",
+    "text": "1,2 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "432000 PLN",
+    "text": "432 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "36%",
+    "text": "36%"
+   },
+   {
+    "kind": "amount",
+    "value": "1296000 PLN",
+    "text": "1 296 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8%"
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-23",
+    "text": "23 października"
+   },
+   {
+    "kind": "date",
+    "value": "--11-03",
+    "text": "3 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:30",
+    "text": "13:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-06",
+    "text": "6 listopada 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Konfiguracja certyfikatów TLS",
+    "text": "Konfiguracja certyfikatów TLS"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd koszyka zakupów",
+    "text": "Przegląd koszyka zakupów"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja migracji danych",
+    "text": "Walidacja migracji danych"
+   },
+   {
+    "kind": "person",
+    "value": "Dariusz",
+    "text": "Dariusz"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja magazynu artefaktów",
+    "text": "Aktualizacja magazynu artefaktów"
+   },
+   {
+    "kind": "person",
+    "value": "Katarzyna",
+    "text": "Katarzyna"
+   },
+   {
+    "kind": "task",
+    "value": "Optymalizacja ogranicznika żądań",
+    "text": "Optymalizacja ogranicznika żądań"
+   },
+   {
+    "kind": "task",
+    "value": "Testy obsługi zamówień",
+    "text": "Testy obsługi zamówień"
+   },
+   {
+    "kind": "task",
+    "value": "Weryfikacja dostępności",
+    "text": "Weryfikacja dostępności"
+   },
+   {
+    "kind": "person",
+    "value": "Oskar",
+    "text": "Oskar"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu zamówienia",
+    "text": "Audyt procesu zamówienia"
+   }
+  ]
+ },
+ {
+  "id": "R16",
+  "source": "simulator",
+  "project": "System rozliczeń hurtowni",
+  "day": "2026-11-13",
+  "people": [
+   "Stanisław",
+   "Igor",
+   "Adam",
+   "Łukasz",
+   "Cezary",
+   "Edward"
+  ],
+  "tasks": [
+   "Przegląd obsługi zamówień",
+   "Refaktoryzacja generatora faktur",
+   "Testy procesu logowania",
+   "Testy układu mobilnego",
+   "Dopracowanie formularza kontaktowego",
+   "Testy dostępności",
+   "Migracja pulpitów metryk",
+   "Dopracowanie centrum powiadomień"
+  ],
+  "projects": [
+   "System rozliczeń hurtowni"
+  ],
+  "text": "Raport tygodniowy: System rozliczeń hurtowni\n\nStan na 13 listopada 2026 r.\n\nZadanie „Dopracowanie formularza kontaktowego” zakończyliśmy 11 listopada. Zadanie „Migracja pulpitów metryk” jest gotowe w 90 proc.. Do końca zadania „Testy dostępności” zostało 13 dni pracy. Łukasz przejmuje zadanie „Refaktoryzacja generatora faktur” w przyszłym tygodniu. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Dopracowanie formularza kontaktowego” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 86 000 zł, czyli 27 % budżetu. Prognoza kosztu na koniec wynosi 339 000 zł, czyli o 6 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 3 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nStanisław wraca do końca miesiąca, więc zadanie „Testy procesu logowania” może się przesunąć o 3 dni. Ryzyko: zadanie „Testy układu mobilnego” jest opóźnione o 3 dni robocze. Proponuję dodać 1 osobę do zadania „Testy procesu logowania” na 15 dni; koszt to około 22 tys. zł. Decyzję potrzebujemy do 22 listopada.\n\nOdbiór projektu planujemy na 19.12.2026. Spotkanie zespołu odbędzie się w środę o 14:30. Zadaniem „Dopracowanie centrum powiadomień” zajmie się Adam, a Łukasz pomoże przy zadaniu „Przegląd obsługi zamówień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "System rozliczeń hurtowni",
+    "text": "System rozliczeń hurtowni"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-13",
+    "text": "13 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-11",
+    "text": "11 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90 proc."
+   },
+   {
+    "kind": "number",
+    "value": "13",
+    "text": "13 dni"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "86000 PLN",
+    "text": "86 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "27%",
+    "text": "27 %"
+   },
+   {
+    "kind": "amount",
+    "value": "339000 PLN",
+    "text": "339 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 %"
+   },
+   {
+    "kind": "amount",
+    "value": "3000 PLN",
+    "text": "3 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-22",
+    "text": "22 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:2",
+    "text": "środę"
+   },
+   {
+    "kind": "date",
+    "value": "time:14:30",
+    "text": "14:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-19",
+    "text": "19.12.2026"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie formularza kontaktowego",
+    "text": "Dopracowanie formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Migracja pulpitów metryk",
+    "text": "Migracja pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Testy dostępności",
+    "text": "Testy dostępności"
+   },
+   {
+    "kind": "person",
+    "value": "Łukasz",
+    "text": "Łukasz"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja generatora faktur",
+    "text": "Refaktoryzacja generatora faktur"
+   },
+   {
+    "kind": "person",
+    "value": "Stanisław",
+    "text": "Stanisław"
+   },
+   {
+    "kind": "task",
+    "value": "Testy procesu logowania",
+    "text": "Testy procesu logowania"
+   },
+   {
+    "kind": "task",
+    "value": "Testy układu mobilnego",
+    "text": "Testy układu mobilnego"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie centrum powiadomień",
+    "text": "Dopracowanie centrum powiadomień"
+   },
+   {
+    "kind": "person",
+    "value": "Adam",
+    "text": "Adam"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd obsługi zamówień",
+    "text": "Przegląd obsługi zamówień"
+   }
+  ]
+ },
+ {
+  "id": "R17",
+  "source": "simulator",
+  "project": "System rozliczeń hurtowni",
+  "day": "2026-11-06",
+  "people": [
+   "Stanisław",
+   "Igor",
+   "Adam",
+   "Łukasz",
+   "Cezary",
+   "Edward"
+  ],
+  "tasks": [
+   "Przegląd obsługi zamówień",
+   "Refaktoryzacja generatora faktur",
+   "Testy procesu logowania",
+   "Testy układu mobilnego",
+   "Dopracowanie formularza kontaktowego",
+   "Testy dostępności",
+   "Migracja pulpitów metryk",
+   "Dopracowanie centrum powiadomień"
+  ],
+  "projects": [
+   "System rozliczeń hurtowni"
+  ],
+  "text": "Raport tygodniowy: System rozliczeń hurtowni\n\nStan na 6 listopada 2026 r.\n\nZadanie „Migracja pulpitów metryk” zakończyliśmy 3 listopada. Zadanie „Testy układu mobilnego” jest gotowe w 75 %. Do końca zadania „Dopracowanie centrum powiadomień” zostało 3 dni pracy. Adam przejmuje zadanie „Dopracowanie formularza kontaktowego” do końca miesiąca. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Migracja pulpitów metryk” jest już zakończone.\n\nBudżet projektu to 600 000 zł; do tej pory wydaliśmy 210 000 zł, czyli 35 % budżetu. Prognoza kosztu na koniec wynosi 648 000 zł, czyli o 8% więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 600 000 zł.\n\nIgor wraca do końca miesiąca, więc zadanie „Przegląd obsługi zamówień” może się przesunąć o 3 dni. Ryzyko: zadanie „Refaktoryzacja generatora faktur” jest opóźnione o 3 dni robocze. Proponuję dodać 3 osoby do zadania „Przegląd obsługi zamówień” na 15 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 13 listopada.\n\nOdbiór projektu planujemy na 31 grudnia 2026 r.. Spotkanie zespołu odbędzie się we wtorek o 11:00. Zadaniem „Testy procesu logowania” zajmie się Stanisław, a Adam pomoże przy zadaniu „Testy dostępności”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "System rozliczeń hurtowni",
+    "text": "System rozliczeń hurtowni"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-06",
+    "text": "6 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-03",
+    "text": "3 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "75%",
+    "text": "75 %"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "amount",
+    "value": "600000 PLN",
+    "text": "600 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "210000 PLN",
+    "text": "210 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "35%",
+    "text": "35 %"
+   },
+   {
+    "kind": "amount",
+    "value": "648000 PLN",
+    "text": "648 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8%"
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 000 zł"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-13",
+    "text": "13 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:1",
+    "text": "wtorek"
+   },
+   {
+    "kind": "date",
+    "value": "time:11:00",
+    "text": "11:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-31",
+    "text": "31 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Migracja pulpitów metryk",
+    "text": "Migracja pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Testy układu mobilnego",
+    "text": "Testy układu mobilnego"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie centrum powiadomień",
+    "text": "Dopracowanie centrum powiadomień"
+   },
+   {
+    "kind": "person",
+    "value": "Adam",
+    "text": "Adam"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie formularza kontaktowego",
+    "text": "Dopracowanie formularza kontaktowego"
+   },
+   {
+    "kind": "person",
+    "value": "Igor",
+    "text": "Igor"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd obsługi zamówień",
+    "text": "Przegląd obsługi zamówień"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja generatora faktur",
+    "text": "Refaktoryzacja generatora faktur"
+   },
+   {
+    "kind": "task",
+    "value": "Testy procesu logowania",
+    "text": "Testy procesu logowania"
+   },
+   {
+    "kind": "person",
+    "value": "Stanisław",
+    "text": "Stanisław"
+   },
+   {
+    "kind": "task",
+    "value": "Testy dostępności",
+    "text": "Testy dostępności"
+   }
+  ]
+ },
+ {
+  "id": "R18",
+  "source": "simulator",
+  "project": "System rozliczeń hurtowni",
+  "day": "2026-10-30",
+  "people": [
+   "Stanisław",
+   "Igor",
+   "Adam",
+   "Łukasz",
+   "Cezary",
+   "Edward"
+  ],
+  "tasks": [
+   "Przegląd obsługi zamówień",
+   "Refaktoryzacja generatora faktur",
+   "Testy procesu logowania",
+   "Testy układu mobilnego",
+   "Dopracowanie formularza kontaktowego",
+   "Testy dostępności",
+   "Migracja pulpitów metryk",
+   "Dopracowanie centrum powiadomień"
+  ],
+  "projects": [
+   "System rozliczeń hurtowni"
+  ],
+  "text": "Raport tygodniowy: System rozliczeń hurtowni\n\nStan na 30 października 2026 r.\n\nZadanie „Refaktoryzacja generatora faktur” zakończyliśmy 26 października. Zadanie „Migracja pulpitów metryk” jest gotowe w 60 proc.. Do końca zadania „Testy układu mobilnego” zostało 6 dni pracy. Igor przejmuje zadanie „Testy procesu logowania” w poniedziałek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Refaktoryzacja generatora faktur” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 80 tys. zł, czyli 25 % budżetu. Prognoza kosztu na koniec wynosi 368 000 zł, czyli o 15 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nEdward wraca w środę, więc zadanie „Dopracowanie centrum powiadomień” może się przesunąć o 7 dni. Ryzyko: zadanie „Dopracowanie formularza kontaktowego” jest opóźnione o 3 dni robocze. Proponuję dodać 2 osoby do zadania „Dopracowanie centrum powiadomień” na 10 dni; koszt to około 18 tys. zł. Decyzję potrzebujemy do 6 listopada.\n\nOdbiór projektu planujemy na 11.12.2026. Spotkanie zespołu odbędzie się jutro o 10:30. Zadaniem „Testy dostępności” zajmie się Cezary, a Igor pomoże przy zadaniu „Przegląd obsługi zamówień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "System rozliczeń hurtowni",
+    "text": "System rozliczeń hurtowni"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-30",
+    "text": "30 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-26",
+    "text": "26 października"
+   },
+   {
+    "kind": "percent",
+    "value": "60%",
+    "text": "60 proc."
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:0",
+    "text": "poniedziałek"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "80000 PLN",
+    "text": "80 tys. zł"
+   },
+   {
+    "kind": "percent",
+    "value": "25%",
+    "text": "25 %"
+   },
+   {
+    "kind": "amount",
+    "value": "368000 PLN",
+    "text": "368 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "15%",
+    "text": "15 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:2",
+    "text": "środę"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 osoby"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-06",
+    "text": "6 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:30",
+    "text": "10:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-11",
+    "text": "11.12.2026"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja generatora faktur",
+    "text": "Refaktoryzacja generatora faktur"
+   },
+   {
+    "kind": "task",
+    "value": "Migracja pulpitów metryk",
+    "text": "Migracja pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Testy układu mobilnego",
+    "text": "Testy układu mobilnego"
+   },
+   {
+    "kind": "person",
+    "value": "Igor",
+    "text": "Igor"
+   },
+   {
+    "kind": "task",
+    "value": "Testy procesu logowania",
+    "text": "Testy procesu logowania"
+   },
+   {
+    "kind": "person",
+    "value": "Edward",
+    "text": "Edward"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie centrum powiadomień",
+    "text": "Dopracowanie centrum powiadomień"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie formularza kontaktowego",
+    "text": "Dopracowanie formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Testy dostępności",
+    "text": "Testy dostępności"
+   },
+   {
+    "kind": "person",
+    "value": "Cezary",
+    "text": "Cezary"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd obsługi zamówień",
+    "text": "Przegląd obsługi zamówień"
+   }
+  ]
+ },
+ {
+  "id": "R19",
+  "source": "simulator",
+  "project": "System rozliczeń hurtowni",
+  "day": "2026-10-23",
+  "people": [
+   "Stanisław",
+   "Igor",
+   "Adam",
+   "Łukasz",
+   "Cezary",
+   "Edward"
+  ],
+  "tasks": [
+   "Przegląd obsługi zamówień",
+   "Refaktoryzacja generatora faktur",
+   "Testy procesu logowania",
+   "Testy układu mobilnego",
+   "Dopracowanie formularza kontaktowego",
+   "Testy dostępności",
+   "Migracja pulpitów metryk",
+   "Dopracowanie centrum powiadomień"
+  ],
+  "projects": [
+   "System rozliczeń hurtowni"
+  ],
+  "text": "Raport tygodniowy: System rozliczeń hurtowni\n\nStan na 23 października 2026 r.\n\nZadanie „Testy dostępności” zakończyliśmy 19 października. Zadanie „Migracja pulpitów metryk” jest gotowe w 30%. Do końca zadania „Dopracowanie formularza kontaktowego” zostało 5 dni pracy. Stanisław przejmuje zadanie „Dopracowanie centrum powiadomień” do końca miesiąca. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Testy dostępności” jest już zakończone.\n\nBudżet projektu to 450 000 zł; do tej pory wydaliśmy 265 000 zł, czyli 59 proc. budżetu. Prognoza kosztu na koniec wynosi 504 000 zł, czyli o 12% więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 450 000 zł.\n\nIgor wraca 29 października, więc zadanie „Przegląd obsługi zamówień” może się przesunąć o 2 dni. Ryzyko: zadanie „Refaktoryzacja generatora faktur” jest opóźnione o 4 dni robocze. Proponuję dodać 3 osoby do zadania „Przegląd obsługi zamówień” na 5 dni; koszt to około 18 tys. zł. Decyzję potrzebujemy do 29 października.\n\nOdbiór projektu planujemy na 27 listopada 2026 r.. Spotkanie zespołu odbędzie się 3 listopada o 14:30. Zadaniem „Testy procesu logowania” zajmie się Adam, a Stanisław pomoże przy zadaniu „Testy układu mobilnego”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "System rozliczeń hurtowni",
+    "text": "System rozliczeń hurtowni"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-23",
+    "text": "23 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-19",
+    "text": "19 października"
+   },
+   {
+    "kind": "percent",
+    "value": "30%",
+    "text": "30%"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "amount",
+    "value": "450000 PLN",
+    "text": "450 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "265000 PLN",
+    "text": "265 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "59%",
+    "text": "59 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "504000 PLN",
+    "text": "504 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "12%",
+    "text": "12%"
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-29",
+    "text": "29 października"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 osoby"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-03",
+    "text": "3 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:14:30",
+    "text": "14:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-27",
+    "text": "27 listopada 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Testy dostępności",
+    "text": "Testy dostępności"
+   },
+   {
+    "kind": "task",
+    "value": "Migracja pulpitów metryk",
+    "text": "Migracja pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie formularza kontaktowego",
+    "text": "Dopracowanie formularza kontaktowego"
+   },
+   {
+    "kind": "person",
+    "value": "Stanisław",
+    "text": "Stanisław"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie centrum powiadomień",
+    "text": "Dopracowanie centrum powiadomień"
+   },
+   {
+    "kind": "person",
+    "value": "Igor",
+    "text": "Igor"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd obsługi zamówień",
+    "text": "Przegląd obsługi zamówień"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja generatora faktur",
+    "text": "Refaktoryzacja generatora faktur"
+   },
+   {
+    "kind": "task",
+    "value": "Testy procesu logowania",
+    "text": "Testy procesu logowania"
+   },
+   {
+    "kind": "person",
+    "value": "Adam",
+    "text": "Adam"
+   },
+   {
+    "kind": "task",
+    "value": "Testy układu mobilnego",
+    "text": "Testy układu mobilnego"
+   }
+  ]
+ },
+ {
+  "id": "R20",
+  "source": "simulator",
+  "project": "System rozliczeń hurtowni",
+  "day": "2026-10-16",
+  "people": [
+   "Stanisław",
+   "Igor",
+   "Adam",
+   "Łukasz",
+   "Cezary",
+   "Edward"
+  ],
+  "tasks": [
+   "Przegląd obsługi zamówień",
+   "Refaktoryzacja generatora faktur",
+   "Testy procesu logowania",
+   "Testy układu mobilnego",
+   "Dopracowanie formularza kontaktowego",
+   "Testy dostępności",
+   "Migracja pulpitów metryk",
+   "Dopracowanie centrum powiadomień"
+  ],
+  "projects": [
+   "System rozliczeń hurtowni"
+  ],
+  "text": "Raport tygodniowy: System rozliczeń hurtowni\n\nStan na 16 października 2026 r.\n\nZadanie „Migracja pulpitów metryk” zakończyliśmy 11 października. Zadanie „Dopracowanie formularza kontaktowego” jest gotowe w 80%. Do końca zadania „Testy układu mobilnego” zostało 9 dni pracy. Edward przejmuje zadanie „Refaktoryzacja generatora faktur” w piątek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Migracja pulpitów metryk” jest już zakończone.\n\nBudżet projektu to 450 000 zł; do tej pory wydaliśmy 243 000 zł, czyli 54 % budżetu. Prognoza kosztu na koniec wynosi 504 000 zł, czyli o 12 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 450 000 zł.\n\nCezary wraca 28 października, więc zadanie „Dopracowanie centrum powiadomień” może się przesunąć o 3 dni. Ryzyko: zadanie „Testy procesu logowania” jest opóźnione o 2 dni robocze. Proponuję dodać 3 osoby do zadania „Dopracowanie centrum powiadomień” na 10 dni; koszt to około 9 000 zł. Decyzję potrzebujemy do 22 października.\n\nOdbiór projektu planujemy na 23 listopada 2026 r.. Spotkanie zespołu odbędzie się w piątek o 10:00. Zadaniem „Testy dostępności” zajmie się Adam, a Edward pomoże przy zadaniu „Przegląd obsługi zamówień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "System rozliczeń hurtowni",
+    "text": "System rozliczeń hurtowni"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-16",
+    "text": "16 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-11",
+    "text": "11 października"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80%"
+   },
+   {
+    "kind": "number",
+    "value": "9",
+    "text": "9 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:4",
+    "text": "piątek"
+   },
+   {
+    "kind": "amount",
+    "value": "450000 PLN",
+    "text": "450 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "243000 PLN",
+    "text": "243 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "54%",
+    "text": "54 %"
+   },
+   {
+    "kind": "amount",
+    "value": "504000 PLN",
+    "text": "504 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "12%",
+    "text": "12 %"
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-28",
+    "text": "28 października"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "9000 PLN",
+    "text": "9 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-22",
+    "text": "22 października"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:00",
+    "text": "10:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-23",
+    "text": "23 listopada 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Migracja pulpitów metryk",
+    "text": "Migracja pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie formularza kontaktowego",
+    "text": "Dopracowanie formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Testy układu mobilnego",
+    "text": "Testy układu mobilnego"
+   },
+   {
+    "kind": "person",
+    "value": "Edward",
+    "text": "Edward"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja generatora faktur",
+    "text": "Refaktoryzacja generatora faktur"
+   },
+   {
+    "kind": "person",
+    "value": "Cezary",
+    "text": "Cezary"
+   },
+   {
+    "kind": "task",
+    "value": "Dopracowanie centrum powiadomień",
+    "text": "Dopracowanie centrum powiadomień"
+   },
+   {
+    "kind": "task",
+    "value": "Testy procesu logowania",
+    "text": "Testy procesu logowania"
+   },
+   {
+    "kind": "task",
+    "value": "Testy dostępności",
+    "text": "Testy dostępności"
+   },
+   {
+    "kind": "person",
+    "value": "Adam",
+    "text": "Adam"
+   },
+   {
+    "kind": "task",
+    "value": "Przegląd obsługi zamówień",
+    "text": "Przegląd obsługi zamówień"
+   }
+  ]
+ },
+ {
+  "id": "R21",
+  "source": "simulator",
+  "project": "Portal klienta ubezpieczyciela",
+  "day": "2026-11-13",
+  "people": [
+   "Katarzyna",
+   "Patrycja",
+   "Bogdan",
+   "Stanisław",
+   "Gabriela",
+   "Kamil"
+  ],
+  "tasks": [
+   "Implementacja formularza rejestracji",
+   "Walidacja obsługi błędów",
+   "Projekt ekranu logowania",
+   "Budowa menu nawigacji",
+   "Budowa formularza kontaktowego",
+   "Zabezpieczenie pulpitów metryk",
+   "Audyt procesu płatności",
+   "Projekt stron błędów"
+  ],
+  "projects": [
+   "Portal klienta ubezpieczyciela"
+  ],
+  "text": "Raport tygodniowy: Portal klienta ubezpieczyciela\n\nStan na 13 listopada 2026 r.\n\nZadanie „Implementacja formularza rejestracji” zakończyliśmy 10 listopada. Zadanie „Budowa menu nawigacji” jest gotowe w 30%. Do końca zadania „Projekt stron błędów” zostało 14 dni pracy. Stanisław przejmuje zadanie „Walidacja obsługi błędów” w piątek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Implementacja formularza rejestracji” jest już zakończone.\n\nBudżet projektu to 1,2 mln zł; do tej pory wydaliśmy 744 000 zł, czyli 62 proc. budżetu. Prognoza kosztu na koniec wynosi 1 272 000 zł, czyli o 6 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 1,2 mln zł.\n\nKamil wraca w przyszłym tygodniu, więc zadanie „Audyt procesu płatności” może się przesunąć o 4 dni. Ryzyko: zadanie „Zabezpieczenie pulpitów metryk” jest opóźnione o 2 dni robocze. Proponuję dodać 2 osoby do zadania „Audyt procesu płatności” na 10 dni; koszt to około 18 000 zł. Decyzję potrzebujemy do 21 listopada.\n\nOdbiór projektu planujemy na 4 stycznia 2027 r.. Spotkanie zespołu odbędzie się 27 listopada o 10:30. Zadaniem „Budowa formularza kontaktowego” zajmie się Bogdan, a Stanisław pomoże przy zadaniu „Projekt ekranu logowania”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Portal klienta ubezpieczyciela",
+    "text": "Portal klienta ubezpieczyciela"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-13",
+    "text": "13 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-10",
+    "text": "10 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "30%",
+    "text": "30%"
+   },
+   {
+    "kind": "number",
+    "value": "14",
+    "text": "14 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:4",
+    "text": "piątek"
+   },
+   {
+    "kind": "amount",
+    "value": "1200000 PLN",
+    "text": "1,2 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "744000 PLN",
+    "text": "744 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "62%",
+    "text": "62 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "1272000 PLN",
+    "text": "1 272 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-21",
+    "text": "21 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "--11-27",
+    "text": "27 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:30",
+    "text": "10:30"
+   },
+   {
+    "kind": "date",
+    "value": "2027-01-04",
+    "text": "4 stycznia 2027 r."
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja formularza rejestracji",
+    "text": "Implementacja formularza rejestracji"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa menu nawigacji",
+    "text": "Budowa menu nawigacji"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt stron błędów",
+    "text": "Projekt stron błędów"
+   },
+   {
+    "kind": "person",
+    "value": "Stanisław",
+    "text": "Stanisław"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja obsługi błędów",
+    "text": "Walidacja obsługi błędów"
+   },
+   {
+    "kind": "person",
+    "value": "Kamil",
+    "text": "Kamil"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu płatności",
+    "text": "Audyt procesu płatności"
+   },
+   {
+    "kind": "task",
+    "value": "Zabezpieczenie pulpitów metryk",
+    "text": "Zabezpieczenie pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa formularza kontaktowego",
+    "text": "Budowa formularza kontaktowego"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt ekranu logowania",
+    "text": "Projekt ekranu logowania"
+   }
+  ]
+ },
+ {
+  "id": "R22",
+  "source": "simulator",
+  "project": "Portal klienta ubezpieczyciela",
+  "day": "2026-11-06",
+  "people": [
+   "Katarzyna",
+   "Patrycja",
+   "Bogdan",
+   "Stanisław",
+   "Gabriela",
+   "Kamil"
+  ],
+  "tasks": [
+   "Implementacja formularza rejestracji",
+   "Walidacja obsługi błędów",
+   "Projekt ekranu logowania",
+   "Budowa menu nawigacji",
+   "Budowa formularza kontaktowego",
+   "Zabezpieczenie pulpitów metryk",
+   "Audyt procesu płatności",
+   "Projekt stron błędów"
+  ],
+  "projects": [
+   "Portal klienta ubezpieczyciela"
+  ],
+  "text": "Raport tygodniowy: Portal klienta ubezpieczyciela\n\nStan na 6 listopada 2026 r.\n\nZadanie „Implementacja formularza rejestracji” zakończyliśmy 3 listopada. Zadanie „Zabezpieczenie pulpitów metryk” jest gotowe w 60%. Do końca zadania „Audyt procesu płatności” zostało 3 dni pracy. Bogdan przejmuje zadanie „Projekt ekranu logowania” 14 listopada. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Implementacja formularza rejestracji” jest już zakończone.\n\nBudżet projektu to 1,2 mln zł; do tej pory wydaliśmy 372 000 zł, czyli 31 proc. budżetu. Prognoza kosztu na koniec wynosi 1 344 000 zł, czyli o 12 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 1,2 mln zł.\n\nGabriela wraca jutro, więc zadanie „Budowa formularza kontaktowego” może się przesunąć o 6 dni. Ryzyko: zadanie „Budowa menu nawigacji” jest opóźnione o 2 dni robocze. Proponuję dodać 1 osobę do zadania „Budowa formularza kontaktowego” na 10 dni; koszt to około 22 tys. zł. Decyzję potrzebujemy do 11 listopada.\n\nOdbiór projektu planujemy na 26 grudnia 2026 r.. Spotkanie zespołu odbędzie się jutro o 11:00. Zadaniem „Projekt stron błędów” zajmie się Kamil, a Bogdan pomoże przy zadaniu „Walidacja obsługi błędów”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Portal klienta ubezpieczyciela",
+    "text": "Portal klienta ubezpieczyciela"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-06",
+    "text": "6 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-03",
+    "text": "3 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "60%",
+    "text": "60%"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni"
+   },
+   {
+    "kind": "date",
+    "value": "--11-14",
+    "text": "14 listopada"
+   },
+   {
+    "kind": "amount",
+    "value": "1200000 PLN",
+    "text": "1,2 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "372000 PLN",
+    "text": "372 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "31%",
+    "text": "31 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "1344000 PLN",
+    "text": "1 344 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "12%",
+    "text": "12 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-11",
+    "text": "11 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:11:00",
+    "text": "11:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-26",
+    "text": "26 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja formularza rejestracji",
+    "text": "Implementacja formularza rejestracji"
+   },
+   {
+    "kind": "task",
+    "value": "Zabezpieczenie pulpitów metryk",
+    "text": "Zabezpieczenie pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu płatności",
+    "text": "Audyt procesu płatności"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt ekranu logowania",
+    "text": "Projekt ekranu logowania"
+   },
+   {
+    "kind": "person",
+    "value": "Gabriela",
+    "text": "Gabriela"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa formularza kontaktowego",
+    "text": "Budowa formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa menu nawigacji",
+    "text": "Budowa menu nawigacji"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt stron błędów",
+    "text": "Projekt stron błędów"
+   },
+   {
+    "kind": "person",
+    "value": "Kamil",
+    "text": "Kamil"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja obsługi błędów",
+    "text": "Walidacja obsługi błędów"
+   }
+  ]
+ },
+ {
+  "id": "R23",
+  "source": "simulator",
+  "project": "Portal klienta ubezpieczyciela",
+  "day": "2026-10-30",
+  "people": [
+   "Katarzyna",
+   "Patrycja",
+   "Bogdan",
+   "Stanisław",
+   "Gabriela",
+   "Kamil"
+  ],
+  "tasks": [
+   "Implementacja formularza rejestracji",
+   "Walidacja obsługi błędów",
+   "Projekt ekranu logowania",
+   "Budowa menu nawigacji",
+   "Budowa formularza kontaktowego",
+   "Zabezpieczenie pulpitów metryk",
+   "Audyt procesu płatności",
+   "Projekt stron błędów"
+  ],
+  "projects": [
+   "Portal klienta ubezpieczyciela"
+  ],
+  "text": "Raport tygodniowy: Portal klienta ubezpieczyciela\n\nStan na 30 października 2026 r.\n\nZadanie „Implementacja formularza rejestracji” zakończyliśmy 25 października. Zadanie „Zabezpieczenie pulpitów metryk” jest gotowe w 30 proc.. Do końca zadania „Projekt ekranu logowania” zostało 5 dni pracy. Patrycja przejmuje zadanie „Audyt procesu płatności” we wtorek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Implementacja formularza rejestracji” jest już zakończone.\n\nBudżet projektu to 320 000 zł; do tej pory wydaliśmy 172 000 zł, czyli 54 proc. budżetu. Prognoza kosztu na koniec wynosi 332 000 zł, czyli o 4 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 320 000 zł.\n\nStanisław wraca do końca miesiąca, więc zadanie „Walidacja obsługi błędów” może się przesunąć o 6 dni. Ryzyko: zadanie „Budowa formularza kontaktowego” jest opóźnione o 2 dni robocze. Proponuję dodać 3 osoby do zadania „Walidacja obsługi błędów” na 5 dni; koszt to około 18 000 zł. Decyzję potrzebujemy do 7 listopada.\n\nOdbiór projektu planujemy na 2026-12-03. Spotkanie zespołu odbędzie się jutro o 10:30. Zadaniem „Budowa menu nawigacji” zajmie się Bogdan, a Patrycja pomoże przy zadaniu „Projekt stron błędów”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Portal klienta ubezpieczyciela",
+    "text": "Portal klienta ubezpieczyciela"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-30",
+    "text": "30 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-25",
+    "text": "25 października"
+   },
+   {
+    "kind": "percent",
+    "value": "30%",
+    "text": "30 proc."
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:1",
+    "text": "wtorek"
+   },
+   {
+    "kind": "amount",
+    "value": "320000 PLN",
+    "text": "320 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "172000 PLN",
+    "text": "172 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "54%",
+    "text": "54 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "332000 PLN",
+    "text": "332 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "4%",
+    "text": "4 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 osoby"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-07",
+    "text": "7 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:30",
+    "text": "10:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-03",
+    "text": "2026-12-03"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja formularza rejestracji",
+    "text": "Implementacja formularza rejestracji"
+   },
+   {
+    "kind": "task",
+    "value": "Zabezpieczenie pulpitów metryk",
+    "text": "Zabezpieczenie pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt ekranu logowania",
+    "text": "Projekt ekranu logowania"
+   },
+   {
+    "kind": "person",
+    "value": "Patrycja",
+    "text": "Patrycja"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu płatności",
+    "text": "Audyt procesu płatności"
+   },
+   {
+    "kind": "person",
+    "value": "Stanisław",
+    "text": "Stanisław"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja obsługi błędów",
+    "text": "Walidacja obsługi błędów"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa formularza kontaktowego",
+    "text": "Budowa formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa menu nawigacji",
+    "text": "Budowa menu nawigacji"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt stron błędów",
+    "text": "Projekt stron błędów"
+   }
+  ]
+ },
+ {
+  "id": "R24",
+  "source": "simulator",
+  "project": "Portal klienta ubezpieczyciela",
+  "day": "2026-10-23",
+  "people": [
+   "Katarzyna",
+   "Patrycja",
+   "Bogdan",
+   "Stanisław",
+   "Gabriela",
+   "Kamil"
+  ],
+  "tasks": [
+   "Implementacja formularza rejestracji",
+   "Walidacja obsługi błędów",
+   "Projekt ekranu logowania",
+   "Budowa menu nawigacji",
+   "Budowa formularza kontaktowego",
+   "Zabezpieczenie pulpitów metryk",
+   "Audyt procesu płatności",
+   "Projekt stron błędów"
+  ],
+  "projects": [
+   "Portal klienta ubezpieczyciela"
+  ],
+  "text": "Raport tygodniowy: Portal klienta ubezpieczyciela\n\nStan na 23 października 2026 r.\n\nZadanie „Zabezpieczenie pulpitów metryk” zakończyliśmy 19 października. Zadanie „Budowa formularza kontaktowego” jest gotowe w 80 %. Do końca zadania „Implementacja formularza rejestracji” zostało 14 dni pracy. Katarzyna przejmuje zadanie „Projekt stron błędów” do końca miesiąca. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Zabezpieczenie pulpitów metryk” jest już zakończone.\n\nBudżet projektu to 1,5 mln zł; do tej pory wydaliśmy 705 000 zł, czyli 47 proc. budżetu. Prognoza kosztu na koniec wynosi 1 560 000 zł, czyli o 4 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 1,5 mln zł.\n\nBogdan wraca za dwa tygodnie, więc zadanie „Walidacja obsługi błędów” może się przesunąć o 4 dni. Ryzyko: zadanie „Budowa menu nawigacji” jest opóźnione o 2 dni robocze. Proponuję dodać 1 osobę do zadania „Walidacja obsługi błędów” na 10 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 29 października.\n\nOdbiór projektu planujemy na 9 grudnia 2026 r.. Spotkanie zespołu odbędzie się 1 listopada o 13:00. Zadaniem „Audyt procesu płatności” zajmie się Kamil, a Katarzyna pomoże przy zadaniu „Projekt ekranu logowania”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Portal klienta ubezpieczyciela",
+    "text": "Portal klienta ubezpieczyciela"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-23",
+    "text": "23 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-19",
+    "text": "19 października"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80 %"
+   },
+   {
+    "kind": "number",
+    "value": "14",
+    "text": "14 dni"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "amount",
+    "value": "1500000 PLN",
+    "text": "1,5 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "705000 PLN",
+    "text": "705 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "47%",
+    "text": "47 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "1560000 PLN",
+    "text": "1 560 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "4%",
+    "text": "4 %"
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "10",
+    "text": "10 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-29",
+    "text": "29 października"
+   },
+   {
+    "kind": "date",
+    "value": "--11-01",
+    "text": "1 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:13:00",
+    "text": "13:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-09",
+    "text": "9 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Zabezpieczenie pulpitów metryk",
+    "text": "Zabezpieczenie pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa formularza kontaktowego",
+    "text": "Budowa formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja formularza rejestracji",
+    "text": "Implementacja formularza rejestracji"
+   },
+   {
+    "kind": "person",
+    "value": "Katarzyna",
+    "text": "Katarzyna"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt stron błędów",
+    "text": "Projekt stron błędów"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja obsługi błędów",
+    "text": "Walidacja obsługi błędów"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa menu nawigacji",
+    "text": "Budowa menu nawigacji"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu płatności",
+    "text": "Audyt procesu płatności"
+   },
+   {
+    "kind": "person",
+    "value": "Kamil",
+    "text": "Kamil"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt ekranu logowania",
+    "text": "Projekt ekranu logowania"
+   }
+  ]
+ },
+ {
+  "id": "R25",
+  "source": "simulator",
+  "project": "Portal klienta ubezpieczyciela",
+  "day": "2026-10-16",
+  "people": [
+   "Katarzyna",
+   "Patrycja",
+   "Bogdan",
+   "Stanisław",
+   "Gabriela",
+   "Kamil"
+  ],
+  "tasks": [
+   "Implementacja formularza rejestracji",
+   "Walidacja obsługi błędów",
+   "Projekt ekranu logowania",
+   "Budowa menu nawigacji",
+   "Budowa formularza kontaktowego",
+   "Zabezpieczenie pulpitów metryk",
+   "Audyt procesu płatności",
+   "Projekt stron błędów"
+  ],
+  "projects": [
+   "Portal klienta ubezpieczyciela"
+  ],
+  "text": "Raport tygodniowy: Portal klienta ubezpieczyciela\n\nStan na 16 października 2026 r.\n\nZadanie „Budowa formularza kontaktowego” zakończyliśmy 12 października. Zadanie „Zabezpieczenie pulpitów metryk” jest gotowe w 60 proc.. Do końca zadania „Implementacja formularza rejestracji” zostało 14 dni pracy. Gabriela przejmuje zadanie „Walidacja obsługi błędów” za dwa tygodnie. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Budowa formularza kontaktowego” jest już zakończone.\n\nBudżet projektu to 180 000 zł; do tej pory wydaliśmy 50 000 zł, czyli 28 proc. budżetu. Prognoza kosztu na koniec wynosi 187 000 zł, czyli o 4% więcej niż budżet. Na licencje potrzebujemy dodatkowo 8 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 180 000 zł.\n\nBogdan wraca za dwa tygodnie, więc zadanie „Budowa menu nawigacji” może się przesunąć o 6 dni. Ryzyko: zadanie „Projekt ekranu logowania” jest opóźnione o 4 dni robocze. Proponuję dodać 1 osobę do zadania „Budowa menu nawigacji” na 15 dni; koszt to około 9 tys. zł. Decyzję potrzebujemy do 25 października.\n\nOdbiór projektu planujemy na 2 grudnia. Spotkanie zespołu odbędzie się w czwartek o 9:30. Zadaniem „Audyt procesu płatności” zajmie się Katarzyna, a Gabriela pomoże przy zadaniu „Projekt stron błędów”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Portal klienta ubezpieczyciela",
+    "text": "Portal klienta ubezpieczyciela"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-16",
+    "text": "16 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-12",
+    "text": "12 października"
+   },
+   {
+    "kind": "percent",
+    "value": "60%",
+    "text": "60 proc."
+   },
+   {
+    "kind": "number",
+    "value": "14",
+    "text": "14 dni"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "amount",
+    "value": "180000 PLN",
+    "text": "180 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "50000 PLN",
+    "text": "50 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "28%",
+    "text": "28 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "187000 PLN",
+    "text": "187 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "4%",
+    "text": "4%"
+   },
+   {
+    "kind": "amount",
+    "value": "8000 PLN",
+    "text": "8 tys. zł"
+   },
+   {
+    "kind": "number",
+    "value": "6",
+    "text": "6 dni"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "9000 PLN",
+    "text": "9 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-25",
+    "text": "25 października"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:3",
+    "text": "czwartek"
+   },
+   {
+    "kind": "date",
+    "value": "time:09:30",
+    "text": "9:30"
+   },
+   {
+    "kind": "date",
+    "value": "--12-02",
+    "text": "2 grudnia"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa formularza kontaktowego",
+    "text": "Budowa formularza kontaktowego"
+   },
+   {
+    "kind": "task",
+    "value": "Zabezpieczenie pulpitów metryk",
+    "text": "Zabezpieczenie pulpitów metryk"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja formularza rejestracji",
+    "text": "Implementacja formularza rejestracji"
+   },
+   {
+    "kind": "person",
+    "value": "Gabriela",
+    "text": "Gabriela"
+   },
+   {
+    "kind": "task",
+    "value": "Walidacja obsługi błędów",
+    "text": "Walidacja obsługi błędów"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa menu nawigacji",
+    "text": "Budowa menu nawigacji"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt ekranu logowania",
+    "text": "Projekt ekranu logowania"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt procesu płatności",
+    "text": "Audyt procesu płatności"
+   },
+   {
+    "kind": "person",
+    "value": "Katarzyna",
+    "text": "Katarzyna"
+   },
+   {
+    "kind": "task",
+    "value": "Projekt stron błędów",
+    "text": "Projekt stron błędów"
+   }
+  ]
+ },
+ {
+  "id": "R26",
+  "source": "simulator",
+  "project": "Aplikacja mobilna banku spółdzielczego",
+  "day": "2026-11-13",
+  "people": [
+   "Agata",
+   "Piotr",
+   "Bogdan",
+   "Marek",
+   "Bartosz",
+   "Halina"
+  ],
+  "tasks": [
+   "Przeprojektowanie panelu ustawień",
+   "Budowa procesu importu danych",
+   "Audyt uprawnień administratora",
+   "Implementacja obsługi webhooków",
+   "Kontrola dostarczania powiadomień",
+   "Testy rejestracji użytkowników",
+   "Refaktoryzacja zaplecza wyszukiwarki",
+   "Aktualizacja odtwarzania po awarii"
+  ],
+  "projects": [
+   "Aplikacja mobilna banku spółdzielczego"
+  ],
+  "text": "Raport tygodniowy: Aplikacja mobilna banku spółdzielczego\n\nStan na 13 listopada 2026 r.\n\nZadanie „Implementacja obsługi webhooków” zakończyliśmy 8 listopada. Zadanie „Aktualizacja odtwarzania po awarii” jest gotowe w 80%. Do końca zadania „Budowa procesu importu danych” zostało 5 dni pracy. Bogdan przejmuje zadanie „Przeprojektowanie panelu ustawień” w przyszłym tygodniu. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Implementacja obsługi webhooków” jest już zakończone.\n\nBudżet projektu to 600 000 zł; do tej pory wydaliśmy 312 000 zł, czyli 52 % budżetu. Prognoza kosztu na koniec wynosi 648 000 zł, czyli o 8 proc. więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 600 000 zł.\n\nBartosz wraca w środę, więc zadanie „Refaktoryzacja zaplecza wyszukiwarki” może się przesunąć o 2 dni. Ryzyko: zadanie „Testy rejestracji użytkowników” jest opóźnione o 2 dni robocze. Proponuję dodać 2 osoby do zadania „Refaktoryzacja zaplecza wyszukiwarki” na 5 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 19 listopada.\n\nOdbiór projektu planujemy na 13 grudnia 2026 r.. Spotkanie zespołu odbędzie się jutro o 9:00. Zadaniem „Audyt uprawnień administratora” zajmie się Halina, a Bogdan pomoże przy zadaniu „Kontrola dostarczania powiadomień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Aplikacja mobilna banku spółdzielczego",
+    "text": "Aplikacja mobilna banku spółdzielczego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-13",
+    "text": "13 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-08",
+    "text": "8 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80%"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "date",
+    "value": "week:+1",
+    "text": "w przyszłym tygodniu"
+   },
+   {
+    "kind": "amount",
+    "value": "600000 PLN",
+    "text": "600 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "312000 PLN",
+    "text": "312 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "52%",
+    "text": "52 %"
+   },
+   {
+    "kind": "amount",
+    "value": "648000 PLN",
+    "text": "648 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8 proc."
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:2",
+    "text": "środę"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-19",
+    "text": "19 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:09:00",
+    "text": "9:00"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-13",
+    "text": "13 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja obsługi webhooków",
+    "text": "Implementacja obsługi webhooków"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja odtwarzania po awarii",
+    "text": "Aktualizacja odtwarzania po awarii"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa procesu importu danych",
+    "text": "Budowa procesu importu danych"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Przeprojektowanie panelu ustawień",
+    "text": "Przeprojektowanie panelu ustawień"
+   },
+   {
+    "kind": "person",
+    "value": "Bartosz",
+    "text": "Bartosz"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja zaplecza wyszukiwarki",
+    "text": "Refaktoryzacja zaplecza wyszukiwarki"
+   },
+   {
+    "kind": "task",
+    "value": "Testy rejestracji użytkowników",
+    "text": "Testy rejestracji użytkowników"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt uprawnień administratora",
+    "text": "Audyt uprawnień administratora"
+   },
+   {
+    "kind": "person",
+    "value": "Halina",
+    "text": "Halina"
+   },
+   {
+    "kind": "task",
+    "value": "Kontrola dostarczania powiadomień",
+    "text": "Kontrola dostarczania powiadomień"
+   }
+  ]
+ },
+ {
+  "id": "R27",
+  "source": "simulator",
+  "project": "Aplikacja mobilna banku spółdzielczego",
+  "day": "2026-11-06",
+  "people": [
+   "Agata",
+   "Piotr",
+   "Bogdan",
+   "Marek",
+   "Bartosz",
+   "Halina"
+  ],
+  "tasks": [
+   "Przeprojektowanie panelu ustawień",
+   "Budowa procesu importu danych",
+   "Audyt uprawnień administratora",
+   "Implementacja obsługi webhooków",
+   "Kontrola dostarczania powiadomień",
+   "Testy rejestracji użytkowników",
+   "Refaktoryzacja zaplecza wyszukiwarki",
+   "Aktualizacja odtwarzania po awarii"
+  ],
+  "projects": [
+   "Aplikacja mobilna banku spółdzielczego"
+  ],
+  "text": "Raport tygodniowy: Aplikacja mobilna banku spółdzielczego\n\nStan na 6 listopada 2026 r.\n\nZadanie „Refaktoryzacja zaplecza wyszukiwarki” zakończyliśmy 1 listopada. Zadanie „Kontrola dostarczania powiadomień” jest gotowe w 80 proc.. Do końca zadania „Testy rejestracji użytkowników” zostało 5 dni pracy. Bartosz przejmuje zadanie „Aktualizacja odtwarzania po awarii” za dwa tygodnie. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Refaktoryzacja zaplecza wyszukiwarki” jest już zakończone.\n\nBudżet projektu to 180 000 zł; do tej pory wydaliśmy 129 000 zł, czyli 72 % budżetu. Prognoza kosztu na koniec wynosi 190 000 zł, czyli o 6 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 180 000 zł.\n\nHalina wraca do końca miesiąca, więc zadanie „Implementacja obsługi webhooków” może się przesunąć o 7 dni. Ryzyko: zadanie „Przeprojektowanie panelu ustawień” jest opóźnione o 3 dni robocze. Proponuję dodać 1 osobę do zadania „Implementacja obsługi webhooków” na 5 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 10 listopada.\n\nOdbiór projektu planujemy na 27.12.2026. Spotkanie zespołu odbędzie się jutro o 9:30. Zadaniem „Audyt uprawnień administratora” zajmie się Bogdan, a Bartosz pomoże przy zadaniu „Budowa procesu importu danych”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Aplikacja mobilna banku spółdzielczego",
+    "text": "Aplikacja mobilna banku spółdzielczego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-06",
+    "text": "6 listopada 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--11-01",
+    "text": "1 listopada"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80 proc."
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "amount",
+    "value": "180000 PLN",
+    "text": "180 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "129000 PLN",
+    "text": "129 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "72%",
+    "text": "72 %"
+   },
+   {
+    "kind": "amount",
+    "value": "190000 PLN",
+    "text": "190 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 %"
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-10",
+    "text": "10 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:09:30",
+    "text": "9:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-27",
+    "text": "27.12.2026"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja zaplecza wyszukiwarki",
+    "text": "Refaktoryzacja zaplecza wyszukiwarki"
+   },
+   {
+    "kind": "task",
+    "value": "Kontrola dostarczania powiadomień",
+    "text": "Kontrola dostarczania powiadomień"
+   },
+   {
+    "kind": "task",
+    "value": "Testy rejestracji użytkowników",
+    "text": "Testy rejestracji użytkowników"
+   },
+   {
+    "kind": "person",
+    "value": "Bartosz",
+    "text": "Bartosz"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja odtwarzania po awarii",
+    "text": "Aktualizacja odtwarzania po awarii"
+   },
+   {
+    "kind": "person",
+    "value": "Halina",
+    "text": "Halina"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja obsługi webhooków",
+    "text": "Implementacja obsługi webhooków"
+   },
+   {
+    "kind": "task",
+    "value": "Przeprojektowanie panelu ustawień",
+    "text": "Przeprojektowanie panelu ustawień"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt uprawnień administratora",
+    "text": "Audyt uprawnień administratora"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa procesu importu danych",
+    "text": "Budowa procesu importu danych"
+   }
+  ]
+ },
+ {
+  "id": "R28",
+  "source": "simulator",
+  "project": "Aplikacja mobilna banku spółdzielczego",
+  "day": "2026-10-30",
+  "people": [
+   "Agata",
+   "Piotr",
+   "Bogdan",
+   "Marek",
+   "Bartosz",
+   "Halina"
+  ],
+  "tasks": [
+   "Przeprojektowanie panelu ustawień",
+   "Budowa procesu importu danych",
+   "Audyt uprawnień administratora",
+   "Implementacja obsługi webhooków",
+   "Kontrola dostarczania powiadomień",
+   "Testy rejestracji użytkowników",
+   "Refaktoryzacja zaplecza wyszukiwarki",
+   "Aktualizacja odtwarzania po awarii"
+  ],
+  "projects": [
+   "Aplikacja mobilna banku spółdzielczego"
+  ],
+  "text": "Raport tygodniowy: Aplikacja mobilna banku spółdzielczego\n\nStan na 30 października 2026 r.\n\nZadanie „Refaktoryzacja zaplecza wyszukiwarki” zakończyliśmy 27 października. Zadanie „Implementacja obsługi webhooków” jest gotowe w 80%. Do końca zadania „Przeprojektowanie panelu ustawień” zostało 14 dni pracy. Piotr przejmuje zadanie „Testy rejestracji użytkowników” w środę. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Refaktoryzacja zaplecza wyszukiwarki” jest już zakończone.\n\nBudżet projektu to 180 000 zł; do tej pory wydaliśmy 117 000 zł, czyli 65% budżetu. Prognoza kosztu na koniec wynosi 190 000 zł, czyli o 6 % więcej niż budżet. Na licencje potrzebujemy dodatkowo 3 000 zł. Warto jeszcze raz podkreślić, że budżet projektu to 180 000 zł.\n\nBogdan wraca do końca miesiąca, więc zadanie „Audyt uprawnień administratora” może się przesunąć o 7 dni. Ryzyko: zadanie „Budowa procesu importu danych” jest opóźnione o 2 dni robocze. Proponuję dodać 1 osobę do zadania „Audyt uprawnień administratora” na 15 dni; koszt to około 22 000 zł. Decyzję potrzebujemy do 5 listopada.\n\nOdbiór projektu planujemy na 21 grudnia 2026 r.. Spotkanie zespołu odbędzie się 17 listopada o 10:30. Zadaniem „Kontrola dostarczania powiadomień” zajmie się Halina, a Piotr pomoże przy zadaniu „Aktualizacja odtwarzania po awarii”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Aplikacja mobilna banku spółdzielczego",
+    "text": "Aplikacja mobilna banku spółdzielczego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-30",
+    "text": "30 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-27",
+    "text": "27 października"
+   },
+   {
+    "kind": "percent",
+    "value": "80%",
+    "text": "80%"
+   },
+   {
+    "kind": "number",
+    "value": "14",
+    "text": "14 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:2",
+    "text": "środę"
+   },
+   {
+    "kind": "amount",
+    "value": "180000 PLN",
+    "text": "180 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "117000 PLN",
+    "text": "117 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "65%",
+    "text": "65%"
+   },
+   {
+    "kind": "amount",
+    "value": "190000 PLN",
+    "text": "190 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6 %"
+   },
+   {
+    "kind": "amount",
+    "value": "3000 PLN",
+    "text": "3 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "2",
+    "text": "2 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "22000 PLN",
+    "text": "22 000 zł"
+   },
+   {
+    "kind": "date",
+    "value": "--11-05",
+    "text": "5 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "--11-17",
+    "text": "17 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:30",
+    "text": "10:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-12-21",
+    "text": "21 grudnia 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja zaplecza wyszukiwarki",
+    "text": "Refaktoryzacja zaplecza wyszukiwarki"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja obsługi webhooków",
+    "text": "Implementacja obsługi webhooków"
+   },
+   {
+    "kind": "task",
+    "value": "Przeprojektowanie panelu ustawień",
+    "text": "Przeprojektowanie panelu ustawień"
+   },
+   {
+    "kind": "person",
+    "value": "Piotr",
+    "text": "Piotr"
+   },
+   {
+    "kind": "task",
+    "value": "Testy rejestracji użytkowników",
+    "text": "Testy rejestracji użytkowników"
+   },
+   {
+    "kind": "person",
+    "value": "Bogdan",
+    "text": "Bogdan"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt uprawnień administratora",
+    "text": "Audyt uprawnień administratora"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa procesu importu danych",
+    "text": "Budowa procesu importu danych"
+   },
+   {
+    "kind": "task",
+    "value": "Kontrola dostarczania powiadomień",
+    "text": "Kontrola dostarczania powiadomień"
+   },
+   {
+    "kind": "person",
+    "value": "Halina",
+    "text": "Halina"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja odtwarzania po awarii",
+    "text": "Aktualizacja odtwarzania po awarii"
+   }
+  ]
+ },
+ {
+  "id": "R29",
+  "source": "simulator",
+  "project": "Aplikacja mobilna banku spółdzielczego",
+  "day": "2026-10-23",
+  "people": [
+   "Agata",
+   "Piotr",
+   "Bogdan",
+   "Marek",
+   "Bartosz",
+   "Halina"
+  ],
+  "tasks": [
+   "Przeprojektowanie panelu ustawień",
+   "Budowa procesu importu danych",
+   "Audyt uprawnień administratora",
+   "Implementacja obsługi webhooków",
+   "Kontrola dostarczania powiadomień",
+   "Testy rejestracji użytkowników",
+   "Refaktoryzacja zaplecza wyszukiwarki",
+   "Aktualizacja odtwarzania po awarii"
+  ],
+  "projects": [
+   "Aplikacja mobilna banku spółdzielczego"
+  ],
+  "text": "Raport tygodniowy: Aplikacja mobilna banku spółdzielczego\n\nStan na 23 października 2026 r.\n\nZadanie „Refaktoryzacja zaplecza wyszukiwarki” zakończyliśmy 18 października. Zadanie „Testy rejestracji użytkowników” jest gotowe w 90%. Do końca zadania „Audyt uprawnień administratora” zostało 5 dni pracy. Agata przejmuje zadanie „Implementacja obsługi webhooków” we wtorek. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Refaktoryzacja zaplecza wyszukiwarki” jest już zakończone.\n\nBudżet projektu to 600 000 zł; do tej pory wydaliśmy 270 000 zł, czyli 45 % budżetu. Prognoza kosztu na koniec wynosi 648 000 zł, czyli o 8% więcej niż budżet. Na licencje potrzebujemy dodatkowo 12 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 600 000 zł.\n\nHalina wraca za dwa tygodnie, więc zadanie „Budowa procesu importu danych” może się przesunąć o 5 dni. Ryzyko: zadanie „Przeprojektowanie panelu ustawień” jest opóźnione o 3 dni robocze. Proponuję dodać 1 osobę do zadania „Budowa procesu importu danych” na 15 dni; koszt to około 18 tys. zł. Decyzję potrzebujemy do 31 października.\n\nOdbiór projektu planujemy na 14 listopada 2026 r.. Spotkanie zespołu odbędzie się 9 listopada o 10:30. Zadaniem „Kontrola dostarczania powiadomień” zajmie się Bartosz, a Agata pomoże przy zadaniu „Aktualizacja odtwarzania po awarii”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Aplikacja mobilna banku spółdzielczego",
+    "text": "Aplikacja mobilna banku spółdzielczego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-23",
+    "text": "23 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-18",
+    "text": "18 października"
+   },
+   {
+    "kind": "percent",
+    "value": "90%",
+    "text": "90%"
+   },
+   {
+    "kind": "number",
+    "value": "5",
+    "text": "5 dni"
+   },
+   {
+    "kind": "date",
+    "value": "weekday:1",
+    "text": "wtorek"
+   },
+   {
+    "kind": "amount",
+    "value": "600000 PLN",
+    "text": "600 000 zł"
+   },
+   {
+    "kind": "amount",
+    "value": "270000 PLN",
+    "text": "270 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "45%",
+    "text": "45 %"
+   },
+   {
+    "kind": "amount",
+    "value": "648000 PLN",
+    "text": "648 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "8%",
+    "text": "8%"
+   },
+   {
+    "kind": "amount",
+    "value": "12000 PLN",
+    "text": "12 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "in:14d",
+    "text": "za dwa tygodnie"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "18000 PLN",
+    "text": "18 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-31",
+    "text": "31 października"
+   },
+   {
+    "kind": "date",
+    "value": "--11-09",
+    "text": "9 listopada"
+   },
+   {
+    "kind": "date",
+    "value": "time:10:30",
+    "text": "10:30"
+   },
+   {
+    "kind": "date",
+    "value": "2026-11-14",
+    "text": "14 listopada 2026 r."
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja zaplecza wyszukiwarki",
+    "text": "Refaktoryzacja zaplecza wyszukiwarki"
+   },
+   {
+    "kind": "task",
+    "value": "Testy rejestracji użytkowników",
+    "text": "Testy rejestracji użytkowników"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt uprawnień administratora",
+    "text": "Audyt uprawnień administratora"
+   },
+   {
+    "kind": "person",
+    "value": "Agata",
+    "text": "Agata"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja obsługi webhooków",
+    "text": "Implementacja obsługi webhooków"
+   },
+   {
+    "kind": "person",
+    "value": "Halina",
+    "text": "Halina"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa procesu importu danych",
+    "text": "Budowa procesu importu danych"
+   },
+   {
+    "kind": "task",
+    "value": "Przeprojektowanie panelu ustawień",
+    "text": "Przeprojektowanie panelu ustawień"
+   },
+   {
+    "kind": "task",
+    "value": "Kontrola dostarczania powiadomień",
+    "text": "Kontrola dostarczania powiadomień"
+   },
+   {
+    "kind": "person",
+    "value": "Bartosz",
+    "text": "Bartosz"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja odtwarzania po awarii",
+    "text": "Aktualizacja odtwarzania po awarii"
+   }
+  ]
+ },
+ {
+  "id": "R30",
+  "source": "simulator",
+  "project": "Aplikacja mobilna banku spółdzielczego",
+  "day": "2026-10-16",
+  "people": [
+   "Agata",
+   "Piotr",
+   "Bogdan",
+   "Marek",
+   "Bartosz",
+   "Halina"
+  ],
+  "tasks": [
+   "Przeprojektowanie panelu ustawień",
+   "Budowa procesu importu danych",
+   "Audyt uprawnień administratora",
+   "Implementacja obsługi webhooków",
+   "Kontrola dostarczania powiadomień",
+   "Testy rejestracji użytkowników",
+   "Refaktoryzacja zaplecza wyszukiwarki",
+   "Aktualizacja odtwarzania po awarii"
+  ],
+  "projects": [
+   "Aplikacja mobilna banku spółdzielczego"
+  ],
+  "text": "Raport tygodniowy: Aplikacja mobilna banku spółdzielczego\n\nStan na 16 października 2026 r.\n\nZadanie „Refaktoryzacja zaplecza wyszukiwarki” zakończyliśmy 12 października. Zadanie „Implementacja obsługi webhooków” jest gotowe w 45 %. Do końca zadania „Aktualizacja odtwarzania po awarii” zostało 4 dni pracy. Bartosz przejmuje zadanie „Budowa procesu importu danych” 31 października. Ogólnie rzecz biorąc, prace idą zgodnie z planem, choć są pewne kwestie, które wymagają uwagi i które warto omówić. Jak wspomniano wcześniej, zadanie „Refaktoryzacja zaplecza wyszukiwarki” jest już zakończone.\n\nBudżet projektu to 1,2 mln zł; do tej pory wydaliśmy 384 000 zł, czyli 32% budżetu. Prognoza kosztu na koniec wynosi 1 272 000 zł, czyli o 6% więcej niż budżet. Na licencje potrzebujemy dodatkowo 5 tys. zł. Warto jeszcze raz podkreślić, że budżet projektu to 1,2 mln zł.\n\nMarek wraca do końca miesiąca, więc zadanie „Audyt uprawnień administratora” może się przesunąć o 7 dni. Ryzyko: zadanie „Kontrola dostarczania powiadomień” jest opóźnione o 3 dni robocze. Proponuję dodać 1 osobę do zadania „Audyt uprawnień administratora” na 15 dni; koszt to około 14 tys. zł. Decyzję potrzebujemy do 20 października.\n\nOdbiór projektu planujemy na 12 listopada. Spotkanie zespołu odbędzie się jutro o 11:30. Zadaniem „Testy rejestracji użytkowników” zajmie się Piotr, a Bartosz pomoże przy zadaniu „Przeprojektowanie panelu ustawień”. Na koniec chciałoby się dodać, że współpraca w zespole przebiega dobrze, a wszystkie osoby są zaangażowane w realizację celów projektu.",
+  "facts": [
+   {
+    "kind": "project",
+    "value": "Aplikacja mobilna banku spółdzielczego",
+    "text": "Aplikacja mobilna banku spółdzielczego"
+   },
+   {
+    "kind": "date",
+    "value": "2026-10-16",
+    "text": "16 października 2026 r."
+   },
+   {
+    "kind": "date",
+    "value": "--10-12",
+    "text": "12 października"
+   },
+   {
+    "kind": "percent",
+    "value": "45%",
+    "text": "45 %"
+   },
+   {
+    "kind": "number",
+    "value": "4",
+    "text": "4 dni"
+   },
+   {
+    "kind": "date",
+    "value": "--10-31",
+    "text": "31 października"
+   },
+   {
+    "kind": "amount",
+    "value": "1200000 PLN",
+    "text": "1,2 mln zł"
+   },
+   {
+    "kind": "amount",
+    "value": "384000 PLN",
+    "text": "384 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "32%",
+    "text": "32%"
+   },
+   {
+    "kind": "amount",
+    "value": "1272000 PLN",
+    "text": "1 272 000 zł"
+   },
+   {
+    "kind": "percent",
+    "value": "6%",
+    "text": "6%"
+   },
+   {
+    "kind": "amount",
+    "value": "5000 PLN",
+    "text": "5 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "end:2:+0",
+    "text": "do końca miesiąca"
+   },
+   {
+    "kind": "number",
+    "value": "7",
+    "text": "7 dni"
+   },
+   {
+    "kind": "number",
+    "value": "3",
+    "text": "3 dni robocze"
+   },
+   {
+    "kind": "number",
+    "value": "1",
+    "text": "1 osobę"
+   },
+   {
+    "kind": "number",
+    "value": "15",
+    "text": "15 dni"
+   },
+   {
+    "kind": "amount",
+    "value": "14000 PLN",
+    "text": "14 tys. zł"
+   },
+   {
+    "kind": "date",
+    "value": "--10-20",
+    "text": "20 października"
+   },
+   {
+    "kind": "date",
+    "value": "day:+1",
+    "text": "jutro"
+   },
+   {
+    "kind": "date",
+    "value": "time:11:30",
+    "text": "11:30"
+   },
+   {
+    "kind": "date",
+    "value": "--11-12",
+    "text": "12 listopada"
+   },
+   {
+    "kind": "task",
+    "value": "Refaktoryzacja zaplecza wyszukiwarki",
+    "text": "Refaktoryzacja zaplecza wyszukiwarki"
+   },
+   {
+    "kind": "task",
+    "value": "Implementacja obsługi webhooków",
+    "text": "Implementacja obsługi webhooków"
+   },
+   {
+    "kind": "task",
+    "value": "Aktualizacja odtwarzania po awarii",
+    "text": "Aktualizacja odtwarzania po awarii"
+   },
+   {
+    "kind": "person",
+    "value": "Bartosz",
+    "text": "Bartosz"
+   },
+   {
+    "kind": "task",
+    "value": "Budowa procesu importu danych",
+    "text": "Budowa procesu importu danych"
+   },
+   {
+    "kind": "person",
+    "value": "Marek",
+    "text": "Marek"
+   },
+   {
+    "kind": "task",
+    "value": "Audyt uprawnień administratora",
+    "text": "Audyt uprawnień administratora"
+   },
+   {
+    "kind": "task",
+    "value": "Kontrola dostarczania powiadomień",
+    "text": "Kontrola dostarczania powiadomień"
+   },
+   {
+    "kind": "task",
+    "value": "Testy rejestracji użytkowników",
+    "text": "Testy rejestracji użytkowników"
+   },
+   {
+    "kind": "person",
+    "value": "Piotr",
+    "text": "Piotr"
+   },
+   {
+    "kind": "task",
+    "value": "Przeprojektowanie panelu ustawień",
+    "text": "Przeprojektowanie panelu ustawień"
+   }
+  ]
+ }
+]

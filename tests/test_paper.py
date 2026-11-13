@@ -232,7 +232,8 @@ def test_reproduce_commands_list_every_run_with_a_keyless_replay(
     assert commands(REPO_ROOT / DEFAULT_CONFIG) == 0
     out = capsys.readouterr().out
     assert all(ref.path.as_posix() in out for ref in config.runs.values())
-    assert out.count("uv run python -m sentinel.experiments.") == 14 + 5  # runs + replays
+    rq6 = 2 if (REPO_ROOT / "configs" / "paper_rq6.toml").is_file() else 0  # WP20, once pinned
+    assert out.count("uv run python -m sentinel.experiments.") == 14 + 5 + rq6  # runs + replays
     assert "--cache-file results/wp6/20261023-215350-f5aad526/llm_cache.jsonl.gz" in out
     assert "9.2 h recorded" in out
 

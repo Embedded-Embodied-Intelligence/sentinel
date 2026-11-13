@@ -123,6 +123,12 @@ def _build_parser() -> argparse.ArgumentParser:
     paper.add_argument("--config", type=Path, default=DEFAULT_PAPER_CONFIG)
     paper.add_argument("--out", type=Path, help="output directory (default: the config's)")
     paper.add_argument(
+        "--pin-rq6",
+        type=Path,
+        metavar="RUN",
+        help="pin this completed RQ6 run in configs/paper_rq6.toml first (WP20)",
+    )
+    paper.add_argument(
         "--readme",
         type=Path,
         default=Path("README.md"),
@@ -327,10 +333,18 @@ def _summarise_wbs(args: argparse.Namespace) -> int:
 
 def _paper(args: argparse.Namespace) -> int:
     # Imported here so that the other commands do not load matplotlib.
+    from sentinel.experiments import paper_rq6
     from sentinel.experiments.paper import RunRefused, generate
 
+    rq6 = args.config.with_name(paper_rq6.DEFAULT_CONFIG.name)
     try:
+        if args.pin_rq6 is not None:
+            paper_rq6.pin(args.pin_rq6, rq6)
+            print(rq6)
         written = generate(args.config, args.out)
+        if rq6.is_file():
+            target = None if args.out is None else args.out / "rq6"
+            written += paper_rq6.generate(rq6, target)
     except RunRefused as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2

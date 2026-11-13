@@ -43,7 +43,10 @@ LLM_RUNNERS = (
     "sentinel.experiments.proposal_study",
     "sentinel.experiments.explanation_study",
     "sentinel.experiments.online_study",
+    "sentinel.experiments.rq6_study",
 )
+RQ6_CONFIG = "paper_rq6.toml"  # beside configs/paper.toml (WP20), checked when it exists
+RQ6_FOLDER = "rq6"  # its artifacts under paper/generated/, checked by their own generator
 PREREQUISITES = (
     ("uv sync", "environment from uv.lock"),
     ("uv run python scripts/fetch_psplib.py --sets j30 j60", "PSPLIB data into data/psplib"),
@@ -121,6 +124,10 @@ def regenerate_summaries(run_dir: Path, pinned: Mapping[str, Any] | None) -> lis
         from sentinel.experiments import online_study
 
         return online_study.regenerate(run_dir)
+    if module == "sentinel.experiments.rq6_study":
+        from sentinel.experiments import rq6_study
+
+        return rq6_study.regenerate(run_dir)
     raise ValueError(f"no summary generator for runs of {module}")
 
 
@@ -146,9 +153,10 @@ def check_run(run_dir: Path, scratch: Path) -> tuple[int, list[str]]:
     return len(names), differing(run_dir, copy, names)
 
 
-def tree_files(root: Path) -> set[str]:
-    """Every file under `root`, as a relative POSIX path."""
-    return {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+def tree_files(root: Path, exclude: str | None = None) -> set[str]:
+    """Every file under `root`, as a relative POSIX path, without those under `exclude`."""
+    names = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+    return {n for n in names if exclude is None or not n.startswith(f"{exclude}/")}
 
 
 def check(config_path: Path) -> int:
@@ -178,14 +186,49 @@ def check(config_path: Path) -> int:
         pinned = json.loads(recorded.read_text(encoding="utf-8"))
         out = scratch / "paper"
         generate(config_path, out, pinned=pinned)
-        names = sorted(tree_files(committed) | tree_files(out))
+        names = sorted(tree_files(committed, RQ6_FOLDER) | tree_files(out))
         bad = differing(committed, out, names)
         total += len(names)
         failures += len(bad)
         state = "identical" if not bad else f"DIFFERS: {', '.join(bad)}"
         print(f"{'paper':<17} {committed.as_posix()}: {len(names)} files {state}")
+        rq6 = config_path.with_name(RQ6_CONFIG)
+        if rq6.is_file():
+            files, wrong = check_rq6(rq6, scratch / "rq6")
+            total += files
+            failures += wrong
+        else:
+            print(f"{'rq6':<17} {rq6.as_posix()} does not exist yet: no run pinned")
     print(f"reproduce --check: {total - failures} of {total} files identical")
     return 0 if failures == 0 else 1
+
+
+def check_rq6(config_path: Path, scratch: Path) -> tuple[int, int]:
+    """The RQ6 run's summaries and its artifacts (`paper_rq6`), regenerated and compared; the
+    number of files and of those that differ."""
+    from sentinel.experiments import paper_rq6
+
+    try:
+        (run,) = paper_rq6.runs_of(config_path)
+    except RunRefused as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 1, 1
+    count, bad = check_run(run.path, scratch / "run")
+    state = "identical" if not bad else f"DIFFERS: {', '.join(bad)}"
+    print(f"{'rq6':<17} {run.path.as_posix()}: {count} summary files {state}", flush=True)
+    config = PaperConfig.model_validate(load_toml(config_path))
+    committed = config.out_dir
+    recorded = committed / MANIFEST_NAME
+    if not recorded.is_file():
+        print(f"paper_rq6: {recorded} is missing", file=sys.stderr)
+        return count + 1, len(bad) + 1
+    out = scratch / "paper"
+    paper_rq6.generate(config_path, out, pinned=json.loads(recorded.read_text(encoding="utf-8")))
+    names = sorted(tree_files(committed) | tree_files(out))
+    wrong = differing(committed, out, names)
+    state = "identical" if not wrong else f"DIFFERS: {', '.join(wrong)}"
+    print(f"{'paper_rq6':<17} {committed.as_posix()}: {len(names)} files {state}")
+    return count + len(names), len(bad) + len(wrong)
 
 
 def _duration(seconds: float) -> str:
@@ -236,5 +279,15 @@ def commands(config_path: Path) -> int:
         print(f"uv run {manifest['command']}")
         if runner(manifest) in LLM_RUNNERS:
             print(f"# replay without keys or Ollama: {replay_command(manifest, run.path)}")
+    rq6 = config_path.with_name(RQ6_CONFIG)
+    if rq6.is_file():
+        from sentinel.experiments import paper_rq6
+
+        (run,) = paper_rq6.runs_of(rq6)
+        seconds = float(run.manifest["duration_s"])
+        total += seconds
+        print(f"\n# rq6: {run.path.as_posix()} ({_duration(seconds)} recorded)")
+        print(f"uv run {run.manifest['command']}")
+        print(f"# replay without keys or Ollama: {replay_command(run.manifest, run.path)}")
     print(f"\n# total recorded duration: {_duration(total)}")
     return 0

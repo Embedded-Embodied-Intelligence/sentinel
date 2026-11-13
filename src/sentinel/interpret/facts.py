@@ -556,17 +556,24 @@ def _amounts(text: str, p: _Patterns) -> list[_Candidate]:
 _NAME_WORD = re.compile(r"[^\W\d_]+(?:[-/][^\W_]+)*|\w+(?:[-/]\w+)*")
 
 
+# The case endings of Polish names (without diacritics): "Anna" "Annie", "Ewa" "Ewy", "Jan"
+# "Janem", "Zielińska" "Zielińskiej", "Lewandowski" "Lewandowskiego".
+NAME_ENDINGS = frozenset(
+    ("a", "y", "i", "e", "u", "ie", "em", "om", "owi", "ej", "ego", "emu", "iej", "iego", "iemu")
+)
+
+
 def word_form(name: str, word: str, *, proper: bool = False) -> bool:
-    """Whether the plain text word `word` is a form of the plain name word `name`: equal, or
-    (a proper name) beginning with all but its last letter and at most four letters more
-    ("anna" "annie", "ewa" "ewie", "lewandowski" "lewandowskiego"), or (other words of four
-    letters or more) sharing a beginning of three letters and all but the last three of the
-    shorter one ("integracja" "integracji", "testy" "testów")."""
+    """Whether the plain text word `word` is a form of the plain name word `name`: equal, or (a
+    proper name) the name, or the name without its final vowel, followed by a case ending
+    ("anna" "annie", "jan" "janem", "lewandowski" "lewandowskiego"; not "jan" "jak"), or (other
+    words of four letters or more) sharing a beginning of three letters and all but the last
+    three of the shorter one ("integracja" "integracji", "testy" "testów")."""
     if name == word:
         return True
     if proper:
-        stem = name[: max(2, len(name) - 1)]
-        return len(name) >= 3 and word.startswith(stem) and len(word) - len(stem) <= 4
+        stems = [name] + ([name[:-1]] if name[-1:] in "aeiouy" and len(name) > 2 else [])
+        return any(word.startswith(s) and word[len(s) :] in NAME_ENDINGS for s in stems)
     if min(len(name), len(word)) < 4:
         return False
     common = 0
@@ -663,6 +670,7 @@ class FactCheck:
     state: FactState
     replaced_by: Fact | None = None
     count: int = 1
+    mentions: tuple[Fact, ...] = ()  # every place it occurs in the original
 
 
 @dataclass(frozen=True)
@@ -722,7 +730,7 @@ def check(
     checks = []
     for i, b in enumerate(before):
         state: FactState = "changed" if i in paired else ("unchanged" if kept[i] else "omitted")
-        checks.append(FactCheck(b.fact, state, paired.get(i), len(b.occurrences)))
+        checks.append(FactCheck(b.fact, state, paired.get(i), len(b.occurrences), b.occurrences))
     new = tuple(a.fact for j, a in enumerate(unmatched_after) if j not in used)
     return Guard(tuple(checks), new, tuple(after_facts))
 

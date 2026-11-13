@@ -11,9 +11,10 @@ application. The RQ6 study also asks for the list of changes (`RedactionWithChan
 Prompts are English and versioned; the text is edited in its own language.
 """
 
-from typing import Literal
+from collections.abc import Callable
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PositiveInt
 
 from sentinel.llm import LlmClient, LlmResponse, Message, load_prompt
 
@@ -38,12 +39,27 @@ class RedactSettings(BaseModel):
     temperature: float = Field(default=0.0, ge=0, allow_inf_nan=False)
 
 
+def _bounded(limit: int) -> Callable[[str], str]:
+    """A length check in code: a `maxLength` in the schema would become a grammar of that many
+    repetitions for a local model (Ollama cannot build it)."""
+
+    def check(value: str) -> str:
+        if len(value) > limit:
+            raise ValueError(f"longer than {limit} characters")
+        return value
+
+    return check
+
+
+Text = Annotated[str, AfterValidator(_bounded(2 * MAX_CHARS))]
+
+
 class Redaction(BaseModel):
     """The answer of an editing call: the edited text, paragraphs separated by a blank line."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    text: str = Field(min_length=1, max_length=2 * MAX_CHARS)
+    text: Text = Field(min_length=1)
 
 
 class ReportedChange(BaseModel):
@@ -51,14 +67,14 @@ class ReportedChange(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    before: str = Field(max_length=MAX_CHARS)
-    after: str = Field(max_length=MAX_CHARS)
+    before: Text
+    after: Text
 
 
 class RedactionWithChanges(Redaction):
     """The RQ6 answer: the edited text and the model's own list of its changes."""
 
-    changes: list[ReportedChange] = Field(max_length=500)
+    changes: list[ReportedChange]
 
 
 def redact_messages(
