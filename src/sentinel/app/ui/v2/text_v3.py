@@ -123,8 +123,8 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     "v2.perm.not.send": ("Send anything to anyone", "Wysłać czegokolwiek do kogokolwiek"),
     "v2.perm.not.approve": ("Approve a change", "Zatwierdzić zmiany"),
     "v2.perm.not.compute": (
-        "Compute a number you see (chance, date, budget)",
-        "Policzyć liczby, którą widzisz (szansa, data, budżet)",
+        "Compute the numbers you see (chance, date, budget)",
+        "Liczyć liczb, które widzisz (szansa, data, budżet)",
     ),
     "v2.perm.not.choose": ("Choose an action", "Wybrać działania"),
     "v2.perm.not.connect": (
