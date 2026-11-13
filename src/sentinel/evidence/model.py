@@ -1,5 +1,5 @@
-"""Pydantic models of the evidence registry (docs/research/evidence/registry.json), the decision
-catalogue (docs/research/decisions.md) and the boundary map (docs/research/boundary-map.json)."""
+"""Pydantic models of the evidence registry, the decision catalogue and the boundary map, which
+ship with the package in sentinel/evidence/data (ADR-0037); docs/research describes them."""
 
 import re
 from datetime import date
@@ -48,6 +48,7 @@ class Figure(_Frozen):
     macro: str = Field(pattern=r"^[A-Za-z]+$")
     value: str
     label_pl: str
+    label_en: str
 
 
 class Verification(_Frozen):
@@ -87,6 +88,7 @@ class EvidenceItem(_Frozen):
     id: str = Field(pattern=r"^E\d{2}$")
     kind: Kind
     title_pl: str = Field(min_length=3, max_length=90)
+    title_en: str = Field(min_length=3, max_length=90)
     modules: list[Module]
     criteria: list[int]
     decisions: list[str]
@@ -97,6 +99,7 @@ class EvidenceItem(_Frozen):
     highlights: list[str] = Field(default_factory=list)
     highlights_pl: list[str] = Field(default_factory=list)
     gloss_pl: str | None = None
+    gloss_en: str | None = None
     location: str | None = None
     citation: str
     doi: str | None = None
@@ -104,15 +107,23 @@ class EvidenceItem(_Frozen):
     open_access: bool
     licence: str | None = None
     summary_pl: str
+    summary_en: str
     implication_pl: str
+    implication_en: str
     verification: Verification
     figures: list[Figure] = Field(default_factory=list)
     run_ids: list[str] = Field(default_factory=list)
     runs: int | None = None
     caveats_pl: str | None = None
+    caveats_en: str | None = None
 
     @model_validator(mode="after")
     def _consistent(self) -> Self:
+        # Our own texts come in both languages; quotes are never translated (v3 spec, section 9).
+        if (self.gloss_pl is None) != (self.gloss_en is None) or (self.caveats_pl is None) != (
+            self.caveats_en is None
+        ):
+            raise ValueError(f"{self.id}: a gloss and caveats come in Polish and English")
         if len(set(self.modules)) != len(self.modules):
             raise ValueError(f"{self.id}: a module is listed twice")
         if any(c < 1 or c > 6 for c in self.criteria) or len(set(self.criteria)) != len(
@@ -222,10 +233,13 @@ def basis(kinds: list[Kind]) -> Basis:
 
 
 class Decision(_Frozen):
-    """A design decision of the catalogue (docs/research/decisions.md)."""
+    """A design decision of the catalogue (decisions.json; the table of docs/research/decisions.md):
+    `text` is the catalogue's sentence, `text_pl` and `text_en` the interface's."""
 
     id: str = Field(pattern=r"^D\d{2}$")
     text: str
+    text_pl: str
+    text_en: str
     screen: str
     evidence: list[str]
     status: Literal["current", "proposed"]
@@ -237,8 +251,13 @@ class Criterion(_Frozen):
 
     id: int = Field(ge=1, le=6)
     name_pl: str
+    name_en: str
+    short_pl: str = Field(max_length=20)
+    short_en: str = Field(max_length=20)
     definition_pl: str
+    definition_en: str
     question_pl: str
+    question_en: str
     evidence: list[str]
     normative: bool
 
@@ -249,17 +268,23 @@ class BoundaryCell(_Frozen):
     criterion: int = Field(ge=1, le=6)
     zone: Zone
     reason_pl: str = Field(min_length=10)
+    reason_en: str = Field(min_length=10)
     evidence: list[str] = Field(min_length=1)
 
 
 class BoundaryProcess(_Frozen):
-    """A company process of the survey with its cells; its zone is the strictest cell's."""
+    """A company process of the survey with its cells; its zone is the strictest cell's. `screen`
+    names where it lives in Sentinel (none: outside Sentinel)."""
 
     id: str = Field(pattern=r"^P\d{2}$")
     name_pl: str
+    name_en: str
     zone: Zone
     reason_pl: str
+    reason_en: str
     sentinel_pl: str
+    sentinel_en: str
+    screen: Literal["overview", "report", "decisions", "reports", "finance", "people"] | None
     cells: list[BoundaryCell]
 
     @model_validator(mode="after")
@@ -270,6 +295,13 @@ class BoundaryProcess(_Frozen):
         if self.zone != strictest:
             raise ValueError(f"{self.id}: the zone is the strictest cell's ({strictest})")
         return self
+
+
+class Catalogue(_Frozen):
+    """The decision catalogue as data."""
+
+    version: str
+    decisions: list[Decision]
 
 
 class BoundaryMap(_Frozen):

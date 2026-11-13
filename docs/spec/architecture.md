@@ -35,7 +35,8 @@ src/sentinel/
   dashboard/             # WP8: project cockpit (`sentinel dashboard`), one self-contained HTML
   evidence/              # WP18: the evidence registry of v3 (model.py, load.py), the quote check
                          #   (verify.py: the documented normalisation) and page text (text.py);
-                         #   data in docs/research/ (registry.json, decisions.md, boundary-map.json)
+                         #   data/ (registry.json, decisions.json, boundary-map.json) ships with
+                         #   the package (WP19, ADR-0037); docs/research/ describes them
   app/                   # WP9: the application (spec section 11): live projects (live.py),
                          #   planning.py (plan, forecast, recommendation and its comparison),
                          #   simulator.py, events.py and store.py (SQLite event log), services.py,

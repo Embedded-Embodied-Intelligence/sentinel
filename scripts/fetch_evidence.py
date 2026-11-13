@@ -7,7 +7,7 @@ Usage:
   uv run python scripts/fetch_evidence.py --update-registry  # write SHA-256 and date of checked
                                                              # verified items into the registry
 
-Sources (docs/research/evidence/registry.json, "sources") are saved to <root>/raw/<file>, their
+Sources (src/sentinel/evidence/data/registry.json, "sources") are saved to <root>/raw/<file>, their
 text to <root>/text/<file>.txt and every download is recorded in <root>/MANIFEST.json (URL, time,
 size, SHA-256). PDF text comes from pdfminer.six, a development dependency (ADR-0036); HTML,
 XHTML and XML text from the standard library (sentinel.evidence.text). The sources are never

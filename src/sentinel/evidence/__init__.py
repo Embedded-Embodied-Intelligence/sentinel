@@ -1,5 +1,6 @@
 """The evidence registry of v3 (WP18): sources for and against each design decision, with
-verbatim quotes checked by code against the fetched source texts, and the boundary map."""
+verbatim quotes checked by code against the fetched source texts, the decision catalogue and the
+boundary map; the data ship with the package (WP19, ADR-0037)."""
 
 from sentinel.evidence.load import (
     BOUNDARY_MAP_PATH,
@@ -8,11 +9,13 @@ from sentinel.evidence.load import (
     load_boundary_map,
     load_decisions,
     load_registry,
+    research,
 )
 from sentinel.evidence.model import (
     BoundaryCell,
     BoundaryMap,
     BoundaryProcess,
+    Catalogue,
     Criterion,
     Decision,
     EvidenceItem,
@@ -30,6 +33,7 @@ __all__ = [
     "BoundaryCell",
     "BoundaryMap",
     "BoundaryProcess",
+    "Catalogue",
     "Criterion",
     "Decision",
     "EvidenceItem",
@@ -42,5 +46,6 @@ __all__ = [
     "load_registry",
     "normalise",
     "quote_occurs",
+    "research",
     "sentence_count",
 ]

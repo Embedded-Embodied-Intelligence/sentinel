@@ -1,0 +1,358 @@
+{
+  "version": "1.0",
+  "decisions": [
+    {
+      "id": "D01",
+      "text": "The chance of meeting the deadline is a natural frequency, \"N na 100\" with a 10×10 dot grid, never a percentage or a probability.",
+      "text_pl": "Szansę na termin pokazujemy jako „N na 100” z siatką 10×10 kropek, nigdy jako procent czy prawdopodobieństwo.",
+      "text_en": "The chance of meeting the deadline is shown as “N in 100” with a 10×10 grid of dots, never as a percentage or a probability.",
+      "screen": "Pulpit · Szansa na termin; Start · project tiles",
+      "evidence": [
+        "E36",
+        "E37",
+        "E49"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D02",
+      "text": "The project state is shown by colour, icon and word together, with fixed thresholds (≥ 80 \"Na dobrej drodze\", 50–79 \"Zagrożony\", < 50 \"Nie zdążymy bez zmian\"); the thresholds are a convention, not a finding.",
+      "text_pl": "Stan projektu ma naraz kolor, ikonę i słowo, a jego progi (80 i 50 na 100) są ustaloną konwencją, nie wynikiem badania.",
+      "text_en": "The state of a project has a colour, an icon and a word together, and its thresholds (80 and 50 in 100) are a fixed convention, not a research finding.",
+      "screen": "Pulpit · verdict; Start · project tiles",
+      "evidence": [
+        "E38"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D03",
+      "text": "Every change to a project, even a pure re-ordering of the plan, happens only after the manager approves it.",
+      "text_pl": "Każda zmiana w projekcie, nawet samo przestawienie kolejności zadań, następuje dopiero po zatwierdzeniu przez kierownika.",
+      "text_en": "Every change to a project, even just a new order of the tasks, happens only after the manager approves it.",
+      "screen": "Decyzja · Zatwierdź; \"Jak Sentinel podejmuje decyzje\"",
+      "evidence": [
+        "E08",
+        "E11",
+        "E28",
+        "E30",
+        "E40",
+        "E44",
+        "E45",
+        "E50",
+        "E52"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D04",
+      "text": "A proposal is never executed by silence: it shows its validity date (\"ważna do\") and the chance lost per day of waiting.",
+      "text_pl": "Propozycja nigdy nie wykonuje się przez milczenie: pokazuje, do kiedy jest ważna i ile szansy kosztuje każdy dzień czekania.",
+      "text_en": "A proposal is never carried out by silence: it shows until when it is valid and how much chance each day of waiting costs.",
+      "screen": "Decyzja · ważna do, Koszt zwłoki; Start · Decyzje do podjęcia",
+      "evidence": [
+        "E40",
+        "E52"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D05",
+      "text": "The justification of a proposal is written by code from the numbers and is contrastive (the chosen option against the best alternative); the AI explanation is an optional extra.",
+      "text_pl": "Uzasadnienie propozycji pisze kod z liczb i porównuje wybraną możliwość z najlepszą alternatywą; wyjaśnienie AI jest tylko dodatkiem.",
+      "text_en": "The reasoning of a proposal is written by code from the numbers and compares the chosen option with the best alternative; an AI explanation is only an extra.",
+      "screen": "Decyzja · Uzasadnienie, Szczegóły",
+      "evidence": [
+        "E06",
+        "E13",
+        "E29",
+        "E51"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D06",
+      "text": "\"Popraw\" lets the manager change the one parameter the model can evaluate, and the effects are recomputed before approval.",
+      "text_pl": "„Popraw” pozwala zmienić jeden parametr, a skutki są przeliczane przed zatwierdzeniem.",
+      "text_en": "“Adjust” lets you change one parameter, and the effects are recalculated before approval.",
+      "screen": "Decyzja · Popraw",
+      "evidence": [
+        "E04",
+        "E41"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D07",
+      "text": "Rejecting a proposal takes one of four reasons or a free text, and the reason is kept in the archive.",
+      "text_pl": "Odrzucenie propozycji wymaga jednego z czterech powodów albo własnego opisu, a powód trafia do archiwum.",
+      "text_en": "Rejecting a proposal takes one of four reasons or your own words, and the reason is kept in the archive.",
+      "screen": "Decyzja · Odrzuć",
+      "evidence": [
+        "E12",
+        "E41"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D08",
+      "text": "Every proposal, decision, correction and reason is recorded with its time and actor (\"Ty\" or \"Sentinel\").",
+      "text_pl": "Każda propozycja, decyzja, poprawka i powód są zapisane z czasem i autorem („Ty” albo „Sentinel”).",
+      "text_en": "Every proposal, decision, adjustment and reason is recorded with its time and author (“You” or “Sentinel”).",
+      "screen": "Dziennik; project tab Decyzje",
+      "evidence": [
+        "E12",
+        "E26"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D09",
+      "text": "There are no per-person performance metrics; the team view shows workload only.",
+      "text_pl": "Nie ma wskaźników wydajności osób; widok zespołu pokazuje tylko obciążenie.",
+      "text_en": "There are no performance scores for people; the team view shows workload only.",
+      "screen": "Plan · Zespół",
+      "evidence": [
+        "E18",
+        "E20",
+        "E21",
+        "E22"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D10",
+      "text": "There is no question about how often a person is absent: one team-wide default from public Polish absence statistics, and absences are stored as availability only.",
+      "text_pl": "Sentinel nie pyta, jak często ktoś bywa nieobecny: przyjmuje jedną wartość dla zespołu z publicznych statystyk, a nieobecności zapisuje tylko jako dostępność.",
+      "text_en": "Sentinel does not ask how often someone is absent: it uses one value for the whole team from public statistics and stores absences as availability only.",
+      "screen": "Nowy projekt · Zespół; Raport",
+      "evidence": [
+        "E32"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D11",
+      "text": "Speech is transcribed into a draft whose recognised items appear as \"Do potwierdzenia\" cards, unchecked by default.",
+      "text_pl": "Mowa zamienia się w szkic, a rozpoznane pozycje trafiają na karty „Do potwierdzenia”, domyślnie niezaznaczone.",
+      "text_en": "Speech becomes a draft, and the recognised items go to “To confirm” cards, unticked by default.",
+      "screen": "Raport · 🎤 and the cards",
+      "evidence": [
+        "E03",
+        "E39",
+        "E47"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D12",
+      "text": "The language model is local (Ollama) or in the cloud (Groq, OpenRouter) by the user's choice, with no tools in either case; caches of real messages keep no prompts.",
+      "text_pl": "Model AI jest lokalny albo w chmurze, do wyboru, w obu przypadkach bez narzędzi, a pamięć podręczna prawdziwych wiadomości nie przechowuje ich treści.",
+      "text_en": "The AI model is local or in the cloud, as you choose, without tools in either case, and the cache of real messages does not keep their content.",
+      "screen": "Ustawienia · Model AI",
+      "evidence": [
+        "E32",
+        "E42"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D13",
+      "text": "Every number the manager sees (chance, finish date, budget, effect of a decision) comes from the schedule code and the Monte Carlo simulation, never from the language model.",
+      "text_pl": "Każdą liczbę, którą widzisz (szansa, data końca, budżet, skutek decyzji), liczy kod harmonogramu i symulacja, nigdy model językowy.",
+      "text_en": "Every number you see (chance, end date, budget, effect of a decision) is computed by the schedule code and the simulation, never by the language model.",
+      "screen": "Pulpit; Raport · Wpływ na projekt; Decyzja · Skutek",
+      "evidence": [
+        "E14",
+        "E15",
+        "E48",
+        "E49",
+        "E50"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D14",
+      "text": "Raporty: AI edits a report a person wrote in tracked-changes mode, and each change is accepted or rejected on its own.",
+      "text_pl": "Raporty: AI redaguje raport napisany przez człowieka w trybie śledzenia zmian, a każdą zmianę przyjmujesz lub odrzucasz osobno.",
+      "text_en": "Reports: AI edits a report a person wrote with tracked changes, and you accept or reject each change on its own.",
+      "screen": "Raporty · Śledzenie zmian (v3)",
+      "evidence": [
+        "E01",
+        "E04",
+        "E05",
+        "E43"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D15",
+      "text": "Raporty: a fact guard in code checks that numbers, dates and names survive the edit and marks every one that changed.",
+      "text_pl": "Raporty: strażnik faktów w kodzie sprawdza, czy liczby, daty i nazwy przetrwały redakcję, i oznacza każdą zmienioną.",
+      "text_en": "Reports: a fact guard in code checks that numbers, dates and names survive the edit and marks every one that changed.",
+      "screen": "Raporty · Strażnik faktów (v3)",
+      "evidence": [
+        "E03",
+        "E14",
+        "E15"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D16",
+      "text": "Raporty: versions of a report for different audiences are tracked-changes edits of the person's text, each reviewed like the first.",
+      "text_pl": "Raporty: wersje raportu dla różnych odbiorców to redakcje tekstu autora ze śledzeniem zmian, przeglądane jak pierwsza.",
+      "text_en": "Reports: versions for different audiences are tracked-changes edits of the author's text, each reviewed like the first.",
+      "screen": "Raporty · Wersje dla odbiorców (v3)",
+      "evidence": [
+        "E01",
+        "E02",
+        "E05",
+        "E43"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D17",
+      "text": "Finanse: AI summarises the budget and its deviations from numbers computed by code and has no right to approve or change a figure.",
+      "text_pl": "Finanse: AI streszcza budżet i odchylenia na podstawie liczb z kodu i nie ma prawa zatwierdzać ani zmieniać żadnej kwoty.",
+      "text_en": "Finance: AI summarises the budget and its deviations from numbers computed by code and has no right to approve or change any figure.",
+      "screen": "Finanse · Podsumowanie (v3)",
+      "evidence": [
+        "E02",
+        "E14",
+        "E15",
+        "E16",
+        "E17"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D18",
+      "text": "Ludzie: features deliberately absent, each named with its reason: performance scores, a ranking of people for substitution, mood or emotion analysis, reasons for absence.",
+      "text_pl": "Ludzie: celowo nie ma ocen wydajności, rankingu ludzi do zastępstw, analizy nastroju ani powodów nieobecności, a każdy z tych braków ma swój powód.",
+      "text_en": "People: on purpose there are no performance scores, no ranking of people for substitutions, no mood analysis and no reasons for absence, each for a stated reason.",
+      "screen": "Ludzie · Czego tu celowo nie ma (v3)",
+      "evidence": [
+        "E18",
+        "E19",
+        "E20",
+        "E22",
+        "E32",
+        "E46"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D19",
+      "text": "Uprawnienia AI: the language model has no tools and no permissions; it returns JSON validated against a schema, which code compiles and a person approves.",
+      "text_pl": "Uprawnienia AI: model językowy nie ma narzędzi ani uprawnień; zwraca dane w stałym formacie, które sprawdza kod, a zatwierdza człowiek.",
+      "text_en": "AI permissions: the language model has no tools and no permissions; it returns data in a fixed format that code checks and a person approves.",
+      "screen": "Uprawnienia AI (v3)",
+      "evidence": [
+        "E09",
+        "E23",
+        "E24",
+        "E25",
+        "E33"
+      ],
+      "status": "current",
+      "basis": "normative"
+    },
+    {
+      "id": "D20",
+      "text": "Mapa granic: twelve company processes are placed in three zones by six criteria instead of the single criterion \"AI only where it saves time\".",
+      "text_pl": "Mapa granic: sześć kryteriów dzieli dwanaście procesów firmy na trzy strefy zamiast jednego kryterium „AI tam, gdzie oszczędza czas”.",
+      "text_en": "Boundary map: six criteria place twelve company processes in three zones instead of the single criterion “AI where it saves time”.",
+      "screen": "Mapa granic (v3)",
+      "evidence": [
+        "E02",
+        "E08",
+        "E17",
+        "E26",
+        "E27",
+        "E28",
+        "E31",
+        "E44",
+        "E45"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D21",
+      "text": "Projekty: a \"Twoja ocena\" step asks for the manager's own estimate before Sentinel's recommendation is shown (cognitive forcing).",
+      "text_pl": "Decyzja: krok „Twoja ocena” prosi o własny wybór, zanim Sentinel pokaże rekomendację; można go pominąć i wyłączyć.",
+      "text_en": "Decision: a “Your assessment” step asks for your own choice before Sentinel shows its recommendation; you can skip it or switch it off.",
+      "screen": "Projekty · Decyzja (v3)",
+      "evidence": [
+        "E06",
+        "E07",
+        "E11",
+        "E29",
+        "E30"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D22",
+      "text": "A \"Dowód\" point at every feature opens a short verified quote with its stance, a summary of the study and one sentence on what follows for Sentinel.",
+      "text_pl": "Punkt „Dowód” przy każdej funkcji pokazuje krótki sprawdzony cytat ze stanowiskiem, streszczenie badania i jedno zdanie o tym, co z tego wynika dla Sentinela.",
+      "text_en": "An “Evidence” point at every feature shows a short checked quote with its stance, a summary of the study and one sentence on what follows for Sentinel.",
+      "screen": "every v3 module",
+      "evidence": [
+        "E06",
+        "E34",
+        "E35"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D23",
+      "text": "Check-in messages are turned into progress data by the language model and count only after a person confirms them.",
+      "text_pl": "Wiadomości o postępie zamienia na dane model językowy, ale liczą się dopiero po potwierdzeniu przez człowieka.",
+      "text_en": "Progress messages are turned into data by the language model, but they count only after a person confirms them.",
+      "screen": "Raport · Do potwierdzenia",
+      "evidence": [
+        "E47",
+        "E51"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    },
+    {
+      "id": "D24",
+      "text": "The language model never chooses the action: candidate actions are evaluated by simulation and the best is proposed to the manager.",
+      "text_pl": "Model językowy nigdy nie wybiera działania: możliwości ocenia symulacja, a najlepszą proponuje się kierownikowi.",
+      "text_en": "The language model never chooses the action: the simulation evaluates the options and the best one is proposed to the manager.",
+      "screen": "Decyzja · Wszystkie rozważone możliwości",
+      "evidence": [
+        "E09",
+        "E10",
+        "E51"
+      ],
+      "status": "current",
+      "basis": "empirical"
+    }
+  ]
+}

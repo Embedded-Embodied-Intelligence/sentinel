@@ -1,8 +1,10 @@
 # Decision catalogue (v3)
 
 Every design decision a user of Sentinel sees, with the evidence for and against it from the
-registry (`docs/research/evidence/registry.json`, WP18). The interface's "Dowód" points and the
-presentation read the same ids.
+registry (`src/sentinel/evidence/data/registry.json`, WP18). The same table as data, with the
+sentences the interface shows in Polish and English (`text_pl`, `text_en`), is
+`src/sentinel/evidence/data/decisions.json` (WP19, ADR-0037); a test checks that both agree. The
+interface's "Dowód" points and the presentation read the same ids.
 
 - **Evidence**: registry ids with the stance: `+` supports (wspiera), `−` challenges (podważa),
   `~` nuances (niuansuje); `*` marks an item without a verified quote (`summary_only`). The list
@@ -35,7 +37,7 @@ presentation read the same ids.
 | D18 | Ludzie: features deliberately absent, each named with its reason: performance scores, a ranking of people for substitution, mood or emotion analysis, reasons for absence. | Ludzie · Czego tu celowo nie ma (v3) | E18+, E19+, E20+, E22+*, E32+, E46~ | current | normative |
 | D19 | Uprawnienia AI: the language model has no tools and no permissions; it returns JSON validated against a schema, which code compiles and a person approves. | Uprawnienia AI (v3) | E09−, E23+, E24+, E25~, E33+* | current | normative |
 | D20 | Mapa granic: twelve company processes are placed in three zones by six criteria instead of the single criterion "AI only where it saves time". | Mapa granic (v3) | E02~, E08+, E17+, E26+, E27~, E28+*, E31~, E44−, E45+ | current | empirical |
-| D21 | Projekty: a "Twoja ocena" step asks for the manager's own estimate before Sentinel's recommendation is shown (cognitive forcing). | Projekty · Decyzja (v3) | E06−, E07+, E11+, E29+, E30+* | proposed | empirical |
+| D21 | Projekty: a "Twoja ocena" step asks for the manager's own estimate before Sentinel's recommendation is shown (cognitive forcing). | Projekty · Decyzja (v3) | E06−, E07+, E11+, E29+, E30+* | current | empirical |
 | D22 | A "Dowód" point at every feature opens a short verified quote with its stance, a summary of the study and one sentence on what follows for Sentinel. | every v3 module | E06−, E34~, E35+ | current | empirical |
 | D23 | Check-in messages are turned into progress data by the language model and count only after a person confirms them. | Raport · Do potwierdzenia | E47~, E51+ | current | empirical |
 | D24 | The language model never chooses the action: candidate actions are evaluated by simulation and the best is proposed to the manager. | Decyzja · Wszystkie rozważone możliwości | E09−, E10~, E51+ | current | empirical |
@@ -51,5 +53,6 @@ presentation read the same ids.
   of correctness) challenges D05 and D22, E43 (co-writing shifts opinions) challenges D14 and
   D16, E44 (human–AI teams are on average worse than the better of the two) challenges D03 and
   D20, and our own E52 (waiting for approval costs on-time finishes in simulation) nuances D03.
-- D21 is proposed: E07 shows that cognitive forcing reduces over-reliance but is rated worst by
-  its users, so it needs a usability test before it becomes a decision.
+- D21 is current since WP19: E07 shows that cognitive forcing reduces over-reliance but is rated
+  worst by its users, so the step can be skipped ("Pokaż od razu") and switched off in the
+  project settings ("Najpierw moja ocena", on by default); a usability test is still open.

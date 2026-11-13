@@ -1,15 +1,24 @@
 """The evidence registry, the decision catalogue and the boundary map (WP18): their rules, their
 coverage, how they point at each other, our own numbers against paper/generated/numbers.tex,
-and the quote normalisation. The quotes against the fetched sources: test_evidence_sources.py."""
+and the quote normalisation; WP19: the data ship with the package, the catalogue's table equals
+its data, and our own texts are complete in English and free of internal terms. The quotes
+against the fetched sources: test_evidence_sources.py."""
 
 import hashlib
+import json
 import re
+import subprocess
+import sys
 import tomllib
+import zipfile
 from collections import Counter
+from importlib.resources import files
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from sentinel.app.terms import internal_terms
 from sentinel.evidence import (
     EvidenceItem,
     Registry,
@@ -26,6 +35,8 @@ from sentinel.evidence.text import markup_text
 
 MODULES = ("raporty", "projekty", "finanse", "ludzie", "uprawnienia", "mapa")
 MACRO = re.compile(r"^\\newcommand\{\\([A-Za-z]+)\}\{(.*)\}$")
+DATA_FILES = ("registry.json", "decisions.json", "boundary-map.json")
+DECISION_ROW = re.compile(r"^\|\s*(D\d{2})\s*\|")
 
 
 @pytest.fixture(scope="module")
@@ -115,7 +126,86 @@ def test_decisions_and_items_point_at_each_other(registry: Registry) -> None:
     for item in registry.items:
         for decision_id in item.decisions:
             assert decision_id in ids and item.id in decisions[ids.index(decision_id)].evidence
-    assert [d.id for d in decisions if d.status == "proposed"] == ["D21"]
+    assert [d.id for d in decisions if d.status == "proposed"] == []  # D21 since WP19
+
+
+def test_the_catalogue_table_is_the_catalogue_data() -> None:
+    """docs/research/decisions.md shows the data the interface reads (decisions.json)."""
+    rows = []
+    for line in (ROOT / "docs/research/decisions.md").read_text(encoding="utf-8").splitlines():
+        if DECISION_ROW.match(line):
+            ident, text, screen, evidence, status, basis_ = (
+                cell.strip() for cell in line.strip().strip("|").split("|")
+            )
+            rows.append((ident, text, screen, re.findall(r"E\d{2}", evidence), status, basis_))
+    data = [(d.id, d.text, d.screen, d.evidence, d.status, d.basis) for d in load_decisions()]
+    assert rows == data
+
+
+def test_the_data_ship_inside_the_package() -> None:
+    package = files("sentinel.evidence") / "data"
+    for name in DATA_FILES:
+        assert json.loads(package.joinpath(name).read_text(encoding="utf-8")), name
+
+
+def test_our_own_texts_are_in_both_languages_and_plain(registry: Registry) -> None:
+    """Every text we wrote (not a quote, not a citation) has an English twin and no internal
+    term, since the interface shows it (v3 spec, sections 2 and 9)."""
+    texts: list[tuple[str, str | None]] = []
+    for item in registry.items:
+        for pl, en in (
+            (item.title_pl, item.title_en),
+            (item.gloss_pl, item.gloss_en),
+            (item.summary_pl, item.summary_en),
+            (item.implication_pl, item.implication_en),
+            (item.caveats_pl, item.caveats_en),
+            *((f.label_pl, f.label_en) for f in item.figures),
+        ):
+            assert (pl is None) == (en is None) and (pl is None or pl != en), item.id
+            texts += [(item.id, pl), (item.id, en)]
+    for decision in load_decisions():
+        texts += [(decision.id, decision.text_pl), (decision.id, decision.text_en)]
+    boundary = load_boundary_map()
+    for c in boundary.criteria:
+        texts += [(f"C{c.id}", t) for t in (c.name_en, c.short_pl, c.short_en, c.question_en)]
+    for p in boundary.processes:
+        texts += [(p.id, t) for t in (p.name_pl, p.name_en, p.reason_pl, p.reason_en)]
+        texts += [(p.id, p.sentinel_pl), (p.id, p.sentinel_en)]
+        texts += [(p.id, cell.reason_pl) for cell in p.cells]
+        texts += [(p.id, cell.reason_en) for cell in p.cells]
+    for ident, text in texts:
+        assert text is None or internal_terms(text) == [], (ident, text)
+
+
+@pytest.mark.slow
+def test_the_built_wheel_carries_and_loads_the_research_data(tmp_path: Path) -> None:
+    """The wheel (also what the Docker image installs) holds the data, and the package loads
+    them from where it is installed, not from the repository."""
+    subprocess.run(
+        ["uv", "build", "--wheel", "--out-dir", str(tmp_path)],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    (wheel,) = tmp_path.glob("sentinel-*.whl")
+    with zipfile.ZipFile(wheel) as archive:
+        names = set(archive.namelist())
+        assert {f"sentinel/evidence/data/{name}" for name in DATA_FILES} <= names
+        archive.extractall(tmp_path / "site")
+    probe = (
+        "import sys; sys.path.insert(0, sys.argv[1]); "
+        "from sentinel.evidence import research; import sentinel.evidence as e; "
+        "assert e.__file__.startswith(sys.argv[1]), e.__file__; "
+        "r, d, m = research(); print(len(r.items), len(d), len(m.processes))"
+    )
+    done = subprocess.run(
+        [sys.executable, "-c", probe, str(tmp_path / "site")],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+    )
+    assert done.stdout.split() == ["52", "24", "12"]
 
 
 def test_every_cell_of_the_boundary_map_has_a_zone_reason_and_evidence(registry: Registry) -> None:

@@ -3,8 +3,9 @@
 Where may AI work in a company and its management, where must a person stay? Sentinel answers
 with six criteria instead of the single criterion "AI only where it saves time" (E27: in
 management, automation cannot be neatly separated from augmentation). The same content, in
-Polish for the interface's "Mapa granic", is `docs/research/boundary-map.json`; evidence ids
-refer to `docs/research/evidence/registry.json`.
+Polish and English for the interface's "Mapa granic", is
+`src/sentinel/evidence/data/boundary-map.json`; evidence ids refer to
+`src/sentinel/evidence/data/registry.json` (both ship with the package, ADR-0037).
 
 ## Zones
 

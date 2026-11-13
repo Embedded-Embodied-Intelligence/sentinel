@@ -30,5 +30,5 @@ repos:
         # Files full of SHA-256 digests: run and summary manifests, the paper artifacts'
         # manifest, the regression digests of the engine and of Sentinel, and the evidence
         # registry (the digest of each fetched source, WP18).
-        exclude: ^(results/.*/(summary_)?manifest\.json|paper/generated/MANIFEST\.json|tests/fixtures/(engine_regression|sentinel_identity)\.json|docs/research/evidence/registry\.json)$
+        exclude: ^(results/.*/(summary_)?manifest\.json|paper/generated/MANIFEST\.json|tests/fixtures/(engine_regression|sentinel_identity)\.json|src/sentinel/evidence/data/registry\.json)$
         language: system

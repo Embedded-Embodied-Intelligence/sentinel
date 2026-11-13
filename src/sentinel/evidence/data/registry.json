@@ -281,6 +281,7 @@
       "id": "E01",
       "kind": "empirical",
       "title_pl": "ChatGPT w pisaniu zawodowym: −40% czasu, +18% jakości",
+      "title_en": "ChatGPT in professional writing: −40% time, +18% quality",
       "modules": [
         "raporty"
       ],
@@ -297,6 +298,7 @@
         "The average time taken decreased by 40% and output quality rose by 18%"
       ],
       "gloss_pl": "ChatGPT skrócił czas pisania o 40% i podniósł jakość tekstów o 18%; różnice między pracownikami zmalały.",
+      "gloss_en": "ChatGPT cut writing time by 40% and raised the quality of texts by 18%; the gaps between workers narrowed.",
       "location": "Abstract",
       "citation": "Noy, S., & Zhang, W. (2023). Experimental evidence on the productivity effects of generative artificial intelligence. Science, 381(6654), 187–192.",
       "doi": "10.1126/science.adh2586",
@@ -304,7 +306,9 @@
       "open_access": false,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Prerejestrowany eksperyment online: 453 profesjonalistów z wyższym wykształceniem wykonywało zawodowe zadania pisarskie, połowa losowo z dostępem do ChatGPT. Czas pracy spadł o 40%, jakość oceniana przez oceniających wzrosła o 18%, a nierówności między pracownikami zmalały.",
+      "summary_en": "A preregistered online experiment: 453 college-educated professionals did occupation-specific writing tasks, half of them randomly given access to ChatGPT. Time fell by 40%, quality as rated by evaluators rose by 18%, and inequality between workers decreased.",
       "implication_pl": "Redakcja tekstu napisanego przez człowieka to zadanie, w którym AI realnie pomaga, więc moduł Raporty z niej korzysta, ale z kontrolą faktów, bo lepszy tekst nie znaczy poprawnych liczb.",
+      "implication_en": "Editing a text a person wrote is a task where AI really helps, so Reports uses it, but with a fact check, because a better text does not mean correct numbers.",
       "verification": {
         "status": "verified",
         "source_file": "noy2023_pubmed.xml",
@@ -317,6 +321,7 @@
       "id": "E02",
       "kind": "empirical",
       "title_pl": "Postrzępiona granica możliwości AI",
+      "title_en": "The jagged frontier of AI capabilities",
       "modules": [
         "raporty",
         "finanse",
@@ -337,6 +342,7 @@
         "seemingly similar in difficulty level, are outside the current capability of AI"
       ],
       "gloss_pl": "Możliwości AI tworzą „postrzępioną granicę”: zadania pozornie podobnie trudne leżą po różnych jej stronach.",
+      "gloss_en": "AI capabilities form a “jagged frontier”: tasks of seemingly similar difficulty lie on different sides of it.",
       "location": "Abstract",
       "citation": "Dell'Acqua, F., McFowland III, E., Mollick, E. R., Lifshitz-Assaf, H., Kellogg, K., Rajendran, S., Krayer, L., Candelon, F., & Lakhani, K. R. (2023). Navigating the jagged technological frontier: Field experimental evidence of the effects of AI on knowledge worker productivity and quality (Harvard Business School Working Paper No. 24-013).",
       "doi": "10.2139/ssrn.4573321",
@@ -344,7 +350,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Prerejestrowany eksperyment z 758 konsultantami BCG (ok. 7% konsultantów tego szczebla), losowo bez AI, z GPT-4 albo z GPT-4 i wprowadzeniem do pisania promptów. W 18 zadaniach „wewnątrz granicy” grupy z AI wykonały o 12,2% więcej zadań, o 25,1% szybciej i z jakością wyższą o ponad 40%; w zadaniu „poza granicą” trafność spadła o 19 punktów procentowych.",
+      "summary_en": "A preregistered experiment with 758 BCG consultants (about 7% of consultants at that level), randomly without AI, with GPT-4, or with GPT-4 and an introduction to writing prompts. On 18 tasks “inside the frontier” the groups with AI completed 12.2% more tasks, 25.1% faster and at over 40% higher quality; on a task “outside the frontier” correctness fell by 19 percentage points.",
       "implication_pl": "Granicy nie wyznacza trudność zadania, tylko jego rodzaj, dlatego Sentinel dzieli zadania według kryteriów (praca językowa tak, liczby i nowy osąd nie), a nie według tego, czy „wyglądają na łatwe”.",
+      "implication_en": "The frontier is set by the kind of task, not by its difficulty, so Sentinel divides tasks by criteria (language work yes, numbers and new judgement no), not by whether they “look easy”.",
       "verification": {
         "status": "verified",
         "source_file": "dellacqua2023_hbs_wp.pdf",
@@ -357,6 +365,7 @@
       "id": "E03",
       "kind": "theoretical",
       "title_pl": "Generowanie tekstu skłonne do halucynacji",
+      "title_en": "Text generation is prone to hallucination",
       "modules": [
         "raporty"
       ],
@@ -373,6 +382,7 @@
         "prone to hallucinate unintended text"
       ],
       "gloss_pl": "Generowanie tekstu przez sieci neuronowe ma skłonność do „halucynowania” treści, których nie zamierzono.",
+      "gloss_en": "Neural text generation tends to “hallucinate” content that was not intended.",
       "location": "Abstract",
       "citation": "Ji, Z., Lee, N., Frieske, R., Yu, T., Su, D., Xu, Y., Ishii, E., Bang, Y. J., Madotto, A., & Fung, P. (2023). Survey of hallucination in natural language generation. ACM Computing Surveys, 55(12), Article 248.",
       "doi": "10.1145/3571730",
@@ -380,7 +390,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Przegląd literatury o halucynacjach w streszczaniu, dialogu, odpowiadaniu na pytania, generowaniu tekstu z danych i tłumaczeniu, z metrykami i metodami ograniczania. Streszczanie abstrakcyjne jest jednym z głównych miejsc niezgodności wyniku z tekstem źródłowym.",
+      "summary_en": "A survey of hallucination in summarisation, dialogue, question answering, data-to-text generation and translation, with metrics and ways to reduce it. Abstractive summarisation is one of the main places where the output disagrees with the source text.",
       "implication_pl": "Skoro redakcja może dopisać nieistniejące fakty, kod Sentinela porównuje liczby, daty i nazwy przed i po redakcji, zamiast ufać modelowi.",
+      "implication_en": "Since editing can add facts that do not exist, Sentinel's code compares numbers, dates and names before and after the edit instead of trusting the model.",
       "verification": {
         "status": "verified",
         "source_file": "ji2023_arxiv.pdf",
@@ -393,6 +405,7 @@
       "id": "E04",
       "kind": "empirical",
       "title_pl": "Możliwość poprawienia algorytmu zwiększa jego użycie",
+      "title_en": "Being able to adjust an algorithm increases its use",
       "modules": [
         "raporty",
         "projekty"
@@ -412,6 +425,7 @@
         "even when participants were severely restricted"
       ],
       "gloss_pl": "Ludzie chętniej korzystali z niedoskonałego algorytmu, gdy mogli zmienić jego wynik, nawet tylko trochę, i osiągali wtedy lepsze wyniki.",
+      "gloss_en": "People used an imperfect algorithm more readily when they could change its output, even slightly, and then did better.",
       "location": "Abstract (wersja opublikowana, kopia autorów)",
       "citation": "Dietvorst, B. J., Simmons, J. P., & Massey, C. (2018). Overcoming algorithm aversion: People will use imperfect algorithms if they can (even slightly) modify them. Management Science, 64(3), 1155–1170.",
       "doi": "10.1287/mnsc.2016.2643",
@@ -419,7 +433,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Trzy eksperymenty prognostyczne z nagrodą za trafność: uczestnicy wybierali między własną prognozą a prognozą algorytmu przygotowanego przez ekspertów. Możliwość zmiany prognoz algorytmu, nawet mocno ograniczona, wyraźnie zwiększyła jego użycie i poprawiła wyniki.",
+      "summary_en": "Three forecasting experiments with a reward for accuracy: participants chose between their own forecast and that of an algorithm built by experts. Being able to modify the algorithm's forecasts, even in a very limited way, clearly increased its use and improved the results.",
       "implication_pl": "Sentinel daje „Popraw” i tryb śledzenia zmian zamiast „przyjmij albo odrzuć całość”, bo kontrola nad wynikiem zwiększa rozsądne korzystanie z algorytmu.",
+      "implication_en": "Sentinel offers “Adjust” and tracked changes instead of “accept or reject everything”, because control over the result increases sensible use of the algorithm.",
       "verification": {
         "status": "verified",
         "source_file": "dietvorst2018_published.pdf",
@@ -432,6 +448,7 @@
       "id": "E05",
       "kind": "empirical",
       "title_pl": "AI pomaga głównie nowicjuszom",
+      "title_en": "AI helps mainly newcomers",
       "modules": [
         "raporty"
       ],
@@ -450,6 +467,7 @@
         "minimal impact on experienced and highly skilled workers"
       ],
       "gloss_pl": "Asystent AI podniósł wydajność średnio o 14%, u nowicjuszy o 34%, a u doświadczonych prawie wcale.",
+      "gloss_en": "An AI assistant raised productivity by 14% on average, by 34% for novices and hardly at all for experienced workers.",
       "location": "Abstract (NBER Working Paper 31161)",
       "citation": "Brynjolfsson, E., Li, D., & Raymond, L. (2025). Generative AI at work. The Quarterly Journal of Economics, 140(2), 889–942. (NBER Working Paper No. 31161, 2023)",
       "doi": "10.1093/qje/qjae044",
@@ -457,7 +475,9 @@
       "open_access": true,
       "licence": "NBER: krótkie fragmenty wolno cytować z pełnym podaniem źródła",
       "summary_pl": "Rozłożone w czasie wdrożenie asystenta opartego na generatywnej AI u 5179 konsultantów obsługi klienta (dane z wersji NBER). Liczba spraw rozwiązanych na godzinę wzrosła średnio o 14%, u najmniej doświadczonych o 34%, u najlepszych efekt był minimalny.",
+      "summary_en": "A staggered introduction of an assistant based on generative AI for 5,179 customer support agents (data from the NBER version). Issues resolved per hour rose by 14% on average and by 34% for the least experienced; for the best the effect was minimal.",
       "implication_pl": "Redakcja w module Raporty najbardziej pomoże słabszym autorom, a ekspertowi głównie oszczędzi czas, więc jej wartość trzeba oceniać osobno dla różnych użytkowników.",
+      "implication_en": "Editing in Reports will help weaker writers most and mainly save an expert's time, so its value has to be judged separately for different users.",
       "verification": {
         "status": "verified",
         "source_file": "brynjolfsson2023_nber_w31161.pdf",
@@ -470,6 +490,7 @@
       "id": "E06",
       "kind": "empirical",
       "title_pl": "Wyjaśnienia AI zwiększają akceptację niezależnie od poprawności",
+      "title_en": "AI explanations raise acceptance regardless of correctness",
       "modules": [
         "projekty"
       ],
@@ -488,6 +509,7 @@
         "regardless of its correctness"
       ],
       "gloss_pl": "Wyjaśnienia nie poprawiły wyników zespołu człowiek+AI, ale zwiększyły szansę przyjęcia rekomendacji AI niezależnie od tego, czy była trafna.",
+      "gloss_en": "Explanations did not improve the human+AI team's results but increased the chance of accepting the AI's recommendation whether or not it was right.",
       "location": "Abstract",
       "citation": "Bansal, G., Wu, T., Zhou, J., Fok, R., Nushi, B., Kamar, E., Ribeiro, M. T., & Weld, D. (2021). Does the whole exceed its parts? The effect of AI explanations on complementary team performance. In Proceedings of the 2021 CHI Conference on Human Factors in Computing Systems.",
       "doi": "10.1145/3411764.3445717",
@@ -495,7 +517,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Badania z udziałem ludzi na trzech zbiorach danych, w których AI miała trafność porównywalną z ludźmi. Zespół człowiek+AI był lepszy od każdego z osobna, ale wyjaśnienia tego nie poprawiły; zwiększyły za to ślepe przyjmowanie rekomendacji.",
+      "summary_en": "Studies with people on three datasets in which the AI was about as accurate as people. The human+AI team beat either alone, but explanations did not improve that; instead they increased blind acceptance of recommendations.",
       "implication_pl": "„Uzasadnienie” w Sentinelu nie może być perswazją: pisze je kod z liczb, pokazuje alternatywę i niepewność, a wyjaśnienie AI jest tylko dodatkiem na żądanie.",
+      "implication_en": "The “Reasoning” in Sentinel must not be persuasion: code writes it from the numbers, shows the alternative and the uncertainty, and an AI explanation is only an extra on request.",
       "verification": {
         "status": "verified",
         "source_file": "bansal2021_arxiv.pdf",
@@ -508,6 +532,7 @@
       "id": "E07",
       "kind": "empirical",
       "title_pl": "Najpierw własna ocena: wymuszanie myślenia ogranicza nadmierne zaufanie",
+      "title_en": "Your own judgement first: cognitive forcing reduces over-reliance",
       "modules": [
         "projekty"
       ],
@@ -525,6 +550,7 @@
         "the least favorable subjective ratings"
       ],
       "gloss_pl": "Wymuszanie własnego namysłu istotnie ograniczyło nadmierne poleganie na AI, ale użytkownicy ocenili te projekty najgorzej.",
+      "gloss_en": "Forcing people to think for themselves significantly reduced over-reliance on AI, but users rated these designs worst.",
       "location": "Abstract",
       "citation": "Buçinca, Z., Malaya, M. B., & Gajos, K. Z. (2021). To trust or to think: Cognitive forcing functions can reduce overreliance on AI in AI-assisted decision-making. Proceedings of the ACM on Human-Computer Interaction, 5(CSCW1), Article 188.",
       "doi": "10.1145/3449287",
@@ -532,7 +558,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Eksperyment (N=199, Amazon Mechanical Turk) porównał trzy projekty „cognitive forcing” z dwoma prostymi wariantami wyjaśnialnej AI i warunkiem bez AI. Wymuszanie namysłu istotnie zmniejszyło nadmierne poleganie na AI, kosztem gorszych ocen subiektywnych.",
-      "implication_pl": "Proponowany krok „Twoja ocena” przed rekomendacją Sentinela ma oparcie w danych, ale będzie mniej lubiany, więc trzeba go przetestować z użytkownikami.",
+      "summary_en": "An experiment (N=199, Amazon Mechanical Turk) compared three cognitive forcing designs with two simple explainable-AI variants and a condition without AI. Cognitive forcing significantly reduced over-reliance on AI, at the cost of worse subjective ratings.",
+      "implication_pl": "Krok „Twoja ocena” przed rekomendacją Sentinela ma oparcie w danych, ale będzie mniej lubiany, dlatego można go pominąć i wyłączyć, a jego odbiór trzeba sprawdzić z użytkownikami.",
+      "implication_en": "The “Your assessment” step before Sentinel's recommendation has data behind it but will be less liked, so it can be skipped and switched off, and how people receive it has to be tested with users.",
       "verification": {
         "status": "verified",
         "source_file": "bucinca2021_arxiv.pdf",
@@ -545,6 +573,7 @@
       "id": "E08",
       "kind": "empirical",
       "title_pl": "Ludzie wolą, by prowadził człowiek, a maszyna pomagała",
+      "title_en": "People prefer a person to lead and the machine to help",
       "modules": [
         "projekty",
         "mapa"
@@ -564,6 +593,7 @@
         "humans play the leading role"
       ],
       "gloss_pl": "Ludzie rzadko chcą pełnej kontroli AI; wolą rozwiązania, w których prowadzi człowiek, a maszyna pomaga.",
+      "gloss_en": "People rarely want full AI control; they prefer designs where the person leads and the machine helps.",
       "location": "Abstract",
       "citation": "Lubars, B., & Tan, C. (2019). Ask not what AI can do, but what AI should do: Towards a framework of task delegability. In Advances in Neural Information Processing Systems 32 (NeurIPS 2019).",
       "doi": null,
@@ -571,7 +601,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Autorzy proponują cztery czynniki delegowania zadań na AI (motywacja, trudność, ryzyko, zaufanie), budują zbiór 100 zadań i przeprowadzają ankietę. Respondenci rzadko wybierali pełną automatyzację, a zaufanie najsilniej wiązało się z preferowanym poziomem delegowania.",
+      "summary_en": "The authors propose four factors of delegating tasks to AI (motivation, difficulty, risk, trust), build a set of 100 tasks and run a survey. Respondents rarely chose full automation, and trust was most strongly linked to the preferred level of delegation.",
       "implication_pl": "Skala „AI samodzielnie / AI z człowiekiem / tylko człowiek” w mapie granic i w ankiecie Sentinela pochodzi z tego wzoru i pozwala porównać wyniki z oryginałem.",
+      "implication_en": "The scale “AI alone / AI with a person / only a person” of Sentinel's boundary map and survey follows this design, so the results can be compared with the original.",
       "verification": {
         "status": "verified",
         "source_file": "lubars2019_arxiv.pdf",
@@ -584,6 +616,7 @@
       "id": "E09",
       "kind": "theoretical",
       "title_pl": "Wizja agenta-kierownika projektu: kierunek przeciwny",
+      "title_en": "The vision of an agent as project manager: the opposite direction",
       "modules": [
         "projekty",
         "uprawnienia"
@@ -602,6 +635,7 @@
         "four working modes, with varying autonomy levels"
       ],
       "gloss_pl": "Agenci mają pracować jak „młodszy kierownik projektu” w czterech trybach o różnym poziomie autonomii.",
+      "gloss_en": "Agents are to work as a “junior project manager” in four modes with different levels of autonomy.",
       "location": "Abstract",
       "citation": "Assalaarachchi, L. I., Masood, Z., Hoda, R., & Grundy, J. (2026). Toward agentic software project management: A vision and roadmap. arXiv:2601.16392.",
       "doi": "10.48550/arXiv.2601.16392",
@@ -609,7 +643,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Artykuł wizyjny, nie badanie empiryczne: wieloagentowy „Agentic PM” z czterema trybami autonomii dobieranymi do zadania, uzasadnionymi etyką, rozliczalnością i zaufaniem. Człowiek ma być „strategicznym liderem” i „coachem”.",
+      "summary_en": "A vision paper, not an empirical study: a multi-agent “Agentic PM” with four autonomy modes matched to the task, justified by ethics, accountability and trust. The person is to be a “strategic leader” and a “coach”.",
       "implication_pl": "Sentinel świadomie idzie w przeciwną stronę: mniej autonomii, model bez narzędzi i twardy podział (liczby z symulacji, język z modelu), co trzeba umieć obronić wobec tej wizji.",
+      "implication_en": "Sentinel goes the other way on purpose: less autonomy, a model without tools and a hard split (numbers from simulation, language from the model), which it must be able to defend against this vision.",
       "verification": {
         "status": "verified",
         "source_file": "assalaarachchi2026_arxiv.pdf",
@@ -622,6 +658,7 @@
       "id": "E10",
       "kind": "empirical",
       "title_pl": "Badania GenAI w zarządzaniu projektami IT są wciąż wstępne",
+      "title_en": "Research on generative AI in IT project management is still preliminary",
       "modules": [
         "projekty",
         "mapa"
@@ -636,6 +673,7 @@
         "research in this area remains at an exploratory stage"
       ],
       "gloss_pl": "W badanych pracach dominuje GPT używany głównie przez inżynierię promptów, więc badania są wciąż na etapie eksploracyjnym.",
+      "gloss_en": "GPT, used mainly through prompt engineering, dominates the studies reviewed, so the research is still exploratory.",
       "location": "Abstract (arXiv)",
       "citation": "Anghel, I., & Cioara, T. (2026). A systematic review of generative AI usage for IT project management. arXiv:2604.21958. Published as: Generative AI for IT project management: A systematic review and future research agenda. Systems, 14(6), 722.",
       "doi": "10.48550/arXiv.2604.21958",
@@ -643,7 +681,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Przegląd systematyczny według PRISMA (Politechnika w Kluż-Napoce) technik, zastosowań i integracji generatywnej AI z narzędziami do zarządzania projektami. Wskazuje trzy kierunki dalszych prac, w tym hybrydowe sieci agentów z orkiestracją kierowaną przez człowieka.",
+      "summary_en": "A systematic review following PRISMA (Technical University of Cluj-Napoca) of the techniques, applications and integration of generative AI with project management tools. It points to three directions for further work, including hybrid networks of agents with orchestration led by a person.",
       "implication_pl": "Sentinel jest prototypem badawczym w obszarze, w którym brak jeszcze mocnych wyników, więc jego twierdzenia muszą opierać się na własnych pomiarach, a nie na obietnicach rynku.",
+      "implication_en": "Sentinel is a research prototype in an area without strong results yet, so its claims must rest on its own measurements, not on market promises.",
       "verification": {
         "status": "verified",
         "source_file": "anghel2026_arxiv.pdf",
@@ -656,6 +696,7 @@
       "id": "E11",
       "kind": "law",
       "title_pl": "AI Act art. 14: świadomość automation bias",
+      "title_en": "AI Act Art. 14: awareness of automation bias",
       "modules": [
         "projekty",
         "finanse",
@@ -679,6 +720,7 @@
         "„błąd automatyzacji”"
       ],
       "gloss_pl": "Osoba nadzorująca ma być świadoma skłonności do automatycznego polegania na wyniku AI (błąd automatyzacji).",
+      "gloss_en": "The person overseeing must be aware of the tendency to rely automatically on the AI's output (automation bias).",
       "location": "Art. 14 ust. 4 lit. b",
       "citation": "Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act). OJ L, 2024/1689, 12.7.2024",
       "doi": null,
@@ -686,7 +728,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Art. 14 określa nadzór człowieka nad systemami wysokiego ryzyka i jako jedyny przepis rozporządzenia nazywa błąd poznawczy wprost. Sentinel nie jest systemem wysokiego ryzyka, więc to wzorzec dobrej praktyki, a nie obowiązek.",
+      "summary_en": "Art. 14 sets human oversight of high-risk systems and is the only provision of the regulation that names a cognitive bias explicitly. Sentinel is not a high-risk system, so this is a model of good practice, not an obligation.",
       "implication_pl": "Samo kliknięcie „Zatwierdź” nie jest skutecznym nadzorem, dlatego Sentinel pokazuje skutki, alternatywy i koszt zwłoki, a nie tylko przycisk.",
+      "implication_en": "Clicking “Approve” alone is not effective oversight, so Sentinel shows the effects, the alternatives and the cost of delay, not just a button.",
       "verification": {
         "status": "verified",
         "source_file": "ai_act_2024_1689_en.xhtml",
@@ -701,6 +745,7 @@
       "id": "E12",
       "kind": "law",
       "title_pl": "AI Act art. 12: automatyczny rejestr zdarzeń",
+      "title_en": "AI Act Art. 12: automatic recording of events",
       "modules": [
         "projekty"
       ],
@@ -721,6 +766,7 @@
         "automatycznego rejestrowania zdarzeń"
       ],
       "gloss_pl": "Systemy wysokiego ryzyka mają technicznie umożliwiać automatyczne rejestrowanie zdarzeń przez cały cykl życia.",
+      "gloss_en": "High-risk systems must technically allow the automatic recording of events over their whole lifetime.",
       "location": "Art. 12 ust. 1",
       "citation": "Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act). OJ L, 2024/1689, 12.7.2024",
       "doi": null,
@@ -728,7 +774,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Wymóg prowadzenia rejestru zdarzeń dla systemów wysokiego ryzyka; po rozporządzeniu (UE) 2026/1744 stosuje się do systemów z załącznika III od 2 grudnia 2027 r. Sentinel prowadzi taki rejestr z własnego wyboru.",
+      "summary_en": "The record-keeping requirement for high-risk systems; after Regulation (EU) 2026/1744 it applies to the systems of Annex III from 2 December 2027. Sentinel keeps such a record by its own choice.",
       "implication_pl": "Dziennik Sentinela zapisuje każdą propozycję, decyzję i jej powód z czasem i autorem, więc każdą zmianę projektu można odtworzyć i rozliczyć.",
+      "implication_en": "Sentinel's log records every proposal, decision and reason with its time and author, so every change to a project can be traced and accounted for.",
       "verification": {
         "status": "verified",
         "source_file": "ai_act_2024_1689_en.xhtml",
@@ -743,6 +791,7 @@
       "id": "E13",
       "kind": "theoretical",
       "title_pl": "Wyjaśnienia są kontrastowe: dlaczego P, a nie Q",
+      "title_en": "Explanations are contrastive: why P rather than Q",
       "modules": [
         "projekty"
       ],
@@ -759,6 +808,7 @@
         "why event P happened instead of some event Q"
       ],
       "gloss_pl": "Ludzie nie pytają „dlaczego P”, tylko „dlaczego P zamiast Q”: wyjaśnienia są kontrastowe.",
+      "gloss_en": "People do not ask “why P” but “why P rather than Q”: explanations are contrastive.",
       "location": "Section 1.2 (Major Findings), finding 1",
       "citation": "Miller, T. (2019). Explanation in artificial intelligence: Insights from the social sciences. Artificial Intelligence, 267, 1–38.",
       "doi": "10.1016/j.artint.2018.07.007",
@@ -766,7 +816,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Przegląd badań filozofii, psychologii i kognitywistyki o tym, jak ludzie tworzą i oceniają wyjaśnienia. Główne wnioski: wyjaśnienia są kontrastowe, selektywne i społeczne, a większość prac o wyjaśnialnej AI opiera się na intuicji badaczy.",
+      "summary_en": "A review of research in philosophy, psychology and cognitive science on how people create and evaluate explanations. The main conclusions: explanations are contrastive, selective and social, and most work on explainable AI rests on the researchers' intuition.",
       "implication_pl": "Uzasadnienie decyzji w Sentinelu porównuje wybraną możliwość z najlepszą alternatywą („Celina zamiast osoby tymczasowej, bo…”), zamiast wyliczać wszystkie powody.",
+      "implication_en": "The reasoning of a decision in Sentinel compares the chosen option with the best alternative (“Celina instead of a temporary person, because…”) rather than listing every reason.",
       "verification": {
         "status": "verified",
         "source_file": "miller2019_arxiv.pdf",
@@ -779,6 +831,7 @@
       "id": "E14",
       "kind": "empirical",
       "title_pl": "FinanceBench: 81% błędnych odpowiedzi lub odmów",
+      "title_en": "FinanceBench: 81% wrong answers or refusals",
       "modules": [
         "finanse"
       ],
@@ -797,6 +850,7 @@
         "incorrectly answered or refused to answer 81% of questions"
       ],
       "gloss_pl": "GPT-4-Turbo z wyszukiwaniem dokumentów odpowiedział błędnie albo odmówił odpowiedzi w 81% pytań.",
+      "gloss_en": "GPT-4-Turbo with document retrieval answered incorrectly or refused to answer 81% of the questions.",
       "location": "Abstract",
       "citation": "Islam, P., Kannappan, A., Kiela, D., Qian, R., Scherrer, N., & Vidgen, B. (2023). FinanceBench: A new benchmark for financial question answering. arXiv:2311.11944.",
       "doi": "10.48550/arXiv.2311.11944",
@@ -804,7 +858,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Benchmark 10 231 pytań o spółki notowane w USA; 16 konfiguracji modeli oceniono ręcznie na 150 przypadkach. Wszystkie miały słabości, takie jak halucynacje, ograniczające użycie w firmach; dotyczy to modeli z 2023 r.",
+      "summary_en": "A benchmark of 10,231 questions about companies listed in the US; 16 model configurations were evaluated by hand on 150 cases. All had weaknesses, such as hallucinations, that limit their use in companies; this concerns the models of 2023.",
       "implication_pl": "Liczby w Sentinelu liczy kod i symulacja, a model językowy najwyżej je opisuje, bo błąd w finansach jest kosztowny i trudny do zauważenia.",
+      "implication_en": "Numbers in Sentinel are computed by code and simulation, and the language model at most describes them, because an error in finance is costly and hard to notice.",
       "verification": {
         "status": "verified",
         "source_file": "financebench2023_arxiv.pdf",
@@ -816,7 +872,8 @@
     {
       "id": "E15",
       "kind": "empirical",
-      "title_pl": "Prosta matematyka bywa poza granicą możliwości LLM",
+      "title_pl": "Prosta matematyka bywa poza granicą możliwości modeli językowych",
+      "title_en": "Simple maths can lie outside the frontier of language models",
       "modules": [
         "finanse"
       ],
@@ -834,6 +891,7 @@
         "(like basic math) are challenges for some LLMs"
       ],
       "gloss_pl": "Generowanie pomysłów bywa dla AI łatwe, a prosta matematyka, pozornie łatwa dla maszyn, sprawia części modeli trudność.",
+      "gloss_en": "Generating ideas can be easy for AI, while simple maths, seemingly easy for machines, is hard for some models.",
       "location": "s. 3 working paper",
       "citation": "Dell'Acqua, F., et al. (2023). Navigating the jagged technological frontier (Harvard Business School Working Paper No. 24-013).",
       "doi": "10.2139/ssrn.4573321",
@@ -841,7 +899,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Ten sam eksperyment co E02 (758 konsultantów BCG); fragment wstępu ilustruje „postrzępioną granicę” przykładami zadań pozornie łatwych i pozornie trudnych dla AI.",
+      "summary_en": "The same experiment as E02 (758 BCG consultants); a passage of its introduction illustrates the “jagged frontier” with tasks that seem easy and tasks that seem hard for AI.",
       "implication_pl": "Moduł Finanse nie pozwala modelowi liczyć: sumy, odchylenia i prognozy budżetu pochodzą z kodu.",
+      "implication_en": "Finance does not let the model compute: sums, deviations and budget forecasts come from code.",
       "verification": {
         "status": "verified",
         "source_file": "dellacqua2023_hbs_wp.pdf",
@@ -854,6 +914,7 @@
       "id": "E16",
       "kind": "industry",
       "title_pl": "Microsoft 365 Copilot w księgowości: AI przygotowuje, człowiek zatwierdza",
+      "title_en": "Microsoft 365 Copilot in accounting: AI prepares, a person approves",
       "modules": [
         "finanse"
       ],
@@ -870,7 +931,9 @@
       "open_access": true,
       "licence": null,
       "summary_pl": "Według raportu badawczego v3 komunikat produktowy Microsoft deklaruje, że Copilot przygotowuje uzgodnienia i zapisy księgowe, a przegląd, zatwierdzenie i księgowanie zostają przy użytkowniku. To komunikat dostawcy, nie badanie, a jego treści nie sprawdzono w tym pakiecie pracy.",
+      "summary_en": "According to the v3 research report, a Microsoft product announcement states that Copilot prepares reconciliations and journal entries, while review, approval and posting stay with the user. It is a vendor's announcement, not a study, and its text was not checked in this work package.",
       "implication_pl": "Rynek przyjmuje zasadę „AI przygotowuje, człowiek zatwierdza” jako ustawienie produktu; w Sentinelu wymusza ją architektura (model nie ma narzędzi).",
+      "implication_en": "The market adopts “AI prepares, a person approves” as a product setting; in Sentinel the architecture enforces it (the model has no tools).",
       "verification": {
         "status": "summary_only",
         "method": "no quote: summary written from the abstract or the research report, not presented as the source's words",
@@ -881,6 +944,7 @@
       "id": "E17",
       "kind": "theoretical",
       "title_pl": "Predykcja i osąd się uzupełniają",
+      "title_en": "Prediction and judgement complement each other",
       "modules": [
         "finanse",
         "mapa"
@@ -898,6 +962,7 @@
         "Prediction and judgment are complements"
       ],
       "gloss_pl": "Osąd, czyli ustalenie, ile warte są możliwe wyniki, jest kosztowny; predykcja i osąd się uzupełniają, dopóki osąd nie jest zbyt trudny.",
+      "gloss_en": "Judgement, working out what the possible outcomes are worth, is costly; prediction and judgement complement each other as long as judgement is not too hard.",
       "location": "Abstract (NBER Working Paper 24243)",
       "citation": "Agrawal, A., Gans, J. S., & Goldfarb, A. (2018). Prediction, judgment and complexity: A theory of decision making and artificial intelligence (NBER Working Paper No. 24243).",
       "doi": "10.3386/w24243",
@@ -905,7 +970,9 @@
       "open_access": true,
       "licence": "NBER: krótkie fragmenty wolno cytować z pełnym podaniem źródła",
       "summary_pl": "Model teoretyczny: AI to tańsza predykcja, a „osąd” to kosztowne ustalanie wypłat (wartości) możliwych wyników. Predykcja i osąd są komplementarne, dopóki osąd nie jest zbyt trudny; w złożonych środowiskach efekt zależy od rodzaju poprawy predykcji.",
-      "implication_pl": "Monte Carlo daje Sentinelowi predykcję, ale ocena, czy dzień opóźnienia jest wart dwóch dni pracy budżetu, to osąd kierownika.",
+      "summary_en": "A theoretical model: AI is cheaper prediction, and “judgement” is the costly work of setting the payoffs (values) of possible outcomes. Prediction and judgement are complements as long as judgement is not too difficult; in complex settings the effect depends on the kind of improvement in prediction.",
+      "implication_pl": "Symulacja wielu możliwych przyszłości daje Sentinelowi predykcję, ale ocena, czy dzień opóźnienia jest wart dwóch dni pracy budżetu, to osąd kierownika.",
+      "implication_en": "Simulating many possible futures gives Sentinel prediction, but whether a day of delay is worth two work-days of budget is the manager's judgement.",
       "verification": {
         "status": "verified",
         "source_file": "agrawal2018_nber_w24243.pdf",
@@ -918,6 +985,7 @@
       "id": "E18",
       "kind": "law",
       "title_pl": "AI Act zał. III pkt 4 lit. b: ocena pracowników to wysokie ryzyko",
+      "title_en": "AI Act Annex III point 4(b): evaluating workers is high risk",
       "modules": [
         "ludzie"
       ],
@@ -940,6 +1008,7 @@
         "przydzielania zadań w oparciu o indywidualne zachowanie lub cechy osobowości"
       ],
       "gloss_pl": "AI do oceny wydajności i zachowania pracowników albo do przydzielania im zadań według cech osobowych to system wysokiego ryzyka.",
+      "gloss_en": "AI for evaluating the performance and behaviour of workers, or for allocating their tasks by personal traits, is a high-risk system.",
       "location": "Załącznik III pkt 4 lit. b",
       "citation": "Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act). OJ L, 2024/1689, 12.7.2024",
       "doi": null,
@@ -947,7 +1016,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Załącznik III wymienia obszary wysokiego ryzyka; rozporządzenie (UE) 2026/1744 nie zmieniło jego treści, ale przesunęło stosowanie wymogów rozdziału III do takich systemów na 2 grudnia 2027 r. (zamiast 2 sierpnia 2026 r.).",
+      "summary_en": "Annex III lists the high-risk areas; Regulation (EU) 2026/1744 did not change its text but moved the application of the requirements of Chapter III to such systems to 2 December 2027 (instead of 2 August 2026).",
       "implication_pl": "Sentinel celowo nie ocenia ludzi i nie dobiera zastępstw według cech osób: pokazuje obciążenie i dostępność, a wybór osoby zostawia kierownikowi.",
+      "implication_en": "Sentinel does not evaluate people or choose substitutes by personal traits, on purpose: it shows workload and availability and leaves the choice of a person to the manager.",
       "verification": {
         "status": "verified",
         "source_file": "ai_act_2024_1689_en.xhtml",
@@ -962,6 +1033,7 @@
       "id": "E19",
       "kind": "law",
       "title_pl": "AI Act art. 5: zakaz wnioskowania o emocjach w pracy",
+      "title_en": "AI Act Art. 5: no inferring emotions at work",
       "modules": [
         "ludzie"
       ],
@@ -982,6 +1054,7 @@
         "do wyciągania wniosków na temat emocji osoby fizycznej w miejscu pracy"
       ],
       "gloss_pl": "Zakazane jest używanie AI do wnioskowania o emocjach osób w miejscu pracy, poza celami medycznymi i bezpieczeństwa.",
+      "gloss_en": "Using AI to infer the emotions of people in the workplace is prohibited, except for medical or safety reasons.",
       "location": "Art. 5 ust. 1 lit. f",
       "citation": "Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act). OJ L, 2024/1689, 12.7.2024",
       "doi": null,
@@ -989,7 +1062,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Zakazane praktyki z art. 5 stosuje się od 2 lutego 2025 r.; rozporządzenie (UE) 2026/1744 dodało nowe zakazy (lit. ba i bb), ale nie zmieniło lit. f. Definicja systemu rozpoznawania emocji opiera się na danych biometrycznych, więc analiza samego tekstu jest prawnie dyskusyjna.",
+      "summary_en": "The prohibited practices of Art. 5 apply from 2 February 2025; Regulation (EU) 2026/1744 added new prohibitions (points (ba) and (bb)) but did not change point (f). The definition of an emotion recognition system rests on biometric data, so analysing text alone is legally debatable.",
       "implication_pl": "Sentinel nie analizuje nastroju ani emocji w raportach zespołu, a schemat odpowiedzi modelu nie ma na to pól.",
+      "implication_en": "Sentinel does not analyse mood or emotions in the team's reports, and the model's answer format has no fields for them.",
       "verification": {
         "status": "verified",
         "source_file": "ai_act_2024_1689_en.xhtml",
@@ -1004,6 +1079,7 @@
       "id": "E20",
       "kind": "theoretical",
       "title_pl": "Kontrola algorytmiczna w pracy: „6R”",
+      "title_en": "Algorithmic control at work: the “6 Rs”",
       "modules": [
         "ludzie"
       ],
@@ -1021,6 +1097,7 @@
         "discipline workers by replacing and rewarding"
       ],
       "gloss_pl": "Kontrola algorytmiczna działa przez sześć mechanizmów: ograniczanie, rekomendowanie, rejestrowanie, ocenianie, zastępowanie i nagradzanie.",
+      "gloss_en": "Algorithmic control works through six mechanisms: restricting, recommending, recording, rating, replacing and rewarding.",
       "location": "Abstract (accepted manuscript)",
       "citation": "Kellogg, K. C., Valentine, M. A., & Christin, A. (2020). Algorithms at work: The new contested terrain of control. Academy of Management Annals, 14(1), 366–410.",
       "doi": "10.5465/annals.2018.0174",
@@ -1028,7 +1105,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Interdyscyplinarny przegląd badań nad algorytmami w miejscu pracy z perspektywy teorii procesu pracy („contested terrain”), z opisem oporu pracowników („algoactivism”).",
+      "summary_en": "An interdisciplinary review of research on algorithms at work from the perspective of labour process theory (“contested terrain”), describing workers' resistance (“algoactivism”).",
       "implication_pl": "Zastępstwo w Sentinelu to decyzja o zadaniach i dostępności, nie ranking ludzi, żeby narzędzie nie stało się mechanizmem oceniania i zastępowania pracowników.",
+      "implication_en": "A substitution in Sentinel is a decision about tasks and availability, not a ranking of people, so that the tool does not become a mechanism for rating and replacing workers.",
       "verification": {
         "status": "verified",
         "source_file": "kellogg2020_nsf_par.pdf",
@@ -1041,6 +1120,7 @@
       "id": "E21",
       "kind": "theoretical",
       "title_pl": "Prawo Goodharta: miara jako cel przestaje mierzyć",
+      "title_en": "Goodhart's law: a measure that becomes a target stops measuring",
       "modules": [
         "ludzie"
       ],
@@ -1057,7 +1137,9 @@
       "open_access": false,
       "licence": null,
       "summary_pl": "Esej antropologiczny o audycie i rankingach w brytyjskich uczelniach; zawiera popularne uogólnienie prawa Goodharta (1975) o tym, że wskaźnik traktowany jako cel przestaje dobrze mierzyć. Dokładne brzmienie i strona wymagają sprawdzenia w PDF.",
+      "summary_en": "An anthropological essay on audit and rankings in British universities; it contains the popular generalisation of Goodhart's law (1975) that a measure treated as a target stops being a good measure. The exact wording and page need checking in the PDF.",
       "implication_pl": "Sentinel nie liczy wskaźników wydajności osób, bo stałyby się celem i przestały mówić prawdę o projekcie.",
+      "implication_en": "Sentinel computes no performance indicators for individuals, because they would become targets and stop telling the truth about the project.",
       "verification": {
         "status": "summary_only",
         "method": "no quote: summary written from the abstract or the research report, not presented as the source's words",
@@ -1068,6 +1150,7 @@
       "id": "E22",
       "kind": "empirical",
       "title_pl": "Bezpieczeństwo psychologiczne a uczenie się zespołów",
+      "title_en": "Psychological safety and team learning",
       "modules": [
         "ludzie"
       ],
@@ -1086,7 +1169,9 @@
       "open_access": true,
       "licence": null,
       "summary_pl": "Badanie terenowe zespołów w firmie produkcyjnej (według raportu badawczego v3: 51 zespołów); bezpieczeństwo psychologiczne zespołu wiązało się z zachowaniami uczenia się, które z kolei wiązały się z wynikami. Liczby wymagają sprawdzenia w pełnym tekście.",
+      "summary_en": "A field study of teams in a manufacturing company (51 teams, according to the v3 research report); a team's psychological safety went with learning behaviour, which in turn went with performance. The figures need checking in the full text.",
       "implication_pl": "Ciągła ocena osób przez AI zniechęcałaby do zgłaszania problemów, a od tych zgłoszeń zależą dane wejściowe prognoz Sentinela.",
+      "implication_en": "Continuous rating of people by AI would discourage reporting problems, and the input of Sentinel's forecasts depends on those reports.",
       "verification": {
         "status": "summary_only",
         "method": "no quote: summary written from the abstract or the research report, not presented as the source's words",
@@ -1097,6 +1182,7 @@
       "id": "E23",
       "kind": "standard",
       "title_pl": "OWASP LLM06: przyczyny nadmiernej sprawczości",
+      "title_en": "OWASP LLM06: the causes of excessive agency",
       "modules": [
         "uprawnienia"
       ],
@@ -1115,6 +1201,7 @@
         "excessive autonomy"
       ],
       "gloss_pl": "Przyczyną nadmiernej sprawczości jest zwykle nadmiar funkcji, uprawnień lub autonomii.",
+      "gloss_en": "Excessive agency usually comes from too much functionality, too many permissions or too much autonomy.",
       "location": "LLM06:2025, Description",
       "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM06:2025 Excessive Agency.",
       "doi": null,
@@ -1122,7 +1209,9 @@
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Standard branżowy: „Excessive Agency” pozwala, by nieoczekiwany, niejednoznaczny lub zmanipulowany wynik modelu wywołał szkodliwe działanie, niezależnie od przyczyny błędu modelu (m.in. halucynacji czy prompt injection).",
+      "summary_en": "An industry standard: “Excessive Agency” lets an unexpected, ambiguous or manipulated output of the model trigger a harmful action, whatever caused the model's error (hallucination or prompt injection, among others).",
       "implication_pl": "Model w Sentinelu nie ma narzędzi, uprawnień ani autonomii: zwraca tylko JSON zgodny ze schematem, który kod sprawdza i kompiluje, więc wszystkie trzy przyczyny są usunięte.",
+      "implication_en": "The model in Sentinel has no tools, permissions or autonomy: it only returns JSON in a fixed format that code checks and compiles, so all three causes are removed.",
       "verification": {
         "status": "verified",
         "source_file": "owasp_top10_llm_2025.pdf",
@@ -1135,6 +1224,7 @@
       "id": "E24",
       "kind": "standard",
       "title_pl": "OWASP LLM01: pośrednia prompt injection",
+      "title_en": "OWASP LLM01: indirect prompt injection",
       "modules": [
         "uprawnienia"
       ],
@@ -1150,6 +1240,7 @@
         "accepts input from external sources"
       ],
       "gloss_pl": "Pośrednia prompt injection zachodzi, gdy model przyjmuje dane z zewnętrznych źródeł, np. stron lub plików.",
+      "gloss_en": "Indirect prompt injection happens when the model accepts input from external sources, such as websites or files.",
       "location": "LLM01:2025, Types of Prompt Injection Vulnerabilities",
       "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM01:2025 Prompt Injection.",
       "doi": null,
@@ -1157,7 +1248,9 @@
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Prompt injection jest pozycją nr 1 listy OWASP 2025; w wersji pośredniej polecenia są ukryte w przetwarzanym dokumencie i mogą zmienić zachowanie modelu.",
+      "summary_en": "Prompt injection is number 1 on the OWASP 2025 list; in its indirect form, instructions hidden in a processed document can change the model's behaviour.",
       "implication_pl": "Raport czy wiadomość od zespołu mogą zawierać wstrzyknięte polecenia, więc Sentinel traktuje je jako niezaufane dane: bez narzędzi skutkiem może być co najwyżej błędny tekst, który wychwytują schemat i karty do potwierdzenia.",
+      "implication_en": "A report or a message from the team may contain injected instructions, so Sentinel treats them as untrusted data: without tools, the worst outcome is a wrong text, which the format check and the cards to confirm catch.",
       "verification": {
         "status": "verified",
         "source_file": "owasp_top10_llm_2025.pdf",
@@ -1170,6 +1263,7 @@
       "id": "E25",
       "kind": "industry",
       "title_pl": "Atlassian Rovo: agent ma uprawnienia użytkownika",
+      "title_en": "Atlassian Rovo: an agent has the user's permissions",
       "modules": [
         "uprawnienia"
       ],
@@ -1186,6 +1280,7 @@
         "only operate within the permissions of user interacting with them"
       ],
       "gloss_pl": "Agenci Rovo działają tylko w granicach uprawnień użytkownika, który z nich korzysta.",
+      "gloss_en": "Rovo agents act only within the permissions of the user who works with them.",
       "location": "Post na Atlassian Community (Trust Engineering)",
       "citation": "Pieterse, T. (2025). Evaluating Rovo? Three things you need to know about security and data governance. Atlassian Community.",
       "doi": null,
@@ -1193,7 +1288,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Wpis pracownika Atlassian o bezpieczeństwie Rovo: agent dziedziczy uprawnienia użytkownika i nie ma dostępu ponad nie. To wzorzec rynkowy „najmniejszych uprawnień”, ale agent nadal może zrobić wszystko, co użytkownik.",
+      "summary_en": "A post by an Atlassian employee on the security of Rovo: an agent inherits the user's permissions and has no access beyond them. It is the market's “least privilege” pattern, but the agent can still do everything the user can.",
       "implication_pl": "Sentinel idzie dalej niż rynek: model ma zero uprawnień niezależnie od tego, kto z niego korzysta, a każdą zmianę wykonuje kod po zatwierdzeniu.",
+      "implication_en": "Sentinel goes further than the market: the model has no permissions whoever uses it, and every change is made by code after approval.",
       "verification": {
         "status": "verified",
         "source_file": "atlassian_rovo_security.html",
@@ -1206,6 +1303,7 @@
       "id": "E26",
       "kind": "standard",
       "title_pl": "NIST AI RMF: funkcja MAP ustala kontekst ryzyka",
+      "title_en": "NIST AI RMF: the MAP function sets the risk context",
       "modules": [
         "uprawnienia",
         "mapa"
@@ -1224,6 +1322,7 @@
         "establishes the context to frame risks"
       ],
       "gloss_pl": "Funkcja MAP ustala kontekst, w którym ocenia się ryzyka związane z systemem AI.",
+      "gloss_en": "The MAP function establishes the context in which the risks of an AI system are assessed.",
       "location": "Section 5.2 (MAP)",
       "citation": "National Institute of Standards and Technology (2023). Artificial Intelligence Risk Management Framework (AI RMF 1.0) (NIST AI 100-1).",
       "doi": "10.6028/NIST.AI.100-1",
@@ -1231,7 +1330,9 @@
       "open_access": true,
       "licence": "publikacja rządu USA, dostępna bezpłatnie",
       "summary_pl": "Ramy zarządzania ryzykiem AI z czterema funkcjami: GOVERN, MAP, MEASURE i MANAGE. MAP ustala kontekst i ryzyka, GOVERN tworzy kulturę i procesy odpowiedzialności.",
+      "summary_en": "A framework for managing AI risk with four functions: GOVERN, MAP, MEASURE and MANAGE. MAP establishes the context and the risks; GOVERN builds a culture and processes of accountability.",
       "implication_pl": "Mapa granic Sentinela to funkcja MAP dla procesów firmy, a archiwum decyzji wspiera GOVERN i MANAGE.",
+      "implication_en": "Sentinel's boundary map is the MAP function for a company's processes, and the decision archive supports GOVERN and MANAGE.",
       "verification": {
         "status": "verified",
         "source_file": "nist_ai_100_1.pdf",
@@ -1244,6 +1345,7 @@
       "id": "E27",
       "kind": "theoretical",
       "title_pl": "Automatyzacji i wspomagania nie da się czysto rozdzielić",
+      "title_en": "Automation and augmentation cannot be cleanly separated",
       "modules": [
         "mapa"
       ],
@@ -1259,6 +1361,7 @@
         "augmentation cannot be neatly separated from automation"
       ],
       "gloss_pl": "W zarządzaniu wspomagania przez AI nie da się czysto oddzielić od automatyzacji; oba tryby są współzależne.",
+      "gloss_en": "In management, augmentation by AI cannot be cleanly separated from automation; the two depend on each other.",
       "location": "Abstract (accepted manuscript)",
       "citation": "Raisch, S., & Krakowski, S. (2021). Artificial intelligence and management: The automation–augmentation paradox. Academy of Management Review, 46(1), 192–210.",
       "doi": "10.5465/amr.2018.0072",
@@ -1266,7 +1369,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Artykuł teoretyczny wychodzi od trzech książek biznesowych zalecających „wspomaganie zamiast automatyzacji”. Z perspektywy teorii paradoksu oba tryby są współzależne w czasie i przestrzeni, a przesadne nastawienie na jeden uruchamia negatywne sprzężenia.",
+      "summary_en": "A theoretical article that starts from three business books recommending “augmentation rather than automation”. From the perspective of paradox theory the two depend on each other across time and space, and too strong a focus on one sets off negative feedback.",
       "implication_pl": "Mapa granic nie może być stałym podziałem „to AI, to człowiek”: strefy wynikają z kryteriów i mogą się przesuwać, a proste kryterium „AI tylko do oszczędzania czasu” przesuwa napięcie, zamiast je usunąć.",
+      "implication_en": "The boundary map cannot be a fixed split “this for AI, this for people”: the zones follow from the criteria and can shift, and the simple criterion “AI only to save time” moves the tension instead of removing it.",
       "verification": {
         "status": "verified",
         "source_file": "raisch2021_unige.pdf",
@@ -1279,6 +1384,7 @@
       "id": "E28",
       "kind": "theoretical",
       "title_pl": "Poziomy automatyzacji osobno dla każdego etapu",
+      "title_en": "Levels of automation separately for each stage",
       "modules": [
         "mapa"
       ],
@@ -1296,7 +1402,9 @@
       "open_access": false,
       "licence": null,
       "summary_pl": "Model czterech funkcji (pozyskanie informacji, analiza, wybór decyzji, wykonanie działania), z których każda może mieć inny poziom automatyzacji. W Sentinelu analiza jest wysoko zautomatyzowana, wybór nisko, a wykonanie wcale.",
+      "summary_en": "A model of four functions (acquiring information, analysis, choosing a decision, carrying out the action), each of which can have its own level of automation. In Sentinel analysis is highly automated, choice lowly, and carrying out not at all.",
       "implication_pl": "Pytanie „czy AI może to robić?” trzeba zadawać osobno dla analizy, wyboru i wykonania, co robi mapa granic.",
+      "implication_en": "The question “may AI do this?” has to be asked separately for analysis, choice and carrying out, which the boundary map does.",
       "verification": {
         "status": "summary_only",
         "method": "no quote: summary written from the abstract or the research report, not presented as the source's words",
@@ -1307,6 +1415,7 @@
       "id": "E29",
       "kind": "theoretical",
       "title_pl": "Zaufanie do automatyzacji powinno odpowiadać jej niezawodności",
+      "title_en": "Trust in automation should match its reliability",
       "modules": [
         "projekty",
         "mapa"
@@ -1325,6 +1434,7 @@
         "trust influences reliance on automation"
       ],
       "gloss_pl": "Automatyzacja bywa problemem, bo ludzie nie polegają na niej we właściwym stopniu; o tym stopniu decyduje zaufanie.",
+      "gloss_en": "Automation can be a problem because people do not rely on it appropriately; trust decides that degree.",
       "location": "Abstract (rekord PubMed)",
       "citation": "Lee, J. D., & See, K. A. (2004). Trust in automation: Designing for appropriate reliance. Human Factors, 46(1), 50–80.",
       "doi": "10.1518/hfes.46.1.50_30392",
@@ -1332,7 +1442,9 @@
       "open_access": false,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Przegląd badań nad zaufaniem z perspektywy organizacyjnej, socjologicznej, psychologicznej i neurologicznej, z modelem koncepcyjnym dynamiki zaufania do automatyzacji. Celem projektowania jest poleganie odpowiednie do rzeczywistej niezawodności, a nie maksymalne zaufanie.",
+      "summary_en": "A review of research on trust from organisational, sociological, psychological and neurological perspectives, with a conceptual model of how trust in automation changes. The design goal is reliance that matches actual reliability, not maximum trust.",
       "implication_pl": "Sentinel pokazuje niepewność („N na 100”, rozkład dat końca) i własne wyniki trafności, żeby zaufanie do prognozy mogło się skalibrować.",
+      "implication_en": "Sentinel shows uncertainty (“N in 100”, the spread of end dates) and its own accuracy results, so that trust in the forecast can calibrate.",
       "verification": {
         "status": "verified",
         "source_file": "lee_see2004_pubmed.xml",
@@ -1345,6 +1457,7 @@
       "id": "E30",
       "kind": "empirical",
       "title_pl": "Człowiek „poza pętlą” traci kontrolę; automation bias",
+      "title_en": "A person “out of the loop” loses control; automation bias",
       "modules": [
         "mapa"
       ],
@@ -1363,7 +1476,9 @@
       "open_access": false,
       "licence": null,
       "summary_pl": "Według raportu badawczego v3: przy pełnej automatyzacji spada świadomość sytuacji i trudniej przejąć kontrolę po awarii, a pośrednie poziomy łagodzą ten efekt; osoby korzystające z automatycznej pomocy popełniały błędy pominięcia i działania, gdy automat się mylił. Obu prac nie przeczytano w tym pakiecie pracy.",
+      "summary_en": "According to the v3 research report: with full automation, awareness of the situation drops and taking over after a failure gets harder, while intermediate levels soften the effect; people using automated aids made errors of omission and of commission when the automation was wrong. Neither paper was read in this work package.",
       "implication_pl": "Kryterium odwracalności musi uwzględniać, czy człowiek ma jeszcze wiedzę, by ocenić wynik; dlatego Sentinel pokazuje skutki i alternatywy, a nie tylko gotową decyzję.",
+      "implication_en": "The reversibility criterion must consider whether a person still knows enough to judge the result; that is why Sentinel shows effects and alternatives, not just a finished decision.",
       "verification": {
         "status": "summary_only",
         "method": "no quote: summary written from the abstract or the research report, not presented as the source's words",
@@ -1374,6 +1489,7 @@
       "id": "E31",
       "kind": "theoretical",
       "title_pl": "Paradoks Polanyiego: wiemy więcej, niż umiemy powiedzieć",
+      "title_en": "Polanyi's paradox: we know more than we can tell",
       "modules": [
         "mapa"
       ],
@@ -1389,6 +1505,7 @@
         "our tacit knowledge of how the world works often exceeds our explicit understanding"
       ],
       "gloss_pl": "Wiedza ukryta o tym, jak działa świat, często przekracza naszą jawną wiedzę, co przez 50 lat ograniczało komputeryzację.",
+      "gloss_en": "Tacit knowledge of how the world works often exceeds our explicit knowledge, which limited computerisation for 50 years.",
       "location": "Abstract (NBER Working Paper 20485)",
       "citation": "Autor, D. H. (2014). Polanyi's paradox and the shape of employment growth (NBER Working Paper No. 20485).",
       "doi": "10.3386/w20485",
@@ -1396,7 +1513,9 @@
       "open_access": true,
       "licence": "NBER: krótkie fragmenty wolno cytować z pełnym podaniem źródła",
       "summary_pl": "Przegląd koncepcyjny i empiryczny: zadania oparte na wiedzy ukrytej trudno było skomputeryzować, co tłumaczy polaryzację rynku pracy. Tekst powstał przed modelami językowymi, które częściowo obchodzą ten paradoks, ucząc się z przykładów.",
+      "summary_en": "A conceptual and empirical review: tasks that rest on tacit knowledge were hard to computerise, which explains the polarisation of the labour market. It was written before language models, which partly get around the paradox by learning from examples.",
       "implication_pl": "Kryterium „smaku” w mapie granic jest normatywne: mówi, gdzie człowiek powinien zostać, a nie dowodzi, że AI technicznie nie potrafi.",
+      "implication_en": "The “taste” criterion of the boundary map is normative: it says where a person should stay, not that AI technically cannot.",
       "verification": {
         "status": "verified",
         "source_file": "autor2014_nber_w20485.pdf",
@@ -1409,6 +1528,7 @@
       "id": "E32",
       "kind": "law",
       "title_pl": "RODO art. 9: zakaz przetwarzania danych o zdrowiu",
+      "title_en": "GDPR Art. 9: no processing of health data",
       "modules": [
         "ludzie",
         "mapa"
@@ -1434,6 +1554,7 @@
         "Zabrania się"
       ],
       "gloss_pl": "Przetwarzanie szczególnych kategorii danych, w tym danych o zdrowiu, jest zakazane, poza wyjątkami z ust. 2.",
+      "gloss_en": "Processing special categories of data, health data included, is prohibited, except as provided in paragraph 2.",
       "location": "Art. 9 ust. 1",
       "citation": "Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 (General Data Protection Regulation). OJ L 119, 4.5.2016, p. 1",
       "doi": null,
@@ -1441,7 +1562,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Art. 9 ust. 1 RODO zakazuje przetwarzania szczególnych kategorii danych osobowych, a ust. 2 wymienia wyjątki (m.in. wyraźna zgoda, obowiązki z prawa pracy). Powód nieobecności często ujawnia stan zdrowia.",
+      "summary_en": "Art. 9(1) GDPR prohibits processing special categories of personal data, and paragraph 2 lists the exceptions (explicit consent and obligations under employment law, among others). The reason for an absence often reveals a person's health.",
       "implication_pl": "Sentinel zapisuje tylko, że ktoś jest niedostępny i do kiedy, nigdy dlaczego, i nie pyta o częstość nieobecności konkretnych osób.",
+      "implication_en": "Sentinel records only that someone is unavailable and until when, never why, and does not ask how often particular people are absent.",
       "verification": {
         "status": "verified",
         "source_file": "gdpr_2016_679_en.xhtml",
@@ -1456,6 +1579,7 @@
       "id": "E33",
       "kind": "standard",
       "title_pl": "ISO/IEC 42001: system zarządzania AI",
+      "title_en": "ISO/IEC 42001: AI management system",
       "modules": [
         "uprawnienia",
         "mapa"
@@ -1474,7 +1598,9 @@
       "open_access": false,
       "licence": null,
       "summary_pl": "Płatna norma systemu zarządzania AI o strukturze podobnej do ISO/IEC 27001. W tym pakiecie pracy nie pobrano ani opisu zakresu, ani treści normy.",
+      "summary_en": "A paid standard for an AI management system, structured like ISO/IEC 27001. In this work package neither the description of its scope nor its text was obtained.",
       "implication_pl": "Sentinel nie twierdzi zgodności z normą; może ją wymienić tylko jako kierunek dla firm, które wdrażają takie narzędzia.",
+      "implication_en": "Sentinel claims no conformity with the standard; it can only mention it as a direction for companies that adopt such tools.",
       "verification": {
         "status": "summary_only",
         "method": "no quote: summary written from the abstract or the research report, not presented as the source's words",
@@ -1485,6 +1611,7 @@
       "id": "E34",
       "kind": "law",
       "title_pl": "AI Act art. 4 po zmianie: wspierać kompetencje w zakresie AI",
+      "title_en": "AI Act Art. 4 as amended: supporting AI literacy",
       "modules": [
         "mapa"
       ],
@@ -1502,6 +1629,7 @@
         "nie oznacza"
       ],
       "gloss_pl": "Nowy art. 4 nie wymaga zagwarantowania określonego poziomu kompetencji w zakresie AI żadnej osoby.",
+      "gloss_en": "The new Art. 4 does not require guaranteeing any specific level of AI literacy of any person.",
       "location": "Art. 1 pkt 5 (nowe brzmienie art. 4 ust. 1 AI Act)",
       "citation": "Regulation (EU) 2026/1744 of the European Parliament and of the Council of 8 July 2026 amending Regulations (EU) 2024/1689, (EU) 2018/1139 and (EU) 2023/1230 (Digital Omnibus on AI). OJ L, 2026/1744, 24.7.2026",
       "doi": null,
@@ -1509,7 +1637,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Pierwotny art. 4 (stosowany od 2 lutego 2025 r.) wymagał środków zapewniających „w możliwie największym stopniu” odpowiedni poziom kompetencji personelu. Od 27.07.2026 r. rozporządzenie 2026/1744 zastąpiło go obowiązkiem podejmowania środków, które wspierają rozwój tych kompetencji.",
+      "summary_en": "The original Art. 4 (applicable from 2 February 2025) required measures to ensure “to their best extent” a sufficient level of AI literacy of staff. From 27 July 2026 Regulation 2026/1744 replaced it with a duty to take measures that support the development of that literacy.",
       "implication_pl": "Punkt „Dowód” przy każdej funkcji jest dobrowolnym sposobem budowania kompetencji użytkowników, a nie spełnieniem obowiązku prawnego.",
+      "implication_en": "The “Evidence” point at every feature is a voluntary way of building users' literacy, not the fulfilment of a legal duty.",
       "verification": {
         "status": "verified",
         "source_file": "omnibus_2026_1744_en.xhtml",
@@ -1524,6 +1654,7 @@
       "id": "E35",
       "kind": "law",
       "title_pl": "Prawo cytatu (art. 29 prawa autorskiego)",
+      "title_en": "The right of quotation (Art. 29 of the Polish copyright act)",
       "modules": [],
       "criteria": [],
       "decisions": [
@@ -1537,6 +1668,7 @@
         "wyjaśnianie, polemika, analiza krytyczna lub naukowa"
       ],
       "gloss_pl": "Wolno cytować urywki rozpowszechnionych utworów w zakresie uzasadnionym celem cytatu, np. wyjaśnianiem lub analizą naukową.",
+      "gloss_en": "Excerpts of disseminated works may be quoted to the extent justified by the purpose of the quotation, such as explanation or scientific analysis.",
       "location": "Art. 29",
       "citation": "Ustawa z dnia 4 lutego 1994 r. o prawie autorskim i prawach pokrewnych (tekst jednolity Dz.U. 2025 poz. 24).",
       "doi": null,
@@ -1544,7 +1676,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Art. 29 pozwala cytować urywki w utworze stanowiącym samoistną całość, gdy uzasadnia to cel cytatu; art. 34 wymaga podania twórcy i źródła. Komentatorzy podkreślają ścisły związek cytatu z własnym wywodem. To nie jest opinia prawna.",
+      "summary_en": "Art. 29 allows quoting excerpts in a work that is an independent whole when the purpose of the quotation justifies it; Art. 34 requires naming the author and the source. Commentators stress the close link between a quotation and one's own argument. This is not legal advice.",
       "implication_pl": "Każdy cytat w punkcie „Dowód” ma najwyżej 3 zdania, autora i źródło oraz własne zdanie Sentinela „co z tego wynika”, które wiąże go z wywodem.",
+      "implication_en": "Every quotation in an “Evidence” point has at most 3 sentences, its author and source, and Sentinel's own sentence on what follows, which ties it to the argument.",
       "verification": {
         "status": "verified",
         "source_file": "pl_copyright_act_du_2025_24.pdf",
@@ -1557,6 +1691,7 @@
       "id": "E36",
       "kind": "empirical",
       "title_pl": "Częstości naturalne ułatwiają rozumowanie o prawdopodobieństwie",
+      "title_en": "Natural frequencies make reasoning about probability easier",
       "modules": [
         "projekty"
       ],
@@ -1573,6 +1708,7 @@
         "up to 50% of all inferences"
       ],
       "gloss_pl": "Gdy dane podano jako częstości, osoby bez wiedzy statystycznej wnioskowały zgodnie z regułą Bayesa nawet w połowie przypadków.",
+      "gloss_en": "When data were given as frequencies, people without statistical training reasoned in line with Bayes' rule in up to half of the cases.",
       "location": "Abstract",
       "citation": "Gigerenzer, G., & Hoffrage, U. (1995). How to improve Bayesian reasoning without instruction: Frequency formats. Psychological Review, 102(4), 684–704.",
       "doi": "10.1037/0033-295X.102.4.684",
@@ -1580,7 +1716,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Autorzy pokazują, że wnioskowanie bayesowskie jest obliczeniowo prostsze w formatach częstości (np. „8 na 1000”) niż w formatach prawdopodobieństw. W analizie kilku tysięcy rozwiązań osoby bez przygotowania statystycznego w formacie częstości wnioskowały zgodnie z regułą Bayesa nawet w 50% przypadków.",
+      "summary_en": "The authors show that Bayesian reasoning is computationally simpler in frequency formats (e.g. “8 in 1,000”) than in probability formats. In an analysis of several thousand solutions, people without statistical training reasoned in line with Bayes' rule in up to 50% of the cases in the frequency format.",
       "implication_pl": "Sentinel podaje szansę jako „39 na 100” z siatką kropek, a nie jako 0,39 czy 39%.",
+      "implication_en": "Sentinel gives the chance as “39 in 100” with a grid of dots, not as 0.39 or 39%.",
       "verification": {
         "status": "verified",
         "source_file": "gigerenzer1995_mpg.pdf",
@@ -1593,6 +1731,7 @@
       "id": "E37",
       "kind": "empirical",
       "title_pl": "Siatki ikon poprawiają rozumienie ryzyka",
+      "title_en": "Icon arrays improve understanding of risk",
       "modules": [
         "projekty"
       ],
@@ -1609,6 +1748,7 @@
         "perceived as less serious"
       ],
       "gloss_pl": "Siatki ikon zwiększyły trafność rozumienia ryzyka u osób o niskich i wysokich umiejętnościach liczbowych; ryzyko wydawało się jednak mniej poważne.",
+      "gloss_en": "Icon arrays increased the accuracy of understanding risk for people with low and high numeracy; the risk, however, seemed less serious.",
       "location": "Abstract, Results (rekord PubMed)",
       "citation": "Galesic, M., Garcia-Retamero, R., & Gigerenzer, G. (2009). Using icon arrays to communicate medical risks: Overcoming low numeracy. Health Psychology, 28(2), 210–216.",
       "doi": "10.1037/a0014474",
@@ -1616,7 +1756,9 @@
       "open_access": false,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Dwa eksperymenty na starszych dorosłych (n=59) i studentach (n=112) porównały przekaz liczbowy z siatkami ikon. Siatki zwiększyły trafność rozumienia redukcji ryzyka w obu grupach, ale ryzyko przedstawione ikonami oceniano jako mniej poważne.",
+      "summary_en": "Two experiments with older adults (n=59) and students (n=112) compared numbers alone with icon arrays. Icon arrays increased the accuracy of understanding a risk reduction in both groups, but risk shown with icons was judged less serious.",
       "implication_pl": "Siatka 10×10 kropek przy „N na 100” jest uzasadniona, a efekt „łagodzenia” ryzyka Sentinel równoważy słownym werdyktem stanu („Nie zdążymy bez zmian”).",
+      "implication_en": "The 10×10 grid of dots next to “N in 100” is justified, and Sentinel balances its “softening” of risk with a verdict in words (“Late without changes”).",
       "verification": {
         "status": "verified",
         "source_file": "galesic2009_pubmed.xml",
@@ -1629,6 +1771,7 @@
       "id": "E38",
       "kind": "standard",
       "title_pl": "WCAG 2.2: kolor nigdy jako jedyny nośnik informacji",
+      "title_en": "WCAG 2.2: colour never the only carrier of information",
       "modules": [
         "projekty"
       ],
@@ -1642,6 +1785,7 @@
         "not used as the only visual means"
       ],
       "gloss_pl": "Kolor nie może być jedynym wizualnym sposobem przekazania informacji.",
+      "gloss_en": "Colour must not be the only visual means of conveying information.",
       "location": "Success Criterion 1.4.1 Use of Color (Level A)",
       "citation": "W3C (2024). Web Content Accessibility Guidelines (WCAG) 2.2. W3C Recommendation, 12 December 2024.",
       "doi": null,
@@ -1649,7 +1793,9 @@
       "open_access": true,
       "licence": "W3C Document License (cytat z podaniem źródła)",
       "summary_pl": "Norma dostępności W3C; kryterium 1.4.1 na poziomie A wymaga, by informacji nie przekazywał sam kolor. Dotyczy m.in. osób z zaburzeniami widzenia barw.",
+      "summary_en": "The W3C accessibility standard; success criterion 1.4.1 at level A requires that information is not conveyed by colour alone. It concerns people with colour vision deficiencies, among others.",
       "implication_pl": "Stany Sentinela („Na dobrej drodze”, „Zagrożony”, „Nie zdążymy bez zmian”) mają kolor, ikonę i słowo, a progi 80 i 50 na 100 są ustaloną konwencją, nie wynikiem badania.",
+      "implication_en": "Sentinel's states (“On track”, “At risk”, “Late without changes”) have a colour, an icon and a word, and the thresholds of 80 and 50 in 100 are a fixed convention, not a research finding.",
       "verification": {
         "status": "verified",
         "source_file": "wcag22.html",
@@ -1662,6 +1808,7 @@
       "id": "E39",
       "kind": "empirical",
       "title_pl": "Whisper czasem dopisuje zdania, których nikt nie powiedział",
+      "title_en": "Whisper sometimes adds sentences nobody said",
       "modules": [
         "raporty",
         "projekty"
@@ -1678,6 +1825,7 @@
         "roughly 1% of audio transcriptions contained entire hallucinated phrases or sentences"
       ],
       "gloss_pl": "Około 1% transkrypcji Whispera zawierało całe zmyślone frazy lub zdania, których nie było w nagraniu.",
+      "gloss_en": "About 1% of Whisper's transcriptions contained entire made-up phrases or sentences that were not in the recording.",
       "location": "Abstract",
       "citation": "Koenecke, A., Choi, A. S. G., Mei, K. X., Schellmann, H., & Sloane, M. (2024). Careless Whisper: Speech-to-text hallucination harms. In Proceedings of the 2024 ACM Conference on Fairness, Accountability, and Transparency (FAccT '24).",
       "doi": "10.1145/3630106.3658996",
@@ -1685,7 +1833,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Ocena usługi rozpoznawania mowy Whisper (OpenAI) na nagraniach z 2023 r. Około 1% transkrypcji zawierało zmyślone frazy, a 38% halucynacji niosło jawne szkody, np. fałszywe skojarzenia lub autorytet.",
+      "summary_en": "An evaluation of the Whisper speech recognition service (OpenAI) on recordings from 2023. About 1% of transcriptions contained made-up phrases, and 38% of these hallucinations carried explicit harms, such as false associations or false authority.",
       "implication_pl": "Dyktowany raport w Sentinelu nie zmienia projektu sam: tekst trafia do kart „Do potwierdzenia”, domyślnie niezaznaczonych.",
+      "implication_en": "A dictated report in Sentinel does not change the project by itself: the text goes to “To confirm” cards, unticked by default.",
       "verification": {
         "status": "verified",
         "source_file": "koenecke2024_arxiv.pdf",
@@ -1698,6 +1848,7 @@
       "id": "E40",
       "kind": "standard",
       "title_pl": "OWASP: ręczny przegląd i „wyślij” zamiast autonomii",
+      "title_en": "OWASP: manual review and “send” instead of autonomy",
       "modules": [
         "uprawnienia",
         "projekty"
@@ -1715,6 +1866,7 @@
         "eliminating excessive autonomy by requiring the user to manually review and hit ‘send’"
       ],
       "gloss_pl": "Nadmierną autonomię usuwa wymóg, by człowiek sam przejrzał i wysłał każdą wiadomość przygotowaną przez model.",
+      "gloss_en": "Excessive autonomy is removed by requiring the person to review and send every message the model drafted.",
       "location": "LLM06:2025, Example Attack Scenarios",
       "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM06:2025 Excessive Agency.",
       "doi": null,
@@ -1722,7 +1874,9 @@
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Standard branżowy opisuje scenariusz ataku, w którym zmanipulowany e-mail skłania asystenta do przesłania poczty atakującemu, i trzy niezależne zabezpieczenia: mniej funkcji, mniej uprawnień i ręczne zatwierdzanie każdej wysyłki.",
+      "summary_en": "The industry standard describes an attack in which a manipulated e-mail makes an assistant forward mail to the attacker, and three independent safeguards: fewer functions, fewer permissions and manual approval of every sending.",
       "implication_pl": "W Sentinelu nic nie dzieje się przez milczenie: propozycja czeka na decyzję człowieka, a „ważna do” i koszt zwłoki zastępują automatyczne wykonanie.",
+      "implication_en": "In Sentinel nothing happens by silence: a proposal waits for a person's decision, and “valid until” with the cost of delay replaces automatic execution.",
       "verification": {
         "status": "verified",
         "source_file": "owasp_top10_llm_2025.pdf",
@@ -1735,6 +1889,7 @@
       "id": "E41",
       "kind": "law",
       "title_pl": "AI Act art. 14: prawo zignorowania i odwrócenia wyniku AI",
+      "title_en": "AI Act Art. 14: the right to disregard and reverse the AI's output",
       "modules": [
         "projekty"
       ],
@@ -1755,6 +1910,7 @@
         "zignorowanie, unieważnienie lub odwrócenie wyniku"
       ],
       "gloss_pl": "Człowiek musi móc w każdej sytuacji nie skorzystać z AI albo zignorować, unieważnić lub odwrócić jej wynik.",
+      "gloss_en": "A person must be able in any situation not to use the AI, or to disregard, override or reverse its output.",
       "location": "Art. 14 ust. 4 lit. d",
       "citation": "Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act). OJ L, 2024/1689, 12.7.2024",
       "doi": null,
@@ -1762,7 +1918,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Przepis o nadzorze człowieka nad systemami wysokiego ryzyka: osoba nadzorująca ma realną możliwość odrzucenia, zmiany lub odwrócenia wyniku. Dla Sentinela to wzorzec dobrej praktyki, nie obowiązek.",
+      "summary_en": "The provision on human oversight of high-risk systems: the person overseeing has a real possibility of rejecting, changing or reversing the output. For Sentinel it is a model of good practice, not an obligation.",
       "implication_pl": "„Odrzuć” z powodem i „Popraw” są w Sentinelu pełnoprawnymi decyzjami zapisanymi w archiwum, a nie wyjątkiem od zatwierdzania.",
+      "implication_en": "In Sentinel, “Reject” with a reason and “Adjust” are full decisions recorded in the archive, not exceptions to approval.",
       "verification": {
         "status": "verified",
         "source_file": "ai_act_2024_1689_en.xhtml",
@@ -1777,6 +1935,7 @@
       "id": "E42",
       "kind": "standard",
       "title_pl": "OWASP LLM02: ujawnienie danych wrażliwych",
+      "title_en": "OWASP LLM02: sensitive information disclosure",
       "modules": [
         "uprawnienia"
       ],
@@ -1792,6 +1951,7 @@
         "risk exposing sensitive data"
       ],
       "gloss_pl": "Modele językowe osadzone w aplikacjach mogą ujawnić w odpowiedziach dane wrażliwe lub poufne.",
+      "gloss_en": "Language models embedded in applications can disclose sensitive or confidential data in their output.",
       "location": "LLM02:2025, Description",
       "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM02:2025 Sensitive Information Disclosure.",
       "doi": null,
@@ -1799,7 +1959,9 @@
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Standard branżowy wymienia wśród danych wrażliwych m.in. dane osobowe, finansowe, medyczne i poufne dane firmy oraz opisuje ryzyko ich ujawnienia przez wynik modelu.",
+      "summary_en": "The industry standard lists personal, financial, health and confidential business data among sensitive data and describes the risk of disclosing them through the model's output.",
       "implication_pl": "Sentinel pozwala wybrać model lokalny (dane nie opuszczają firmy) albo chmurowy, a cache wiadomości prawdziwych nie przechowuje ich treści.",
+      "implication_en": "Sentinel lets you choose a local model (data does not leave the company) or a cloud one, and the cache of real messages does not keep their content.",
       "verification": {
         "status": "verified",
         "source_file": "owasp_top10_llm_2025.pdf",
@@ -1812,6 +1974,7 @@
       "id": "E43",
       "kind": "empirical",
       "title_pl": "Pisanie z modelem językowym zmienia opinie autorów",
+      "title_en": "Writing with a language model shifts authors' opinions",
       "modules": [
         "raporty"
       ],
@@ -1830,6 +1993,7 @@
         "shifted their opinions"
       ],
       "gloss_pl": "Asystent pisania z wbudowaną opinią zmienił to, co uczestnicy napisali, i to, co później deklarowali w ankiecie.",
+      "gloss_en": "A writing assistant with a built-in opinion changed what participants wrote and what they later stated in a survey.",
       "location": "Abstract",
       "citation": "Jakesch, M., Bhat, A., Buschek, D., Zalmanson, L., & Naaman, M. (2023). Co-writing with opinionated language models affects users' views. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems.",
       "doi": "10.1145/3544548.3581196",
@@ -1837,7 +2001,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Eksperyment online (N=1506): uczestnicy pisali post o tym, czy media społecznościowe są dobre dla społeczeństwa; grupa eksperymentalna miała asystenta skonfigurowanego, by argumentował za jedną stroną. Asystent przesunął zarówno opinie w tekstach (ocenione przez 500 niezależnych sędziów), jak i późniejsze deklaracje uczestników.",
+      "summary_en": "An online experiment (N=1,506): participants wrote a post on whether social media is good for society; the treatment group had an assistant set up to argue for one side. The assistant shifted both the opinions in the texts (rated by 500 independent judges) and what participants stated later.",
       "implication_pl": "Redakcja przez AI nie jest neutralna: może zmienić sens raportu, dlatego w Sentinelu każda zmiana jest widoczna i osobno akceptowana, a model nie dodaje ocen.",
+      "implication_en": "AI editing is not neutral: it can change the meaning of a report, so in Sentinel every change is visible and accepted on its own, and the model adds no judgements.",
       "verification": {
         "status": "verified",
         "source_file": "jakesch2023_arxiv.pdf",
@@ -1850,6 +2016,7 @@
       "id": "E44",
       "kind": "empirical",
       "title_pl": "Metaanaliza: człowiek+AI średnio gorsi od lepszego z nich",
+      "title_en": "Meta-analysis: human+AI on average worse than the better of the two",
       "modules": [
         "mapa",
         "projekty"
@@ -1869,6 +2036,7 @@
         "performance losses in tasks that involved making decisions"
       ],
       "gloss_pl": "Średnio połączenie człowieka i AI wypadało istotnie gorzej niż lepszy z nich osobno; straty dotyczyły decyzji, zyski tworzenia treści.",
+      "gloss_en": "On average, combining a person and AI did significantly worse than the better of the two alone; the losses were in decisions, the gains in creating content.",
       "location": "Abstract",
       "citation": "Vaccaro, M., Almaatouq, A., & Malone, T. (2024). When combinations of humans and AI are useful: A systematic review and meta-analysis. Nature Human Behaviour, 8, 2293–2303.",
       "doi": "10.1038/s41562-024-02024-1",
@@ -1876,7 +2044,9 @@
       "open_access": true,
       "licence": "CC BY 4.0",
       "summary_pl": "Przegląd systematyczny i metaanaliza 106 eksperymentów (370 wielkości efektu) z lat 2020–2023, w których porównano ludzi, AI i ich połączenie. Średnio połączenie było gorsze od lepszego z nich (g = −0,23), ze stratami w zadaniach decyzyjnych i zyskami w tworzeniu treści.",
+      "summary_en": "A systematic review and meta-analysis of 106 experiments (370 effect sizes) from 2020–2023 that compared people, AI and their combination. On average the combination was worse than the better of the two (g = −0.23), with losses in decision tasks and gains in creating content.",
       "implication_pl": "Strefa „AI z człowiekiem” nie jest automatycznie najlepsza: mapa granic musi uzasadniać ją odwracalnością, wpływem na ludzi lub normą, a nie obietnicą lepszego wyniku.",
+      "implication_en": "The “AI with a person” zone is not automatically the best: the boundary map has to justify it by reversibility, impact on people or a norm, not by the promise of a better result.",
       "verification": {
         "status": "verified",
         "source_file": "vaccaro2024_nhb.pdf",
@@ -1889,6 +2059,7 @@
       "id": "E45",
       "kind": "theoretical",
       "title_pl": "Integracja AI wymaga, by człowiek odpowiadał za cały proces",
+      "title_en": "Integrating AI requires a person to answer for the whole process",
       "modules": [
         "mapa",
         "projekty"
@@ -1907,6 +2078,7 @@
         "humans to retain overall responsibility"
       ],
       "gloss_pl": "Połączenie automatyzacji i wspomagania wymaga, by człowiek zachował ogólną odpowiedzialność za proces zarządczy.",
+      "gloss_en": "Combining automation and augmentation requires that a person keeps overall responsibility for the management process.",
       "location": "Section on integrating automation and augmentation (accepted manuscript)",
       "citation": "Raisch, S., & Krakowski, S. (2021). Artificial intelligence and management: The automation–augmentation paradox. Academy of Management Review, 46(1), 192–210.",
       "doi": "10.5465/amr.2018.0072",
@@ -1914,7 +2086,9 @@
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Artykuł teoretyczny: skoro automatyzacji i wspomagania nie da się w zarządzaniu rozdzielić, organizacja musi je integrować, a integracja wymaga, by odpowiedzialność za cały proces została przy człowieku. Autorzy powołują się na badania, według których ogranicza to też błędy współpracy człowieka z maszyną.",
+      "summary_en": "A theoretical article: since automation and augmentation cannot be separated in management, an organisation has to integrate them, and integration requires that responsibility for the whole process stays with a person. The authors cite research according to which this also reduces errors in collaboration between people and machines.",
       "implication_pl": "Sentinel może automatyzować analizę, ale decyzja o zmianie projektu zawsze należy do kierownika.",
+      "implication_en": "Sentinel may automate analysis, but the decision to change a project always belongs to the manager.",
       "verification": {
         "status": "verified",
         "source_file": "raisch2021_unige.pdf",
@@ -1927,6 +2101,7 @@
       "id": "E46",
       "kind": "law",
       "title_pl": "Obowiązki dla systemów z zał. III od 2 grudnia 2027 r.",
+      "title_en": "Obligations for Annex III systems from 2 December 2027",
       "modules": [
         "ludzie",
         "mapa"
@@ -1947,6 +2122,7 @@
         "2 grudnia 2027 r."
       ],
       "gloss_pl": "Wymogi dla systemów wysokiego ryzyka z załącznika III stosuje się od 2 grudnia 2027 r., a dla systemów z załącznika I od 2 sierpnia 2028 r.",
+      "gloss_en": "The requirements for the high-risk systems of Annex III apply from 2 December 2027, and for those of Annex I from 2 August 2028.",
       "location": "Art. 1 pkt 40 lit. b (nowe brzmienie art. 113 akapit trzeci lit. c AI Act)",
       "citation": "Regulation (EU) 2026/1744 of the European Parliament and of the Council of 8 July 2026 amending Regulations (EU) 2024/1689, (EU) 2018/1139 and (EU) 2023/1230 (Digital Omnibus on AI). OJ L, 2026/1744, 24.7.2026",
       "doi": null,
@@ -1954,7 +2130,9 @@
       "open_access": true,
       "licence": "akt prawny, nie jest przedmiotem prawa autorskiego (art. 4 ustawy o prawie autorskim)",
       "summary_pl": "Rozporządzenie (UE) 2026/1744 opublikowano 24.07.2026, weszło w życie trzeciego dnia po publikacji (27.07.2026). Przesunęło stosowanie wymogów dla systemów wysokiego ryzyka z załącznika III z 2 sierpnia 2026 r. na 2 grudnia 2027 r.; treść załącznika III i zakazy z art. 5 ust. 1 lit. f się nie zmieniły.",
+      "summary_en": "Regulation (EU) 2026/1744 was published on 24 July 2026 and entered into force on the third day after its publication (27 July 2026). It moved the application of the requirements for the high-risk systems of Annex III from 2 August 2026 to 2 December 2027; the text of Annex III and the prohibition of Art. 5(1)(f) did not change.",
       "implication_pl": "Na obronie (2 grudnia 2026 r.) poprawne zdanie brzmi: ocena pracowników przez AI jest systemem wysokiego ryzyka, a związane z tym obowiązki będą stosowane od 2 grudnia 2027 r.",
+      "implication_en": "At the defence (2 December 2026) the correct sentence is: evaluating workers with AI is a high-risk system, and the related obligations will apply from 2 December 2027.",
       "verification": {
         "status": "verified",
         "source_file": "omnibus_2026_1744_en.xhtml",
@@ -1968,7 +2146,8 @@
     {
       "id": "E47",
       "kind": "own",
-      "title_pl": "Nasze badanie (RQ1): LLM zamienia opis projektu w strukturę zadań",
+      "title_pl": "Nasze badanie (RQ1): model językowy zamienia opis projektu w zadania",
+      "title_en": "Our study (RQ1): a language model turns a project description into tasks",
       "modules": [
         "raporty",
         "projekty"
@@ -1987,35 +2166,42 @@
       "url": null,
       "open_access": true,
       "licence": "MIT (kod i wyniki Sentinela)",
-      "summary_pl": "Model gpt-oss-120b odczytywał zadania i zależności z opisów projektów PSPLIB napisanych językiem narracyjnym. Poprawnych odpowiedzi było 72,5% za pierwszym razem i 100,0% po naprawie przez walidację schematu, ale czułość na zależności między zadaniami została na poziomie 0,745.",
+      "summary_pl": "Model gpt-oss-120b odczytywał zadania i zależności z opisów projektów testowych standardowej biblioteki badawczej napisanych językiem narracyjnym. Poprawnych odpowiedzi było 72,5% za pierwszym razem i 100,0% po naprawie przez walidację schematu, ale czułość na zależności między zadaniami została na poziomie 0,745.",
+      "summary_en": "The gpt-oss-120b model read tasks and dependencies from narrative descriptions of test projects of a standard research library. 72.5% of the answers were valid at the first attempt and 100.0% after repair by schema validation, but the sensitivity to dependencies between tasks stayed at 0.745.",
       "implication_pl": "Schemat i walidacja naprawiają formę odpowiedzi, a nie jej treść, więc wszystko, co model odczyta z tekstu, człowiek potwierdza na kartach.",
+      "implication_en": "The schema and validation repair the form of an answer, not its content, so whatever the model reads from a text is confirmed by a person on the cards.",
       "figures": [
         {
           "macro": "RQoneValidGptOssNarrativeSingle",
           "value": "72.5",
-          "label_pl": "poprawne odpowiedzi za pierwszym razem, opisy narracyjne [%]"
+          "label_pl": "poprawne odpowiedzi za pierwszym razem, opisy narracyjne [%]",
+          "label_en": "valid answers at the first attempt, narrative descriptions [%]"
         },
         {
           "macro": "RQoneValidGptOssNarrativeRepair",
           "value": "100.0",
-          "label_pl": "poprawne odpowiedzi po naprawie [%]"
+          "label_pl": "poprawne odpowiedzi po naprawie [%]",
+          "label_en": "valid answers after repair [%]"
         },
         {
           "macro": "RQoneEdgeRecallGptOssNarrativeRepair",
           "value": "0.745",
-          "label_pl": "czułość na zależności po naprawie"
+          "label_pl": "czułość na zależności po naprawie",
+          "label_en": "sensitivity to dependencies after repair"
         },
         {
           "macro": "RQoneValidGptOssStructuredSingle",
           "value": "100.0",
-          "label_pl": "poprawne odpowiedzi, opisy uporządkowane [%]"
+          "label_pl": "poprawne odpowiedzi, opisy uporządkowane [%]",
+          "label_en": "valid answers, structured descriptions [%]"
         }
       ],
       "run_ids": [
         "20261023-215350-f5aad526"
       ],
       "runs": 320,
-      "caveats_pl": "Opisy wygenerowane z instancji PSPLIB, a nie prawdziwe dokumenty firm; 320 wierszy wyników (160 sesji, dwa warunki), dwa modele.",
+      "caveats_pl": "Opisy wygenerowane z projektów testowych biblioteki badawczej, a nie prawdziwe dokumenty firm; 320 wierszy wyników (160 sesji, dwa warunki), dwa modele.",
+      "caveats_en": "Descriptions generated from test projects of a research library, not real company documents; 320 result rows (160 sessions, two conditions), two models.",
       "verification": {
         "status": "verified",
         "source_file": "paper/generated/numbers.tex",
@@ -2028,6 +2214,7 @@
       "id": "E48",
       "kind": "own",
       "title_pl": "Nasze badanie (RQ2): harmonogram liczy solver, nie model językowy",
+      "title_en": "Our study (RQ2): a solver computes the schedule, not a language model",
       "modules": [
         "projekty"
       ],
@@ -2043,30 +2230,36 @@
       "url": null,
       "open_access": true,
       "licence": "MIT (kod i wyniki Sentinela)",
-      "summary_pl": "Na instancjach J30 biblioteki PSPLIB średnie odchylenie od optimum wyniosło 5,58% dla reguły SGS-LFT, 0,82% dla RBRS i 0,01% dla CP-SAT z limitem 10 s.",
+      "summary_pl": "Na projektach J30 standardowej biblioteki testowej średnie odchylenie od optimum wyniosło 5,58% dla prostej reguły priorytetowej (LFT), 0,82% dla RBRS i 0,01% dla solvera ograniczeń z limitem 10 s.",
+      "summary_en": "On the J30 projects of a standard test library, the mean deviation from the optimum was 5.58% for a simple priority rule (LFT), 0.82% for RBRS and 0.01% for a constraint solver with a 10 s limit.",
       "implication_pl": "Daty i harmonogram w Sentinelu pochodzą z deterministycznego kodu o znanej dokładności, więc model językowy nie musi i nie powinien niczego liczyć.",
+      "implication_en": "Dates and the schedule in Sentinel come from deterministic code of known accuracy, so the language model need not and should not compute anything.",
       "figures": [
         {
           "macro": "RQtwoGapSgsLftJthirty",
           "value": "5.58",
-          "label_pl": "SGS-LFT, średnie odchylenie od optimum J30 [%]"
+          "label_pl": "prosta reguła priorytetowa (LFT), średnie odchylenie od optimum J30 [%]",
+          "label_en": "simple priority rule (LFT), mean deviation from the optimum J30 [%]"
         },
         {
           "macro": "RQtwoGapRbrsJthirty",
           "value": "0.82",
-          "label_pl": "RBRS, odchylenie J30 [%]"
+          "label_pl": "RBRS, odchylenie J30 [%]",
+          "label_en": "RBRS, deviation J30 [%]"
         },
         {
           "macro": "RQtwoGapCpsatTenJthirty",
           "value": "0.01",
-          "label_pl": "CP-SAT 10 s, odchylenie J30 [%]"
+          "label_pl": "solver ograniczeń 10 s, odchylenie J30 [%]",
+          "label_en": "constraint solver 10 s, deviation J30 [%]"
         }
       ],
       "run_ids": [
         "20261020-105318-3ba2e943"
       ],
       "runs": 6720,
-      "caveats_pl": "Instancje benchmarkowe PSPLIB, nie prawdziwe projekty; 6720 rozwiązań (metody × instancje J30 i J60).",
+      "caveats_pl": "Projekty testowe standardowej biblioteki, nie prawdziwe projekty; 6720 rozwiązań (metody × projekty J30 i J60).",
+      "caveats_en": "Test projects of a standard library, not real projects; 6,720 solutions (methods × J30 and J60 projects).",
       "verification": {
         "status": "verified",
         "source_file": "paper/generated/numbers.tex",
@@ -2079,6 +2272,7 @@
       "id": "E49",
       "kind": "own",
       "title_pl": "Nasze badanie (RQ3): prognozy „N na 100” są skalibrowane",
+      "title_en": "Our study (RQ3): the “N in 100” forecasts are calibrated",
       "modules": [
         "projekty"
       ],
@@ -2095,28 +2289,34 @@
       "url": null,
       "open_access": true,
       "licence": "MIT (kod i wyniki Sentinela)",
-      "summary_pl": "Prognozy Monte Carlo szansy na termin oceniono na 960 instancjach J30 z zakłóceniami. Brier skill score rósł z 0,171 na etapie planu do 0,541 przy 80% wykonanej pracy; przy 40% AUC wyniosło 0,865, a pokrycie centralnego przedziału 80% rozkładu daty końca 0,798.",
+      "summary_pl": "Prognozy szansy na termin, liczone symulacją wielu możliwych przebiegów, oceniono na 960 instancjach J30 z zakłóceniami. Brier skill score rósł z 0,171 na etapie planu do 0,541 przy 80% wykonanej pracy; przy 40% AUC wyniosło 0,865, a pokrycie centralnego przedziału 80% rozkładu daty końca 0,798.",
+      "summary_en": "Forecasts of the chance of meeting the deadline, computed by simulating many possible runs, were evaluated on 960 J30 instances with disruptions. The Brier skill score rose from 0.171 at the plan stage to 0.541 at 80% of the work done; at 40% the AUC was 0.865, and the coverage of the central 80% interval of the end date 0.798.",
       "implication_pl": "Liczba „N na 100” na Pulpicie jest sprawdzalna i dobrze skalibrowana, ale na początku projektu mówi niewiele, co trzeba pokazywać uczciwie.",
+      "implication_en": "The “N in 100” number on the Overview can be checked and is well calibrated, but at the start of a project it says little, which has to be shown honestly.",
       "figures": [
         {
           "macro": "RQthreeBssMcFullJthirtyFzero",
           "value": "0.171",
-          "label_pl": "Brier skill score na etapie planu"
+          "label_pl": "Brier skill score na etapie planu",
+          "label_en": "Brier skill score at the plan stage"
         },
         {
           "macro": "RQthreeBssMcFullJthirtyFeight",
           "value": "0.541",
-          "label_pl": "Brier skill score przy 80% pracy"
+          "label_pl": "Brier skill score przy 80% pracy",
+          "label_en": "Brier skill score at 80% of the work"
         },
         {
           "macro": "RQthreeAucMcFullJthirtyFfour",
           "value": "0.865",
-          "label_pl": "AUC przy 40% pracy"
+          "label_pl": "AUC przy 40% pracy",
+          "label_en": "AUC at 40% of the work"
         },
         {
           "macro": "RQthreePitCovMcFullJthirtyFfour",
           "value": "0.798",
-          "label_pl": "pokrycie przedziału 80% przy 40% pracy"
+          "label_pl": "pokrycie przedziału 80% przy 40% pracy",
+          "label_en": "coverage of the 80% interval at 40% of the work"
         }
       ],
       "run_ids": [
@@ -2124,6 +2324,7 @@
       ],
       "runs": 230400,
       "caveats_pl": "Świat symulowany według modelu Sentinela (prognoza i świat mają ten sam model, poza badaniem błędnej specyfikacji); 230 400 prognoz na 960 instancjach.",
+      "caveats_en": "A world simulated by Sentinel's own model (the forecast and the world share the model, except in the misspecification study); 230,400 forecasts on 960 instances.",
       "verification": {
         "status": "verified",
         "source_file": "paper/generated/numbers.tex",
@@ -2136,6 +2337,7 @@
       "id": "E50",
       "kind": "own",
       "title_pl": "Nasze badanie (RQ4): symulacja przed działaniem daje więcej terminów i mniej zmian",
+      "title_en": "Our study (RQ4): simulating before acting meets more deadlines with fewer changes",
       "modules": [
         "projekty",
         "mapa"
@@ -2154,54 +2356,65 @@
       "open_access": true,
       "licence": "MIT (kod i wyniki Sentinela)",
       "summary_pl": "Na J30 Sentinel dotrzymał terminu D = 1,2·C* w 37,1% przebiegów wobec 31,3% dla FullResolve i 27,0% bez reakcji (różnica parami +10,2 pp, przedział 8,1–12,1), przy nerwowości planu 40,3 wobec 151,6 dla FullResolve.",
+      "summary_en": "On J30, Sentinel met the deadline D = 1.2·C* in 37.1% of the runs, against 31.3% for FullResolve and 27.0% without reaction (paired difference +10.2 pp, interval 8.1–12.1), with plan nervousness of 40.3 against 151.6 for FullResolve.",
       "implication_pl": "Ocena skutków na wielu symulowanych przyszłościach przed zmianą projektu daje więcej dotrzymanych terminów przy mniejszej liczbie zmian planu, co uzasadnia „Wpływ na projekt” i propozycje z liczbami.",
+      "implication_en": "Evaluating the effects on many simulated futures before changing a project meets more deadlines with fewer plan changes, which justifies “Effect on the project” and proposals with numbers.",
       "figures": [
         {
           "macro": "RQfourOnTimeSentinelJthirty",
           "value": "37.1",
-          "label_pl": "Sentinel, terminowo J30 [%]"
+          "label_pl": "Sentinel, terminowo J30 [%]",
+          "label_en": "Sentinel, on time J30 [%]"
         },
         {
           "macro": "RQfourOnTimeFullResolveJthirty",
           "value": "31.3",
-          "label_pl": "FullResolve, terminowo J30 [%]"
+          "label_pl": "FullResolve, terminowo J30 [%]",
+          "label_en": "FullResolve, on time J30 [%]"
         },
         {
           "macro": "RQfourOnTimeNoReactionJthirty",
           "value": "27.0",
-          "label_pl": "bez reakcji, terminowo J30 [%]"
+          "label_pl": "bez reakcji, terminowo J30 [%]",
+          "label_en": "no reaction, on time J30 [%]"
         },
         {
           "macro": "RQfourVsNoReactionOnTimeSentinelJthirty",
           "value": "+10.2",
-          "label_pl": "różnica parami wobec braku reakcji [pp]"
+          "label_pl": "różnica parami wobec braku reakcji [pp]",
+          "label_en": "paired difference against no reaction [pp]"
         },
         {
           "macro": "RQfourVsNoReactionOnTimeSentinelJthirtyLo",
           "value": "8.1",
-          "label_pl": "dolna granica przedziału [pp]"
+          "label_pl": "dolna granica przedziału [pp]",
+          "label_en": "lower bound of the interval [pp]"
         },
         {
           "macro": "RQfourVsNoReactionOnTimeSentinelJthirtyHi",
           "value": "12.1",
-          "label_pl": "górna granica przedziału [pp]"
+          "label_pl": "górna granica przedziału [pp]",
+          "label_en": "upper bound of the interval [pp]"
         },
         {
           "macro": "RQfourNervousnessSentinelJthirty",
           "value": "40.3",
-          "label_pl": "nerwowość planu, Sentinel"
+          "label_pl": "nerwowość planu, Sentinel",
+          "label_en": "plan nervousness, Sentinel"
         },
         {
           "macro": "RQfourNervousnessFullResolveJthirty",
           "value": "151.6",
-          "label_pl": "nerwowość planu, FullResolve"
+          "label_pl": "nerwowość planu, FullResolve",
+          "label_en": "plan nervousness, FullResolve"
         }
       ],
       "run_ids": [
         "20261022-102609-e9d131b3"
       ],
       "runs": 8640,
-      "caveats_pl": "Symulacja na instancjach PSPLIB z modelowanymi zakłóceniami; przedział dla różnicy z bootstrapu po instancjach; 8640 przebiegów (180 instancji J30 i J60).",
+      "caveats_pl": "Symulacja na projektach testowych z modelowanymi zakłóceniami; przedział dla różnicy z bootstrapu po instancjach; 8640 przebiegów (180 instancji J30 i J60).",
+      "caveats_en": "Simulation on test projects with modelled disruptions; the interval of the difference from a bootstrap over instances; 8,640 runs (180 J30 and J60 instances).",
       "verification": {
         "status": "verified",
         "source_file": "paper/generated/numbers.tex",
@@ -2213,7 +2426,8 @@
     {
       "id": "E51",
       "kind": "own",
-      "title_pl": "Nasze badanie (RQ5): LLM jako wybierający działa jak losowanie",
+      "title_pl": "Nasze badanie (RQ5): model językowy wybierający działania jest jak losowanie",
+      "title_en": "Our study (RQ5): a language model choosing actions is like drawing lots",
       "modules": [
         "projekty",
         "uprawnienia"
@@ -2233,37 +2447,45 @@
       "open_access": true,
       "licence": "MIT (kod i wyniki Sentinela)",
       "summary_pl": "Na 200 wiadomościach gpt-oss-120b odczytał zdarzenia dokładnie w 82,0%, a qwen2.5:7b w 51,0%, bez ujawnienia powodów nieobecności. Propozycje działań gpt-oss-120b wygrywały w 9,3% ze 150 stanów decyzyjnych, a losowa kontrola w 8,7%; wyjaśnienia były w pełni wierne liczbom w 99,3%.",
+      "summary_en": "On 200 messages, gpt-oss-120b read the events exactly in 82.0% of the cases and qwen2.5:7b in 51.0%, without disclosing reasons for absence. The actions proposed by gpt-oss-120b won in 9.3% of 150 decision states and a random control in 8.7%; the explanations were fully faithful to the numbers in 99.3%.",
       "implication_pl": "Model jest użyteczny do tłumaczenia tekstu na dane i liczb na tekst, ale wybierając działania nie jest lepszy od losowania, więc w Sentinelu nigdy nie decyduje.",
+      "implication_en": "The model is useful for turning text into data and numbers into text, but when choosing actions it is no better than drawing lots, so in Sentinel it never decides.",
       "figures": [
         {
           "macro": "RQfiveEventExactGptOssRepair",
           "value": "82.0",
-          "label_pl": "zdarzenia odczytane dokładnie, gpt-oss-120b [%]"
+          "label_pl": "zdarzenia odczytane dokładnie, gpt-oss-120b [%]",
+          "label_en": "events read exactly, gpt-oss-120b [%]"
         },
         {
           "macro": "RQfiveEventExactQwenRepair",
           "value": "51.0",
-          "label_pl": "zdarzenia odczytane dokładnie, qwen2.5:7b [%]"
+          "label_pl": "zdarzenia odczytane dokładnie, qwen2.5:7b [%]",
+          "label_en": "events read exactly, qwen2.5:7b [%]"
         },
         {
           "macro": "RQfiveEventLeaksGptOssRepair",
           "value": "0",
-          "label_pl": "ujawnione powody nieobecności, gpt-oss-120b"
+          "label_pl": "ujawnione powody nieobecności, gpt-oss-120b",
+          "label_en": "reasons for absence disclosed, gpt-oss-120b"
         },
         {
           "macro": "RQfivePropWinRateGptOss",
           "value": "9.3",
-          "label_pl": "wygrane propozycje gpt-oss-120b [%]"
+          "label_pl": "wygrane propozycje gpt-oss-120b [%]",
+          "label_en": "winning proposals, gpt-oss-120b [%]"
         },
         {
           "macro": "RQfivePropWinRateRandom",
           "value": "8.7",
-          "label_pl": "wygrane propozycje losowej kontroli [%]"
+          "label_pl": "wygrane propozycje losowej kontroli [%]",
+          "label_en": "winning proposals, random control [%]"
         },
         {
           "macro": "RQfiveExplFaithfulGptOss",
           "value": "99.3",
-          "label_pl": "wyjaśnienia w pełni wierne, gpt-oss-120b [%]"
+          "label_pl": "wyjaśnienia w pełni wierne, gpt-oss-120b [%]",
+          "label_en": "fully faithful explanations, gpt-oss-120b [%]"
         }
       ],
       "run_ids": [
@@ -2273,6 +2495,7 @@
       ],
       "runs": 1550,
       "caveats_pl": "Wiadomości syntetyczne, 150 stanów decyzyjnych; przedziały Wilsona propozycji nakładają się (5,6–15,1 wobec 5,1–14,3), więc „jak losowanie” znaczy „brak wykazanej różnicy”; 1550 wierszy wyników (800 + 450 + 300).",
+      "caveats_en": "Synthetic messages, 150 decision states; the Wilson intervals of the proposals overlap (5.6–15.1 against 5.1–14.3), so “like drawing lots” means “no difference shown”; 1,550 result rows (800 + 450 + 300).",
       "verification": {
         "status": "verified",
         "source_file": "paper/generated/numbers.tex",
@@ -2285,6 +2508,7 @@
       "id": "E52",
       "kind": "own",
       "title_pl": "Nasze badanie (RQ4): czekanie na zgodę kosztuje terminy",
+      "title_en": "Our study (RQ4): waiting for approval costs deadlines",
       "modules": [
         "projekty",
         "mapa"
@@ -2303,37 +2527,45 @@
       "open_access": true,
       "licence": "MIT (kod i wyniki Sentinela)",
       "summary_pl": "Na tych samych 240 światach J30 Sentinel, który każdą zmianę przekazuje do zatwierdzenia (poziom autonomii 0, symulowana zgoda po 1 dniu), dotrzymał terminu w 22,5% przebiegów, a w pełni autonomiczny (poziom 3) w 33,8%; brak reakcji dał 21,2%.",
+      "summary_en": "On the same 240 J30 worlds, a Sentinel that hands every change over for approval (autonomy level 0, approval simulated after 1 day) met the deadline in 22.5% of the runs, and a fully autonomous one (level 3) in 33.8%; no reaction gave 21.2%.",
       "implication_pl": "Zatwierdzanie każdej zmiany ma realny koszt w czasie, dlatego Sentinel pokazuje „ważna do” i koszt zwłoki, żeby szybka decyzja człowieka nie była przypadkiem.",
+      "implication_en": "Approving every change has a real cost in time, which is why Sentinel shows “valid until” and the cost of delay, so that a quick decision by a person is no accident.",
       "figures": [
         {
           "macro": "RQfourAutoLevelZeroOnTime",
           "value": "22.5",
-          "label_pl": "poziom 0 (każda zmiana do zgody), terminowo [%]"
+          "label_pl": "poziom 0 (każda zmiana do zgody), terminowo [%]",
+          "label_en": "level 0 (every change approved), on time [%]"
         },
         {
           "macro": "RQfourAutoLevelOneOnTime",
           "value": "23.3",
-          "label_pl": "poziom 1, terminowo [%]"
+          "label_pl": "poziom 1, terminowo [%]",
+          "label_en": "level 1, on time [%]"
         },
         {
           "macro": "RQfourAutoLevelTwoOnTime",
           "value": "29.6",
-          "label_pl": "poziom 2, terminowo [%]"
+          "label_pl": "poziom 2, terminowo [%]",
+          "label_en": "level 2, on time [%]"
         },
         {
           "macro": "RQfourAutoLevelThreeOnTime",
           "value": "33.8",
-          "label_pl": "poziom 3 (pełna autonomia), terminowo [%]"
+          "label_pl": "poziom 3 (pełna autonomia), terminowo [%]",
+          "label_en": "level 3 (full autonomy), on time [%]"
         },
         {
           "macro": "RQfourAutoNoReactionOnTime",
           "value": "21.2",
-          "label_pl": "bez reakcji, terminowo [%]"
+          "label_pl": "bez reakcji, terminowo [%]",
+          "label_en": "no reaction, on time [%]"
         },
         {
           "macro": "RQfourAutoLevelThreeRuns",
           "value": "240",
-          "label_pl": "liczba światów na poziom"
+          "label_pl": "liczba światów na poziom",
+          "label_en": "worlds per level"
         }
       ],
       "run_ids": [
@@ -2342,7 +2574,8 @@
         "20261022-102609-e9d131b3"
       ],
       "runs": 720,
-      "caveats_pl": "Zgoda symulowana: człowiek zawsze zatwierdza po 1 dniu, więc koszt to samo opóźnienie, bez odrzuceń i lepszych pomysłów człowieka; tylko λ_A = 0,01, 240 światów na poziom (720 przebiegów w badaniu poziomów 0 i 1); przedziały poziomów 0 i 1 się nakładają.",
+      "caveats_pl": "Zgoda symulowana: człowiek zawsze zatwierdza po 1 dniu, więc koszt to samo opóźnienie, bez odrzuceń i lepszych pomysłów człowieka; tylko jedna waga kosztu zmian (0,01), 240 światów na poziom (720 przebiegów w badaniu poziomów 0 i 1); przedziały poziomów 0 i 1 się nakładają.",
+      "caveats_en": "Simulated approval: the person always approves after 1 day, so the cost is the delay alone, without rejections or better ideas from the person; only one weight of the cost of changes (0.01), 240 worlds per level (720 runs in the study of levels 0 and 1); the intervals of levels 0 and 1 overlap.",
       "verification": {
         "status": "verified",
         "source_file": "paper/generated/numbers.tex",

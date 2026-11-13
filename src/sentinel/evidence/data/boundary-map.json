@@ -9,8 +9,13 @@
     {
       "id": 1,
       "name_pl": "Odwracalność i stawka",
+      "name_en": "Reversibility and stakes",
+      "short_pl": "Odwracalność",
+      "short_en": "Reversibility",
       "definition_pl": "Czy błąd da się tanio cofnąć, zanim wyrządzi szkodę, i ile kosztuje, jeśli się nie da.",
+      "definition_en": "Whether an error can be undone cheaply before it does harm, and what it costs if it cannot.",
       "question_pl": "Czy błąd AI w tym zadaniu da się cofnąć, zanim komuś zaszkodzi?",
+      "question_en": "Can an AI error in this task be undone before it harms anyone?",
       "evidence": [
         "E04",
         "E07",
@@ -37,8 +42,13 @@
     {
       "id": 2,
       "name_pl": "Weryfikowalność",
+      "name_en": "Verifiability",
+      "short_pl": "Sprawdzalność",
+      "short_en": "Checkability",
       "definition_pl": "Czy człowiek albo kod może tanio i pewnie sprawdzić wynik, zanim zostanie użyty.",
+      "definition_en": "Whether a person or code can check the result cheaply and reliably before it is used.",
       "question_pl": "Czy wynik AI można szybko sprawdzić (kodem albo okiem człowieka)?",
+      "question_en": "Can the AI's result be checked quickly (by code or by a person's eye)?",
       "evidence": [
         "E03",
         "E04",
@@ -60,8 +70,13 @@
     {
       "id": 3,
       "name_pl": "Praca językowa czy liczby i osąd",
+      "name_en": "Language work or numbers and judgement",
+      "short_pl": "Tekst czy liczby",
+      "short_en": "Text or numbers",
       "definition_pl": "Czy to praca na języku wewnątrz granicy możliwości modelu (redakcja, streszczenie, tekst na dane), czy liczenie, nowy osąd lub strategia poza nią.",
+      "definition_en": "Whether it is language work inside the frontier of the model's capabilities (editing, summarising, text to data), or computing, new judgement or strategy outside it.",
       "question_pl": "Czy to praca na tekście, czy liczenie, nowy osąd albo strategia?",
+      "question_en": "Is it work on text, or computing, new judgement or strategy?",
       "evidence": [
         "E01",
         "E02",
@@ -79,8 +94,13 @@
     {
       "id": 4,
       "name_pl": "Wpływ na ludzi i pieniądze",
+      "name_en": "Impact on people and money",
+      "short_pl": "Ludzie i pieniądze",
+      "short_en": "People and money",
       "definition_pl": "Czy wynik dotyczy oceny, warunków pracy lub pieniędzy konkretnych osób albo firmy.",
+      "definition_en": "Whether the result concerns the evaluation, working conditions or money of particular people or of the company.",
       "question_pl": "Czy wynik wpływa na ocenę, pracę lub pieniądze konkretnych osób?",
+      "question_en": "Does the result affect the evaluation, work or money of particular people?",
       "evidence": [
         "E08",
         "E18",
@@ -97,8 +117,13 @@
     {
       "id": 5,
       "name_pl": "Wartości, relacje i wyczucie („smak”)",
+      "name_en": "Values, relationships and feel (“taste”)",
+      "short_pl": "Smak",
+      "short_en": "Taste",
       "definition_pl": "Czy decyzja zależy od wartości, relacji lub wiedzy ukrytej, której nie da się sprawdzić danymi.",
+      "definition_en": "Whether the decision depends on values, relationships or tacit knowledge that no data can check.",
       "question_pl": "Czy decyzja zależy od wartości, relacji lub wyczucia, których nie sprawdzi żadna liczba?",
+      "question_en": "Does the decision depend on values, relationships or feel that no number can check?",
       "evidence": [
         "E17",
         "E22",
@@ -111,8 +136,13 @@
     {
       "id": 6,
       "name_pl": "Wrażliwość danych",
+      "name_en": "Data sensitivity",
+      "short_pl": "Dane",
+      "short_en": "Data",
       "definition_pl": "Czy zadanie wymaga danych szczególnych kategorii albo poufnych, które nie powinny trafić do modelu ani wyjść poza firmę.",
+      "definition_en": "Whether the task needs special-category or confidential data that should not reach the model or leave the company.",
       "question_pl": "Czy zadanie wymaga danych wrażliwych lub poufnych?",
+      "question_en": "Does the task need sensitive or confidential data?",
       "evidence": [
         "E19",
         "E23",
@@ -130,14 +160,19 @@
     {
       "id": "P01",
       "name_pl": "Redakcja raportu napisanego przez człowieka",
+      "name_en": "Editing a report written by a person",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Język to mocna strona modelu, ale redakcja może zmienić sens i fakty, więc każdą zmianę akceptuje autor.",
+      "reason_en": "Language is the model's strength, but editing can change meaning and facts, so the author accepts every change.",
       "sentinel_pl": "Raporty: śledzenie zmian i strażnik faktów (D14, D15).",
+      "sentinel_en": "Reports: tracked changes and a fact guard (D14, D15).",
+      "screen": "reports",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_samodzielnie",
           "reason_pl": "Każda zmiana jest widoczna i odwracalna jednym kliknięciem.",
+          "reason_en": "Every change is visible and can be undone with one click.",
           "evidence": [
             "E04"
           ]
@@ -146,6 +181,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Kod sprawdza liczby i daty, ale zmianę sensu ocenia autor.",
+          "reason_en": "Code checks numbers and dates, but a change of meaning is judged by the author.",
           "evidence": [
             "E03",
             "E43"
@@ -155,6 +191,7 @@
           "criterion": 3,
           "zone": "ai_samodzielnie",
           "reason_pl": "Redakcja tekstu leży wewnątrz granicy możliwości modelu.",
+          "reason_en": "Editing text lies inside the frontier of the model's capabilities.",
           "evidence": [
             "E01",
             "E02"
@@ -164,6 +201,7 @@
           "criterion": 4,
           "zone": "ai_samodzielnie",
           "reason_pl": "Redakcja nie ocenia ludzi i nie przesuwa pieniędzy; to nie obszar wysokiego ryzyka.",
+          "reason_en": "Editing does not evaluate people or move money; it is not a high-risk area.",
           "evidence": [
             "E18"
           ]
@@ -172,6 +210,7 @@
           "criterion": 5,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Co i jak podkreślić, decyduje autor; model nie dodaje ocen.",
+          "reason_en": "What to stress and how is the author's decision; the model adds no judgements.",
           "evidence": [
             "E43",
             "E27"
@@ -181,6 +220,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Raport bywa poufny: model lokalny albo dane bez treści w cache.",
+          "reason_en": "A report can be confidential: a local model, or a cache without the content.",
           "evidence": [
             "E42"
           ]
@@ -190,14 +230,19 @@
     {
       "id": "P02",
       "name_pl": "Wersje raportu dla działów",
+      "name_en": "Versions of a report for departments",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Każda wersja to redakcja tekstu autora; dobór treści dla odbiorcy to osąd, więc wersje przegląda człowiek.",
+      "reason_en": "Each version is an edit of the author's text; choosing content for an audience is judgement, so a person reviews the versions.",
       "sentinel_pl": "Raporty: wersje dla odbiorców ze śledzeniem zmian (D16).",
+      "sentinel_en": "Reports: versions for audiences with tracked changes (D16).",
+      "screen": "reports",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_samodzielnie",
           "reason_pl": "Wersja nie zastępuje oryginału i można ją odrzucić.",
+          "reason_en": "A version does not replace the original and can be rejected.",
           "evidence": [
             "E04"
           ]
@@ -206,6 +251,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Strażnik faktów sprawdza liczby; pominięcia ocenia człowiek.",
+          "reason_en": "The fact guard checks the numbers; omissions are judged by a person.",
           "evidence": [
             "E03",
             "E14"
@@ -215,6 +261,7 @@
           "criterion": 3,
           "zone": "ai_samodzielnie",
           "reason_pl": "Dostosowanie języka do odbiorcy to praca językowa.",
+          "reason_en": "Adapting language to an audience is language work.",
           "evidence": [
             "E01",
             "E05"
@@ -224,6 +271,7 @@
           "criterion": 4,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Inne ujęcie dla innego działu może zmienić odbiór decyzji.",
+          "reason_en": "A different framing for another department can change how a decision is received.",
           "evidence": [
             "E43"
           ]
@@ -232,6 +280,7 @@
           "criterion": 5,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Co dany dział powinien wiedzieć, to wyczucie autora.",
+          "reason_en": "What a department should know is the author's feel.",
           "evidence": [
             "E27"
           ]
@@ -240,6 +289,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Wersje nie mogą przenosić poufnych danych między działami.",
+          "reason_en": "Versions must not carry confidential data between departments.",
           "evidence": [
             "E42"
           ]
@@ -249,14 +299,19 @@
     {
       "id": "P03",
       "name_pl": "Streszczenie protokołu ze spotkania",
+      "name_en": "Summary of meeting minutes",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Streszczenie to praca językowa, ale model może zmyślić lub błędnie przypisać ustalenia, więc sprawdza je uczestnik.",
+      "reason_en": "Summarising is language work, but the model can invent agreements or attribute them wrongly, so a participant checks them.",
       "sentinel_pl": "Raporty i Raport: szkic do potwierdzenia, nie gotowy protokół (D11, D14).",
+      "sentinel_en": "Reports and Report: a draft to confirm, not finished minutes (D11, D14).",
+      "screen": "report",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_samodzielnie",
           "reason_pl": "Streszczenie można poprawić przed rozesłaniem.",
+          "reason_en": "A summary can be corrected before it is sent.",
           "evidence": [
             "E04"
           ]
@@ -265,6 +320,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Halucynacje i błędy transkrypcji trzeba sprawdzić z notatkami.",
+          "reason_en": "Hallucinations and transcription errors have to be checked against notes.",
           "evidence": [
             "E03",
             "E39"
@@ -274,6 +330,7 @@
           "criterion": 3,
           "zone": "ai_samodzielnie",
           "reason_pl": "Streszczanie leży wewnątrz granicy możliwości modelu.",
+          "reason_en": "Summarising lies inside the frontier of the model's capabilities.",
           "evidence": [
             "E01",
             "E02"
@@ -283,6 +340,7 @@
           "criterion": 4,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Przypisanie zobowiązań konkretnym osobom ich dotyczy.",
+          "reason_en": "Assigning commitments to particular people concerns them.",
           "evidence": [
             "E20"
           ]
@@ -291,6 +349,7 @@
           "criterion": 5,
           "zone": "ai_samodzielnie",
           "reason_pl": "Streszczenie relacjonuje ustalenia, nie waży wartości.",
+          "reason_en": "A summary reports agreements; it does not weigh values.",
           "evidence": [
             "E17"
           ]
@@ -299,6 +358,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Protokół może zawierać dane osobowe i poufne.",
+          "reason_en": "Minutes can contain personal and confidential data.",
           "evidence": [
             "E42",
             "E32"
@@ -309,14 +369,19 @@
     {
       "id": "P04",
       "name_pl": "Zamiana wiadomości statusowych na dane o postępie",
+      "name_en": "Turning status messages into progress data",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Model dobrze zamienia tekst na dane, ale nie zawsze dokładnie, więc każda pozycja jest kartą do potwierdzenia.",
+      "reason_en": "The model turns text into data well, but not always exactly, so every item is a card to confirm.",
       "sentinel_pl": "Raport: karty „Do potwierdzenia”, domyślnie niezaznaczone (D11, D23).",
+      "sentinel_en": "Report: “To confirm” cards, unticked by default (D11, D23).",
+      "screen": "report",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_samodzielnie",
           "reason_pl": "Błędny postęp można odwrócić w następnym raporcie.",
+          "reason_en": "Wrong progress can be reversed in the next report.",
           "evidence": [
             "E41"
           ]
@@ -325,6 +390,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Dokładnie odczytane tylko 82 ze 100 wiadomości, więc człowiek potwierdza.",
+          "reason_en": "Only 82 of 100 messages were read exactly, so a person confirms.",
           "evidence": [
             "E51",
             "E47"
@@ -334,6 +400,7 @@
           "criterion": 3,
           "zone": "ai_samodzielnie",
           "reason_pl": "Tekst na dane to praca językowa, którą model robi dobrze.",
+          "reason_en": "Text to data is language work the model does well.",
           "evidence": [
             "E47",
             "E51"
@@ -343,6 +410,7 @@
           "criterion": 4,
           "zone": "ai_samodzielnie",
           "reason_pl": "Zapisuje się tylko dostępność, nie ocenę osób.",
+          "reason_en": "Only availability is stored, not an evaluation of people.",
           "evidence": [
             "E32"
           ]
@@ -351,6 +419,7 @@
           "criterion": 5,
           "zone": "ai_samodzielnie",
           "reason_pl": "Postęp zadań to fakty, nie wartości.",
+          "reason_en": "The progress of tasks is facts, not values.",
           "evidence": [
             "E17"
           ]
@@ -359,6 +428,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Wiadomość może zdradzać powód nieobecności; schemat go nie zapisuje.",
+          "reason_en": "A message may reveal a reason for absence; the format does not store it.",
           "evidence": [
             "E32",
             "E51"
@@ -369,14 +439,19 @@
     {
       "id": "P05",
       "name_pl": "Prognoza dotrzymania terminu",
+      "name_en": "Forecast of meeting the deadline",
       "zone": "ai_samodzielnie",
       "reason_pl": "Prognozę liczy symulacja, a nie model językowy; niczego nie zmienia i jest sprawdzalna, więc może działać sama.",
-      "sentinel_pl": "Pulpit: „N na 100” z symulacji Monte Carlo (D01, D13).",
+      "reason_en": "A simulation computes the forecast, not a language model; it changes nothing and can be checked, so it may work alone.",
+      "sentinel_pl": "Pulpit: „N na 100” z symulacji wielu możliwych przebiegów (D01, D13).",
+      "sentinel_en": "Overview: “N in 100” from a simulation of many possible runs (D01, D13).",
+      "screen": "overview",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_samodzielnie",
           "reason_pl": "Prognoza informuje i niczego w projekcie nie zmienia.",
+          "reason_en": "The forecast informs and changes nothing in the project.",
           "evidence": [
             "E49"
           ]
@@ -385,6 +460,7 @@
           "criterion": 2,
           "zone": "ai_samodzielnie",
           "reason_pl": "Trafność prognoz zmierzono: są dobrze skalibrowane.",
+          "reason_en": "The accuracy of the forecasts was measured: they are well calibrated.",
           "evidence": [
             "E49",
             "E29"
@@ -394,6 +470,7 @@
           "criterion": 3,
           "zone": "ai_samodzielnie",
           "reason_pl": "Liczy symulacja i kod, nie model językowy.",
+          "reason_en": "Simulation and code compute it, not a language model.",
           "evidence": [
             "E48",
             "E14"
@@ -403,6 +480,7 @@
           "criterion": 4,
           "zone": "ai_samodzielnie",
           "reason_pl": "Prognoza dotyczy projektu, nie oceny ludzi.",
+          "reason_en": "The forecast concerns the project, not an evaluation of people.",
           "evidence": [
             "E18"
           ]
@@ -411,6 +489,7 @@
           "criterion": 5,
           "zone": "ai_samodzielnie",
           "reason_pl": "Predykcja to nie osąd; osąd zostaje przy decyzji.",
+          "reason_en": "Prediction is not judgement; judgement stays with the decision.",
           "evidence": [
             "E17"
           ]
@@ -419,6 +498,7 @@
           "criterion": 6,
           "zone": "ai_samodzielnie",
           "reason_pl": "Wystarcza dostępność osób, bez powodów nieobecności.",
+          "reason_en": "People's availability is enough, without reasons for absence.",
           "evidence": [
             "E32"
           ]
@@ -428,14 +508,19 @@
     {
       "id": "P06",
       "name_pl": "Wybór działania naprawczego w projekcie",
+      "name_en": "Choosing a corrective action in a project",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Symulacja ocenia możliwości i proponuje najlepszą, ale zmiana dotyczy ludzi i kompromisów, więc decyduje kierownik.",
+      "reason_en": "The simulation evaluates the options and proposes the best, but the change affects people and trade-offs, so the manager decides.",
       "sentinel_pl": "Decyzja: propozycja z liczbami, Zatwierdź / Odrzuć / Popraw (D03, D05, D24).",
+      "sentinel_en": "Decision: a proposal with numbers, Approve / Reject / Adjust (D03, D05, D24).",
+      "screen": "decisions",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Zmiana planu jest odwracalna, ale czekanie na zgodę kosztuje.",
+          "reason_en": "A plan change can be reversed, but waiting for approval costs.",
           "evidence": [
             "E52",
             "E11"
@@ -445,6 +530,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Skutki są policzone na symulowanych przyszłościach, nie zgadywane.",
+          "reason_en": "The effects are computed on simulated futures, not guessed.",
           "evidence": [
             "E50"
           ]
@@ -453,6 +539,7 @@
           "criterion": 3,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Model językowy wybiera jak losowanie; wybiera symulacja i człowiek.",
+          "reason_en": "A language model chooses like drawing lots; the simulation and a person choose.",
           "evidence": [
             "E51",
             "E44"
@@ -462,6 +549,7 @@
           "criterion": 4,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Działanie przesuwa zadania i obciążenie konkretnych osób.",
+          "reason_en": "The action moves tasks and the workload of particular people.",
           "evidence": [
             "E08",
             "E18"
@@ -471,6 +559,7 @@
           "criterion": 5,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Czy dzień terminu jest wart dni pracy budżetu, to osąd.",
+          "reason_en": "Whether a day of the deadline is worth work-days of budget is judgement.",
           "evidence": [
             "E17",
             "E45"
@@ -480,6 +569,7 @@
           "criterion": 6,
           "zone": "ai_samodzielnie",
           "reason_pl": "Wystarcza dostępność i role, bez danych szczególnych.",
+          "reason_en": "Availability and roles are enough, with no special-category data.",
           "evidence": [
             "E32"
           ]
@@ -489,14 +579,19 @@
     {
       "id": "P07",
       "name_pl": "Streszczenie budżetu i odchyleń",
+      "name_en": "Summary of the budget and deviations",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Liczby liczy kod, model tylko je opisuje; błąd w finansach jest kosztowny, więc streszczenie czyta człowiek.",
+      "reason_en": "Code computes the numbers and the model only describes them; an error in finance is costly, so a person reads the summary.",
       "sentinel_pl": "Finanse: podsumowanie bez prawa zatwierdzania (D17).",
+      "sentinel_en": "Finance: a summary with no right to approve (D17).",
+      "screen": "finance",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_samodzielnie",
           "reason_pl": "Streszczenie tylko informuje i niczego nie księguje.",
+          "reason_en": "A summary only informs and books nothing.",
           "evidence": [
             "E16"
           ]
@@ -505,6 +600,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Strażnik faktów porównuje tekst z liczbami z kodu, potem czyta człowiek.",
+          "reason_en": "The fact guard compares the text with the numbers from code, then a person reads it.",
           "evidence": [
             "E14",
             "E03"
@@ -514,6 +610,7 @@
           "criterion": 3,
           "zone": "ai_samodzielnie",
           "reason_pl": "Liczby pochodzą z kodu, model tylko je opisuje.",
+          "reason_en": "The numbers come from code; the model only describes them.",
           "evidence": [
             "E15",
             "E48"
@@ -523,6 +620,7 @@
           "criterion": 4,
           "zone": "ai_samodzielnie",
           "reason_pl": "Streszczenie nie przesuwa pieniędzy.",
+          "reason_en": "A summary does not move money.",
           "evidence": [
             "E16"
           ]
@@ -531,6 +629,7 @@
           "criterion": 5,
           "zone": "ai_samodzielnie",
           "reason_pl": "Opis odchyleń to fakty, nie wybór wartości.",
+          "reason_en": "Describing deviations is facts, not a choice of values.",
           "evidence": [
             "E17"
           ]
@@ -539,6 +638,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Dane finansowe są poufne.",
+          "reason_en": "Financial data is confidential.",
           "evidence": [
             "E42"
           ]
@@ -548,14 +648,19 @@
     {
       "id": "P08",
       "name_pl": "Zatwierdzenie przesunięcia budżetu lub wydatku",
+      "name_en": "Approving a budget shift or an expense",
       "zone": "tylko_czlowiek",
       "reason_pl": "Wydanych pieniędzy nie da się cofnąć, a zatwierdzenie to odpowiedzialność osoby, więc AI może tylko przygotować liczby.",
+      "reason_en": "Money spent cannot be taken back, and approval is a person's responsibility, so AI may only prepare the numbers.",
       "sentinel_pl": "Finanse: AI nie ma prawa zatwierdzać; decyzja i podpis należą do człowieka (D17, D19).",
+      "sentinel_en": "Finance: AI has no right to approve; the decision and the signature belong to a person (D17, D19).",
+      "screen": "finance",
       "cells": [
         {
           "criterion": 1,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wydanych pieniędzy nie da się cofnąć; odpowiada osoba.",
+          "reason_en": "Money spent cannot be taken back; a person answers for it.",
           "evidence": [
             "E45",
             "E40"
@@ -565,6 +670,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Liczby do decyzji przygotowuje i sprawdza kod.",
+          "reason_en": "Code prepares and checks the numbers for the decision.",
           "evidence": [
             "E14"
           ]
@@ -573,6 +679,7 @@
           "criterion": 3,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Kwoty liczy kod, ale zatwierdzenie to osąd.",
+          "reason_en": "Code computes the amounts, but approval is judgement.",
           "evidence": [
             "E15",
             "E17"
@@ -582,6 +689,7 @@
           "criterion": 4,
           "zone": "tylko_czlowiek",
           "reason_pl": "Decyzja przesuwa pieniądze firmy i ludzi.",
+          "reason_en": "The decision moves the money of the company and of people.",
           "evidence": [
             "E08",
             "E16"
@@ -591,6 +699,7 @@
           "criterion": 5,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wybór między celami to osąd i wartości.",
+          "reason_en": "Choosing between goals is judgement and values.",
           "evidence": [
             "E17",
             "E27"
@@ -600,6 +709,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Dane finansowe są poufne.",
+          "reason_en": "Financial data is confidential.",
           "evidence": [
             "E42"
           ]
@@ -609,14 +719,19 @@
     {
       "id": "P09",
       "name_pl": "Ocena wydajności pracownika",
+      "name_en": "Evaluating an employee's performance",
       "zone": "tylko_czlowiek",
       "reason_pl": "Ocena ludzi przez AI to system wysokiego ryzyka, psuje miary i bezpieczeństwo zespołu, więc Sentinel celowo jej nie robi.",
+      "reason_en": "Evaluating people with AI is a high-risk system and spoils measures and the team's safety, so Sentinel does not do it, on purpose.",
       "sentinel_pl": "Ludzie: funkcja celowo nieistniejąca (D09, D18).",
+      "sentinel_en": "People: a feature absent on purpose (D09, D18).",
+      "screen": "people",
       "cells": [
         {
           "criterion": 1,
           "zone": "tylko_czlowiek",
           "reason_pl": "Skutki oceny dla kariery trudno odwrócić.",
+          "reason_en": "The effects of an evaluation on a career are hard to reverse.",
           "evidence": [
             "E18",
             "E46"
@@ -626,6 +741,7 @@
           "criterion": 2,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wydajności nie da się rzetelnie sprawdzić miarą; miara jako cel się psuje.",
+          "reason_en": "Performance cannot be checked reliably by a measure; a measure that becomes a target breaks.",
           "evidence": [
             "E21",
             "E20"
@@ -635,6 +751,7 @@
           "criterion": 3,
           "zone": "tylko_czlowiek",
           "reason_pl": "To osąd o człowieku poza granicą możliwości modelu.",
+          "reason_en": "It is a judgement about a person, outside the frontier of the model's capabilities.",
           "evidence": [
             "E02",
             "E44"
@@ -644,6 +761,7 @@
           "criterion": 4,
           "zone": "tylko_czlowiek",
           "reason_pl": "AI Act zalicza ocenę pracowników do wysokiego ryzyka.",
+          "reason_en": "The AI Act classes evaluating workers as high risk.",
           "evidence": [
             "E18",
             "E46"
@@ -653,6 +771,7 @@
           "criterion": 5,
           "zone": "tylko_czlowiek",
           "reason_pl": "Ocena ciągła niszczy bezpieczeństwo psychologiczne zespołu.",
+          "reason_en": "Continuous evaluation destroys the team's psychological safety.",
           "evidence": [
             "E22"
           ]
@@ -661,6 +780,7 @@
           "criterion": 6,
           "zone": "tylko_czlowiek",
           "reason_pl": "Grozi przetwarzaniem danych o zdrowiu i emocjach.",
+          "reason_en": "It risks processing data about health and emotions.",
           "evidence": [
             "E32",
             "E19"
@@ -671,14 +791,19 @@
     {
       "id": "P10",
       "name_pl": "Wybór osoby na zastępstwo",
+      "name_en": "Choosing a person to cover",
       "zone": "ai_z_czlowiekiem",
       "reason_pl": "Symulacja pokazuje skutki zastępstwa według ról i dostępności, bez rankingu ludzi; kogo poprosić, wybiera kierownik.",
+      "reason_en": "The simulation shows the effects of a substitution by roles and availability, without ranking people; the manager chooses whom to ask.",
       "sentinel_pl": "Decyzja: zastępstwo z Popraw (inna osoba), bez rankingu ludzi (D06, D18).",
+      "sentinel_en": "Decision: a substitution with Adjust (another person), without ranking people (D06, D18).",
+      "screen": "decisions",
       "cells": [
         {
           "criterion": 1,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Przydział można zmienić następnego dnia.",
+          "reason_en": "An assignment can be changed the next day.",
           "evidence": [
             "E41"
           ]
@@ -687,6 +812,7 @@
           "criterion": 2,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Skutki zastępstwa policzone na symulowanych przyszłościach.",
+          "reason_en": "The effects of the substitution are computed on simulated futures.",
           "evidence": [
             "E50"
           ]
@@ -695,6 +821,7 @@
           "criterion": 3,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Symulacja liczy skutki; model językowy nie wybiera osoby.",
+          "reason_en": "The simulation computes the effects; a language model does not choose the person.",
           "evidence": [
             "E51"
           ]
@@ -703,6 +830,7 @@
           "criterion": 4,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Przydział według ról i dostępności, nie cech osobowych.",
+          "reason_en": "Assignment by roles and availability, not by personal traits.",
           "evidence": [
             "E18",
             "E20"
@@ -712,6 +840,7 @@
           "criterion": 5,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Kto jest przeciążony i z kim pracuje, wie kierownik.",
+          "reason_en": "The manager knows who is overloaded and who works with whom.",
           "evidence": [
             "E45"
           ]
@@ -720,6 +849,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Tylko dostępność, nigdy powód nieobecności.",
+          "reason_en": "Availability only, never the reason for absence.",
           "evidence": [
             "E32"
           ]
@@ -729,14 +859,19 @@
     {
       "id": "P11",
       "name_pl": "Komunikat do zespołu o trudnej decyzji",
+      "name_en": "Message to the team about a hard decision",
       "zone": "tylko_czlowiek",
       "reason_pl": "Treść i ton trudnej wiadomości budują zaufanie i relacje, za które odpowiada kierownik; AI może najwyżej podać fakty z kodu.",
+      "reason_en": "The content and tone of a hard message build trust and relationships the manager answers for; AI may at most provide facts from code.",
       "sentinel_pl": "Poza Sentinelem: aplikacja podaje liczby, nie pisze takich komunikatów (D13, D20).",
+      "sentinel_en": "Outside Sentinel: the application provides the numbers and does not write such messages (D13, D20).",
+      "screen": null,
       "cells": [
         {
           "criterion": 1,
           "zone": "tylko_czlowiek",
           "reason_pl": "Raz powiedzianego nie da się cofnąć.",
+          "reason_en": "What has been said cannot be unsaid.",
           "evidence": [
             "E45"
           ]
@@ -745,6 +880,7 @@
           "criterion": 2,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wpływu słów na ludzi nie sprawdzi się przed wysłaniem.",
+          "reason_en": "The effect of words on people cannot be checked before sending.",
           "evidence": [
             "E43"
           ]
@@ -753,6 +889,7 @@
           "criterion": 3,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Pisanie to praca językowa, ale treść to decyzja autora.",
+          "reason_en": "Writing is language work, but the content is the author's decision.",
           "evidence": [
             "E01",
             "E43"
@@ -762,6 +899,7 @@
           "criterion": 4,
           "zone": "tylko_czlowiek",
           "reason_pl": "Komunikat dotyczy pracy konkretnych osób.",
+          "reason_en": "The message concerns the work of particular people.",
           "evidence": [
             "E08",
             "E22"
@@ -771,6 +909,7 @@
           "criterion": 5,
           "zone": "tylko_czlowiek",
           "reason_pl": "Relacje i wartości to granica normatywna „smaku”.",
+          "reason_en": "Relationships and values are the normative boundary of “taste”.",
           "evidence": [
             "E27",
             "E31"
@@ -780,6 +919,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Treść może dotyczyć danych osobowych zespołu.",
+          "reason_en": "The content may concern the team's personal data.",
           "evidence": [
             "E32"
           ]
@@ -789,14 +929,19 @@
     {
       "id": "P12",
       "name_pl": "Decyzja strategiczna, np. wejście na nowy rynek",
+      "name_en": "A strategic decision, e.g. entering a new market",
       "zone": "tylko_czlowiek",
       "reason_pl": "To nowy osąd o wysokiej stawce, którego nie da się sprawdzić przed faktem, więc należy do ludzi; AI może dostarczyć fakty.",
+      "reason_en": "It is new judgement with high stakes that cannot be checked before the fact, so it belongs to people; AI may provide facts.",
       "sentinel_pl": "Poza Sentinelem: aplikacja wspiera projekty, nie strategię (D20).",
+      "sentinel_en": "Outside Sentinel: the application supports projects, not strategy (D20).",
+      "screen": null,
       "cells": [
         {
           "criterion": 1,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wysoka stawka i niska odwracalność.",
+          "reason_en": "High stakes and low reversibility.",
           "evidence": [
             "E45"
           ]
@@ -805,6 +950,7 @@
           "criterion": 2,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wyniku nie da się sprawdzić przed faktem.",
+          "reason_en": "The result cannot be checked before the fact.",
           "evidence": [
             "E06",
             "E29"
@@ -814,6 +960,7 @@
           "criterion": 3,
           "zone": "tylko_czlowiek",
           "reason_pl": "Nowy osąd poza granicą możliwości modelu; w decyzjach zespoły z AI tracą.",
+          "reason_en": "New judgement outside the frontier of the model's capabilities; in decisions, teams with AI lose.",
           "evidence": [
             "E02",
             "E44"
@@ -823,6 +970,7 @@
           "criterion": 4,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Wpływa na ludzi i pieniądze, ale pośrednio.",
+          "reason_en": "It affects people and money, but indirectly.",
           "evidence": [
             "E08"
           ]
@@ -831,6 +979,7 @@
           "criterion": 5,
           "zone": "tylko_czlowiek",
           "reason_pl": "Wartości i wiedza ukryta to granica normatywna „smaku”.",
+          "reason_en": "Values and tacit knowledge are the normative boundary of “taste”.",
           "evidence": [
             "E31",
             "E17"
@@ -840,6 +989,7 @@
           "criterion": 6,
           "zone": "ai_z_czlowiekiem",
           "reason_pl": "Plany strategiczne są poufne.",
+          "reason_en": "Strategic plans are confidential.",
           "evidence": [
             "E42"
           ]

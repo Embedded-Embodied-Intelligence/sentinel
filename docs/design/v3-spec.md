@@ -12,9 +12,11 @@ may work alone, where only with a person, where never; where is the boundary of 
 or more tools?** v3 makes the application itself an argument: every feature carries the evidence
 for and against the decision behind it, and six modules show the three zones in practice.
 
-Sources of truth: `docs/research/evidence/registry.json` (evidence E01…),
-`docs/research/decisions.md` (decisions D01…), `docs/research/boundary-criteria.md` and
-`docs/research/boundary-map.json` (six criteria, twelve processes, three zones).
+Sources of truth: `src/sentinel/evidence/data/registry.json` (evidence E01…),
+`docs/research/decisions.md` with its data `src/sentinel/evidence/data/decisions.json` (decisions
+D01…), `docs/research/boundary-criteria.md` and `src/sentinel/evidence/data/boundary-map.json`
+(six criteria, twelve processes, three zones). The data files moved from `docs/research/` into
+the package in WP19 (ADR-0037).
 
 ## 1. Navigation
 
