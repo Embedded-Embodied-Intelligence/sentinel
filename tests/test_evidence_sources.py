@@ -1,8 +1,10 @@
 """Every verified quote of the evidence registry against the text of its fetched source (WP18).
-Needs data/evidence from scripts/fetch_evidence.py; skips cleanly without it."""
+Needs data/evidence from scripts/fetch_evidence.py; skips cleanly without it. A source that was
+not fetched and a quote that is not in its fetched source fail as two separate tests (WP19)."""
 
 import json
 import warnings
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -24,30 +26,40 @@ def evidence_root() -> Path:
     return EVIDENCE
 
 
-def test_every_verified_quote_occurs_in_its_source(evidence_root: Path) -> None:
-    registry = load_registry()
-    readings: dict[str, tuple[str, str]] = {}
-    missing, wrong = [], []
-    checked = 0
-    for item in registry.items:
+def quoted_sources() -> Iterator[tuple[str, str, str]]:
+    """(item id, quote, source file) of every verified quote and official Polish wording."""
+    for item in load_registry().items:
         check = item.verification
         if check.status != "verified" or item.kind == "own":
             continue
-        pairs = ((item.quote, check.source_file), (item.quote_pl, check.source_file_pl))
-        for quote, name in pairs:
-            if quote is None or name is None:
-                continue
-            path = evidence_root / "text" / f"{name}.txt"
-            if not path.is_file():
-                missing.append(f"{item.id}: {name}")
-                continue
-            if name not in readings:
-                readings[name] = source_readings(path.read_text(encoding="utf-8"))
-            checked += 1
-            if not quote_occurs(quote, readings[name]):
-                wrong.append(f"{item.id}: {name}")
-    assert not missing, f"sources not fetched: {missing}"
-    assert not wrong, f"quotes not found in their sources: {wrong}"
+        for quote, name in ((item.quote, check.source_file), (item.quote_pl, check.source_file_pl)):
+            if quote is not None and name is not None:
+                yield item.id, quote, name
+
+
+def test_every_quoted_source_was_fetched(evidence_root: Path) -> None:
+    missing = [
+        f"{ident}: {name}"
+        for ident, _, name in quoted_sources()
+        if not (evidence_root / "text" / f"{name}.txt").is_file()
+    ]
+    assert not missing, f"sources not fetched (run scripts/fetch_evidence.py): {missing}"
+
+
+def test_every_verified_quote_occurs_in_its_fetched_source(evidence_root: Path) -> None:
+    readings: dict[str, tuple[str, str]] = {}
+    wrong = []
+    checked = 0
+    for ident, quote, name in quoted_sources():
+        path = evidence_root / "text" / f"{name}.txt"
+        if not path.is_file():
+            continue  # reported by the test above
+        if name not in readings:
+            readings[name] = source_readings(path.read_text(encoding="utf-8"))
+        checked += 1
+        if not quote_occurs(quote, readings[name]):
+            wrong.append(f"{ident}: {name}")
+    assert not wrong, f"quotes not found in their fetched sources: {wrong}"
     assert checked >= 25
 
 

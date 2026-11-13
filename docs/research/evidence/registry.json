@@ -154,29 +154,18 @@
       "title": "Kellogg, Valentine & Christin 2020, accepted manuscript (NSF Public Access Repository)"
     },
     {
-      "file": "owasp_llm06_2025.html",
-      "url": "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/",
-      "format": "html",
-      "title": "OWASP Top 10 for LLM Applications 2025, LLM06:2025 Excessive Agency"
-    },
-    {
-      "file": "owasp_llm01_2025.html",
-      "url": "https://genai.owasp.org/llmrisk/llm01-prompt-injection/",
-      "format": "html",
-      "title": "OWASP Top 10 for LLM Applications 2025, LLM01:2025 Prompt Injection"
-    },
-    {
-      "file": "owasp_llm02_2025.html",
-      "url": "https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/",
-      "format": "html",
-      "title": "OWASP Top 10 for LLM Applications 2025, LLM02:2025 Sensitive Information Disclosure"
+      "file": "owasp_top10_llm_2025.pdf",
+      "url": "https://raw.githubusercontent.com/OWASP/www-project-top-10-for-large-language-model-applications/17bfc163ffaa3ff18f61f215ac2ed822416efb62/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf",
+      "format": "pdf",
+      "title": "OWASP Top 10 for LLM Applications 2025 (the official PDF, v2025)",
+      "note": "the project's own copy in its GitHub repository, pinned to a commit; genai.owasp.org answers HTTP 403 to the fetcher"
     },
     {
       "file": "atlassian_rovo_security.html",
-      "url": "https://community.atlassian.com/forums/Atlassian-AI-Rovo-discussions/Evaluating-Rovo-Three-things-you-need-to-know-about-security-and/td-p/3085845",
+      "url": "https://web.archive.org/web/20260422214943id_/https://community.atlassian.com/forums/Atlassian-AI-Rovo-discussions/Evaluating-Rovo-Three-things-you-need-to-know-about-security-and/td-p/3085845",
       "format": "html",
       "title": "Atlassian Community: Evaluating Rovo? Three things you need to know about security and data governance",
-      "note": "the post is in the page's <noscript> part"
+      "note": "the Wayback Machine snapshot of 2026-04-22 as served originally (id_), so that its digest stays fixed; the post is in the page's <noscript> part"
     },
     {
       "file": "nist_ai_100_1.pdf",
@@ -1119,24 +1108,26 @@
         "D19"
       ],
       "stance": "wspiera",
-      "quote": "The root cause of Excessive Agency is typically one or more of: excessive functionality; excessive permissions; excessive autonomy.",
+      "quote": "The root cause of Excessive Agency is typically one or more of: • excessive functionality; • excessive permissions; • excessive autonomy.",
       "highlights": [
-        "excessive functionality; excessive permissions; excessive autonomy"
+        "excessive functionality",
+        "excessive permissions",
+        "excessive autonomy"
       ],
       "gloss_pl": "Przyczyną nadmiernej sprawczości jest zwykle nadmiar funkcji, uprawnień lub autonomii.",
       "location": "LLM06:2025, Description",
-      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025, LLM06:2025 Excessive Agency.",
+      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM06:2025 Excessive Agency.",
       "doi": null,
-      "url": "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/",
+      "url": "https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/17bfc163ffaa3ff18f61f215ac2ed822416efb62/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf",
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Standard branżowy: „Excessive Agency” pozwala, by nieoczekiwany, niejednoznaczny lub zmanipulowany wynik modelu wywołał szkodliwe działanie, niezależnie od przyczyny błędu modelu (m.in. halucynacji czy prompt injection).",
       "implication_pl": "Model w Sentinelu nie ma narzędzi, uprawnień ani autonomii: zwraca tylko JSON zgodny ze schematem, który kod sprawdza i kompiluje, więc wszystkie trzy przyczyny są usunięte.",
       "verification": {
         "status": "verified",
-        "source_file": "owasp_llm06_2025.html",
-        "sha256": "395ee34b17c3c948c4356be4d2f4a9513dfe678050c605318de770796799b2ff",
-        "method": "quote found in the text of the fetched web page, after the normalisation of sentinel.evidence.verify",
+        "source_file": "owasp_top10_llm_2025.pdf",
+        "sha256": "d8596f2c6b3384081574d392619ee3e9065c4f86e5b1fed1bb56be78de2ce382",
+        "method": "quote found in the text of the fetched PDF (pdfminer.six), after the normalisation of sentinel.evidence.verify",
         "checked_on": "2026-11-13"
       }
     },
@@ -1160,18 +1151,18 @@
       ],
       "gloss_pl": "Pośrednia prompt injection zachodzi, gdy model przyjmuje dane z zewnętrznych źródeł, np. stron lub plików.",
       "location": "LLM01:2025, Types of Prompt Injection Vulnerabilities",
-      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025, LLM01:2025 Prompt Injection.",
+      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM01:2025 Prompt Injection.",
       "doi": null,
-      "url": "https://genai.owasp.org/llmrisk/llm01-prompt-injection/",
+      "url": "https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/17bfc163ffaa3ff18f61f215ac2ed822416efb62/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf",
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Prompt injection jest pozycją nr 1 listy OWASP 2025; w wersji pośredniej polecenia są ukryte w przetwarzanym dokumencie i mogą zmienić zachowanie modelu.",
       "implication_pl": "Raport czy wiadomość od zespołu mogą zawierać wstrzyknięte polecenia, więc Sentinel traktuje je jako niezaufane dane: bez narzędzi skutkiem może być co najwyżej błędny tekst, który wychwytują schemat i karty do potwierdzenia.",
       "verification": {
         "status": "verified",
-        "source_file": "owasp_llm01_2025.html",
-        "sha256": "3237f2691e20cb3e844e903d282b38db08d6475a50f9c150be3b7c7c8856ed13",
-        "method": "quote found in the text of the fetched web page, after the normalisation of sentinel.evidence.verify",
+        "source_file": "owasp_top10_llm_2025.pdf",
+        "sha256": "d8596f2c6b3384081574d392619ee3e9065c4f86e5b1fed1bb56be78de2ce382",
+        "method": "quote found in the text of the fetched PDF (pdfminer.six), after the normalisation of sentinel.evidence.verify",
         "checked_on": "2026-11-13"
       }
     },
@@ -1198,7 +1189,7 @@
       "location": "Post na Atlassian Community (Trust Engineering)",
       "citation": "Pieterse, T. (2025). Evaluating Rovo? Three things you need to know about security and data governance. Atlassian Community.",
       "doi": null,
-      "url": "https://community.atlassian.com/forums/Atlassian-AI-Rovo-discussions/Evaluating-Rovo-Three-things-you-need-to-know-about-security-and/td-p/3085845",
+      "url": "https://web.archive.org/web/20260422214943/https://community.atlassian.com/forums/Atlassian-AI-Rovo-discussions/Evaluating-Rovo-Three-things-you-need-to-know-about-security-and/td-p/3085845",
       "open_access": true,
       "licence": "krótki cytat na podstawie art. 29 i 34 ustawy o prawie autorskim",
       "summary_pl": "Wpis pracownika Atlassian o bezpieczeństwie Rovo: agent dziedziczy uprawnienia użytkownika i nie ma dostępu ponad nie. To wzorzec rynkowy „najmniejszych uprawnień”, ale agent nadal może zrobić wszystko, co użytkownik.",
@@ -1206,7 +1197,7 @@
       "verification": {
         "status": "verified",
         "source_file": "atlassian_rovo_security.html",
-        "sha256": "5b52faef1b76ac5f70f90faca1735bbb4ad031f8ad446ed45ae98631bcf07661",
+        "sha256": "d44a700982dc531fdfc66cd7ecf7ffa722199dcff5a55801e7d1eb9c29a4b484",
         "method": "quote found in the text of the fetched web page, after the normalisation of sentinel.evidence.verify",
         "checked_on": "2026-11-13"
       }
@@ -1719,24 +1710,24 @@
         "D04"
       ],
       "stance": "wspiera",
-      "quote": "This could be avoided by: eliminating excessive functionality by using an extension that only implements mail-reading capabilities, eliminating excessive permissions by authenticating to the user’s email service via an OAuth session with a read-only scope, and/or eliminating excessive autonomy by requiring the user to manually review and hit ‘send’ on every mail drafted by the LLM extension.",
+      "quote": "eliminating excessive autonomy by requiring the user to manually review and hit ‘send’ on every mail drafted by the LLM extension.",
       "highlights": [
         "eliminating excessive autonomy by requiring the user to manually review and hit ‘send’"
       ],
       "gloss_pl": "Nadmierną autonomię usuwa wymóg, by człowiek sam przejrzał i wysłał każdą wiadomość przygotowaną przez model.",
       "location": "LLM06:2025, Example Attack Scenarios",
-      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025, LLM06:2025 Excessive Agency.",
+      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM06:2025 Excessive Agency.",
       "doi": null,
-      "url": "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/",
+      "url": "https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/17bfc163ffaa3ff18f61f215ac2ed822416efb62/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf",
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Standard branżowy opisuje scenariusz ataku, w którym zmanipulowany e-mail skłania asystenta do przesłania poczty atakującemu, i trzy niezależne zabezpieczenia: mniej funkcji, mniej uprawnień i ręczne zatwierdzanie każdej wysyłki.",
       "implication_pl": "W Sentinelu nic nie dzieje się przez milczenie: propozycja czeka na decyzję człowieka, a „ważna do” i koszt zwłoki zastępują automatyczne wykonanie.",
       "verification": {
         "status": "verified",
-        "source_file": "owasp_llm06_2025.html",
-        "sha256": "395ee34b17c3c948c4356be4d2f4a9513dfe678050c605318de770796799b2ff",
-        "method": "quote found in the text of the fetched web page, after the normalisation of sentinel.evidence.verify",
+        "source_file": "owasp_top10_llm_2025.pdf",
+        "sha256": "d8596f2c6b3384081574d392619ee3e9065c4f86e5b1fed1bb56be78de2ce382",
+        "method": "quote found in the text of the fetched PDF (pdfminer.six), after the normalisation of sentinel.evidence.verify",
         "checked_on": "2026-11-13"
       }
     },
@@ -1802,18 +1793,18 @@
       ],
       "gloss_pl": "Modele językowe osadzone w aplikacjach mogą ujawnić w odpowiedziach dane wrażliwe lub poufne.",
       "location": "LLM02:2025, Description",
-      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025, LLM02:2025 Sensitive Information Disclosure.",
+      "citation": "OWASP Gen AI Security Project (2025). OWASP Top 10 for LLM Applications 2025 (v2025 PDF), LLM02:2025 Sensitive Information Disclosure.",
       "doi": null,
-      "url": "https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/",
+      "url": "https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/17bfc163ffaa3ff18f61f215ac2ed822416efb62/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf",
       "open_access": true,
       "licence": "CC BY-SA 4.0",
       "summary_pl": "Standard branżowy wymienia wśród danych wrażliwych m.in. dane osobowe, finansowe, medyczne i poufne dane firmy oraz opisuje ryzyko ich ujawnienia przez wynik modelu.",
       "implication_pl": "Sentinel pozwala wybrać model lokalny (dane nie opuszczają firmy) albo chmurowy, a cache wiadomości prawdziwych nie przechowuje ich treści.",
       "verification": {
         "status": "verified",
-        "source_file": "owasp_llm02_2025.html",
-        "sha256": "790b86a949b2da043de61f188cd20b2e613d189e16c43c3dbf1e4291f8f31319",
-        "method": "quote found in the text of the fetched web page, after the normalisation of sentinel.evidence.verify",
+        "source_file": "owasp_top10_llm_2025.pdf",
+        "sha256": "d8596f2c6b3384081574d392619ee3e9065c4f86e5b1fed1bb56be78de2ce382",
+        "method": "quote found in the text of the fetched PDF (pdfminer.six), after the normalisation of sentinel.evidence.verify",
         "checked_on": "2026-11-13"
       }
     },
