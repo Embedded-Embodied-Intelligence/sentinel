@@ -1,7 +1,8 @@
 {# Approve / reject in place (sections 3 and 8.4); on the decision page also adjust and postpone. #}
+{% import "v2/_macros.html" as m %}
 <div class="stack" data-decide>
   <div class="decide">
-    <button type="button" class="btn btn-approve btn-lg" hx-post="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/approve" hx-vals='{"back": "{{ back }}"}'>{{ icon("check", 20) }}{{ t("v2.approve") }}</button>
+    <button type="button" class="btn btn-approve btn-lg" hx-post="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/approve" hx-vals='{{ (dict(back=back, **own_fields) if own_fields is defined else dict(back=back)) | tojson }}'>{{ icon("check", 20) }}{{ t("v2.approve") }}</button>
     <button type="button" class="btn btn-reject btn-lg" data-toggle="reject-{{ seq }}" aria-expanded="false" aria-controls="reject-{{ seq }}">{{ icon("x", 20) }}{{ t("v2.reject") }}</button>
     {% if full | default(false) %}
     {% if adjustable | default(false) %}<button type="button" class="btn btn-lg" data-toggle="adjust-{{ seq }}" aria-expanded="false" aria-controls="adjust-{{ seq }}">{{ icon("pencil", 20) }}{{ t("v2.adjust") }}</button>{% endif %}
@@ -12,8 +13,9 @@
   </div>
   <form id="reject-{{ seq }}" class="panel" hidden hx-post="{{ prefix }}/projects/{{ project_id }}/decisions/{{ seq }}/reject">
     <input type="hidden" name="back" value="{{ back }}">
+    {% if own_fields is defined %}{% for name, value in own_fields.items() %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}{% endif %}
     <fieldset class="reason-chips">
-      <legend class="label" style="margin-bottom:8px">{{ t("v2.reject.title") }}</legend>
+      <legend class="label" style="margin-bottom:8px">{{ t("v2.reject.title") }} {{ m.dowod(t, "D07") }}</legend>
       {% for reason in ("too_expensive", "unavailable", "no_budget", "other") %}
       <label><input type="radio" name="reason" value="{{ reason }}" required{% if reason == "other" %} data-other{% endif %}>{{ t("v2.reject." ~ reason) }}</label>
       {% endfor %}

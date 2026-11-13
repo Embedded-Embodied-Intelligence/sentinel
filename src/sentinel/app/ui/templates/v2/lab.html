@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% block content %}
 <header class="v2-head"><h1>{{ t("v2.lab.title") }}</h1></header>
 <nav aria-label="{{ t('v2.lab.tabs') }}" class="log-tools">
@@ -24,7 +25,7 @@
     <div class="actions"><button type="submit" class="btn btn-primary btn-lg">{{ t("v2.lab.check") }}</button></div>
   </section>
   <section class="card step" aria-labelledby="whatif-impact-title">
-    <h2 id="whatif-impact-title">{{ t("v2.report.step3") }}</h2>
+    <div class="titled"><h2 id="whatif-impact-title">{{ t("v2.report.step3") }}</h2>{{ m.dowod(t, "D13") }}</div>
     <div id="whatif-impact" aria-live="polite"><p class="muted">{{ t("v2.lab.impact_empty") }}</p></div>
   </section>
 </form>
@@ -38,7 +39,7 @@
 </section>
 {% endif %}
 <section class="card stack section" aria-labelledby="sim-new-title">
-  <h2 id="sim-new-title">{{ t("v2.lab.new_sim") }}</h2>
+  <div class="titled"><h2 id="sim-new-title">{{ t("v2.lab.new_sim") }}</h2>{{ m.dowod(t, "D24") }}</div>
   {% if not examples %}<p class="muted">{{ t("sim.unavailable") }}</p>
   {% else %}
   <form class="stack" hx-post="{{ prefix }}/lab/sim" hx-target="#sim-start" hx-swap="innerHTML">

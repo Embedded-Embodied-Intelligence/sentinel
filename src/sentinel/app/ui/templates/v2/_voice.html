@@ -1,8 +1,9 @@
 {# The voice component (section 9): a text box with a microphone, live grey preview, ✓/Enter and ✕/Esc. #}
+{% import "v2/_macros.html" as m %}
 <div class="voice-box" data-voice-box>
   <textarea class="input" id="{{ box_id }}" name="{{ box_name }}" rows="{{ box_rows }}"{% if box_example %} placeholder="{{ box_example }}"{% endif %} maxlength="5000"{% if box_hint %} aria-describedby="{{ box_id }}-hint"{% endif %}>{{ box_value | default("") }}</textarea>
   {% if voice %}
-  <button type="button" class="btn btn-quiet btn-icon voice-mic" data-voice-start data-voice-url="{{ prefix }}/transcribe{% if box_project %}?project={{ box_project }}{% endif %}" aria-label="{{ t('v2.voice.start') }}" title="{{ t('v2.voice.start') }}">{{ icon("mic", 24) }}</button>
+  <button type="button" class="btn btn-quiet btn-icon voice-mic" data-voice-start data-voice-url="{{ prefix }}/transcribe{% if box_project %}?project={{ box_project }}{% endif %}" aria-label="{{ t('v2.voice.start') }}" title="{{ t('v2.voice.start') }}">{{ icon("mic", 24) }}</button>{{ m.dowod(t, "D11") }}
   <div class="voice-rec" data-voice-rec hidden>
     <span class="voice-dot" aria-hidden="true"></span><span>{{ t("v2.voice.recording") }}</span>
     <span class="voice-time" data-voice-time>0:00</span>

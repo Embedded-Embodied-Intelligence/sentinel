@@ -23,5 +23,10 @@
     {% block content %}{% endblock %}
   </main>
 </div>
+{# The "Dowód" panel (v3 spec section 2): filled by a point, or by `?dowod=` with the page. #}
+{% set opened = dowod_panel if dowod_panel is defined else none %}
+<dialog id="dowod" class="dowod" aria-labelledby="dowod-title"{% if opened %} open data-open{% endif %}>
+  <div class="dowod-body">{% if opened %}{% with panel=opened %}{% include "v2/_dowod.html" %}{% endwith %}{% endif %}</div>
+</dialog>
 </body>
 </html>

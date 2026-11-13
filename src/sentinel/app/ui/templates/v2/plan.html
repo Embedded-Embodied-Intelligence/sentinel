@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% macro kv(name, default="") %}{{ kept.get(name, default) if kept else default }}{% endmacro %}
 {% block content %}
 <div class="log-tools">
@@ -68,7 +69,7 @@
 </section>
 {% else %}
 <section class="card stack" aria-labelledby="team-title">
-  <div class="section-head"><h2 id="team-title" class="overline">{{ t("v2.plan.view.team") }}</h2>
+  <div class="section-head"><div class="titled"><h2 id="team-title" class="overline">{{ t("v2.plan.view.team") }}</h2>{{ m.dowod(t, "D09") }}</div>
   <span class="muted">{% if week %}{{ t("v2.plan.week", first=t.date(week[0]), last=t.date(week[-1])) }}{% endif %}</span></div>
   <p class="muted">{{ t("v2.plan.team_hint") }}</p>
   <div class="table-wrap">

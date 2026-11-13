@@ -15,8 +15,12 @@ explanation, counts once).
 import json
 import os
 import re
+import threading
+import time
+from collections import deque
 from collections.abc import Callable, Mapping, Sequence
-from datetime import date
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Literal, cast
 
@@ -47,7 +51,7 @@ from sentinel.interpret.explain import (
     render_record,
 )
 from sentinel.llm import (
-    BaseClient,
+    DomainValidator,
     GroqClient,
     LlmCache,
     LlmClient,
@@ -154,7 +158,7 @@ class LlmSettingsUpdate(BaseModel):
     groq_key: str | None = Field(default=None, max_length=500)
 
 
-ClientFactory = Callable[[LlmSettings, LlmCache], LlmClient]
+ClientFactory = Callable[[LlmSettings, LlmCache | None], LlmClient]
 TranscriberFactory = Callable[[Secret], Transcriber]
 
 
@@ -180,7 +184,7 @@ def voice_failure(error: LlmError) -> AppError:
 
 
 def make_client(
-    settings: LlmSettings, cache: LlmCache, *, timeout_s: float | None = None
+    settings: LlmSettings, cache: LlmCache | None, *, timeout_s: float | None = None
 ) -> LlmClient:
     """The client of the configured provider over `cache` (`auto`: replay a cached answer, else
     call), with the limits of a person waiting (`timeout_s` replaces the limit on one call); the
@@ -257,6 +261,86 @@ class RequestCache(LlmCache):
         }
 
 
+CALLS_KEPT = 20  # the calls "Uprawnienia AI" lists (v3 spec section 4)
+Role = Literal["extract", "propose", "explain", "read", "test", "attack"]
+
+
+@dataclass(frozen=True)
+class CallRecord:
+    """One call of the language model as "Uprawnienia AI" lists it: metadata only, kept in
+    memory (v3 spec section 4), never a message, an answer or a key."""
+
+    at: datetime
+    role: Role
+    provider: str
+    model: str
+    chars: int  # the length of the text sent, in characters
+    seconds: float
+    cached: bool
+    session: str | None
+
+
+class Logged:
+    """An `LlmClient` that notes the metadata of each of its calls."""
+
+    def __init__(
+        self,
+        inner: LlmClient,
+        note: Callable[[CallRecord], None],
+        role: Role,
+        provider: str,
+        session: str | None,
+    ) -> None:
+        self.inner = inner
+        self.note = note
+        self.role: Role = role
+        self.provider = provider
+        self.session = session
+
+    @property
+    def model(self) -> str:
+        """The model of the client it wraps (a connection test names it)."""
+        return str(getattr(self.inner, "model", "?"))
+
+    def complete[ModelT: BaseModel](
+        self,
+        messages: Sequence[Message],
+        *,
+        schema: type[ModelT],
+        temperature: float = 0.0,
+        seed: int,
+        max_tokens: int,
+        validator: DomainValidator | None = None,
+    ) -> LlmResponse[ModelT]:
+        at = datetime.now(UTC)
+        started = time.monotonic()
+        cached = False
+        try:
+            response = self.inner.complete(
+                messages,
+                schema=schema,
+                temperature=temperature,
+                seed=seed,
+                max_tokens=max_tokens,
+                validator=validator,
+            )
+            cached = response.cache_hit
+            return response
+        finally:
+            self.note(
+                CallRecord(
+                    at=at,
+                    role=self.role,
+                    provider=self.provider,
+                    model=self.model,
+                    chars=sum(len(message.content) for message in messages),
+                    seconds=time.monotonic() - started,
+                    cached=cached,
+                    session=self.session,
+                )
+            )
+
+
 class LlmService:
     """The configured language model of a server: settings, cap and the two features."""
 
@@ -284,6 +368,18 @@ class LlmService:
         self.voice_session_cap = voice_session_cap
         self.factory = factory
         self.transcriber = transcriber
+        self._calls: deque[CallRecord] = deque(maxlen=CALLS_KEPT)
+        self._calls_guard = threading.Lock()
+
+    def _note(self, record: CallRecord) -> None:
+        with self._calls_guard:
+            self._calls.appendleft(record)
+
+    def calls(self, session: str | None = None) -> list[CallRecord]:
+        """The latest calls, newest first; of one visitor's sandbox when `session` is given."""
+        with self._calls_guard:
+            found = list(self._calls)
+        return [c for c in found if session is None or c.session == session]
 
     def settings(self) -> LlmSettings:
         try:
@@ -358,8 +454,11 @@ class LlmService:
             limits.append((f"{key}:{session}", session_cap))
         return limits
 
-    def client(self, session: str | None = None) -> LlmClient:
-        """The client for one feature request, counted against the daily caps."""
+    def client(
+        self, session: str | None = None, role: Role = "read", *, cached: bool = True
+    ) -> LlmClient:
+        """The client for one feature request, counted against the daily caps; its calls are
+        listed by "Uprawnienia AI" (metadata only). `cached=False` keeps no trace on disk."""
         if not self.available:
             raise AppError("llm_disabled", "unavailable")
         if not self.store.use_all(
@@ -367,8 +466,10 @@ class LlmService:
         ):
             raise AppError("llm_cap", "limit")
         settings = self.settings()
-        cache = RequestCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
-        return self.factory(settings, cache)
+        cache = None
+        if cached:
+            cache = RequestCache(self.cache_dir / f"{settings.provider}.jsonl", store_prompts=False)
+        return Logged(self.factory(settings, cache), self._note, role, settings.provider, session)
 
     def transcribe(
         self,
@@ -419,7 +520,7 @@ class LlmService:
     ) -> Session:
         """WP6a extraction with up to three repair rounds (spec section 10); the roles of the
         project's team, if it has one, follow the description."""
-        client = self.client(session)
+        client = self.client(session, role="extract")
         try:
             return extract_live(
                 client, with_team_roles(text, roles), seed=seed, settings=EXTRACTION
@@ -441,7 +542,7 @@ class LlmService:
         the needs gate, compiled against the rule candidates: the valid, distinct ones. A
         failed call, a reached cap or an invalid answer adds none."""
         try:
-            client = self.client()
+            client = self.client(role="propose")
             summary = state_summary(observation, record, names, params, roles)
             response = ask(client, summary, seed=seed, settings=PROPOSALS)
         except (AppError, LlmError, ValueError):
@@ -468,7 +569,7 @@ class LlmService:
         has one too, the page keeps the template explanation alone. The prompts stay English
         (ADR-0029)."""
         rendered = render_record(record, observation, params, roles)
-        client = self.client(session)
+        client = self.client(session, role="explain")
         base = load_prompt(EXPLAIN_PROMPT, EXPLANATION.prompt_version)
         addendum = load_prompt(EXPLAIN_LIVE_PROMPT, EXPLANATION.prompt_version)
         system = f"{base.text}\n\n{addendum.render(language=LANGUAGE_NAMES[language])}"
@@ -541,7 +642,7 @@ class LlmService:
         the application's reader with its repair rounds, dates settled by code), for the manager
         to confirm one by one; never a reason for an absence (invariant 7)."""
         context = MessageContext(project, when, text)
-        client = self.client(session)
+        client = self.client(session, role="read")
         try:
             reading = read(client, context, seed=seed)
         except LlmError as exc:
@@ -555,9 +656,7 @@ class LlmService:
     def test(self) -> str:
         """Ask the configured model for a fixed answer, past the cache's replay (a connection
         test); the model's name, or AppError with the reason."""
-        client = self.client()
-        if isinstance(client, BaseClient):
-            client.mode = "record"  # a test must reach the provider, not the cache
+        client = self.client(role="test", cached=False)  # it must reach the provider
         messages = [
             Message(role="system", content='Answer with the JSON object {"ok": true} only.'),
             Message(role="user", content="Connection test."),

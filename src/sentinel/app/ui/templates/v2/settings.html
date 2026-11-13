@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% block content %}
 <header class="v2-head"><h1>{{ t("v2.settings.title") }}</h1></header>
 {% if saved %}<p class="notice notice-good" role="status">{{ icon("check-circle", 20) }}<span>{{ t("v2.settings.saved") }}</span></p>{% endif %}
@@ -18,7 +19,7 @@
   </div>
 </section>
 <section class="card stack" aria-labelledby="ai-title">
-  <h2 id="ai-title">{{ t("v2.settings.ai") }}</h2>
+  <div class="titled"><h2 id="ai-title">{{ t("v2.settings.ai") }}</h2>{{ m.dowod(t, "D12") }}</div>
   {% if demo %}
   <p>{{ t("v2.settings.ai_demo") }}</p>
   {% else %}

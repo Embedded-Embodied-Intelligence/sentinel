@@ -29,6 +29,7 @@ from sentinel.app.config import AppConfig
 from sentinel.app.errors import AppError
 from sentinel.app.events import (
     OPEN,
+    Assessment,
     BaselineSet,
     CheckinDone,
     Corrected,
@@ -712,9 +713,11 @@ class Services:
         reason: RejectReason | None = None,
         note: str | None = None,
         autonomy: int | None = None,
+        assessment: Assessment | None = None,
     ) -> ProjectView:
         """The manager's decision on a recommendation (spec section 11.5); a rejection with its
-        reason and words (v2), a fresh recommendation at `autonomy` after a discarded one."""
+        reason and words (v2), a fresh recommendation at `autonomy` after a discarded one, and
+        the manager's own choice made first ("Twoja ocena", section 11.8)."""
         follow = False
         with self._lock(project_id):
             row, state = self._state(session, project_id)
@@ -737,6 +740,7 @@ class Services:
                 reason=reason if verdict == "reject" else None,
                 note=(note or "").strip()[:300] or None if verdict == "reject" else None,
                 brief=brief,
+                assessment=assessment if verdict in ("approve", "reject") else None,
             )
             if verdict == "approve":
                 try:

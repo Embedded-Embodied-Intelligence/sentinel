@@ -110,25 +110,27 @@ def task_rows(
     return sorted(rows, key=lambda row: order.get(row.state, 0))
 
 
-def next_week(project: LiveProject, as_of: date) -> list[date]:
-    """The working days of the calendar week after `as_of` (holidays and days off excluded)."""
+def next_week(project: LiveProject, as_of: date, weeks: int = 1) -> list[date]:
+    """The working days of the `weeks` calendar weeks after `as_of` (holidays and days off
+    excluded)."""
     monday = as_of + timedelta(days=7 - as_of.weekday())
     return [
         day
-        for day in (monday + timedelta(days=i) for i in range(WEEK))
+        for day in (monday + timedelta(days=7 * w + i) for w in range(weeks) for i in range(WEEK))
         if project.calendar.is_working(day)
     ]
 
 
 def team_rows(
-    t: TextsV2, view: ProjectView, project: LiveProject, today: date
+    t: TextsV2, view: ProjectView, project: LiveProject, today: date, weeks: int = 1
 ) -> tuple[list[PersonRow], list[date]]:
-    """Every person with their absences, current and next tasks and next week's demand on their
-    role: for each working day, the people the active tasks need of the role over those of it
-    present (at most one day a day), summed over the days the person is present."""
+    """Every person with their absences, current and next tasks and the demand on their role in
+    the next `weeks` weeks: for each working day, the people the active tasks need of the role
+    over those of it present (at most one day a day), summed over the days the person is
+    present (Plan: next week; Ludzie: the next two, v3 spec section 5)."""
     status = view.checkins[-1].date if view.checkins else view.definition.start
     as_of = max(today, status)  # the week after the latest report's, or this week's
-    week = next_week(project, as_of)
+    week = next_week(project, as_of, weeks)
     active: list[tuple[TaskView, date, date]] = []
     for task in view.tasks:
         if task.state in ("done", "removed"):

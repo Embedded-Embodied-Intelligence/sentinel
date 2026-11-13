@@ -1,0 +1,18 @@
+{# The content of the "Dowód" panel (v3 spec section 2): a decision with its basis, or a cell of
+   Mapa granic with its zone and reason; then the evidence, supporting first. #}
+{% import "v2/_macros.html" as m %}
+{% import "v2/_ev.html" as ev %}
+<div class="dowod-head">
+  <p class="overline">{{ t("v2.ev.panel") }}{% if panel.decision %} · {{ panel.decision }}{% endif %}</p>
+  <button type="button" class="dowod-close" data-dowod-close aria-label="{{ t('v2.ev.close') }}">{{ icon("x", 20) }}</button>
+</div>
+<h2 id="dowod-title" class="dowod-title">{% if panel.decision %}{{ t("v2.ev.decision") }}{% else %}{{ panel.title }}{% endif %}</h2>
+{% if panel.question %}<p class="muted">{{ panel.question }}</p>{% endif %}
+<p class="dowod-lead">{{ panel.lead }}</p>
+{% if panel.basis %}<p class="dowod-basis"><span class="muted small">{{ t("v2.ev.basis") }}</span> <span class="basis basis-{{ panel.basis }}">{{ t("v2.ev.basis." ~ panel.basis) }}</span></p>{% endif %}
+{% if panel.zone %}<p>{{ m.zone(t, panel.zone) }}</p>{% endif %}
+<h3 class="overline dowod-items">{{ t("v2.ev.items", n=panel.cards | length) }}</h3>
+<div class="stack">
+{% for c in panel.cards %}{{ ev.card(t, c, 4) }}{% endfor %}
+</div>
+<p class="dowod-foot small"><a href="/v2/sources">{{ t("v2.ev.all_sources") }} ›</a></p>

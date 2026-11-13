@@ -10,11 +10,20 @@
       · {{ m.life_badge(t, life) }}
       {% if validity and validity.expires_tomorrow %}<span class="expires">{{ icon("clock", 16) }} {{ t("v2.decision.expires") }}</span>{% endif %}
     </p>
-    <h2 id="dec-title" class="decision-title" style="font-size:24px;line-height:32px">{{ rec.headline if rec.headline is defined else rec.title }}</h2>
-    {% if pending %}<p class="notice">{{ icon("info", 20) }}<span>{{ t("v2.dec.need." ~ need) }}</span></p>{% endif %}
+    <h2 id="dec-title" class="decision-title" style="font-size:24px;line-height:32px">{% if own and own.asking %}{{ t("v2.own.title") }}{% else %}{{ rec.headline if rec.headline is defined else rec.title }}{% endif %}</h2>
+    {% if pending and not (own and own.asking) %}<p class="notice">{{ icon("info", 20) }}<span>{{ t("v2.dec.need." ~ need) }}</span> {{ m.dowod(t, "D03") }}</p>{% endif %}
+    {% if own and not own.asking and own.choice %}<p class="own-line">{{ icon("person", 20) }}<span>{{ t("v2.own.line", mine=own.choice, sentinel=own.sentinel) }}</span> {{ m.dowod(t, "D21") }}</p>{% endif %}
   </header>
+  {% if own and own.asking %}
+  <section class="brief-row own-step stack-sm" aria-labelledby="own-hint">
+    <div class="titled"><p id="own-hint">{{ t("v2.own.hint") }}</p>{{ m.dowod(t, "D21") }}</div>
+    {% if own.noop_chance is not none %}<p class="muted">{{ t("v2.own.context", n=own.noop_chance) }}</p>{% endif %}
+    <ul class="own-chips">{% for key, title in own.chips %}<li><a class="chip own-chip" href="?own={{ key }}">{{ title }}</a></li>{% endfor %}</ul>
+    <p><a class="btn btn-quiet" href="?own=skip">{{ t("v2.own.skip") }}</a></p>
+  </section>
+  {% else %}
   <section class="brief-row" aria-labelledby="effect-title">
-    <h3 id="effect-title" class="overline">{{ t("v2.dec.effect") }}</h3>
+    <div class="titled"><h3 id="effect-title" class="overline">{{ t("v2.dec.effect") }}</h3>{{ m.dowod(t, "D13") }}</div>
     <div class="effects">
       {% for e in effects %}
       <div class="effect effect-{{ e.tone }}"><p class="label">{{ e.label }}</p><p class="value">{{ e.text }}{% if e.tone in ("good", "bad") %}&nbsp;{% endif %}{% if e.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif e.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</p></div>
@@ -22,7 +31,7 @@
     </div>
   </section>
   <section class="brief-row" aria-labelledby="why-title">
-    <h3 id="why-title" class="overline">{{ t("v2.dec.reasoning") }}</h3>
+    <div class="titled"><h3 id="why-title" class="overline">{{ t("v2.dec.reasoning") }}</h3>{{ m.dowod(t, "D05") }}</div>
     <p>{{ reasoning | join(" ") }}</p>
   </section>
   <section class="brief-row" aria-labelledby="who-title">
@@ -31,14 +40,14 @@
   </section>
   {% if pending %}
   <section class="brief-row" aria-labelledby="delay-title">
-    <h3 id="delay-title" class="overline">{{ t("v2.dec.delay") }}</h3>
+    <div class="titled"><h3 id="delay-title" class="overline">{{ t("v2.dec.delay") }}</h3>{{ m.dowod(t, "D04") }}</div>
     {% if validity and validity.computing %}<p class="computing" hx-get="{{ here }}" hx-trigger="load delay:3s" hx-select="#main" hx-target="#main" hx-swap="outerHTML">{{ t("v2.dec.delay_wait") }}</p>
     {% elif validity and validity.delay %}<p><strong>{{ t("v2.dec.delay_text", n=validity.delay) }}</strong></p>
     {% else %}<p>{{ t("v2.dec.delay_small") }}</p>{% endif %}
   </section>
   {% with seq=rec.seq, project_id=view.id, back="decision", full=true, adjustable=true %}{% include "v2/_decide.html" %}{% endwith %}
   <form id="adjust-{{ rec.seq }}" class="panel" hidden hx-post="{{ prefix }}/projects/{{ view.id }}/decisions/{{ rec.seq }}/adjust">
-    <h3>{{ t("v2.adjust.title") }}</h3>
+    <div class="titled"><h3>{{ t("v2.adjust.title") }}</h3>{{ m.dowod(t, "D06") }}</div>
     {% if parameter == "none" %}<p>{{ t("v2.adjust.none") }}</p>
     {% elif options | length < 2 %}<p>{{ t("v2.adjust.no_choice") }}</p>
     {% else %}
@@ -50,11 +59,13 @@
     {% endif %}
   </form>
   {% endif %}
+  {% endif %}
 </article>
+{% if not (own and own.asking) %}
 <details class="card more section" id="details">
   <summary>{{ t("v2.details") }}</summary>
   <section class="stack" aria-labelledby="options-title">
-    <h3 id="options-title">{{ t("v2.options.title") }}</h3>
+    <div class="titled"><h3 id="options-title">{{ t("v2.options.title") }}</h3>{{ m.dowod(t, "D24") }}</div>
     <table class="table">
       <thead><tr><th scope="col">{{ t("v2.options.option") }}</th><th scope="col">{{ t("v2.options.chance") }}</th><th scope="col">{{ t("v2.options.end") }}</th><th scope="col">{{ t("v2.options.budget") }}</th></tr></thead>
       <tbody>
@@ -77,4 +88,5 @@
     {% else %}<p class="muted">{{ t("v2.ai.off") }}</p>{% endif %}
   </section>
 </details>
+{% endif %}
 {% endblock %}

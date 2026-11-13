@@ -50,6 +50,10 @@ def page(ui: Ui, request: Request, template: str, status: int = 200, **values: A
         "project": None,
         "notice": None,
     }
+    if not template.startswith("_"):
+        from sentinel.app.ui.v2.evidence import panel_of  # it builds on this module
+
+        frame["dowod_panel"] = panel_of(request)  # `?dowod=D14` (v3 spec section 2)
     frame.update(values)
     return ui.page(request, f"v2/{template}", status, **frame)
 

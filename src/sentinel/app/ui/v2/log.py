@@ -434,6 +434,25 @@ def csv_of(t: TextsV2, items: list[LogItem]) -> str:
     return out.getvalue()
 
 
+def agreement(ui: Ui, request: Request, project_ids: list[str]) -> tuple[int, int]:
+    """ "Zgadzasz się z Sentinelem w X z Y decyzji" (v3 spec section 6): of the decisions taken
+    after the manager chose first ("Twoja ocena", spec section 11.8; skipped ones aside), those
+    whose choice was Sentinel's."""
+    agreed = asked = 0
+    session = ui.session(request)
+    for project_id in project_ids:
+        for row in ui.services.store.events(session, project_id):
+            if row.type != "decision":
+                continue
+            event = parse(row)
+            if isinstance(event, Decided) and event.assessment is not None:
+                agrees = event.assessment.agrees
+                if agrees is not None:
+                    asked += 1
+                    agreed += agrees
+    return agreed, asked
+
+
 def router(ui: Ui) -> APIRouter:
     routes = APIRouter()
     services = ui.services
@@ -492,6 +511,14 @@ def router(ui: Ui) -> APIRouter:
         total = len(items)
         if show != "all":
             items = [entry for entry in items if entry.kind == show]
+        ids = (
+            [project_id]
+            if project_id
+            else [picked]
+            if picked
+            else [p for p, _ in values["projects"]]
+        )
+        agreed, asked = agreement(ui, request, ids)
         return page(
             ui,
             request,
@@ -503,6 +530,8 @@ def router(ui: Ui) -> APIRouter:
             filters=FILTERS,
             total=total,
             today=date.today(),
+            agreed=agreed,
+            asked=asked,
             **values,
         )
 

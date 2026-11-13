@@ -101,6 +101,9 @@ class Settings(_Frozen):
     # off are not working days; a project stored before v2.2.0 reads "none" (`events.parse`).
     holidays: Holidays = "pl"
     days_off: tuple[date, ...] = Field(default=(), max_length=MAX_DAYS_OFF)
+    # "Najpierw moja ocena" (spec section 11.8, WP19): the decision page asks for the manager's
+    # own choice before it shows Sentinel's; on by default, skippable, and can be switched off.
+    assessment_first: bool = True
 
     def pert(self) -> PertParams:
         """The PERT multiplier of the estimation preset with the advanced overrides."""

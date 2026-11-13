@@ -1,0 +1,44 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.people.title") }}</h1></header>
+<section class="stack" aria-labelledby="absent-title">
+  <div class="titled"><h2 id="absent-title">{{ t("v2.people.absent") }}</h2>{{ m.dowod(t, "D18") }}</div>
+  <div class="absent-grid">
+  {% for key, name, d in absent %}
+    <article class="card absent-card">
+      <p class="struck" aria-hidden="true">{{ icon(name, 24) }}</p>
+      <h3>{{ t("v2.people.absent." ~ key) }}</h3>
+      <p>{{ t("v2.people.why." ~ key) }}</p>
+      <p>{{ m.dowod(t, d) }}</p>
+    </article>
+  {% endfor %}
+  </div>
+</section>
+<section class="stack section" aria-labelledby="load-title">
+  <div class="titled"><h2 id="load-title">{{ t("v2.people.load") }}</h2>{{ m.dowod(t, "D09") }}</div>
+  <p class="lead">{{ t("v2.people.principle") }}</p>
+  {% for team in teams %}
+  <section class="card stack-sm" aria-labelledby="team-{{ team.id }}">
+    <div class="section-head"><h3 id="team-{{ team.id }}">{{ team.name }}</h3>{% if team.days %}<span class="muted small">{{ t("v2.people.period", first=t.date(team.days[0]), last=t.date(team.days[-1])) }}</span>{% endif %}</div>
+    <div class="table-wrap">
+    <table class="table people-load">
+      <thead><tr><th scope="col">{{ t("v2.plan.col.person") }}</th><th scope="col">{{ t("v2.people.col.role") }}</th><th scope="col">{{ t("v2.plan.col.away") }}</th><th scope="col">{{ t("v2.people.col.load") }}</th></tr></thead>
+      <tbody>
+      {% for p in team.people %}
+      <tr>
+        <th scope="row">{{ p.name }}</th>
+        <td>{{ p.role }}{% if p.temporary %} · {{ t("v2.plan.temporary") }}{% endif %}</td>
+        <td>{% if p.absences %}<ul class="plain">{% for a in p.absences %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
+        <td>{% if not team.days %}–{% elif p.days == 0 %}{{ t("v2.people.away_all") }}{% else %}<span class="load"><span class="bar" aria-hidden="true"><span style="width: {{ (100 * p.busy / p.days) | round | int }}%"></span></span>{{ t.plural("v2.plan.load", p.days, busy=p.busy) }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+  {% else %}
+  <p class="card muted">{{ t("v2.people.none") }} <a href="{{ prefix }}">{{ t("v2.nav.start") }} ›</a></p>
+  {% endfor %}
+</section>
+{% endblock %}

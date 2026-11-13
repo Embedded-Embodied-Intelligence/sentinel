@@ -3,7 +3,7 @@
 {% block content %}
 {% set state = s.state if s.state in ("good", "warn", "bad") else "none" %}
 <section class="card verdict verdict-{{ state }}" aria-labelledby="verdict-state">
-  <p id="verdict-state">{{ m.state_badge(t, s.state, large=True) }}</p>
+  <div class="titled"><p id="verdict-state">{{ m.state_badge(t, s.state, large=True) }}</p>{{ m.dowod(t, "D02") }}</div>
   {% if s.sentence %}<p class="verdict-text">{{ s.sentence }}</p>{% endif %}
   {% if s.cause %}<p class="verdict-cause">{{ t("v2.verdict.cause", cause=s.cause) }}</p>{% endif %}
   {% if s.summary and s.summary.promise_note %}<p class="muted small">{{ t("v2.promise_note", why=t("v2.promise." ~ s.summary.promise_note)) }}</p>{% endif %}
@@ -12,7 +12,7 @@
 {% if f %}
 <div class="grid-3">
   <section class="card figure" aria-labelledby="fig-chance">
-    <h2 id="fig-chance" class="overline">{{ t("v2.chance.title") }}</h2>
+    <div class="titled"><h2 id="fig-chance" class="overline">{{ t("v2.chance.title") }}</h2>{{ m.dowod(t, "D01") }}</div>
     {% if s.n is not none %}
     <div class="with-grid">
       <p class="hero hero-{{ state }} num">{{ s.n }} <small>{{ t("v2.chance.value", n="").strip() }}</small></p>
@@ -25,7 +25,7 @@
     {% else %}<p class="muted">{{ t("v2.verdict.none") }}</p>{% endif %}
   </section>
   <section class="card figure" aria-labelledby="fig-end">
-    <h2 id="fig-end" class="overline">{{ t("v2.end.title") }}</h2>
+    <div class="titled"><h2 id="fig-end" class="overline">{{ t("v2.end.title") }}</h2>{{ m.dowod(t, "D13") }}</div>
     <dl class="facts">
       <dt>{{ t("v2.end.likely") }}</dt><dd class="big">{{ t.date(f.p50) }}</dd>
       {% if f.deadline %}<dt>{{ t("v2.end.deadline") }}</dt><dd>{{ t.date(f.deadline) }}</dd>{% endif %}

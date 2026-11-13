@@ -10,6 +10,7 @@ from collections.abc import Mapping
 
 from sentinel.app.ui.text import CATALOGUE as V1_CATALOGUE
 from sentinel.app.ui.text import Texts
+from sentinel.app.ui.v2.text_v3 import CATALOGUE_V3
 
 CATALOGUE: Mapping[str, tuple[str, str]] = {
     # ---- frame (section 7)
@@ -1172,6 +1173,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.plan.load.few": ("about {busy} of {n} days", "ok. {busy} z {n} dni"),
     "v2.plan.load.many": ("about {busy} of {n} days", "ok. {busy} z {n} dni"),
 }
+
+
+CATALOGUE = {**CATALOGUE, **CATALOGUE_V3}  # the research layer of v3 (WP19)
 
 
 class TextsV2(Texts):

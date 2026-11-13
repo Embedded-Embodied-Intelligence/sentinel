@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% block content %}
 <form id="report-form" class="stack" hx-post="{{ prefix }}/projects/{{ view.id }}/report" data-report>
   <div class="section-head">
@@ -13,7 +14,7 @@
   <input type="hidden" name="planned_used" value="" data-planned-used>
 
   <section class="card step" aria-labelledby="step1-title">
-    <div class="step-head"><span class="step-no">1</span><h2 id="step1-title">{{ t("v2.report.step1") }}</h2></div>
+    <div class="step-head"><span class="step-no">1</span><h2 id="step1-title">{{ t("v2.report.step1") }}</h2>{{ m.dowod(t, "D11") }}</div>
     <label class="vh" for="message">{{ t("v2.report.message") }}</label>
     {% with box_id="message", box_name="message", box_rows=4, box_example=t("v2.report.example"), box_hint="", box_project=view.id %}{% include "v2/_voice.html" %}{% endwith %}
     <div class="hints"><span class="muted">{{ t("v2.report.hints") }}</span>
@@ -36,7 +37,7 @@
 
   <section class="card step" aria-labelledby="step2-title">
     <div class="section-head">
-      <div class="step-head"><span class="step-no">2</span><h2 id="step2-title">{{ t("v2.report.step2") }}</h2></div>
+      <div class="step-head"><span class="step-no">2</span><h2 id="step2-title">{{ t("v2.report.step2") }}</h2>{{ m.dowod(t, "D23") }}</div>
       <button type="button" class="btn btn-quiet" data-tick-all>{{ t("v2.report.all") }}</button>
     </div>
     <p class="muted">{{ t("v2.report.step2_hint") }}</p>
@@ -48,7 +49,7 @@
   </section>
 
   <section class="card step" aria-labelledby="step3-title">
-    <div class="step-head"><span class="step-no">3</span><h2 id="step3-title">{{ t("v2.report.step3") }}</h2></div>
+    <div class="step-head"><span class="step-no">3</span><h2 id="step3-title">{{ t("v2.report.step3") }}</h2>{{ m.dowod(t, "D13") }}</div>
     <div id="impact" hx-post="{{ prefix }}/projects/{{ view.id }}/report/impact" hx-include="#report-form" hx-trigger="{% if lab_cards %}load, {% endif %}change from:#report-form delay:600ms, cards from:body delay:100ms" hx-swap="innerHTML" hx-sync="this:replace" aria-live="polite">
       {% with chips=[], error=none, blocked=false, ticked=0, can_save=false, stalled=0, last=last %}{% include "v2/_impact.html" %}{% endwith %}
     </div>

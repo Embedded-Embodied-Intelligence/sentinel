@@ -1,11 +1,14 @@
 """The pages of the v2 interface (WP15; docs/design/v2-spec.md; spec section 11.8) on the
 showcase project: every screen in Polish and English without internal terms, missing texts, raw
 codes or ISO dates, the theme cookie, the decisions taken from the overview and the decision
-page with the promised numbers shown after an approval (the WP12 guarantee, spec 11.5)."""
+page with the promised numbers shown after an approval (the WP12 guarantee, spec 11.5). WP19
+(docs/design/v3-spec.md): the screens of "Zasady AI", a "Dowód" point for every decision that
+has a screen, panels with verified quotes only, "Próba ataku" and "Twoja ocena"."""
 
 import csv
 import html
 import io
+import json
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -20,6 +23,7 @@ from ui_check import problems, visible_text
 from sentinel.app import planning, showcase
 from sentinel.app.api import create_app
 from sentinel.app.config import AppConfig
+from sentinel.app.events import Decided, parse
 from sentinel.app.names import accusative, vocabulary
 from sentinel.app.services import Services
 from sentinel.app.store import LOCAL_SESSION
@@ -27,6 +31,7 @@ from sentinel.app.ui.v2.decision import reasoning
 from sentinel.app.ui.v2.log import LogItem, csv_of
 from sentinel.app.ui.v2.text import TextsV2
 from sentinel.app.views import TITLE_LIMIT
+from sentinel.evidence import load_decisions, load_registry
 
 LANGUAGES = ("pl", "en")
 
@@ -91,6 +96,15 @@ def test_every_v2_page_is_clean(site: Site, language: str) -> None:
         "/v2/log",
         "/v2/lab",
         "/v2/settings",
+        # v3 (WP19): the group "Zasady AI", the panel by deep link and the step before a decision
+        "/v2/map",
+        "/v2/map?dowod=P06-3",
+        "/v2/sources",
+        "/v2/sources?stance=podwaza&kind=own",
+        "/v2/permissions",
+        "/v2/people",
+        f"/v2/projects/{pid}?dowod=D01",
+        f"/v2/projects/{pid}/decisions/{open_seq}",
     ]
     assert open_seq is not None
     for path in paths:
@@ -344,7 +358,9 @@ def seq_of(site: Site) -> int:
 
 def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
     seq = seq_of(site)
-    html = site.client.get(f"/v2/projects/{site.project}/decisions/{seq}", params={"lang": "pl"})
+    html = site.client.get(
+        f"/v2/projects/{site.project}/decisions/{seq}", params={"lang": "pl", "own": "skip"}
+    )  # past "Twoja ocena" (WP19)
     text = text_of(html.text)
     assert "Dotyczy ludzi, dlatego wymaga Twojej zgody." in text
     assert "Szansa 39 → 57 na 100" in text and "Budżet 92 → 94 dni pracy" in text
@@ -495,7 +511,7 @@ def test_postpone_and_expiry(fresh: Site) -> None:
     assert "done=postponed" in target and "valid=2026-11-19" in target
     text = text_of(fresh.client.get(target).text)
     assert "Przypomnę przy następnej wizycie. Decyzja ważna do czw. 19 lis." in text
-    assert "odłożona" in text_of(fresh.client.get(path).text)
+    assert "odłożona" in text_of(fresh.client.get(path, params={"own": "skip"}).text)
     fresh.services.expire(LOCAL_SESSION, fresh.project, date(2026, 11, 19))  # still valid
     assert fresh.services.state(LOCAL_SESSION, fresh.project).open is not None
     fresh.services.expire(LOCAL_SESSION, fresh.project, date(2026, 11, 20))
@@ -653,3 +669,133 @@ def test_a_wrong_or_revoked_link_finds_nothing(site: Site) -> None:
     assert client.get(path).status_code == 404
     again = link_of(client, pid, headers)
     assert again != path and client.get(again).status_code == 200
+
+
+# ---- v3 (WP19): the research layer
+
+POINT = re.compile(r'data-decision="(D\d\d)"[^>]*aria-label="[^"(]*\((\d+)\)"')
+QUOTE = re.compile(r'<blockquote class="ev-quote" lang="(\w+)">(.*?)</blockquote>', re.S)
+LATER = {"D14", "D15", "D16", "D17"}  # Raporty and Finanse come in WP20
+
+
+def test_every_decision_with_a_screen_has_its_point(site: Site) -> None:
+    """A "Dowód" point for every decision of the catalogue whose screen exists, its N the
+    decision's number of evidence items (v3 spec section 2)."""
+    pid = site.project
+    seq = seq_of(site)
+    paths = [
+        "/v2",
+        f"/v2/projects/{pid}",
+        f"/v2/projects/{pid}/report",
+        f"/v2/projects/{pid}/decisions/{seq}",
+        f"/v2/projects/{pid}/decisions/{seq}?own=skip",
+        f"/v2/projects/{pid}/plan?view=team",
+        f"/v2/projects/{pid}/log",
+        f"/v2/projects/{pid}/settings",
+        "/v2/log",
+        "/v2/lab",
+        "/v2/lab?tab=sim",
+        "/v2/settings",
+        "/v2/map",
+        "/v2/sources",
+        "/v2/permissions",
+        "/v2/people",
+    ]
+    counts = {d.id: len(d.evidence) for d in load_decisions()}
+    found: dict[str, int] = {}
+    for path in paths:
+        for ident, n in POINT.findall(
+            site.client.get(path + "&lang=pl" if "?" in path else path + "?lang=pl").text
+        ):
+            found[ident] = int(n)
+    assert set(found) == set(counts) - LATER
+    assert all(found[ident] == counts[ident] for ident in found)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_a_panel_shows_verified_quotes_only_with_their_highlights(
+    site: Site, language: str
+) -> None:
+    """Every decision's panel: one marked quote per verified quoted item (a legal text in the
+    page's language), the note instead for an item without one, never another quote."""
+    registry = load_registry()
+    for decision in load_decisions():
+        page_html = site.client.get(f"/v2/dowod/{decision.id}", params={"lang": language}).text
+        items = [registry.item(e) for e in decision.evidence]
+        quoted = [i for i in items if i.verification.status == "verified" and i.quote]
+        quotes = QUOTE.findall(page_html)
+        assert len(quotes) == len(quoted), decision.id
+        assert all("<mark>" in shown for _, shown in quotes), decision.id
+        shown_quotes = {(lang, html.unescape(re.sub(r"</?mark>", "", q))) for lang, q in quotes}
+        for item in quoted:
+            in_polish = language == "pl" and item.quote_pl is not None
+            wanted = (
+                ("pl", item.quote_pl)
+                if in_polish and item.quote_pl
+                else (item.language, item.quote)
+            )
+            assert wanted in shown_quotes, (decision.id, item.id)
+        missing = sum(i.verification.status != "verified" for i in items)
+        note = "Cytat niezweryfikowany" if language == "pl" else "Quote not verified"
+        assert page_html.count(note) == missing, decision.id
+        assert problems(page_html) == [], decision.id
+
+
+def test_the_attack_test_shows_the_flow_and_saves_nothing(site: Site) -> None:
+    """ "Próba ataku" on the recorded answer (v3 spec section 4): the instruction ignored, the
+    two task reports to confirm, the sentence on functions; no event, no job, no call."""
+    before = len(site.services.store.events(LOCAL_SESSION, site.project))
+    calls = len(site.services.llm.calls())
+    found = site.client.post(
+        "/v2/permissions/attack", data={"mode": "replay"}, headers=site.headers
+    )
+    text = text_of(found.text)
+    assert "Polecenie zostało zignorowane" in text
+    assert "Sentinel nie ma funkcji, którą AI mogłoby to zrobić." in text
+    assert "„Projekt UX procesu zakupu” gotowe" in text and "wykonano 60 %" in text
+    assert "Nagrana odpowiedź openai/gpt-oss-120b (OpenRouter)" in text
+    assert len(site.services.store.events(LOCAL_SESSION, site.project)) == before
+    assert len(site.services.llm.calls()) == calls
+    assert problems(found.text) == []
+
+
+def test_the_decision_page_asks_first_and_can_be_skipped(site: Site) -> None:
+    """ "Twoja ocena" (v3 spec section 6): the options as chips with "Bez zmian", nothing of the
+    recommendation yet; a choice shows it with both choices and sends them with the decision."""
+    path = f"/v2/projects/{site.project}/decisions/{seq_of(site)}"
+    asking = site.client.get(path, params={"lang": "pl"}).text
+    text = text_of(asking)
+    assert "Co byś zrobił?" in text and "Pokaż od razu" in text and "Bez zmian" in text
+    assert "Zatwierdź" not in text and "Uzasadnienie" not in text
+    chips = re.findall(r'href="\?own=(\d+)">([^<]+)</a>', asking)
+    assert len(chips) >= 3 and chips[-1][1] == "Bez zmian"
+    shown = site.client.get(path, params={"lang": "pl", "own": chips[-1][0]}).text
+    text = text_of(shown)
+    assert "Twój wybór: Bez zmian · Sentinel: Zastępstwo" in text and "Zatwierdź" in text
+    assert '"own": "NOOP"' in html.unescape(shown) and 'name="own_sentinel"' in shown
+    skipped = text_of(site.client.get(path, params={"lang": "pl", "own": "skip"}).text)
+    assert "Twój wybór" not in skipped and "Zatwierdź" in skipped
+
+
+@pytest.mark.slow  # a second showcase (about 2 s)
+def test_the_choice_is_stored_and_counted_in_the_log(fresh: Site) -> None:
+    """The choice made first goes into the decision event; Dziennik counts the agreement; the
+    project setting switches the step off."""
+    pid = fresh.project
+    seq = fresh.services.live(LOCAL_SESSION, pid, "pl").open_recommendation
+    path = f"/v2/projects/{pid}/decisions/{seq}"
+    fresh.client.get(path)  # the validity, so that the brief stored has it
+    shown = fresh.client.get(path, params={"own": "0"}).text
+    vals = re.search(r"hx-vals='([^']+)'", shown)
+    assert vals is not None
+    data = json.loads(html.unescape(vals.group(1)))
+    assert fresh.client.post(path + "/approve", data=data, headers=fresh.headers).status_code == 200
+    decided = [r for r in fresh.services.store.events(LOCAL_SESSION, pid) if r.type == "decision"]
+    event = parse(decided[-1])
+    assert isinstance(event, Decided) and event.assessment is not None
+    assert event.assessment.sentinel == data["own_sentinel"]
+    log = text_of(fresh.client.get(f"/v2/projects/{pid}/log", params={"lang": "pl"}).text)
+    agreed = int(event.assessment.agrees or 0)
+    assert f"Zgadzasz się z Sentinelem w {agreed} z 1 decyzji" in log
+    fresh.client.post(f"/v2/projects/{pid}/settings/assessment", data={}, headers=fresh.headers)
+    assert not fresh.services.live(LOCAL_SESSION, pid, "pl").definition.settings.assessment_first

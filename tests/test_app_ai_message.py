@@ -372,7 +372,7 @@ def test_an_explanation_is_in_the_page_language_without_internal_terms() -> None
     names = {"SUBST(1)": "Zastępstwo: Cleo przejmuje udział osoby nieobecnej (Ada)"}
     for answers, expected in (([dirty, clean], clean["summary"]), ([dirty, dirty], "")):
         fake = FakeLlmClient([json.dumps(answer) for answer in answers])
-        service.client = lambda session=None, fake=fake: fake  # type: ignore[method-assign]
+        service.client = lambda session=None, role="read", cached=True, fake=fake: fake  # type: ignore[method-assign]
         result = service.explain(record, observation, params, roles, 7, language="pl", names=names)
         assert result.text == expected and len(fake.requests) == 2
         sent = fake.requests[0].messages

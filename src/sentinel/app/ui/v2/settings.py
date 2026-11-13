@@ -138,7 +138,7 @@ def router(ui: Ui) -> APIRouter:
         found = project_values(request, project_id)
         found.update(values)
         done = request.query_params.get("done")
-        if done in ("basics", "days_off", "reminder", "calendar", "revoked"):
+        if done in ("basics", "days_off", "reminder", "calendar", "revoked", "assessment"):
             found["notice"] = {
                 "tone": "good",
                 "icon": "check-circle",
@@ -236,6 +236,19 @@ def router(ui: Ui) -> APIRouter:
         changed = CalendarRow(current.project, current.session, current.nonce, int(day), hour)
         services.store.save_calendar(ui.session(request), changed)
         return saved(request, project_id, "reminder")
+
+    @routes.post(PREFIX + "/projects/{project_id}/settings/assessment")
+    async def save_assessment(request: Request, project_id: str) -> Response:
+        """ "Najpierw moja ocena" on or off (v3 spec section 6; spec section 11.8)."""
+        session, language = ui.session(request), ui.language(request)
+        form = await Form.read(request)
+        view = services.live(session, project_id, language)
+        settings = view.definition.settings.model_copy(
+            update={"assessment_first": form.flag("assessment_first")}
+        )
+        changed = view.definition.model_copy(update={"settings": settings})
+        services.update_definition(session, project_id, changed, language)
+        return saved(request, project_id, "assessment")
 
     @routes.post(PREFIX + "/projects/{project_id}/delete")
     def delete(request: Request, project_id: str) -> Response:

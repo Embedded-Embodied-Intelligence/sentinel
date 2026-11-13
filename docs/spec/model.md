@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.4.1)
+# Sentinel — formal model (v2.5.0)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -112,6 +112,10 @@ research runs are unchanged. v2.4.1 (WP17, the owner's audit item 10) an announc
 starts after the check-in's day is known at once (§11.3): the observation lists it, the belief
 draws its length and every simulated future starts it on its first day; the studies have no
 such absence, so §1–§10 and the research runs are unchanged (`sentinel reproduce --check`).
+v2.5.0 (WP19) the v3 interface's own assessment ("Twoja ocena", §11.8): the manager may choose
+an option before the recommendation is shown, and the decision event stores the choice and
+Sentinel's; no figure, forecast or recommendation depends on it, so §1–§10, §11.1–§11.7 and the
+research runs are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
 
@@ -1266,6 +1270,14 @@ of §11.4–§11.5, and the first interface keeps them as they are.
   for recommendations, validity and expiry. A decision event also stores the brief as it was:
   the chance in 100, the most likely finish and the expected cost with and without the action,
   the validity date and the cost of delay.
+- **Own assessment** ("Twoja ocena", v2.5.0, WP19). While a recommendation is pending and the
+  project's setting "assessment first" is on (the default), the decision page first asks the
+  manager to choose one of the options of the comparison (§11.5 item 3; "no change" is NOOP)
+  or to skip, and shows the recommendation only then, with the manager's choice beside
+  Sentinel's. An approval or a rejection made after it stores in its decision event the option
+  chosen (none when skipped) and Sentinel's choice shown at that moment. The log counts the
+  agreement as the decisions whose choice equals Sentinel's over those with a choice. Nothing
+  else changes: the choice is not an input of any forecast, recommendation or validity.
 - **Validity date and cost of delay.** For the action a recommendation waits on (as corrected),
   on the forecast's `N` worlds of its day `t` (§11.4: seed and rollout layout) and with the
   rollouts of §6, which apply an action approved `δ` days later on the approval day as §4 does,

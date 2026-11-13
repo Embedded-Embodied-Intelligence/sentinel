@@ -5,6 +5,30 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 1.10.0 — 2026-11-13 (WP19, v3 part 1: the research layer in the interface)
+
+No change to research results (`sentinel reproduce --check`). The v2 interface shows the
+research of WP18:
+
+- **"Dowód"** at every feature tied to a decision: a point "ⓘ N" that opens a panel from the
+  right with the decision, its basis ("badania", "prawo i normy", "teoria") and its evidence,
+  supporting first, then challenging and nuancing; only quotes checked by code are shown, with
+  their highlights, legal texts in the interface's language; `?dowod=D14` opens it directly.
+- **Zasady AI**, a new group of the sidebar: **Mapa granic** (twelve processes, six criteria,
+  three zones in colour, icon and word; a cell opens its reason and evidence), **Uprawnienia
+  AI** (what the model may and may not do; the active model, what leaves the company and its
+  latest calls as metadata only; "Próba ataku", a message with a hidden instruction through
+  the real message flow, recorded by default, live on request, nothing saved), **Ludzie**
+  (four features deliberately absent, the workload of the next two weeks) and **Źródła** (the
+  whole registry with filters).
+- **"Twoja ocena"** on the decision page (spec v2.5.0, §11.8): choose first or "Pokaż od
+  razu"; the choice is stored with the decision and Dziennik shows the agreement; "Najpierw
+  moja ocena" in the project settings, on by default.
+- The registry, the decision catalogue (now also as data) and the boundary map ship with the
+  package (`src/sentinel/evidence/data/`, ADR-0037), with English texts for the English
+  interface; the OWASP items are checked against the official 2025 PDF and the Atlassian post
+  against an archived copy.
+
 ## 1.9.0 — 2026-11-13 (WP18, the research layer of v3)
 
 No change to the interface or to research results. This release adds the evidence the v3

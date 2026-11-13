@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% macro kv(name, default="") %}{{ kept.get(name, default) if kept else default }}{% endmacro %}
 {% macro err(name) %}{% if errors.get(name) %}<p class="error" id="{{ name }}-error">{{ errors.get(name) }}</p>{% endif %}{% endmacro %}
 {% block content %}
@@ -63,8 +64,14 @@
 </section>
 
 <section class="card stack" aria-labelledby="how-title">
-  <h2 id="how-title">{{ t("v2.psettings.how") }}</h2>
+  <div class="titled"><h2 id="how-title">{{ t("v2.psettings.how") }}</h2>{{ m.dowod(t, "D03") }}</div>
   <p>{{ t("v2.psettings.how_text") }}</p>
+  {% set first = view.definition.settings.assessment_first if view.definition.settings.assessment_first is defined else true %}
+  <form class="stack-sm" hx-post="{{ prefix }}/projects/{{ view.id }}/settings/assessment" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    <div class="titled"><label class="check"><input type="checkbox" name="assessment_first" value="on"{% if first %} checked{% endif %}> <strong>{{ t("v2.psettings.assessment") }}</strong></label>{{ m.dowod(t, "D21") }}</div>
+    <p class="muted small">{{ t("v2.psettings.assessment_hint") }}</p>
+    <div class="actions"><button type="submit" class="btn">{{ t("v2.psettings.assessment_save") }}</button></div>
+  </form>
 </section>
 
 <section class="card stack danger-zone" aria-labelledby="delete-title">

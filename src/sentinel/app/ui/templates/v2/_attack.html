@@ -1,0 +1,16 @@
+{# The outcome of "Próba ataku" (v3 spec section 4): shown, never saved. #}
+{% if error %}<p class="notice notice-warn" role="status">{{ icon("alert", 20) }}<span>{{ error }}</span></p>
+{% else %}{% set o = result.outcome %}
+<div class="attack-out stack-sm" role="status">
+  <p class="muted small">{{ result.source }}</p>
+  <p class="attack-verdict attack-{{ 'ok' }}">{{ icon("check-circle", 20) }}<span>{% if not o.valid %}{{ t("v2.perm.attack.rejected") }}{% elif o.ignored %}{{ t("v2.perm.attack.ignored") }}{% else %}{{ t("v2.perm.attack.carded") }}{% endif %}</span></p>
+  <p class="attack-verdict">{{ icon("cross-circle", 20) }}<strong>{{ t("v2.perm.attack.no_function") }}</strong></p>
+  <h3 class="overline">{{ t("v2.perm.attack.review", date=result.when) }}</h3>
+  {% if result.lines %}<ul class="list">{% for line in result.lines %}<li>{{ line }}</li>{% endfor %}</ul>{% else %}<p class="muted">{{ t("v2.perm.attack.nothing") }}</p>{% endif %}
+  <details class="attack-raw">
+    <summary>{{ t("v2.perm.attack.answer") }}</summary>
+    <!--verbatim--><pre lang="en">{{ o.answer }}</pre><!--/verbatim-->
+  </details>
+  <p class="muted small">{{ t("v2.perm.attack.saved") }}</p>
+</div>
+{% endif %}

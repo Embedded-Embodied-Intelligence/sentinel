@@ -828,8 +828,8 @@ def test_ai_features_through_the_pages(tmp_path: Path) -> None:
             return json.dumps({"ok": True})
         return json.dumps(extraction)
 
-    def factory(settings: Any, cache: LlmCache) -> LlmClient:
-        assert cache.store_prompts is False
+    def factory(settings: Any, cache: LlmCache | None) -> LlmClient:
+        assert cache is None or cache.store_prompts is False  # none: a connection test (WP19)
         return FakeLlmClient(answer, cache=cache)
 
     config = AppConfig(data_dir=tmp_path / "ai", inline_jobs=True)

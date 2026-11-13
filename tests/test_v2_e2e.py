@@ -179,6 +179,10 @@ def test_the_demo_path(demo: Server) -> None:
         pending = page.locator("#pending")
         expect(pending).to_contain_text("zastępuje", timeout=120_000)
         pending.get_by_role("link", name=re.compile("Szczegóły")).click()
+        # "Twoja ocena" (WP19): choose first, then the recommendation with both choices
+        expect(page.get_by_role("heading", name="Co byś zrobił?")).to_be_visible()
+        page.get_by_role("link", name="Bez zmian", exact=True).click()
+        expect(page.locator(".own-line")).to_contain_text("Twój wybór: Bez zmian · Sentinel:")
         effect = page.locator(".effects")
         expect(effect).to_contain_text("→")
         chance = number(effect.inner_text(), r"\d+ → (\d+)\sna\s100")  # no break in "57 na 100"
@@ -187,7 +191,9 @@ def test_the_demo_path(demo: Server) -> None:
         page.wait_for_url(re.compile(r"done=approved"))
         expect(page.locator(".notice")).to_contain_text("Zatwierdzono")
         expect(page.locator(".hero")).to_contain_text(chance)
-        expect(page.locator("#fig-end").locator("..")).to_contain_text(end.replace("\xa0", " "))
+        expect(page.locator("section[aria-labelledby='fig-end']")).to_contain_text(
+            end.replace("\xa0", " ")
+        )
         context.close()
         chromium.close()
     assert WHISPER.calls >= 2  # a preview and the final transcription
@@ -213,6 +219,7 @@ def test_the_log_shows_a_decision_and_its_fate(demo: Server) -> None:
     with sync_api.sync_playwright() as playwright:
         chromium, page, overview = showcase_page(demo, playwright)
         page.locator("#pending").get_by_role("link", name=re.compile("Szczegóły")).click()
+        page.get_by_role("link", name="Pokaż od razu").click()  # "Twoja ocena" skipped
         page.locator("[data-toggle^='reject']").first.click()
         page.locator(".reason-chips label", has_text="Za drogo").click()
         page.get_by_role("button", name="Potwierdź odrzucenie").click()
@@ -297,6 +304,55 @@ def test_the_calendar_feed(demo: Server) -> None:
         chromium.close()
 
 
+def test_the_presentation_path(demo: Server) -> None:
+    """WP19 (docs/design/v3-spec.md): Pulpit → ⓘ on "N na 100" → the panel (verified quotes
+    with highlights, Esc closes, focus back on the point) → Mapa granic → a cell → Uprawnienia
+    AI → "Próba ataku" → Ludzie; and a deep link opens a panel with its page."""
+    with sync_api.sync_playwright() as playwright:
+        chromium, page, _ = showcase_page(demo, playwright)
+        point = page.locator("[data-decision='D01']")
+        expect(point).to_have_attribute("aria-label", "Dowody dla tej decyzji (3)")
+        point.click()
+        panel = page.locator("#dowod")
+        expect(panel).to_be_visible()
+        expect(panel.get_by_role("heading", name="Decyzja")).to_be_visible()
+        expect(panel).to_contain_text("Szansę na termin pokazujemy jako „N na 100”")
+        expect(panel.locator("blockquote mark").first).to_be_visible()
+        expect(panel.locator(".ev-wspiera")).to_have_count(3)
+        inside = "() => document.getElementById('dowod').contains(document.activeElement)"
+        for _ in range(6):  # the page behind is inert: Tab stays in the panel
+            page.keyboard.press("Tab")
+            assert page.evaluate(inside)
+        page.keyboard.press("Escape")
+        expect(panel).to_be_hidden()
+        assert page.evaluate("() => document.activeElement.dataset.decision") == "D01"
+        page.get_by_role("link", name="Mapa granic").click()
+        expect(page.get_by_role("heading", level=1)).to_contain_text("Mapa granic")
+        page.locator(".map-cell[data-dowod$='/P09/4']").click()
+        expect(panel).to_contain_text("Ocena wydajności pracownika")
+        expect(panel).to_contain_text("tylko człowiek")
+        expect(panel.locator(".ev").first).to_be_visible()
+        panel.get_by_role("button", name="Zamknij dowody").click()
+        expect(panel).to_be_hidden()
+        page.locator("summary", has_text="Prognoza dotrzymania terminu").click()
+        expect(page.locator(".proc[open]")).to_contain_text("Pulpit")
+        page.get_by_role("link", name="Uprawnienia AI").click()
+        expect(page.locator(".perm-may-not")).to_contain_text("Zatwierdzić zmiany")
+        page.get_by_role("button", name="Uruchom").click()
+        result = page.locator("#attack-result")
+        expect(result).to_contain_text("Polecenie zostało zignorowane")
+        expect(result).to_contain_text("Sentinel nie ma funkcji, którą AI mogłoby to zrobić.")
+        page.get_by_role("link", name="Ludzie").click()
+        expect(page.locator(".absent-card")).to_have_count(4)
+        expect(page.locator("main")).to_contain_text(
+            "Sentinel planuje według ról i dostępności, nie ocenia ludzi."
+        )
+        page.goto(demo.base + "/v2/sources?dowod=D22")
+        expect(panel).to_be_visible()
+        expect(panel).to_contain_text("Punkt „Dowód” przy każdej funkcji")
+        chromium.close()
+
+
 def _axe(page: Any) -> list[str]:
     # Through the DevTools protocol: the page's content policy allows no inline script (WP17).
     page.evaluate("() => {" + AXE.read_text(encoding="utf-8") + "\n}")
@@ -329,6 +385,10 @@ def test_a_phone_and_a_small_laptop_never_scroll_sideways(demo: Server) -> None:
                 f"{project}/plan?view=tasks",
                 "/v2/lab",
                 "/v2/new",
+                "/v2/map",
+                "/v2/permissions",
+                "/v2/people",
+                "/v2/sources",
             ):
                 page.goto(demo.base + path)
                 page.wait_for_load_state("networkidle")
@@ -395,8 +455,17 @@ def test_the_v2_screens_have_no_serious_accessibility_violations(demo: Server, t
             ("project_settings", href + "/settings", "[data-toggle='delete-confirm']"),
             ("wizard", "/v2/new", None),
         ]
+        screens += [  # v3 (WP19), with the "Dowód" panel open
+            ("overview_panel", href, "[data-decision='D01']"),
+            ("map", "/v2/map", None),
+            ("map_panel", "/v2/map", ".map-cell"),
+            ("permissions", "/v2/permissions", "[data-attack-run]"),
+            ("people", "/v2/people", None),
+            ("sources", "/v2/sources", "details.src-item > summary"),
+        ]
         if decision is not None:
-            screens.append(("decision", decision, "[data-toggle^='reject']"))
+            screens.append(("decision_assessment", decision, None))
+            screens.append(("decision", decision + "?own=skip", "[data-toggle^='reject']"))
         problems = {}
         for name, path, click in screens:
             page.goto(demo.base + path)

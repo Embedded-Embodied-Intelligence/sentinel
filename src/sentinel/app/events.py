@@ -82,9 +82,26 @@ class Brief(_Event):
     delay: float | None = None
 
 
+class Assessment(BaseModel):
+    """ "Twoja ocena" (spec section 11.8, WP19): the action the manager chose before seeing the
+    recommendation (an action label of its comparison, "NOOP" for no change; None: skipped)
+    and Sentinel's choice it was then shown."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    choice: str | None = Field(default=None, max_length=200)
+    sentinel: str = Field(max_length=200)
+
+    @property
+    def agrees(self) -> bool | None:
+        """Whether the manager chose as Sentinel did; None when the step was skipped."""
+        return None if self.choice is None else self.choice == self.sentinel
+
+
 class Decided(_Event):
     """The manager's decision on a recommendation; a rejection may give one of the reasons of
-    the v2 interface and, for "other", the manager's own words (WP15)."""
+    the v2 interface and, for "other", the manager's own words (WP15); the manager's own choice
+    made first, if the decision page asked for it (WP19)."""
 
     recommendation: int
     verdict: Verdict
@@ -93,6 +110,7 @@ class Decided(_Event):
     reason: RejectReason | None = None
     note: str | None = Field(default=None, max_length=300)
     brief: Brief | None = None
+    assessment: Assessment | None = None
 
 
 class Corrected(_Event):

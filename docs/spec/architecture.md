@@ -52,6 +52,8 @@ src/sentinel/
     calendar.py          # WP12: working days with Polish holidays and company days off (11.1)
     decisions.py         # WP15: validity date, cost of delay, corrections, brief (spec 11.8)
     feed.py              # WP16: the iCalendar text of a project's calendar feed (ADR-0035)
+    attack.py            # WP19: "Próba ataku" of Uprawnienia AI through the message flow, with
+                         #   the recorded answer attack_replay.json (scripts/record_attack.py)
     ui/                  # WP9b: the pages: Jinja2 templates, text.py (catalogue PL/EN), forms,
                          #   charts (SVG), routes per screen; static/ (CSS, vendored HTMX)
       v2/                # the v2 interface under /v2 (ADR-0033; docs/design/v2-spec.md):
@@ -62,9 +64,13 @@ src/sentinel/
                          #   WP16: log (Dziennik, CSV), plan (Harmonogram, Zadania, Zespół),
                          #   lab (Co jeśli?, Symulator), settings (Ustawienia, project settings),
                          #   calendar (secret link and feed, ADR-0035);
+                         #   WP19 (docs/design/v3-spec.md): evidence (the "Dowód" point and
+                         #   panel, Źródła, Mapa granic), rules (Uprawnienia AI, Ludzie),
+                         #   text_v3.py; the decision page's "Twoja ocena" (spec 11.8);
                          #   text.py (its catalogue); templates/v2/, sentinel-v2.css/js
 scripts/                 # one-off utilities, e.g. fetch_psplib.py, fetch_evidence.py (WP18: the
-                         #   registry's open sources, their text and the quote check); run_demo.sh (public demo),
+                         #   registry's open sources, their text and the quote check); record_attack.py
+                         #   (WP19); ui_v3_screenshots.py (WP19); run_demo.sh (public demo),
                          #   setup_e2e_libs.sh (Chromium libraries without root)
 configs/                 # experiment configs (TOML), one per experiment; paper.toml (WP7)
 tests/                   # pytest; fixtures in tests/fixtures/

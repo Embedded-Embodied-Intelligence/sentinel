@@ -1,4 +1,5 @@
 {% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
 {% block content %}
 <header class="v2-head"><h1>{{ t("v2.new.title") }}{% if view %} · <span class="muted" style="font-weight:600">{{ view.name }}</span>{% endif %}</h1></header>
 <nav aria-label="{{ t('v2.new.steps') }}">
@@ -27,7 +28,7 @@
 {% elif step == "team" %}
 <form class="card stack" hx-post="{{ prefix }}/new/{{ view.id }}/team" hx-target="body">
   <input type="hidden" name="tasks_way" value="{{ tasks_way }}">
-  <p>{{ t("v2.new.team_text") }}</p>
+  <p>{{ t("v2.new.team_text") }} {{ m.dowod(t, "D10") }}</p>
   <label class="label" for="team">{{ t("v2.new.team") }}</label>
   {% with box_id="team", box_name="team", box_rows=6, box_example=t("v2.new.team_example"), box_hint=t("v2.new.team_hint"), box_project=none, box_value=team %}{% include "v2/_voice.html" %}{% endwith %}
   {% if roles %}<p class="muted">{{ roles | join(" · ") }}</p>{% endif %}

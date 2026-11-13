@@ -1,0 +1,21 @@
+{# An evidence item as a card (v3 spec section 2): stance in colour, icon and word, the verified
+   quote with its highlights, the summary, what follows for Sentinel and the citation. The
+   verbatim parts (quote, citation) are marked for the internal-term check, which skips them. #}
+{% macro card(t, c, level=3) -%}
+{% set icons = {"wspiera": "check-circle", "podwaza": "cross-circle", "niuansuje": "minus"} %}
+<article class="ev ev-{{ c.stance }}">
+  <p class="ev-stance">{{ icon(icons[c.stance], 16) }}<span>{{ t("v2.ev.stance." ~ c.stance) }}</span>{% if c.tag %}<span class="tag tag-own">{{ c.tag }}</span>{% endif %}</p>
+  <h{{ level }} class="ev-title">{{ c.title }}</h{{ level }}>
+  {% if c.quote %}
+  <!--verbatim--><blockquote class="ev-quote" lang="{{ c.quote_lang }}">{{ c.quote }}</blockquote><!--/verbatim-->
+  {% if c.gloss %}<p class="ev-gloss">{{ c.gloss }}</p>{% endif %}
+  {% elif not c.verified %}<p class="ev-note">{{ icon("alert", 16) }}<span>{{ t("v2.ev.unverified") }}</span></p>{% endif %}
+  {% if c.figures %}<!--research--><dl class="ev-figures">{% for f in c.figures %}<div><dt>{{ f.label }}</dt><dd class="num">{{ f.value }}</dd></div>{% endfor %}</dl><!--/research-->{% endif %}
+  <p class="ev-label">{{ t("v2.ev.text" if c.kind in ("law", "standard", "industry") else "v2.ev.did") }}</p>
+  <!--research--><p>{{ c.summary }}</p><!--/research-->
+  {% if c.caveats %}<!--research--><p class="muted small"><strong>{{ t("v2.ev.caveats") }}</strong> {{ c.caveats }}</p><!--/research-->{% endif %}
+  <p class="ev-label">{{ t("v2.ev.means") }}</p>
+  <p>{{ c.implication }}</p>
+  <p class="ev-cite small"><!--verbatim--><cite>{{ c.citation }}</cite><!--/verbatim-->{% if c.link %} <a href="{{ c.link }}" target="_blank" rel="noopener noreferrer">{{ t("v2.ev.source") }}<span class="vh"> ({{ t("v2.ev.new_tab") }})</span></a>{% endif %}{% if c.open_access %} · <span class="tag">{{ t("v2.ev.open_access") }}</span>{% endif %}</p>
+</article>
+{%- endmacro %}

@@ -23,3 +23,14 @@
 {% macro chip(t, c) -%}
 <span class="chip chip-{{ c.tone }} num">{{ c.text }}{% if c.tone == "good" %}<span class="arrow" aria-hidden="true">▲</span><span class="vh">{{ t("v2.effect.better") }}</span>{% elif c.tone == "bad" %}<span class="arrow" aria-hidden="true">▼</span><span class="vh">{{ t("v2.effect.worse") }}</span>{% endif %}</span>
 {%- endmacro %}
+
+{# The "Dowód" point of a decision (v3 spec section 2): "ⓘ N", N its evidence items; the panel
+   opens from the right (sentinel-v2.js); `?dowod=D14` opens it with the page. #}
+{% macro dowod(t, ident) -%}
+{% if evidence_count is defined %}{% set n = evidence_count(ident) %}<button type="button" class="dowod-point" data-dowod="/v2/dowod/{{ ident }}" data-decision="{{ ident }}" aria-haspopup="dialog" aria-label="{{ t('v2.ev.point', n=n) }}" data-n="{{ n }}">{{ icon("info", 16) }}</button>{% endif %}
+{%- endmacro %}
+
+{# A zone of Mapa granic: colour, icon and word together (v3 spec section 3). #}
+{% macro zone(t, value, small=False) -%}
+<span class="zone zone-{{ value }}{% if small %} zone-sm{% endif %}"><span class="zone-icons">{% if value == "ai_samodzielnie" %}{{ icon("robot", 16) }}{% elif value == "ai_z_czlowiekiem" %}{{ icon("robot", 16) }}{{ icon("person", 16) }}{% else %}{{ icon("person", 16) }}{% endif %}</span><span>{{ t(("v2.zone.short." if small else "v2.zone.") ~ value) }}</span></span>
+{%- endmacro %}

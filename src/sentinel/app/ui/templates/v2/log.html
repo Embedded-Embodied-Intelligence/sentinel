@@ -2,13 +2,14 @@
 {% import "v2/_macros.html" as m %}
 {% macro query(show_value, project_value) %}?show={{ show_value }}{% if project_value %}&amp;project={{ project_value }}{% endif %}{% endmacro %}
 {% block content %}
-{% if not project %}<header class="v2-head"><h1>{{ t("v2.log.title") }}</h1></header>{% endif %}
+{% if not project %}<header class="v2-head"><div class="titled"><h1>{{ t("v2.log.title") }}</h1>{{ m.dowod(t, "D08") }}</div></header>{% endif %}
 <div class="log-tools">
   <nav aria-label="{{ t('v2.log.filters') }}">
     <ul class="filters">
       {% for key in filters %}<li><a href="{{ base }}{{ query(key, picked) }}"{% if show == key %} aria-current="true"{% endif %}>{{ t("v2.log.filter." ~ key) }}</a></li>{% endfor %}
     </ul>
   </nav>
+  {% if project %}{{ m.dowod(t, "D08") }}{% endif %}
   <a class="btn" href="{{ base }}.csv{{ query(show, picked) }}" download>{{ icon("download", 20) }}{{ t("v2.log.download") }}</a>
 </div>
 {% if projects | length > 1 %}
@@ -19,6 +20,7 @@
   </ul>
 </nav>
 {% endif %}
+{% if asked is defined and asked %}<p class="own-agree">{{ icon("person", 20) }}<span>{{ t.plural("v2.own.agree", asked, agreed=agreed) }}</span> {{ m.dowod(t, "D21") }}</p>{% endif %}
 {% if not chart and projects | length > 1 and not picked %}<p class="muted">{{ t("v2.log.chart.pick") }}</p>{% endif %}
 {% if chart %}
 <section class="card section" aria-labelledby="chance-time-title">

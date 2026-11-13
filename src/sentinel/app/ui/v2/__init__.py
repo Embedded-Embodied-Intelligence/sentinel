@@ -11,11 +11,13 @@ def mount(app: FastAPI, ui: Ui) -> None:
     from sentinel.app.ui.v2 import (
         calendar,
         decision,
+        evidence,
         lab,
         log,
         overview,
         plan,
         report,
+        rules,
         settings,
         shell,
         start,
@@ -23,6 +25,7 @@ def mount(app: FastAPI, ui: Ui) -> None:
         wizard,
     )
 
+    ui.env.globals["evidence_count"] = evidence.evidence_count  # the "Dowód" points (v3)
     for module in (
         start,
         wizard,
@@ -35,6 +38,8 @@ def mount(app: FastAPI, ui: Ui) -> None:
         settings,
         calendar,
         voice,
+        evidence,
+        rules,
         shell,
     ):
         app.include_router(module.router(ui))

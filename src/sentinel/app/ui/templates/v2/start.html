@@ -13,7 +13,7 @@
 </section>
 {% else %}
 <section class="section" aria-labelledby="todo-title">
-  <div class="section-head"><h2 id="todo-title" class="overline">{{ t("v2.start.decisions") }} ({{ todos | length }})</h2>{% if todos %}<span class="muted small">{{ t("v2.start.sorted") }}</span>{% endif %}</div>
+  <div class="section-head"><div class="titled"><div class="titled"><h2 id="todo-title" class="overline">{{ t("v2.start.decisions") }} ({{ todos | length }})</h2>{{ m.dowod(t, "D04") }}</div>{{ m.dowod(t, "D04") }}</div>{% if todos %}<span class="muted small">{{ t("v2.start.sorted") }}</span>{% endif %}</div>
   {% if todos %}
   <ul class="list">
     {% for todo in todos %}
@@ -23,7 +23,7 @@
   {% else %}<p class="card muted">{{ t("v2.start.no_decisions") }}</p>{% endif %}
 </section>
 <section class="section" aria-labelledby="tiles-title">
-  <h2 id="tiles-title" class="overline">{{ t("v2.start.projects") }}</h2>
+  <div class="titled"><h2 id="tiles-title" class="overline">{{ t("v2.start.projects") }}</h2>{{ m.dowod(t, "D01") }}</div>
   {% include "v2/_tiles.html" %}
 </section>
 <section class="section" aria-labelledby="events-title">

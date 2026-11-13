@@ -370,4 +370,69 @@
     if (event.key === "Enter") { event.preventDefault(); accept(active); }
     else if (event.key === "Escape") { event.preventDefault(); cancel(active); }
   });
+
+  // ---- the "Dowód" panel (v3 spec section 2): a modal dialog from the right, so the page
+  // behind is inert (focus stays inside), Esc or ✕ closes it and focus returns to the point.
+  var dowod = document.getElementById("dowod");
+  var opener = null;
+
+  function showDowod() {
+    if (!dowod.open) dowod.showModal();
+    var close = dowod.querySelector("[data-dowod-close]");
+    if (close) close.focus();
+    dowod.querySelector(".dowod-body").scrollTop = 0;
+  }
+
+  if (dowod) {
+    if (dowod.hasAttribute("data-open")) {  // ?dowod=D14 opened it with the page
+      dowod.removeAttribute("data-open");
+      dowod.close();
+      showDowod();
+    }
+    dowod.addEventListener("close", function () {
+      var back = opener && document.contains(opener) ? opener : document.getElementById("main");
+      opener = null;
+      if (back) back.focus();
+    });
+    dowod.addEventListener("click", function (event) {
+      if (event.target === dowod) dowod.close();  // a click on the dimmed page beside it
+    });
+    // Tab and Shift+Tab go round the panel's controls instead of leaving for the browser.
+    dowod.addEventListener("keydown", function (event) {
+      if (event.key !== "Tab") return;
+      var items = Array.prototype.filter.call(
+        dowod.querySelectorAll("a[href], button, summary, [tabindex]:not([tabindex='-1'])"),
+        function (el) { return el.offsetParent !== null; }
+      );
+      if (!items.length) return;
+      var first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!dowod) return;
+    if (event.target.closest("[data-dowod-close]")) { dowod.close(); return; }
+    var point = event.target.closest("[data-dowod]");
+    if (!point) return;
+    event.preventDefault();
+    opener = point;
+    fetch(point.getAttribute("data-dowod"), { credentials: "same-origin", headers: { "HX-Request": "true" } })
+      .then(function (response) {
+        if (!response.ok) throw new Error(String(response.status));
+        return response.text();
+      })
+      .then(function (html) {
+        dowod.querySelector(".dowod-body").innerHTML = html;
+        showDowod();
+      })
+      .catch(function () { opener = null; });
+  });
+
+  // Źródła: a filter applies as soon as it changes.
+  document.addEventListener("change", function (event) {
+    var form = event.target.closest("form[data-autosubmit]");
+    if (form && event.target.tagName === "SELECT") form.requestSubmit();
+  });
 })();

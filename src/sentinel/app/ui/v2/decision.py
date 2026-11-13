@@ -15,6 +15,7 @@ from sentinel.app.decisions import Option, parameter_of
 from sentinel.app.errors import AppError
 from sentinel.app.events import (
     OPEN,
+    Assessment,
     Brief,
     Decided,
     Expired,
@@ -272,6 +273,77 @@ def option_rows(
     return rows
 
 
+OWN = "own"  # the query parameter of "Twoja ocena": an option's number, or "skip"
+
+
+@dataclass(frozen=True)
+class OwnStep:
+    """ "Twoja ocena" on the decision page (v3 spec section 6; spec section 11.8): the options to
+    choose from while asking (number, title; in alphabetical order, "Bez zmian" last, so that
+    the order does not give Sentinel's choice away), then the manager's choice and Sentinel's,
+    and the fields the decision forms send with them."""
+
+    asking: bool
+    chips: list[tuple[str, str]]
+    choice: str | None
+    sentinel: str
+    fields: dict[str, str]
+    noop_chance: int | None
+
+
+def own_step(
+    t: TextsV2,
+    request: Request,
+    project: LiveProject,
+    entry: RecommendationEntry,
+    rec: RecommendationView,
+) -> OwnStep | None:
+    """The step while the decision waits and the project asks for it (on by default)."""
+    comparison = entry.recommendation.comparison
+    if comparison is None or entry.status not in OPEN:
+        return None
+    if not project.definition.settings.assessment_first:
+        return None
+    labels = [impact.label for impact in comparison.impacts]
+    titles = {a.label: a.title for a in rec.alternatives} | {rec.label: rec.title}
+    noop = t("v2.options.noop")
+
+    def title(label: str) -> str:
+        return noop if label == "NOOP" else titles.get(label, label)
+
+    chance = next((i.p_on_time for i in comparison.impacts if i.label == "NOOP"), None)
+    noop_chance = None if chance is None else per_hundred(chance)
+    wanted = request.query_params.get(OWN, "")
+    if wanted == "skip":
+        choice = None
+    elif wanted.isdigit() and int(wanted) < len(labels):
+        choice = labels[int(wanted)]
+    else:
+        chips = sorted(
+            ((str(n), title(label)) for n, label in enumerate(labels)),
+            key=lambda chip: (chip[1] == noop, chip[1].casefold()),
+        )
+        return OwnStep(True, chips, None, title(rec.label), {}, noop_chance)
+    fields = {"own": choice or "", "own_skip": "" if choice else "1", "own_sentinel": rec.label}
+    shown = None if choice is None else title(choice)
+    return OwnStep(False, [], shown, title(rec.label), fields, noop_chance)
+
+
+def assessment_of(form: Form, entry: RecommendationEntry | None) -> Assessment | None:
+    """The manager's own choice a decision form sent, if it names options of the comparison."""
+    comparison = None if entry is None else entry.recommendation.comparison
+    sentinel = form.get("own_sentinel")
+    if comparison is None or not sentinel:
+        return None
+    labels = {impact.label for impact in comparison.impacts}
+    if sentinel not in labels:
+        return None
+    if form.get("own_skip") == "1":
+        return Assessment(choice=None, sentinel=sentinel)
+    choice = form.get("own")
+    return Assessment(choice=choice, sentinel=sentinel) if choice in labels else None
+
+
 def histogram(
     t: TextsV2,
     project: LiveProject,
@@ -448,6 +520,7 @@ def router(ui: Ui) -> APIRouter:
         )
         options = services.correction_options(session, project_id, seq) if pending else []
         done = request.query_params.get("done")
+        own = own_step(t, request, state.project, entry, rec)
         return page(
             ui,
             request,
@@ -471,6 +544,8 @@ def router(ui: Ui) -> APIRouter:
             options=[(o.key, option_label(t, o), o.current) for o in options],
             rows=option_rows(t, state.project, entry, rec),
             notice=decision_notice(t, done),
+            own=own,
+            own_fields=own.fields if own is not None else {},
         )
 
     @routes.get(PREFIX + "/projects/{project_id}/decisions/{seq}/distribution")
@@ -527,7 +602,10 @@ def router(ui: Ui) -> APIRouter:
     async def approve(request: Request, project_id: str, seq: int) -> Response:
         form = await Form.read(request)
         session, language = ui.session(request), ui.language(request)
-        after = services.decide(session, project_id, seq, "approve", language, autonomy=GATE)
+        own = assessment_of(form, services.state(session, project_id).recommendation(seq))
+        after = services.decide(
+            session, project_id, seq, "approve", language, autonomy=GATE, assessment=own
+        )
         entry = next((r for r in after.recommendations if r.seq == seq), None)
         back = form.get("back")
         target = back_to(project_id, "overview" if back == "decision" else back)
@@ -543,8 +621,17 @@ def router(ui: Ui) -> APIRouter:
             raise AppError("field_invalid", field="reason", detail=form.get("reason"))
         note = form.get("note") if reason == "other" else None
         session, language = ui.session(request), ui.language(request)
+        own = assessment_of(form, services.state(session, project_id).recommendation(seq))
         services.decide(
-            session, project_id, seq, "reject", language, reason=reason, note=note, autonomy=GATE
+            session,
+            project_id,
+            seq,
+            "reject",
+            language,
+            reason=reason,
+            note=note,
+            autonomy=GATE,
+            assessment=own,
         )
         back = form.get("back")
         target = back_to(project_id, "overview" if back == "decision" else back)

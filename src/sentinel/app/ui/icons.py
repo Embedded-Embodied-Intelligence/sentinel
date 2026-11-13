@@ -55,6 +55,17 @@ PATHS = {
     '<path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     "trash": '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     "x": '<path d="M6 6l12 12M18 6L6 18"/>',
+    # v3 (WP19): the zones of Mapa granic, the group "Zasady AI" and Ludzie
+    "robot": '<rect x="5" y="8" width="14" height="11" rx="2.5"/><path d="M12 4v4M9 13h.1M15 13h.1'
+    'M10 16.5h4M3 12.5v2M21 12.5v2"/>',
+    "map": '<path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20"/>',
+    "shield": '<path d="M12 3l7 3v5.5c0 4.6-3 8-7 9.5-4-1.5-7-4.9-7-9.5V6z"/>'
+    '<path d="M9 12l2 2 4-4"/>',
+    "gauge": '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 14l4-5"/>',
+    "podium": '<path d="M9 9h6v11H9zM3 13h6v7H3zM15 15h6v5h-6zM12 3.5l.9 1.8 2 .3-1.4 1.4.3 2'
+    '-1.8-1-1.8 1 .3-2-1.4-1.4 2-.3z"/>',
+    "smile": '<circle cx="12" cy="12" r="9"/>'
+    '<path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.1M15 9.5h.1"/>',
 }
 SIZES = (12, 14, 16, 20, 24, 40)
 

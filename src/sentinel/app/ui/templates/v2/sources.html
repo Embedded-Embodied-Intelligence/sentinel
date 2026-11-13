@@ -1,0 +1,27 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% import "v2/_ev.html" as ev %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.src.title") }} {{ m.dowod(t, "D22") }}</h1></header>
+<p class="lead">{{ t("v2.src.lead") }}</p>
+<form class="card src-filters" method="get" action="{{ prefix }}/sources" role="search" aria-label="{{ t('v2.src.filters') }}" data-autosubmit>
+  <div class="field src-q"><label for="src-q">{{ t("v2.src.search") }}</label><input class="input" id="src-q" type="search" name="q" value="{{ chosen.q }}"></div>
+  <div class="field"><label for="src-module">{{ t("v2.src.module") }}</label><select id="src-module" name="module"><option value="">{{ t("v2.src.any") }}</option>{% for x in modules %}<option value="{{ x }}"{% if chosen.module == x %} selected{% endif %}>{{ t("v2.module." ~ x) }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="src-criterion">{{ t("v2.src.criterion") }}</label><select id="src-criterion" name="criterion"><option value="">{{ t("v2.src.any") }}</option>{% for c in criteria %}<option value="{{ c.id }}"{% if chosen.criterion == c.id | string %} selected{% endif %}>{{ c.id }}. {{ c.short_en if t.lang == "en" else c.short_pl }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="src-stance">{{ t("v2.src.stance") }}</label><select id="src-stance" name="stance"><option value="">{{ t("v2.src.any") }}</option>{% for x in stances %}<option value="{{ x }}"{% if chosen.stance == x %} selected{% endif %}>{{ t("v2.ev.stance." ~ x) }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="src-kind">{{ t("v2.src.kind") }}</label><select id="src-kind" name="kind"><option value="">{{ t("v2.src.any") }}</option>{% for x in kinds %}<option value="{{ x }}"{% if chosen.kind == x %} selected{% endif %}>{{ t("v2.kind." ~ x) }}</option>{% endfor %}</select></div>
+  <div class="actions"><button type="submit" class="btn">{{ t("v2.src.apply") }}</button>{% if chosen.values() | select | list %}<a class="btn btn-quiet" href="{{ prefix }}/sources">{{ t("v2.src.clear") }}</a>{% endif %}</div>
+</form>
+<p class="muted src-count" role="status">{{ t("v2.src.count", n=cards | length, total=total) }}</p>
+<div class="stack src-list">
+{% for c in cards %}
+<details class="card src-item src-{{ c.stance }}" id="src-{{ c.id }}">
+  <summary><span class="src-id num">{{ c.id }}</span><span class="src-title">{{ c.title }}</span><span class="src-meta small">{{ t("v2.ev.stance." ~ c.stance) }} · {{ t("v2.kind." ~ c.kind) }}{% if not c.verified %} · {{ t("v2.src.summary_only") }}{% endif %}</span></summary>
+  <div class="src-body">
+  {{ ev.card(t, c, 2) }}
+  <p class="small src-used"><span class="muted">{{ t("v2.src.used_by") }}</span> {% for d in c.decisions %}<button type="button" class="link-button" data-dowod="/v2/dowod/{{ d }}" aria-haspopup="dialog">{{ t("v2.src.decision", id=d) }}</button>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+  </div>
+</details>
+{% endfor %}
+</div>
+{% endblock %}
