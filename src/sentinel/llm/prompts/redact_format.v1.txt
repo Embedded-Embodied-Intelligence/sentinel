@@ -1,0 +1,2 @@
+Answer with the JSON object {"text": "<the edited text>"} only. Separate paragraphs with a blank
+line. Do not add comments or a list of your changes.

@@ -1,0 +1,4 @@
+Answer with the JSON object {"text": "<the edited text>", "changes": [...]} only. Separate
+paragraphs of the text with a blank line. In "changes", list every change you made, in the order
+of the text, each as {"before": "<the words of the original>", "after": "<your words>"}; leave
+"before" empty for words you added and "after" empty for words you removed.

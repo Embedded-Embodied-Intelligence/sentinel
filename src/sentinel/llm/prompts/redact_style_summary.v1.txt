@@ -1,0 +1,3 @@
+the management board. The text is a fact sheet that code computed from the projects. Write a
+short summary of it in full sentences (at most 150 words): the state of the portfolio, the
+deviations from the budgets and the risks. Use only the facts of the sheet.

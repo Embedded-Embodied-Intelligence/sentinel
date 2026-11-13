@@ -12,8 +12,9 @@ plan stability) and selects interventions by **simulating their outcomes before 
   risk forecasts, recommendations.
 - **Goal B (Sentinel):** a goal-driven rollout agent with a permission gate, evaluated against
   classical predictive-reactive policies on PSPLIB instances extended with disruptions.
-- The LLM has three narrow roles only: parse unstructured events, propose candidate actions in a
-  fixed JSON grammar, explain decisions. It never decides and never runs inside rollouts.
+- The LLM has four narrow roles only: parse unstructured events, propose candidate actions in a
+  fixed JSON grammar, explain decisions, and edit a person's text for an audience (ADR-0038). It
+  never decides and never runs inside rollouts.
 
 Deliverables: a reproducible code base, an LNCS article (English) and a course report (Polish).
 Deadline: 2026-12-02.

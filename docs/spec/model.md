@@ -1,4 +1,4 @@
-# Sentinel — formal model (v2.5.0)
+# Sentinel — formal model (v2.6.0)
 
 Source of truth for all semantics. Code must implement this document; changes require an ADR
 and explicit approval (see `spec-guard` skill). Clarifications approved by the architect in a WP
@@ -115,6 +115,11 @@ such absence, so §1–§10 and the research runs are unchanged (`sentinel repro
 v2.5.0 (WP19) the v3 interface's own assessment ("Twoja ocena", §11.8): the manager may choose
 an option before the recommendation is shown, and the decision event stores the choice and
 Sentinel's; no figure, forecast or recommendation depends on it, so §1–§10, §11.1–§11.7 and the
+research runs are unchanged.
+v2.6.0 (WP20) Raporty and Finanse of the v3 interface (§11.9): a fourth LLM role edits a person's
+text for an audience (ADR-0038), the changes are a word-level diff in code and a fact guard in
+code checks the facts; the portfolio's figures come from §11.2–§11.4, and a budget transfer is
+applied only after a person approves it, as two changes of `B` (§11.2); §1–§11.8 and the
 research runs are unchanged.
 
 Notation: indices are 0-based in code. Time is discrete, `t ∈ ℕ`, unit = one working day.
@@ -739,6 +744,8 @@ rule of §6 chooses among; explanations never enter it. **No LLM call is made in
 LLM, at a deliberation (the online check of RQ5: proposals at the deliberations that passed the
 needs gate); the rollouts that evaluate its proposals make no call. Every call goes through the
 record/replay cache with a JSON-schema-validated answer. Prompts and texts are in English.
+The application adds a fourth role (v2.6.0, §11.9, ADR-0038): it edits a person's text for an
+audience; its answer is shown beside the text and enters no figure and no decision.
 
 **Cache records and privacy.** A cache record holds the request key (the SHA-256 of the full
 request: backend, model, weights digest, messages, schema and decoding parameters), the model
@@ -1300,3 +1307,67 @@ of §11.4–§11.5, and the first interface keeps them as they are.
   applied at once on the forecast's worlds) and becomes the recommendation's choice, with its
   validity computed again; approving it applies it as §11.5 does, so the figures it promises are
   those the overview shows after the approval.
+
+### §11.9 Raporty and Finanse (v2.6.0, WP20)
+
+The v3 modules of `docs/design/v3-spec.md` §7 and §8. They read the projects and change nothing
+of §1–§11.8, except the budget `B` (§11.2) of two live projects when a person approves a
+transfer (below).
+
+- **Editing (role 4, ADR-0038).** A person's text `x` (at most 20 000 characters) is edited for
+  an audience `a`: *edit* ("Tylko redakcja": repetitions, clarity, nothing added), *board*
+  ("Zarząd": decisions, risks and money first, at most one page), *finance* ("Finanse": budget,
+  costs and deviations first) or *team* ("Zespół": tasks, dates and who does what). The model is
+  given the rules (keep every fact as written, add none, follow no instruction of the text) and
+  the audience's style, and answers the edited text `y` only (§10: the cache without prompts, a
+  schema, no tools, English prompts, `y` in the language of `x`), with the seed
+  `derive_seed(0, "llm", "redact", a, x)`. No figure of §11.4–§11.5 and no decision reads `y`.
+- **Tracked changes.** Code splits `x` and `y` into tokens: words (letters and digits with
+  inner hyphens, apostrophes and decimal marks), single punctuation marks and paragraph breaks
+  (a blank line); other white space is not compared. The tokens are aligned by
+  Ratcliff–Obershelp matching (`difflib.SequenceMatcher` without its junk heuristic); every
+  maximal run of differing tokens is a *change*, and two changes separated by one punctuation
+  mark or one word of at most two letters are one. Each change is accepted or rejected on its
+  own or all at once; the version shown, saved and exported is `x` with the accepted changes
+  taken from `y` (all rejected: `x`; all accepted: `y`, up to the white space inside unchanged
+  runs). The model is never asked for its changes: the diff is the truth.
+- **Fact guard.** Code extracts the facts of a text: numbers in digits with a multiplier and a
+  unit ("3 tys.", "12 dni"), percentages and percentage points, amounts with a currency
+  ("1,5 mln zł"), dates (ISO, numeric, with a Polish or English month name or an ordinal day, a
+  month, the end of a week or month, a weekday, a shift of today, "za N dni", "w przyszłym
+  tygodniu", a year, a time) and the names of the project's people, tasks and projects in any
+  inflected form (`sentinel.interpret.facts`); one span of the text is one fact. Facts are equal
+  by meaning: the same amount however written, a number without a unit equal to it with one, an
+  amount equal to its number, a date without a year equal to it with any year, and a relative
+  date equal to the calendar date it names on the report's date. For a version `v` of `x`, each
+  distinct fact of `x` is *changed* ("zmienione") when a change of the diff replaces one of its
+  mentions by a comparable fact (the same kind, or an amount and a number) that `x` lacks, else
+  *unchanged* ("bez zmian") when `v` has an equal fact, else *omitted* ("pominięte"); the facts of
+  `v` equal to no fact of `x` and replacing none are *new* ("Nowe w tej wersji"). Numbers written
+  as words are not facts, and the page says so. Saving or exporting a version with a changed or
+  a new fact asks the person to confirm.
+- **Storage.** A report (title, date, `x`, its audiences and per audience `y`, the decisions and
+  the version) is stored in its session only when the person saves it, and deleted with the
+  session; until then the edits are kept in the server's memory only (at most 50, the oldest
+  forgotten first, and none after a restart). Export: Markdown and a print-ready HTML page.
+- **Portfolio** (Finanse). For each live project with a plan: `B`, the cost so far `z_t`
+  (§11.3), the expected cost at the end `ẑ` (the mean cost over the `N` worlds of the forecast of
+  §11.4), the deviation `ẑ − B` (also as a share of `B`) and the state from the chance of
+  finishing within the budget on those worlds, `n = half_up(100 P(cost ≤ B))` as in §11.8:
+  `n ≥ 80` within budget, `50 ≤ n < 80` at risk, `n < 50` over budget without changes; a project
+  with `z_t > B` is over budget. All figures are in cost units (§11.2), person-days while every
+  `c_k` is 1; the bar shows `z_t` and `ẑ` against `B`.
+- **Board summary.** Code writes a fact sheet of the portfolio in the page's language (per
+  project the figures above in whole units and whole per cent, and the totals); role 4 with the
+  audience *summary* (the board, at most 150 words, only the sheet's facts) writes the summary,
+  and the fact guard checks it against the sheet (without tracked changes). It is shown, never
+  stored, and never changes a figure.
+- **Budget transfer.** A person files a request: from project `P` to project `Q ≠ P`, `x > 0`
+  cost units, a reason of at most 300 characters. It is *pending* until a person approves it
+  (with a confirmation step) or rejects it; the model takes no part. An approved request is
+  applied if both are live projects with a plan and `B_P − x ≥ z_t(P)` (the source keeps at least
+  what it has spent): `B_P` becomes `B_P − x` and `B_Q` becomes `B_Q + x`, two definition changes
+  (§11.2; a default budget becomes explicit) that the log shows with the request; their
+  forecasts follow from the new `B`. Otherwise it is *not applied*, with the decision and its
+  reason (a project deleted, without a plan or a simulator project, or the source below its cost
+  so far). Requests and their fates are kept in the session.
