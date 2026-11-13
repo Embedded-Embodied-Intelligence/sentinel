@@ -1,0 +1,1 @@
+<p class="computing" hx-get="{{ base }}/wait?job={{ job }}" hx-trigger="load delay:1s" hx-target="this" hx-swap="outerHTML" role="status">{{ t("v2.rep.working") }}{% if now %} {{ t("v2.rep.working_for", audience=now) }}{% endif %}</p>

@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 
 from sentinel.agent.candidates import Candidate
 from sentinel.agent.decide import DecisionRecord
-from sentinel.app import decisions, io, planning, simulator
+from sentinel.app import decisions, io, planning, reports, simulator
 from sentinel.app.config import AppConfig
 from sentinel.app.errors import AppError
 from sentinel.app.events import (
@@ -73,8 +73,10 @@ from sentinel.app.store import (
     EventRow,
     JobRow,
     ProjectRow,
+    RecordRow,
     SessionRow,
     Store,
+    new_id,
     now,
 )
 from sentinel.app.views import (
@@ -92,6 +94,8 @@ from sentinel.app.views import (
     recommendation_view,
 )
 from sentinel.experiments.runs import derive_seed
+from sentinel.interpret.facts import Names
+from sentinel.interpret.redaction import Audience
 from sentinel.llm.whisper import Transcript
 from sentinel.policies.sentinel import Proposer
 from sentinel.simulation.state import Observation
@@ -235,6 +239,7 @@ class Services:
         self._validities: OrderedDict[str, decisions.ValidityResult] = OrderedDict()
         self._flights: dict[tuple[str, str], threading.Lock] = {}
         self._clauses: OrderedDict[str, tuple[str, ...]] = OrderedDict()
+        self.drafts = reports.Drafts()  # Raporty's drafts, in memory until saved (WP20)
         # set by the web layer (demo): seeds a sandbox with the showcase in a language
         self.showcase: Callable[[str, Language], None] | None = None
 
@@ -1000,6 +1005,109 @@ class Services:
         """The clauses of the message a reading job read, while this process keeps them."""
         with self._guard:
             return self._clauses.get(job_id, ())
+
+    # ---- Raporty (v3 spec section 7; spec section 11.9)
+
+    def report_names(self, session: str) -> Names:
+        """The people, tasks and project names of the session's live projects (the fact
+        guard's names)."""
+        people: list[str] = []
+        tasks: list[str] = []
+        projects: list[str] = []
+        for summary in self.projects(session):
+            if summary.kind != "live":
+                continue
+            definition = self.state(session, summary.id).project.definition
+            projects.append(definition.name or summary.name)
+            people += [p.name for p in definition.team]
+            tasks += [t.name for t in definition.tasks]
+        return reports.session_names(people, tasks, projects)
+
+    def new_draft(
+        self,
+        session: str,
+        title: str,
+        text: str,
+        audiences: Sequence[str],
+        day: date,
+        language: Language,
+    ) -> tuple[reports.Draft, JobView]:
+        """A new report's draft and the job that edits it for each audience (nothing stored)."""
+        if not self.llm.available:
+            raise AppError("llm_disabled", "unavailable")
+        try:
+            title, text, chosen = reports.validate(title, text, audiences)
+        except ValueError as exc:
+            raise AppError(f"report_{exc}") from exc
+        draft = reports.Draft(
+            id=new_id(),
+            session=session,
+            title=title,
+            day=day,
+            original=text,
+            audiences=chosen,
+            language=language,
+            names=self.report_names(session),
+        )
+        self.drafts.put(draft)
+        return draft, self._edit_job(draft, chosen, language)
+
+    def _edit_job(
+        self, draft: reports.Draft, audiences: Sequence[Audience], language: Language
+    ) -> JobView:
+        guard_language = reports.text_language(draft.original, language)
+
+        def work(progress: Progress) -> Mapping[str, Any]:
+            for index, audience in enumerate(audiences):
+                progress(index / len(audiences), audience)
+                seed = derive_seed(0, "llm", "redact", audience, draft.original)
+                try:
+                    text, model = self.llm.redact(
+                        draft.original, audience, guard_language, seed, draft.session
+                    )
+                    draft.versions[audience] = reports.Version(audience, text, model=model)
+                except AppError as exc:
+                    draft.versions[audience] = reports.Version(audience, error=exc.code)
+            return {"draft": draft.id}  # no text of the report in the database
+
+        return self._submit(draft.session, None, "redact", work, language)
+
+    def draft(self, session: str, draft_id: str) -> reports.Draft:
+        found = self.drafts.get(session, draft_id)
+        if found is None:
+            raise AppError("draft_not_found", "not_found")
+        return found
+
+    def save_draft(self, session: str, draft_id: str) -> str:
+        """Store the draft as the session's report (a new one, or a new version of the one it
+        came from); returns the report's id."""
+        draft = self.draft(session, draft_id)
+        if draft.report_id is None:
+            draft.report_id = new_id()
+        self.store.save_report(session, draft.report_id, draft.title, reports.payload(draft))
+        return draft.report_id
+
+    def saved_reports(self, session: str) -> list[RecordRow]:
+        return self.store.reports(session)
+
+    def saved_report(self, session: str, report_id: str) -> RecordRow:
+        found = self.store.report(session, report_id)
+        if found is None:
+            raise AppError("report_not_found", "not_found")
+        return found
+
+    def reopen(self, session: str, report_id: str) -> reports.Draft:
+        """A saved report as a draft again, to change its decisions and save it anew."""
+        row = self.saved_report(session, report_id)
+        draft = reports.from_payload(
+            new_id(), session, row.id, row.title, row.payload, self.report_names(session)
+        )
+        self.drafts.put(draft)
+        return draft
+
+    def delete_report(self, session: str, report_id: str) -> None:
+        if not self.store.delete_report(session, report_id):
+            raise AppError("report_not_found", "not_found")
 
     def transcribe(
         self,

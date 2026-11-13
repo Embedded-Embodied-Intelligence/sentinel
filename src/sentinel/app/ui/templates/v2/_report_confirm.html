@@ -1,0 +1,4 @@
+<div class="notice notice-warn stack-sm" role="alert">
+  <p><strong>{{ t("v2.rep.confirm.title") }}</strong> {{ t("v2.rep.confirm.text", audiences=audiences) }}</p>
+  <p class="choices-row"><button class="btn btn-primary" type="button" hx-post="{{ base }}/save" hx-vals='{"confirm": "1"}'>{{ t("v2.rep.confirm.save") }}</button><a class="btn btn-quiet" href="{{ base }}">{{ t("v2.rep.confirm.back") }}</a></p>
+</div>

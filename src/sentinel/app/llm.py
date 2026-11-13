@@ -50,6 +50,7 @@ from sentinel.interpret.explain import (
     check,
     render_record,
 )
+from sentinel.interpret.redaction import Audience, RedactSettings, redact
 from sentinel.llm import (
     DomainValidator,
     GroqClient,
@@ -105,6 +106,7 @@ OPENROUTER_PROVIDER: dict[str, JsonValue] = {
 EXTRACTION = ExtractionSettings(prompt_version="v1", max_tokens=4096, max_repair_rounds=3)
 EXPLANATION = ExplainSettings(prompt_version="v1", max_tokens=2048)
 PROPOSALS = ProposalSettings(prompt_version="v1", max_tokens=2048)
+REDACTION = RedactSettings(prompt_version="v1", max_tokens=8192)  # role 4 (spec 11.9, WP20)
 USAGE_KEY = "llm"
 VOICE_KEY = "voice_s"  # seconds of audio sent to Whisper
 VOICE_MIN_S = 10  # the shortest request a provider bills (Groq)
@@ -262,7 +264,7 @@ class RequestCache(LlmCache):
 
 
 CALLS_KEPT = 20  # the calls "Uprawnienia AI" lists (v3 spec section 4)
-Role = Literal["extract", "propose", "explain", "read", "test", "attack"]
+Role = Literal["extract", "propose", "explain", "read", "test", "attack", "edit"]
 
 
 @dataclass(frozen=True)
@@ -652,6 +654,24 @@ class LlmService:
             detail = "no answer" if error is None else error.kind
             raise AppError("parse_failed", "invalid", detail=detail)
         return draft(reading, context)
+
+    def redact(
+        self, text: str, audience: Audience, language: str, seed: int, session: str | None = None
+    ) -> tuple[str, str]:
+        """Role 4 (spec section 11.9, ADR-0038): the person's text edited for an audience, the
+        edited text only, through the cache without prompts; (text, model), or AppError with
+        the reason."""
+        client = self.client(session, role="edit")
+        try:
+            response = redact(
+                client, text, audience, language=language, seed=seed, settings=REDACTION
+            )
+        except LlmError as exc:
+            raise failure(exc) from exc
+        if response.value is None:
+            detail = "no answer" if response.error is None else response.error.kind
+            raise AppError("parse_failed", "invalid", detail=detail)
+        return response.value.text, str(getattr(client, "model", "?"))
 
     def test(self) -> str:
         """Ask the configured model for a fixed answer, past the cache's replay (a connection

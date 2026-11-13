@@ -1,0 +1,31 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.rep.new") }}</h1></header>
+<p><a href="{{ prefix }}/reports">‹ {{ t("v2.rep.back") }}</a></p>
+{% if not available %}
+<p class="notice notice-warn" role="status">{{ t("v2.rep.no_ai") }} <a href="{{ prefix }}/settings">{{ t("v2.nav.settings") }} ›</a></p>
+{% endif %}
+<form id="report-new" class="card stack" hx-post="{{ prefix }}/reports/new" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+  {% if error %}<p class="notice notice-bad" role="alert">{{ error }}</p>{% endif %}
+  <div class="grid-2">
+    <div class="field"><label class="label" for="rep-title">{{ t("v2.rep.form.title") }}</label><input class="input" id="rep-title" name="title" maxlength="120" value="{{ values.title | default('') }}"></div>
+    <div class="field"><label class="label" for="rep-date">{{ t("v2.rep.form.date") }}</label><input class="input" id="rep-date" name="date" type="date" value="{{ today.isoformat() }}"></div>
+  </div>
+  <div class="field">
+    <label class="label" for="rep-text">{{ t("v2.rep.form.text") }}</label>
+    {% with box_id="rep-text", box_name="text", box_rows=12, box_example="", box_hint=t("v2.rep.form.text_hint"), box_project=None, box_value=values.text | default(""), box_max=20000 %}{% include "v2/_voice.html" %}{% endwith %}
+  </div>
+  <fieldset class="field">
+    <legend class="label">{{ t("v2.rep.form.audiences") }} {{ m.dowod(t, "D16") }}</legend>
+    <p class="hint">{{ t("v2.rep.form.audiences_hint") }}</p>
+    <div class="choices-row">
+    {% for a in audiences %}
+      <label class="choice-pill"><input type="checkbox" name="audience" value="{{ a }}"{% if a in values.audience | default(["edit"]) %} checked{% endif %}><span>{{ t("v2.rep.aud." ~ a) }} <span class="muted small">— {{ t("v2.rep.aud_hint." ~ a) }}</span></span></label>
+    {% endfor %}
+    </div>
+  </fieldset>
+  <p class="muted small">{{ icon("shield", 16) }} {{ t("v2.rep.privacy") }}</p>
+  <p><button class="btn btn-primary btn-lg" type="submit"{% if not available %} disabled{% endif %}>{{ t("v2.rep.form.submit") }}</button></p>
+</form>
+{% endblock %}

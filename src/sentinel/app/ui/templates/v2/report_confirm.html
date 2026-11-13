@@ -1,0 +1,8 @@
+{% extends "v2/base.html" %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.rep.confirm.title") }}</h1></header>
+<div class="notice notice-warn stack-sm" role="alert">
+  <p>{{ t("v2.rep.confirm.text", audiences=audiences) }}</p>
+  <p class="choices-row"><a class="btn btn-primary" href="{{ base }}/export?a={{ audience }}&fmt={{ fmt }}&confirm=1">{{ t("v2.rep.confirm.export") }}</a><a class="btn btn-quiet" href="{{ base }}?a={{ audience }}">{{ t("v2.rep.confirm.back") }}</a></p>
+</div>
+{% endblock %}

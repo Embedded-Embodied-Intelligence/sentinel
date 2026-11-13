@@ -110,6 +110,27 @@ MIGRATIONS: tuple[str, ...] = (
         updated TEXT NOT NULL
     );
     """,
+    # WP20 (spec section 11.9): Raporty's saved reports and Finanse's budget requests, each
+    # with its session; a report is stored only when its person saves it.
+    """
+    CREATE TABLE reports (
+        id TEXT PRIMARY KEY,
+        session TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        created TEXT NOT NULL,
+        updated TEXT NOT NULL,
+        payload TEXT NOT NULL
+    );
+    CREATE INDEX reports_session ON reports(session);
+    CREATE TABLE budget_requests (
+        id TEXT PRIMARY KEY,
+        session TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+        created TEXT NOT NULL,
+        updated TEXT NOT NULL,
+        payload TEXT NOT NULL
+    );
+    CREATE INDEX budget_requests_session ON budget_requests(session);
+    """,
 )
 SCHEMA_VERSION = len(MIGRATIONS)
 LOCAL_SESSION = "local"  # the one session of a local (non-demo) app
@@ -190,6 +211,18 @@ class RequestRow:
     partial: bool
     status: int
     seconds: float | None = None
+
+
+@dataclass(frozen=True)
+class RecordRow:
+    """A saved report or a budget request (WP20): its id, session, times and payload."""
+
+    id: str
+    session: str
+    created: datetime
+    updated: datetime
+    payload: dict[str, Any]
+    title: str = ""
 
 
 @dataclass(frozen=True)
@@ -489,6 +522,88 @@ class Store:
             )
             return cursor.rowcount > 0
 
+    # ---- reports and budget requests (WP20)
+
+    def save_report(
+        self, session: str, report_id: str, title: str, payload: Mapping[str, Any]
+    ) -> RecordRow:
+        """Store a report (a new one, or a new version of one of the session's)."""
+        stamp = _stamp(now())
+        with self._write() as db:
+            found = db.execute(
+                "SELECT created FROM reports WHERE id = ? AND session = ?", (report_id, session)
+            ).fetchone()
+            if found is None:
+                db.execute(
+                    "INSERT INTO reports (id, session, title, created, updated, payload) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (report_id, session, title, stamp, stamp, _dump(payload)),
+                )
+            else:
+                db.execute(
+                    "UPDATE reports SET title = ?, updated = ?, payload = ? "
+                    "WHERE id = ? AND session = ?",
+                    (title, stamp, _dump(payload), report_id, session),
+                )
+        row = self.report(session, report_id)
+        assert row is not None
+        return row
+
+    def reports(self, session: str) -> list[RecordRow]:
+        """The session's reports, the latest change first."""
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT * FROM reports WHERE session = ? ORDER BY updated DESC, id", (session,)
+            ).fetchall()
+        return [_record(row) for row in rows]
+
+    def report(self, session: str, report_id: str) -> RecordRow | None:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT * FROM reports WHERE id = ? AND session = ?", (report_id, session)
+            ).fetchone()
+        return None if row is None else _record(row)
+
+    def delete_report(self, session: str, report_id: str) -> bool:
+        with self._write() as db:
+            cursor = db.execute(
+                "DELETE FROM reports WHERE id = ? AND session = ?", (report_id, session)
+            )
+            return cursor.rowcount > 0
+
+    def save_budget_request(
+        self, session: str, request_id: str, payload: Mapping[str, Any]
+    ) -> RecordRow:
+        """Store a budget request, or its new state."""
+        stamp = _stamp(now())
+        with self._write() as db:
+            db.execute(
+                "INSERT INTO budget_requests (id, session, created, updated, payload) "
+                "VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET updated = excluded.updated, "
+                "payload = excluded.payload WHERE budget_requests.session = excluded.session",
+                (request_id, session, stamp, stamp, _dump(payload)),
+            )
+        row = self.budget_request(session, request_id)
+        assert row is not None
+        return row
+
+    def budget_requests(self, session: str) -> list[RecordRow]:
+        """The session's budget requests, the newest first."""
+        with self._connect() as db:
+            rows = db.execute(
+                "SELECT * FROM budget_requests WHERE session = ? ORDER BY created DESC, id",
+                (session,),
+            ).fetchall()
+        return [_record(row) for row in rows]
+
+    def budget_request(self, session: str, request_id: str) -> RecordRow | None:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT * FROM budget_requests WHERE id = ? AND session = ?",
+                (request_id, session),
+            ).fetchone()
+        return None if row is None else _record(row)
+
     # ---- jobs
 
     def create_job(self, session: str, project: str | None, kind: str) -> JobRow:
@@ -688,6 +803,18 @@ def _project(row: sqlite3.Row) -> ProjectRow:
         _parse(row["created"]),
         _parse(row["updated"]),
         int(row["seq"]),
+    )
+
+
+def _record(row: sqlite3.Row) -> RecordRow:
+    keys = row.keys()
+    return RecordRow(
+        id=row["id"],
+        session=row["session"],
+        created=_parse(row["created"]),
+        updated=_parse(row["updated"]),
+        payload=json.loads(row["payload"]),
+        title=row["title"] if "title" in keys else "",
     )
 
 

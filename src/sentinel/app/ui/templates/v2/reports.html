@@ -1,0 +1,29 @@
+{% extends "v2/base.html" %}
+{% import "v2/_macros.html" as m %}
+{% block content %}
+<header class="v2-head"><h1>{{ t("v2.rep.title") }} {{ m.dowod(t, "D14") }}</h1><a class="btn btn-primary btn-lg" href="{{ prefix }}/reports/new">{{ icon("plus", 20) }}{{ t("v2.rep.new") }}</a></header>
+<p class="lead">{{ t("v2.rep.lead") }}</p>
+{% if notice %}<p class="notice notice-good" role="status">{{ notice }}</p>{% endif %}
+<section class="card stack-sm" aria-labelledby="saved-title">
+  <h2 id="saved-title">{{ t("v2.rep.list") }}</h2>
+  {% if rows %}
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th scope="col">{{ t("v2.rep.col.title") }}</th><th scope="col">{{ t("v2.rep.col.date") }}</th><th scope="col">{{ t("v2.rep.col.audiences") }}</th><th scope="col">{{ t("v2.rep.col.saved") }}</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <th scope="row"><a href="{{ prefix }}/reports/{{ r.id }}">{{ r.title or t("v2.rep.untitled") }}</a></th>
+      <td>{{ t.date(r.payload.day | iso_date) }}</td>
+      <td>{% for a in r.payload.audiences %}{{ labels[a] }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
+      <td>{{ r.updated.astimezone().strftime("%Y-%m-%d %H:%M") }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="muted">{{ t("v2.rep.none") }}</p>
+  {% endif %}
+</section>
+{% endblock %}

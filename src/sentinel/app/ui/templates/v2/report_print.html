@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="{{ t.lang }}" data-theme="{{ theme }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<link rel="stylesheet" href="{{ static('sentinel-v2.css') }}">
+<link rel="icon" href="{{ static('favicon.svg') }}" type="image/svg+xml">
+<script src="{{ static('sentinel-v2.js') }}" defer></script>
+</head>
+<body class="print-page">
+<main class="print-sheet">
+  <p class="print-tools"><button class="btn btn-primary" type="button" data-print>{{ t("v2.rep.print") }}</button></p>
+  <h1>{{ title }}</h1>
+  <p class="print-meta">{{ day }} · {{ audience }}</p>
+  {% for para in paragraphs %}<p>{{ para }}</p>{% endfor %}
+</main>
+</body>
+</html>

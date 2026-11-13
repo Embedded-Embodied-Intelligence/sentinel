@@ -280,6 +280,18 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_disabled": "No AI model is set up.",
         "llm_cap": "The daily limit of AI requests is reached; try again tomorrow.",
         "voice_cap": "The daily limit of recordings is reached; type the report instead.",
+        "report_empty": "Write or paste the report first.",
+        "report_too_long": "The report is longer than 20 000 characters.",
+        "report_no_audience": "Choose at least one audience.",
+        "draft_not_found": (
+            "This draft is no longer here; the server was restarted or many drafts came after it."
+        ),
+        "report_not_found": "There is no such report.",
+        "budget_same": "Choose two different projects.",
+        "budget_amount": "Give a positive number of work-days.",
+        "budget_unknown": "Choose the projects again.",
+        "budget_decided": "This request has been decided already.",
+        "request_not_found": "There is no such request.",
         "demo_title": "Sentinel: a demo of AI-supported project management",
         "demo_cookies": "Every visitor gets their own sandbox with an example project, kept for 24 "
         "hours. It needs one cookie with its identifier; nothing else is stored about you.",
@@ -562,6 +574,18 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "llm_disabled": "Nie skonfigurowano modelu AI.",
         "llm_cap": "Osiągnięto dzienny limit zapytań do AI; spróbuj jutro.",
         "voice_cap": "Osiągnięto dzienny limit nagrań; wpisz raport tekstem.",
+        "report_empty": "Najpierw wpisz lub wklej raport.",
+        "report_too_long": "Raport jest dłuższy niż 20 000 znaków.",
+        "report_no_audience": "Wybierz co najmniej jednego odbiorcę.",
+        "draft_not_found": (
+            "Tego szkicu już nie ma: serwer uruchomiono ponownie albo powstało po nim wiele innych."
+        ),
+        "report_not_found": "Nie ma takiego raportu.",
+        "budget_same": "Wybierz dwa różne projekty.",
+        "budget_amount": "Podaj dodatnią liczbę dni pracy.",
+        "budget_unknown": "Wybierz projekty jeszcze raz.",
+        "budget_decided": "O tym wniosku już zdecydowano.",
+        "request_not_found": "Nie ma takiego wniosku.",
         "demo_title": "Sentinel: demo zarządzania projektem ze wsparciem AI",
         "demo_cookies": "Każdy gość dostaje własną piaskownicę z przykładowym projektem na 24 "
         "godziny. Potrzebuje do tego jednego ciasteczka z jej identyfikatorem; nic więcej o "

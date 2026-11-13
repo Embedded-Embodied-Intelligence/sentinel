@@ -1,0 +1,8 @@
+<div class="titled"><h2 id="versions-title" class="overline">{{ t("v2.rep.versions") }}</h2>{{ m.dowod(t, "D16") }}</div>
+<nav aria-labelledby="versions-title" id="report-tabs">
+  <ul class="v2-tabs">
+  {% for tab in tabs %}
+    <li><a href="{{ tab.href }}"{% if tab.current %} aria-current="page"{% endif %}>{{ tab.label }}{% if tab.warning %} <span class="fact-warn" aria-label="{{ t('v2.rep.fact.changed') }}">⚠</span>{% elif tab.failed %} <span aria-hidden="true">✕</span>{% endif %}</a></li>
+  {% endfor %}
+  </ul>
+</nav>

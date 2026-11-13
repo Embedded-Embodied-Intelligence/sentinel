@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from sentinel.app.ui.text import CATALOGUE as V1_CATALOGUE
 from sentinel.app.ui.text import Texts
 from sentinel.app.ui.v2.text_v3 import CATALOGUE_V3
+from sentinel.app.ui.v2.text_v3_work import CATALOGUE_V3_WORK
 
 CATALOGUE: Mapping[str, tuple[str, str]] = {
     # ---- frame (section 7)
@@ -1175,7 +1176,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
 }
 
 
-CATALOGUE = {**CATALOGUE, **CATALOGUE_V3}  # the research layer of v3 (WP19)
+CATALOGUE = {**CATALOGUE, **CATALOGUE_V3, **CATALOGUE_V3_WORK}  # v3 (WP19, WP20)
 
 
 class TextsV2(Texts):

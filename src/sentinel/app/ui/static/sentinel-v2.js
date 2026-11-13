@@ -61,6 +61,8 @@
     } catch (e) { /* keep the server's address */ }
   });
   document.addEventListener("click", function (event) {
+    var printer = event.target.closest("[data-print]");
+    if (printer) { window.print(); return; }
     var button = event.target.closest("[data-copy]");
     if (!button) return;
     var input = document.getElementById(button.getAttribute("data-copy"));
