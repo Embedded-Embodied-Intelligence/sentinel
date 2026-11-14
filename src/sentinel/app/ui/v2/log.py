@@ -174,7 +174,7 @@ def entries(
                         amount=amount,
                         source=move.source,
                         target=move.target,
-                        reason=move.reason or "–",
+                        reason=move.reason or t("value.none"),
                     ),
                 )
             add(row, you, "; ".join(lines) if lines else t("v2.event.definition"))

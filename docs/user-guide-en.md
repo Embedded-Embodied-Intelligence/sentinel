@@ -1,4 +1,4 @@
-# Sentinel — a guide for project managers
+# Sentinel: a guide for project managers
 
 Sentinel watches the deadline and the budget of your project. After every check-in it works
 out whether the deadline is at risk and, if so, proposes a concrete change: a substitute, a
@@ -282,7 +282,7 @@ You decide at the bottom: the approve button names the change (e.g. **Approve th
 decision" until the next check-in, which works everything out again. An
 approved change goes into the plan at once (e.g. the substitute joins the task, a temporary person is
 hired for the stated number of days). **Can wait** means there are still a few days before the risk
-becomes real. "No change — the plan is still the best" means no change checked helps clearly more
+becomes real. "No change: the plan is still the best" means no change checked helps clearly more
 than the current plan. The overview says whether no change is needed or Sentinel checked N options
 and none helps enough (with a link to the comparison). After a change of the autonomy the message
 says what Sentinel will do alone from the next analysis and what it will ask about, and the history
@@ -356,39 +356,39 @@ At `/v2` a new look runs on the same data (the link "Nowy wygląd (v2)" on the s
 Colours show the state, always with an icon and a word; the chance is given as "39 in 100" with
 a 10 × 10 dot grid.
 
-- **Start** — every decision to make, sorted by its validity date, the project tiles and the
+- **Start**: every decision to make, sorted by its validity date, the project tiles and the
   recent events.
-- A project's **Overview** — the verdict ("Late without changes · about 2 working days late"),
+- A project's **Overview**: the verdict ("Late without changes · about 2 working days late"),
   the chance of the deadline, the project end and the budget in work-days, and below them the
   decision to make.
-- **Report** — describe or dictate what happened (🎤) and Sentinel turns it into cards to
+- **Report**: describe or dictate what happened (🎤) and Sentinel turns it into cards to
   confirm; "Progress as planned" and "Fill in the form" are the other ways. "Effect on the
   project" shows the result before anything is saved.
-- **Decision** — the effect, the reasoning, who is affected and the cost of delay; "Approve",
+- **Decision**: the effect, the reasoning, who is affected and the cost of delay; "Approve",
   "Reject" (with a reason), "Adjust" or "Postpone". **You approve every change**: in the new look
   Sentinel changes nothing by itself.
-- **Log** — who (you or Sentinel) did what, day by day, with filters; expand an entry (▸) to see
+- **Log**: who (you or Sentinel) did what, day by day, with filters; expand an entry (▸) to see
   the decision as it was and its fate; the "Chance over time" chart and "Download the log
   (CSV)".
-- **Plan** — "Schedule" (a Gantt chart with today, the deadline and the forecast's band; tasks
+- **Plan**: "Schedule" (a Gantt chart with today, the deadline and the forecast's band; tasks
   of the main risks in amber, absences hatched), "Tasks" (a task not started yet is corrected
-  with "Adjust") and "Team" (absences, current and next tasks, next week's workload — **never a
+  with "Adjust") and "Team" (absences, current and next tasks, next week's workload, **never a
   rating of anyone's work**).
-- **Lab** — "What if?" tries an absence, a longer task or a new task on a chosen project and
+- **Lab**: "What if?" tries an absence, a longer task or a new task on a chosen project and
   saves nothing; "Add to report" carries these changes to a report. "Simulator" runs an example
   project day by day: Sentinel beside the same project with no reaction, "+1 day", "+5 days" or
   "To the end", and one sentence with the result at the end.
 - **On a phone or a tablet** the new look fits the screen: the menu is on top, cards one
   under another, tables and tabs scroll sideways. On a large monitor the view grows.
-- **Settings** — appearance (light, dark, system), language and the AI model ("Cloud
-  (recommended)" or "Local"; keys only in your own installation). **Project settings** — the
+- **Settings**: appearance (light, dark, system), language and the AI model ("Cloud
+  (recommended)" or "Local"; keys only in your own installation). **Project settings**: the
   basics, the team, company days off, the **calendar**, the report reminder (Thursday 17:00 by
   default), exports and "Delete project".
-- **Calendar** — "Create the calendar link" gives a secret link to add in Google Calendar
+- **Calendar**: "Create the calendar link" gives a secret link to add in Google Calendar
   ("Other calendars" → "+" → "From URL") or iCloud (File → New Calendar Subscription). The
   calendar shows the deadline, task starts and ends, absences (dates only, never a reason),
   decision validity dates and the report reminder. **Whoever has the link sees people's names and
-  the dates of their absences** — "Revoke the link" switches it off at once.
+  the dates of their absences**. "Revoke the link" switches it off at once.
 
 ### Version 3: AI rules, Reports and Finance (from 2.0.0)
 
@@ -397,7 +397,7 @@ map, AI permissions, People, Sources) and **Other**. Every feature that rests on
 decision has a point **ⓘ N**: it opens the "Evidence" panel with that decision and the studies
 for and against it (a quote is shown only when code found it in its source).
 
-- **Reports** — "New report": paste or dictate the text (🎤), choose the audiences ("Editing
+- **Reports**: "New report": paste or dictate the text (🎤), choose the audiences ("Editing
   only", "Board", "Finance", "Team") and click "Edit". AI writes a version for each audience.
   **Code computes the changes, not AI**: deleted words are red and struck through, added ones
   green and underlined; you accept (✓) or reject (✕) each change, or all at once. Beside it the
@@ -408,18 +408,18 @@ for and against it (a quote is shown only when code found it in its source).
   printing, the clipboard. **A report stays in Sentinel only when you click "Save"**; until
   then the draft lives in the server's memory only. The text goes to the AI provider chosen in
   Settings. Numbers written in words are not checked.
-- **Finance** — the portfolio in work-days: budget, spent, forecast at the end, deviation and
+- **Finance**: the portfolio in work-days: budget, spent, forecast at the end, deviation and
   state ("Within budget", "At risk", "Over budget without changes", "Over budget"), all
   computed by code. "Summary for the board (AI)" is written from a fact sheet that code computed
   and checked by the fact guard; it is never stored. **"Move budget"** creates a request ("AI has
   no right to approve"); only when you click "Approve the request" and confirm do both budgets
   change, and Dziennik records it. A request that cannot be applied (e.g. the source has spent
   more than it would keep) is recorded as "approved, not applied" with the reason.
-- **Boundary map** — twelve company processes in three zones ("AI alone", "AI with a person",
+- **Boundary map**: twelve company processes in three zones ("AI alone", "AI with a person",
   "person only") by six criteria. After the survey is imported (`docs/research/survey.md`) a
   switch "Our map" / "What people answered (N = …)" shows the answers and the agreement with our
   map (an opinion poll, a convenience sample).
-- **AI permissions**, **People**, **Sources** — what AI may and may not do (with an attack
+- **AI permissions**, **People**, **Sources**: what AI may and may not do (with an attack
   test), what Sentinel deliberately lacks (e.g. performance scores) and every source with
   filters.
 

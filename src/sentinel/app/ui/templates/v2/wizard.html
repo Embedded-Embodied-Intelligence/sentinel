@@ -72,7 +72,7 @@
       <td style="width:90px"><input type="number" name="t_days" min="1" value="{{ row.days if row else 1 }}" aria-label="{{ t('v2.new.task.days') }} {{ loop.index }}"></td>
       <td style="width:260px"><span class="row" style="gap:6px;flex-wrap:nowrap"><input type="number" name="t_count" min="0" style="width:70px" value="{{ row.count if row else 1 }}" aria-label="{{ t('v2.new.task.crew') }} {{ loop.index }}">
         <select name="t_role" aria-label="{{ t('v2.new.task.crew') }} {{ loop.index }}">{% for role in roles %}<option{% if row and row.role == role %} selected{% endif %}>{{ role }}</option>{% endfor %}</select></span></td>
-      <td style="width:220px"><select name="t_after" aria-label="{{ t('v2.new.task.after') }} {{ loop.index }}"><option value="">—</option>{% for other in rows %}{% if not row or other.name != row.name %}<option{% if row and row.after == other.name %} selected{% endif %}>{{ other.name }}</option>{% endif %}{% endfor %}</select></td>
+      <td style="width:220px"><select name="t_after" aria-label="{{ t('v2.new.task.after') }} {{ loop.index }}"><option value="">{{ t("value.none") }}</option>{% for other in rows %}{% if not row or other.name != row.name %}<option{% if row and row.after == other.name %} selected{% endif %}>{{ other.name }}</option>{% endif %}{% endfor %}</select></td>
       <td style="width:90px"><input type="checkbox" name="t_optional" value="{{ i }}"{% if row and row.optional %} checked{% endif %} aria-label="{{ t('v2.new.task.optional') }} {{ loop.index }}"></td>
     </tr>
     {% endfor %}

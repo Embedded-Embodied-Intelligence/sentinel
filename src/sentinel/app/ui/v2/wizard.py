@@ -401,7 +401,7 @@ def router(ui: Ui) -> APIRouter:
 
 def task_card(t: TextsV2, task: Task, definition: ProjectDefinition) -> str:
     names = {other.key: other.name for other in definition.tasks}
-    crew = ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or "—"
+    crew = ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or t("value.none")
     after = ", ".join(names.get(p, p) for p in task.predecessors)
     tail = t("v2.new.task.card_after", after=after) if after else ""
     return t("v2.new.task.card", name=task.name, days=task.duration, crew=crew, after=tail)

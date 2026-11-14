@@ -5,8 +5,8 @@
   {% set n = loop.index %}
   <li class="{{ 'done' if n < index else 'current' if n == index else 'todo' }}"{% if n == index %} aria-current="step"{% endif %}>
     <span class="bar" aria-hidden="true"></span>
-    {% if project_id and n < index %}<a class="label" href="/projects/{{ project_id }}/setup/{{ name }}">{{ icon("check", 14) }}{{ t("setup.step." ~ name) }}<span class="vh"> — {{ t("setup.state.done") }}</span></a>
-    {% else %}<span class="label">{{ t("setup.step." ~ name) }}<span class="vh"> — {{ t("setup.state." ~ ('current' if n == index else 'todo')) }}</span></span>{% endif %}
+    {% if project_id and n < index %}<a class="label" href="/projects/{{ project_id }}/setup/{{ name }}">{{ icon("check", 14) }}{{ t("setup.step." ~ name) }}<span class="vh">: {{ t("setup.state.done") }}</span></a>
+    {% else %}<span class="label">{{ t("setup.step." ~ name) }}<span class="vh">: {{ t("setup.state." ~ ('current' if n == index else 'todo')) }}</span></span>{% endif %}
   </li>
   {% endfor %}
 </ol>

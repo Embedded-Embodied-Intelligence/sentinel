@@ -394,8 +394,25 @@
     dowod.addEventListener("close", function () {
       var back = opener && document.contains(opener) ? opener : document.getElementById("main");
       opener = null;
+      dowod.removeAttribute("data-more");
       if (back) back.focus();
     });
+    // "Szczegóły badania" (WP21): one click opens the details of every card, and the choice
+    // holds while the panel is open (also for the cards behind "Więcej dowodów").
+    dowod.addEventListener("toggle", function (event) {
+      var target = event.target;
+      if (!target.matches) return;
+      var wanted = dowod.hasAttribute("data-more");
+      if (target.matches("details.ev-more") && target.open !== wanted) {
+        wanted = target.open;
+        if (wanted) dowod.setAttribute("data-more", ""); else dowod.removeAttribute("data-more");
+      } else if (!target.matches("details.dowod-rest")) {
+        return;
+      }
+      dowod.querySelectorAll("details.ev-more").forEach(function (more) {
+        if (more.open !== wanted) more.open = wanted;
+      });
+    }, true);
     dowod.addEventListener("click", function (event) {
       if (event.target === dowod) dowod.close();  // a click on the dimmed page beside it
     });
@@ -431,6 +448,25 @@
       })
       .catch(function () { opener = null; });
   });
+
+  // Collapsible sections (WP21, Pulpit): a section opened or closed stays so in this browser.
+  // The server renders the default; storage may be blocked, then the default holds.
+  function foldKey(fold) { return "sentinel.fold." + fold.getAttribute("data-fold"); }
+  function applyFolds(root) {
+    (root || document).querySelectorAll("details[data-fold]").forEach(function (fold) {
+      var stored = null;
+      try { stored = window.localStorage.getItem(foldKey(fold)); } catch (e) { stored = null; }
+      if (stored === "1") fold.open = true;
+      else if (stored === "0") fold.open = false;
+    });
+  }
+  applyFolds(document);
+  document.body.addEventListener("htmx:load", function (event) { applyFolds(event.target); });
+  document.addEventListener("toggle", function (event) {
+    var fold = event.target;
+    if (!fold.matches || !fold.matches("details[data-fold]")) return;
+    try { window.localStorage.setItem(foldKey(fold), fold.open ? "1" : "0"); } catch (e) { /* not kept */ }
+  }, true);
 
   // Źródła: a filter applies as soon as it changes.
   document.addEventListener("change", function (event) {

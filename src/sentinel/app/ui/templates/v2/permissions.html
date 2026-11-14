@@ -1,16 +1,16 @@
 {% extends "v2/base.html" %}
 {% import "v2/_macros.html" as m %}
 {% block content %}
-<header class="v2-head"><h1>{{ t("v2.perm.title") }} {{ m.dowod(t, "D19") }}</h1></header>
+<header class="v2-head"><h1>{{ t("v2.perm.title") }}</h1></header>
 <p class="lead">{{ t("v2.perm.lead") }}</p>
 <div class="perm-grid">
   <section class="card stack-sm perm-may" aria-labelledby="may-title">
-    <h2 id="may-title">{{ icon("check-circle", 20) }} {{ t("v2.perm.may") }}</h2>
-    <ul class="perm-list">{% for key, d in may %}<li><span>{{ t("v2.perm.may." ~ key) }}</span> {{ m.dowod(t, d) }}</li>{% endfor %}</ul>
+    <div class="titled"><h2 id="may-title">{{ icon("check-circle", 20) }} {{ t("v2.perm.may") }}</h2>{{ m.dowod(t, may | map("last") | unique | join("+")) }}</div>
+    <ul class="perm-list">{% for key, d in may %}<li>{{ t("v2.perm.may." ~ key) }}</li>{% endfor %}</ul>
   </section>
   <section class="card stack-sm perm-may-not" aria-labelledby="may-not-title">
-    <h2 id="may-not-title">{{ icon("cross-circle", 20) }} {{ t("v2.perm.may_not") }}</h2>
-    <ul class="perm-list">{% for key, d in may_not %}<li><span>{{ t("v2.perm.not." ~ key) }}</span> {{ m.dowod(t, d) }}</li>{% endfor %}</ul>
+    <div class="titled"><h2 id="may-not-title">{{ icon("cross-circle", 20) }} {{ t("v2.perm.may_not") }}</h2>{{ m.dowod(t, may_not | map("last") | unique | join("+")) }}</div>
+    <ul class="perm-list">{% for key, d in may_not %}<li>{{ t("v2.perm.not." ~ key) }}</li>{% endfor %}</ul>
   </section>
 </div>
 <section class="card stack section" aria-labelledby="now-title">

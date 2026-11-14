@@ -112,8 +112,14 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "v2.verdict.finished": ("The project is finished.", "Projekt jest zakończony."),
     "v2.verdict.cause": ("Main cause: {cause}.", "Główna przyczyna: {cause}."),
-    "v2.cause.absence": ("{name} away until {date}", "{name} — nieobecność do {date}"),
-    "v2.cause.absence_open": ("{name} away", "{name} — nieobecność"),
+    "v2.cause.absence": (
+        "{name} away until {date}",
+        "{name}: nieobecność do {date}",
+    ),
+    "v2.cause.absence_open": (
+        "{name} away",
+        "{name}: nieobecność",
+    ),
     "v2.cause.growth": ("“{name}” takes longer", "„{name}” potrwa dłużej"),
     "v2.cause.new_task": ("the new task “{name}”", "nowe zadanie „{name}”"),
     "v2.cause.progress": ("work slower than planned", "prace wolniej niż w planie"),
@@ -126,11 +132,11 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.chance.help": ("Where does this number come from?", "Skąd ta liczba?"),
     "v2.chance.explain": (
         "Sentinel played this project {w} times, each time with different random events "
-        "(absences, tasks shorter or longer than planned), in line with what the reports tell "
-        "us. In {k} of them — that is {n} in 100 — the project finished by the deadline.",
+        "(absences, tasks shorter or longer than planned), in line with what the reports tell us. "
+        "In {k} of them ({n} in 100) the project finished by the deadline.",
         "Sentinel rozegrał ten projekt {w} razy, za każdym razem z innymi losowymi zdarzeniami "
-        "(choroby, zadania krótsze lub dłuższe niż w planie), zgodnie z tym, co wiemy z "
-        "raportów. W {k} z nich — czyli {n} na 100 — projekt skończył się przed terminem.",
+        "(choroby, zadania krótsze lub dłuższe niż w planie), zgodnie z tym, co wiemy z raportów. "
+        "W {k} z nich ({n} na 100) projekt skończył się przed terminem.",
     ),
     "v2.dots": ("{n} of 100 dots filled", "{n} ze 100 kropek wypełnionych"),
     "v2.end.title": ("Project end", "Koniec projektu"),
@@ -418,11 +424,15 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.options.chosen": ("proposed", "proponowana"),
     "v2.options.noop": ("No change", "Bez zmian"),
     "v2.dist.title": ("Where these numbers come from", "Skąd te liczby"),
+    "v2.dist.count": (
+        "Out of {w}: by the deadline {k}, later {late}.",
+        "Na {w}: w terminie {k}, później {late}.",
+    ),
     "v2.dist.text": (
-        "Each bar counts the played futures that end on that day; bars after the deadline line "
-        "are late. Out of {w}: by the deadline {k}, later {late}.",
-        "Każdy słupek liczy rozegrane warianty, które kończą się danego dnia; słupki za linią "
-        "terminu są spóźnione. Na {w}: w terminie {k}, później {late}.",
+        "Each bar counts the played futures that end on that day; bars past the deadline line are "
+        "late.",
+        "Każdy słupek liczy warianty, które kończą się danego dnia; słupki za linią terminu są "
+        "spóźnione.",
     ),
     "v2.dist.with": ("With the change", "Ze zmianą"),
     "v2.dist.without": ("Without a change", "Bez zmian"),
@@ -506,16 +516,16 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.report.blocked": ("Answer the questions first.", "Najpierw odpowiedz na pytania."),
     "v2.report.form": ("Fill in the form", "Wypełnij formularz"),
     "v2.report.stalled.one": (
-        "{n} task in progress without news — has nothing changed since {date}?",
-        "{n} zadanie w toku bez wieści — czy od {date} nic się nie zmieniło?",
+        "{n} task in progress without news: has nothing changed since {date}?",
+        "{n} zadanie w toku bez wieści: czy od {date} nic się nie zmieniło?",
     ),
     "v2.report.stalled.few": (
-        "{n} tasks in progress without news — has nothing changed since {date}?",
-        "{n} zadania w toku bez wieści — czy od {date} nic się nie zmieniło?",
+        "{n} tasks in progress without news: has nothing changed since {date}?",
+        "{n} zadania w toku bez wieści: czy od {date} nic się nie zmieniło?",
     ),
     "v2.report.stalled.many": (
-        "{n} tasks in progress without news — has nothing changed since {date}?",
-        "{n} zadań w toku bez wieści — czy od {date} nic się nie zmieniło?",
+        "{n} tasks in progress without news: has nothing changed since {date}?",
+        "{n} zadań w toku bez wieści: czy od {date} nic się nie zmieniło?",
     ),
     "v2.report.finished": ("The project is finished.", "Projekt jest zakończony."),
     "v2.card.done": ("“{task}” finished on {date}", "„{task}” skończone {date}"),
@@ -559,8 +569,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.voice.cap_soon": ("The recording stops in 30 s.", "Nagranie zakończy się za 30 s."),
     "v2.voice.writing": ("Writing it out…", "Przepisuję…"),
     "v2.voice.done": (
-        "Written out — read it and correct it if needed.",
-        "Przepisane — przeczytaj i popraw, jeśli trzeba.",
+        "Written out. Read it and correct it if needed.",
+        "Przepisane. Przeczytaj i popraw, jeśli trzeba.",
     ),
     "v2.voice.denied": (
         "Allow the microphone in the browser to dictate.",
@@ -643,8 +653,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.new.more": ("More", "Więcej"),
     "v2.new.days_off": ("Company days off", "Dni wolne w firmie"),
     "v2.new.days_off_hint": (
-        "One date per line, e.g. 31.12.2026. Public holidays are counted already.",
-        "Jedna data w wierszu, np. 31.12.2026. Święta ustawowe są już uwzględnione.",
+        "One date per line, e.g. 31.12.2026; public holidays are counted already.",
+        "Jedna data w wierszu, np. 31.12.2026; święta ustawowe są już uwzględnione.",
     ),
     "v2.new.next": ("Next", "Dalej"),
     "v2.new.back": ("Back", "Wstecz"),
@@ -726,8 +736,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     # ---- the report's form (section 8.3, WP16)
     "v2.form.title": ("Form", "Formularz"),
     "v2.form.hint": (
-        "Change what is different from the plan. “Add to report” puts it in step 2, ticked.",
-        "Zmień to, co różni się od planu. „Dodaj do raportu” umieści to w kroku 2, zaznaczone.",
+        "Change what differs from the plan; “Add to report” puts it in step 2, ticked.",
+        "Zmień to, co różni się od planu; „Dodaj do raportu” umieści to zaznaczone w kroku 2.",
     ),
     "v2.form.close": ("Close the form", "Zamknij formularz"),
     "v2.form.tasks": ("Tasks in progress and next", "Zadania w toku i najbliższe"),
@@ -775,9 +785,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.lab.whatif": ("What if?", "Co jeśli?"),
     "v2.lab.sim": ("Simulator", "Symulator"),
     "v2.lab.whatif_intro": (
-        "Try what a change would do to a project. Nothing is saved until you add it to a report.",
-        "Sprawdź, co zmiana zrobiłaby z projektem. Nic się nie zapisze, dopóki nie dodasz tego "
-        "do raportu.",
+        "Try what a change would do to a project; nothing is saved until you add it to a report.",
+        "Sprawdź, co zmiana zrobiłaby z projektem; nic się nie zapisze, dopóki nie dodasz jej do "
+        "raportu.",
     ),
     "v2.lab.project": ("Project", "Projekt"),
     "v2.lab.no_project": ("No project with a plan", "Brak projektu z planem"),
@@ -801,14 +811,14 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "albo nowe zadanie.",
     ),
     "v2.lab.not_saved": (
-        "Nothing was saved. “Add to report” opens the report with these changes ticked.",
-        "Nic nie zostało zapisane. „Dodaj do raportu” otworzy raport z tymi zmianami zaznaczonymi.",
+        "Nothing was saved; “Add to report” opens the report with these changes ticked.",
+        "Nic nie zapisano; „Dodaj do raportu” otworzy raport z tymi zmianami zaznaczonymi.",
     ),
     "v2.lab.sim_intro": (
-        "Watch Sentinel run an example project day by day, next to the same project where nobody "
-        "reacts. Both meet the same events.",
-        "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu, obok tego samego "
-        "projektu, w którym nikt nie reaguje. Oba spotykają te same zdarzenia.",
+        "Watch Sentinel run an example project day by day beside the same project where nobody "
+        "reacts.",
+        "Zobacz, jak Sentinel prowadzi przykładowy projekt dzień po dniu obok tego samego "
+        "projektu bez reakcji.",
     ),
     "v2.lab.runs": ("Your simulations", "Twoje symulacje"),
     "v2.lab.finished": ("finished", "zakończona"),
@@ -885,9 +895,9 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.settings.key_example": ("e.g. sk-or-…", "np. sk-or-…"),
     "v2.settings.key_saved": ("saved, hidden", "zapisany, ukryty"),
     "v2.settings.key_hint": (
-        "Stored only on this computer and never shown again. Leave it empty to keep the saved one.",
-        "Zapisany tylko na tym komputerze i nigdy więcej niepokazywany. Zostaw puste, by zachować "
-        "zapisany.",
+        "Stored only on this computer and never shown again; leave it empty to keep the saved key.",
+        "Zapisany tylko na tym komputerze i nigdy więcej niepokazywany; puste pole zachowa "
+        "zapisany klucz.",
     ),
     "v2.settings.forget": ("Remove the saved key", "Usuń zapisany klucz"),
     "v2.settings.host": ("Address of the local model", "Adres modelu lokalnego"),
@@ -1156,10 +1166,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "v2.plan.week": ("Next week: {first} – {last}", "Przyszły tydzień: {first} – {last}"),
     "v2.plan.team_hint": (
-        "“Next week”: on how many working days the plan needs the person's role, per person "
-        "present. Workload comes from the plan; Sentinel measures nobody's performance.",
-        "„Przyszły tydzień”: w ilu dniach roboczych plan potrzebuje roli tej osoby, na osobę "
-        "obecną. Obciążenie wynika z planu; Sentinel nie mierzy niczyjej wydajności.",
+        "“Next week”: on how many working days the plan needs this person's role; workload, not "
+        "performance.",
+        "„Przyszły tydzień”: w ilu dniach roboczych plan potrzebuje roli tej osoby; to "
+        "obciążenie, nie ocena.",
     ),
     "v2.plan.col.person": ("Person", "Osoba"),
     "v2.plan.col.away": ("Absences", "Nieobecności"),
@@ -1167,7 +1177,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "v2.plan.col.next": ("Next for the role", "Następne dla roli"),
     "v2.plan.col.load": ("Next week", "Przyszły tydzień"),
     "v2.plan.temporary": ("temporary", "tymczasowo"),
-    "v2.plan.away": ("{first} – back {back}", "{first} – wraca {back}"),
+    "v2.plan.away": (
+        "{first}, back {back}",
+        "{first}, wraca {back}",
+    ),
     "v2.plan.away_open": ("from {first}, return unknown", "od {first}, powrót nieznany"),
     "v2.plan.load_away": ("absent all week", "nieobecność cały tydzień"),
     "v2.plan.load.one": ("about {busy} of {n} day", "ok. {busy} z {n} dnia"),

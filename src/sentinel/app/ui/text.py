@@ -103,9 +103,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "To działanie nie jest już możliwe; Sentinel przygotowuje nową rekomendację.",
     ),
     "flash.no_change": ("No change is needed.", "Zmiana nie jest potrzebna."),
+    "value.none": ("none", "brak"),  # a missing value, never a dash (WP21)
     "flash.imported": (
-        "The tasks were imported — please check them below.",
-        "Zadania zostały zaimportowane — sprawdź je poniżej.",
+        "The tasks were imported. Please check them below.",
+        "Zadania zostały zaimportowane. Sprawdź je poniżej.",
     ),
     "job.plan": (
         "Calculating the chance of meeting the deadline… usually a few seconds.",
@@ -182,7 +183,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "start.empty": (
         "Give the deadline, the team and the tasks, and Sentinel works out whether you will "
         "make it.",
-        "Podaj termin, zespół i zadania — Sentinel policzy, czy zdążysz.",
+        "Podaj termin, zespół i zadania, a Sentinel policzy, czy zdążysz.",
     ),
     "start.chance_failed": (
         "The chance could not be calculated.",
@@ -221,13 +222,13 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "how.simulate.text": (
         "Tasks take longer or shorter than planned, people are sometimes away and new work comes "
         "up. Sentinel plays the rest of your project out hundreds of times with such surprises, "
-        "once for every option it has — keep the plan, move dates, change the order of tasks, "
-        "bring in a substitute or a temporary person, or drop an optional task — and compares "
+        "once for every option it has (keep the plan, move dates, change the order of tasks, "
+        "bring in a substitute or a temporary person, or drop an optional task) and compares "
         "the results.",
         "Zadania trwają dłużej lub krócej, niż planowano, ludzie bywają nieobecni, pojawia się "
         "nowa praca. Sentinel rozgrywa resztę projektu setki razy z takimi niespodziankami, dla "
-        "każdej możliwości osobno — zachowanie planu, przesunięcie terminów, zmiana kolejności "
-        "zadań, zastępstwo, osoba tymczasowa albo rezygnacja z zadania opcjonalnego — i "
+        "każdej możliwości osobno (zachowanie planu, przesunięcie terminów, zmiana kolejności "
+        "zadań, zastępstwo, osoba tymczasowa albo rezygnacja z zadania opcjonalnego) i "
         "porównuje wyniki.",
     ),
     "how.goals.title": ("Your goals decide", "Decydują Twoje cele"),
@@ -715,6 +716,7 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
         "Poprawki zapisane; prognoza liczy się od nowa.",
     ),
     "common.yes": ("yes", "tak"),
+    "common.no": ("no", "nie"),
     "setup.tasks.name_of": ("Name of task {n}", "Nazwa zadania {n}"),
     "setup.tasks.days_of": ("Working days of task {n}", "Dni robocze zadania {n}"),
     "setup.tasks.people_of": ("{role}: people in task {n}", "{role}: liczba osób w zadaniu {n}"),
@@ -797,8 +799,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "project.tab.settings": ("Settings", "Ustawienia"),
     "overview.chance_title": ("Chance of meeting the deadline", "Szansa na dotrzymanie terminu"),
     "overview.finished": (
-        "All tasks are done — the project is finished.",
-        "Wszystkie zadania są gotowe — projekt jest zakończony.",
+        "All tasks are done: the project is finished.",
+        "Wszystkie zadania są gotowe: projekt jest zakończony.",
     ),
     "overview.calculating": (
         "Calculating the forecast… usually a few seconds.",
@@ -1832,8 +1834,8 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     "sim.report": ("Show the report", "Pokaż raport"),
     "sim.timeline_title": ("What happened", "Co się wydarzyło"),
     "sim.timeline_empty": (
-        "Nothing yet — simulate a few days.",
-        "Jeszcze nic — zasymuluj kilka dni.",
+        "Nothing yet. Simulate a few days.",
+        "Jeszcze nic. Zasymuluj kilka dni.",
     ),
     "sim.kind.absence": ("Absence", "Nieobecność"),
     "sim.kind.grows": ("A task grows", "Zadanie się wydłuża"),
@@ -2015,7 +2017,7 @@ class Texts:
 
     def date(self, value: Day | None) -> str:
         """A date as "Mon 14 Mar" ("pon. 14 mar"), with the year if it is not this year's."""
-        return "—" if value is None else date_text(value, self.lang)
+        return self("value.none") if value is None else date_text(value, self.lang)
 
     def date_long(self, value: Day) -> str:
         """A date with its year: "Fri 13 Nov 2026" ("pt. 13 lis 2026")."""
@@ -2060,7 +2062,7 @@ class Texts:
     def pct(self, value: float | None) -> str:
         """A probability as a whole percentage; never "0 %" or "100 %" unless it is exact."""
         if value is None or math.isnan(value):
-            return "—"
+            return self("value.none")
         percent = int(half_up(100 * value))
         if value > 0 and percent == 0:
             return f"<{NBSP}1{NBSP}%"

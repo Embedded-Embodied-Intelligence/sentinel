@@ -277,7 +277,7 @@ def test_what_if_then_add_to_the_report(demo: Server) -> None:
         impact = page.locator("#whatif-impact")
         expect(impact.locator(".chips")).to_contain_text("Szansa 39 →")
         assert int(number(impact.inner_text(), r"Szansa 39 → (\d+) na 100")) < 39
-        expect(impact).to_contain_text("Nic nie zostało zapisane.")
+        expect(impact).to_contain_text("Nic nie zapisano;")
         page.get_by_role("link", name="Dodaj do raportu").click()
         page.wait_for_url(re.compile(r"/report\?"))
         card = page.locator("#cards-lab [data-card]")

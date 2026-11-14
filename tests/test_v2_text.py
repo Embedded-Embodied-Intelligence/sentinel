@@ -1,15 +1,18 @@
 """The texts of the v2 interface (WP15; docs/design/v2-spec.md, section 6): both languages with
 the same placeholders, every key the v2 templates and code use, no internal term, and the
-glossary's labels exactly as the spec quotes them."""
+glossary's labels exactly as the spec quotes them. WP21 (docs/design/v3-spec.md, section 10):
+no dash as a pause in any of our texts, and the text budget of headings and helper sentences."""
 
 import re
 import string
 from pathlib import Path
 
-from ui_check import problems
+from ui_check import pauses, problems
 
+from sentinel.app.messages import MESSAGES
 from sentinel.app.ui.text import CATALOGUE as V1
 from sentinel.app.ui.v2.text import CATALOGUE, TextsV2
+from sentinel.evidence import research
 
 UI = Path(__file__).parents[1] / "src/sentinel/app/ui"
 # Keys built from a prefix and a value in the v2 templates and code.
@@ -190,13 +193,13 @@ GLOSSARY = {
     "v2.ev.means": ("What follows for Sentinel", "Co z tego wynika dla Sentinela"),
     "v2.ev.open_access": ("open access", "otwarty dostęp"),
     "v2.ev.unverified": (
-        "Quote not verified — summary only",
-        "Cytat niezweryfikowany — tylko streszczenie",
+        "Quote not verified: summary only",
+        "Cytat niezweryfikowany: tylko streszczenie",
     ),
     "v2.map.thesis": (
-        "Instead of a single criterion, “AI where it saves time”, six questions decide whether AI "
-        "works alone, with a person, or not at all.",
-        "Zamiast jednego kryterium »AI tam, gdzie oszczędza czas« — sześć pytań decyduje, czy AI "
+        "Not “AI where it saves time”, but six questions decide whether AI works alone, with a "
+        "person or never.",
+        "Nie jedno kryterium »AI tam, gdzie oszczędza czas«, lecz sześć pytań decyduje, czy AI "
         "pracuje sama, z człowiekiem, czy wcale.",
     ),
     "v2.map.normative": ("normative criterion", "kryterium normatywne"),
@@ -288,3 +291,77 @@ def test_verdict_sentences_follow_polish_numbers() -> None:
     assert pl.plural("v2.verdict.warn", 2) == (
         "Raczej zdążymy, ale zapas jest mały (ok. 2 dni roboczych)."
     )
+
+
+# ---- WP21: no dash as a pause; the text budget (docs/design/v3-spec.md, section 10)
+
+ROOT = Path(__file__).parents[1]
+OWN_FIELDS = (  # the registry's own texts; a quote, its highlights and a citation are verbatim
+    *("title_pl", "title_en", "gloss_pl", "gloss_en", "summary_pl", "summary_en"),
+    *("implication_pl", "implication_en", "caveats_pl", "caveats_en"),
+)
+KEY = r"""{{ *t(?:\.plural)?\(\s*["']([a-z0-9_.]+)["']"""
+LEAD_IN = r"(?:<[^>]+>|\s|{{[^}]*icon[^}]*}})*"  # tags, spaces and icons before the text
+HEADING = re.compile(r"<h[1-3][^>]*>" + LEAD_IN + KEY)
+HELPER = re.compile(
+    r"""<(?:p|span|div)[^>]*class="[^"]*\b(?:lead|hint|muted)\b[^"]*"[^>]*>""" + LEAD_IN + KEY
+)
+SENTENCE_END = re.compile(r"(?<=[.!?…])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ„“«])")
+
+
+def _our_texts() -> list[tuple[str, str]]:
+    """Every text we wrote that a person reads: the catalogues, the messages, the registry's own
+    fields, the decisions, the map and the user guides (a quoted line of a guide skipped)."""
+    texts = [(k, v) for c in (CATALOGUE, V1) for k, pair in c.items() for v in pair]
+    texts += [(f"{lang}:{k}", v) for lang, m in MESSAGES.items() for k, v in m.items()]
+    registry, decisions, boundary = research()
+    for item in registry.items:
+        texts += [(f"{item.id}.{f}", getattr(item, f) or "") for f in OWN_FIELDS]
+        texts += [(f"{item.id}.figure", g.label_pl + " " + g.label_en) for g in item.figures]
+    texts += [(d.id, t) for d in decisions for t in (d.text, d.text_pl, d.text_en)]
+    for c in boundary.criteria:
+        texts += [(f"criterion {c.id}", t) for t in c.model_dump().values() if isinstance(t, str)]
+    for process in boundary.processes:
+        texts += [(process.id, t) for t in process.model_dump().values() if isinstance(t, str)]
+        texts += [(process.id, t) for c in process.cells for t in (c.reason_pl, c.reason_en)]
+    for guide in ("docs/user-guide-pl.md", "docs/user-guide-en.md"):
+        lines = (ROOT / guide).read_text(encoding="utf-8").splitlines()
+        texts += [(guide, line) for line in lines if not line.lstrip().startswith(">")]
+    return texts
+
+
+def test_no_dash_as_a_pause_in_our_texts() -> None:
+    """No em dash and no spaced en dash as a pause in our texts; an en dash only in a range
+    ("1–5", "{first} – {last}"); quotes and citations are verbatim and not ours to change."""
+    found = [(where, p) for where, text in _our_texts() for p in pauses(text)]
+    assert found == []
+
+
+def _words(text: str) -> int:
+    return len(re.sub(r"\{[a-z_]+\}", "X", text).split())
+
+
+def _entries(key: str) -> list[tuple[str, str]]:
+    keys = [f"{key}.{form}" for form in ("one", "few", "many")]
+    keys = keys if keys[0] in CATALOGUE or keys[0] in V1 else [key]
+    return [(k, text) for k in keys for text in (CATALOGUE.get(k) or V1[k])]
+
+
+def test_the_text_budget_of_headings_and_helpers() -> None:
+    """A heading of the interface has at most 6 words; a helper (a lead, a hint, a muted line)
+    is one sentence of at most 20 words (a project's, a person's or a source's own name is
+    content, not a heading of ours)."""
+    headings, helpers = set(), set()
+    for path in (ROOT / "src/sentinel/app/ui/templates/v2").glob("*.html"):
+        source = path.read_text(encoding="utf-8")
+        headings |= {k for k in HEADING.findall(source) if not k.endswith(".")}
+        helpers |= {k for k in HELPER.findall(source) if not k.endswith(".")}
+    assert len(headings) > 40 and len(helpers) > 60
+    long_headings = [(k, text) for key in headings for k, text in _entries(key) if _words(text) > 6]
+    long_helpers = [
+        (k, text)
+        for key in helpers
+        for k, text in _entries(key)
+        if _words(text) > 20 or len(SENTENCE_END.split(text.strip())) > 1
+    ]
+    assert long_headings == [] and long_helpers == []

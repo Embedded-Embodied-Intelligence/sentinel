@@ -140,7 +140,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "not_a_live_project": "This is a simulator project; it has no check-ins.",
         "simulation_running": "Both runs must finish before the cockpit can be written.",
         # actions, statuses and reasons shown with recommendations (spec section 11.5)
-        "action_noop": "No change — the plan is still the best",
+        "action_noop": "No change: the plan is still the best",
         "action_shift": "Move task dates without changing their order",
         "action_reseq_m": "Re-plan to finish as early as possible",
         "action_reseq_s": "Re-plan with as few changes as possible",
@@ -436,7 +436,7 @@ MESSAGES: Mapping[Language, Mapping[str, str]] = {
         "not_a_simulator": "To nie jest projekt symulatora.",
         "not_a_live_project": "To jest projekt symulatora; nie ma raportów statusu.",
         "simulation_running": "Obie symulacje muszą się zakończyć, zanim powstanie kokpit.",
-        "action_noop": "Bez zmian — plan wciąż jest najlepszy",
+        "action_noop": "Bez zmian: plan wciąż jest najlepszy",
         "action_shift": "Przesuń terminy zadań bez zmiany kolejności",
         "action_reseq_m": "Ułóż zadania na nowo, aby skończyć jak najszybciej",
         "action_reseq_s": "Ułóż zadania na nowo, zmieniając plan jak najmniej",

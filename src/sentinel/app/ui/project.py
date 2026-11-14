@@ -337,7 +337,10 @@ def impact_chips(rec: RecommendationView, texts: Texts) -> list[Chip]:
     chips.append(Chip(texts("chip.cost"), value, tone))
     moved_tasks = len(rec.changes)
     chips.append(
-        Chip(texts("chip.moved"), texts.plural("chip.tasks", moved_tasks) if moved_tasks else "–")
+        Chip(
+            texts("chip.moved"),
+            texts.plural("chip.tasks", moved_tasks) if moved_tasks else texts("value.none"),
+        )
     )
     return chips
 

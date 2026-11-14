@@ -21,7 +21,7 @@
       <p>{{ ui.badge("good", t("start.finished")) }}</p>
       {% elif card.deadline %}
       <div class="card-chance" hx-get="/projects/{{ card.id }}/chance" hx-trigger="load" hx-swap="innerHTML">
-        <p class="card-number skeleton" aria-hidden="true">— %</p>
+        <p class="card-number skeleton" aria-hidden="true">… %</p>
         <p class="loading-line"><span class="spinner" aria-hidden="true"></span>{{ t("start.calculating") }}</p>
       </div>
       {% else %}

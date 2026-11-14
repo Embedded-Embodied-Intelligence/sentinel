@@ -114,7 +114,7 @@ def test_formats_people_read() -> None:
         ("pon.", "wt.", "śr.", "czw.", "pt.", "sob.", "niedz.")
     )
     assert en.date(date(this_year + 1, 1, 4)).endswith(str(this_year + 1))
-    assert en.date(None) == "—"
+    assert en.date(None) == "none"  # a word, never a dash (WP21)
     assert [en.pct(p) for p in (0.0, 0.004, 0.645, 0.996, 1.0)] == [
         "0\u00a0%",
         "<\u00a01\u00a0%",

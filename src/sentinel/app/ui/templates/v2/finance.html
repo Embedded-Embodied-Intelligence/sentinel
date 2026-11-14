@@ -1,7 +1,7 @@
 {% extends "v2/base.html" %}
 {% import "v2/_macros.html" as m %}
 {% block content %}
-<header class="v2-head"><h1>{{ t("v2.fin.title") }} {{ m.dowod(t, "D17") }}</h1></header>
+<header class="v2-head"><h1>{{ t("v2.fin.title") }}</h1></header>
 <p class="lead">{{ t("v2.fin.lead") }}</p>
 {% if error %}<p class="notice notice-bad" role="alert">{{ error }}</p>{% endif %}
 <section class="card stack-sm" aria-labelledby="portfolio-title">
@@ -58,7 +58,7 @@
   <ul class="fin-requests">
   {% for r in requests %}
     <li class="card-inner stack-sm" id="request-{{ r.request.id }}">
-      <p><strong>{{ r.line }}</strong>{% if r.request.reason %} — {{ r.request.reason }}{% endif %}</p>
+      <p><strong>{{ r.line }}</strong>{% if r.request.reason %}: {{ r.request.reason }}{% endif %}</p>
       <p class="small"><span class="tag">{{ t("v2.fin.status." ~ r.request.status) }}</span> <span class="muted">{{ r.filed }}{% if r.decided %} · {{ r.decided }}{% endif %}</span>{% if r.why %} · {{ r.why }}{% endif %}</p>
       {% if r.request.status == "pending" %}
       <p class="small">{{ icon("shield", 16) }} {{ t("v2.fin.no_ai_right") }}</p>

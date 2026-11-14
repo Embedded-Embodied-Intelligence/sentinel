@@ -44,24 +44,29 @@
 
 {% include "v2/_pending.html" %}
 
-<div class="grid-2 section">
-  <section class="card stack" aria-labelledby="buffer-title">
-    <div><h2 id="buffer-title">{{ t("v2.buffer.title") }}</h2><p class="muted small">{{ t("v2.buffer.subtitle") }}</p></div>
+{# Below the decision (WP21): four collapsible sections, the first two open; a choice is
+   remembered in this browser (sentinel-v2.js, `data-fold`). #}
+<div class="grid-2 section folds">
+  <details class="card fold" data-fold="buffer" open>
+    <summary><h2 id="buffer-title">{{ t("v2.buffer.title") }}</h2></summary>
+    <div class="stack">
+    <p class="muted small">{{ t("v2.buffer.subtitle") }}</p>
     {% if fever %}
     {{ fever }}
     <p class="legend"><span class="lg-good">{{ t("v2.buffer.zone.good") }}</span><span class="lg-warn">{{ t("v2.buffer.zone.warn") }}</span><span class="lg-bad">{{ t("v2.buffer.zone.bad") }}</span></p>
     {% elif reserve <= 0 and view.deadline %}
     <p class="notice notice-warn">{{ icon("alert", 20) }}<span>{{ t("v2.buffer.none") }}</span></p>
     {% endif %}
-  </section>
-  <section class="card stack" aria-labelledby="week-title">
-    <h2 id="week-title">{{ t("v2.week.title") }}</h2>
+    </div>
+  </details>
+  <details class="card fold" data-fold="week" open>
+    <summary><h2 id="week-title">{{ t("v2.week.title") }}</h2></summary>
     {% if week %}
     <ul class="week">
       {% for item in week %}<li><span class="when">{{ t.date(item.day) }}</span><span{% if item.deadline %} class="deadline"{% endif %}>{{ item.text }}</span></li>{% endfor %}
     </ul>
     {% else %}<p class="muted">{{ t("v2.week.empty") }}</p>{% endif %}
-  </section>
+  </details>
 </div>
 {% with project_id=view.id %}{% include "v2/_insights.html" %}{% endwith %}
 {% endblock %}

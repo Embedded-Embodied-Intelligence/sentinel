@@ -2,6 +2,7 @@
 <figure class="stack-sm" style="margin:0">
   <figcaption class="label">{{ title }}</figcaption>
   {{ chart }}
-  <p class="muted small">{{ t("v2.dist.text", w=worlds, k=on, late=late) }}</p>
+  <p class="small">{{ t("v2.dist.count", w=worlds, k=on, late=late) }}</p>
 </figure>
+{% if loop.last %}<p class="muted small">{{ t("v2.dist.text") }}</p>{% endif %}
 {% else %}<p class="muted">{{ t("v2.failed") }}</p>{% endfor %}

@@ -21,7 +21,7 @@
     <p class="hint">{{ t("v2.rep.form.audiences_hint") }}</p>
     <div class="choices-row">
     {% for a in audiences %}
-      <label class="choice-pill"><input type="checkbox" name="audience" value="{{ a }}"{% if a in values.audience | default(["edit"]) %} checked{% endif %}><span>{{ t("v2.rep.aud." ~ a) }} <span class="muted small">— {{ t("v2.rep.aud_hint." ~ a) }}</span></span></label>
+      <label class="choice-pill"><input type="checkbox" name="audience" value="{{ a }}"{% if a in values.audience | default(["edit"]) %} checked{% endif %}><span>{{ t("v2.rep.aud." ~ a) }} <span class="muted small">({{ t("v2.rep.aud_hint." ~ a) }})</span></span></label>
     {% endfor %}
     </div>
   </fieldset>

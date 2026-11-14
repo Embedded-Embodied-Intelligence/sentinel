@@ -211,10 +211,12 @@ def router(ui: Ui) -> APIRouter:
             return ", ".join(str(numbers[p]) for p in task.predecessors if p in numbers)
 
         def after_names(task: Task) -> str:
-            return ", ".join(names.get(p, p) for p in task.predecessors) or "–"
+            return ", ".join(names.get(p, p) for p in task.predecessors) or texts("value.none")
 
         def crew_text(task: Task) -> str:
-            return ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or "–"
+            return ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or texts(
+                "value.none"
+            )
 
         result: dict[str, Any] = {
             "title": texts("setup.title") if definition is None else definition.name,
@@ -600,12 +602,13 @@ def extraction_review(ui: Ui, request: Request, view: JobView) -> Response:
     definition = ProjectDefinition.model_validate(result.get("definition", {}))
     project_id = request.query_params.get("project", "")
     names = {task.key: task.name for task in definition.tasks}
+    none = ui.texts(request)("value.none")
 
     def crew_text(task: Task) -> str:
-        return ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or "—"
+        return ", ".join(f"{count} × {role}" for role, count in task.crew.items()) or none
 
     def after_names(task: Task) -> str:
-        return ", ".join(names.get(p, p) for p in task.predecessors) or "—"
+        return ", ".join(names.get(p, p) for p in task.predecessors) or none
 
     has_team = bool(ui.services.state(ui.session(request), project_id).project.definition.team)
     team = [] if has_team else [f"{p.name} ({p.role})" for p in definition.team]

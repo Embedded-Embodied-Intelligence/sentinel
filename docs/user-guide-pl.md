@@ -1,4 +1,4 @@
-# Sentinel — przewodnik dla kierownika projektu
+# Sentinel: przewodnik dla kierownika projektu
 
 Sentinel pilnuje terminu i budżetu Twojego projektu. Po każdym raporcie statusu sprawdza,
 czy termin jest zagrożony, i jeśli tak, proponuje konkretną zmianę: zastępstwo, osobę
@@ -25,14 +25,14 @@ Przewodnik jest dla osoby, która prowadzi projekt. Instalacja dla działu IT je
 
 Projekt rzadko idzie zgodnie z planem: ktoś choruje, zadanie okazuje się większe, pojawia się
 nowa praca. Sentinel bierze Twój plan i to, co zgłaszasz w raportach statusu, i odgrywa
-**200 możliwych przyszłości projektu** — z nieobecnościami i niespodziankami w takim tempie,
+**200 możliwych przyszłości projektu**: z nieobecnościami i niespodziankami w takim tempie,
 jakie wybierzesz przy zakładaniu projektu. Z tych scenariuszy wynika:
 
 - **szansa na dotrzymanie terminu** (np. „39 %”: w 78 z 200 scenariuszy projekt kończy się w
   terminie),
 - **najbardziej prawdopodobna data zakończenia** i **zły scenariusz** (jeden na dziesięć kończy
   się jeszcze później),
-- **co zagraża terminowi** — zadania, których czas trwania najwyraźniej idzie w parze z datą
+- **co zagraża terminowi**: zadania, których czas trwania najwyraźniej idzie w parze z datą
   zakończenia, najwyżej trzy, sprawdzone na 1000 scenariuszach, z których pierwsze 200 to właśnie te,
 - **rekomendacja**: najlepsza zmiana, sprawdzona na tych samych scenariuszach co prognoza.
 
@@ -58,15 +58,15 @@ startowej.
 
 ![Krok 1 kreatora: nazwa, daty, budżet, pewność szacunków](ui/pl_wizard_basics.png)
 
-- **Nazwa projektu**, **Data rozpoczęcia** i **Termin** — ostatni dzień, do którego cała praca
+- **Nazwa projektu**, **Data rozpoczęcia** i **Termin**: ostatni dzień, do którego cała praca
   ma być gotowa. Bez terminu Sentinel pokaże prognozę dat, ale nie szansę ani rekomendacje.
 - **Budżet (opcjonalnie)** w jednostkach kosztu: domyślnie jedna jednostka to jeden
   osobodzień (dzień pracy jednej osoby). Pozostaw puste, a Sentinel oszacuje budżet z zadań
   (z zapasem 10 %).
 - Pod **Więcej ustawień** (zwykle nie trzeba ich zmieniać):
-  - **Jak pewne są szacunki czasu?** *Dość pewne*, *Typowe* albo *Zgrubne* — im mniej pewne, tym
+  - **Jak pewne są szacunki czasu?** *Dość pewne*, *Typowe* albo *Zgrubne*: im mniej pewne, tym
     szerzej rozrzucone są czasy zadań w scenariuszach.
-  - **Jak burzliwy jest zespół?** *Spokojny*, *Typowy* albo *Burzliwy* — jak często zdarzają się
+  - **Jak burzliwy jest zespół?** *Spokojny*, *Typowy* albo *Burzliwy*: jak często zdarzają się
     nieobecności i niespodzianki.
 
 Pod datami od razu widać, czy termin wypada po starcie i ile to tygodni.
@@ -88,13 +88,13 @@ Zadania możesz wprowadzić na trzy sposoby (trzy karty u góry):
 
 ![Krok 3 kreatora: tabela zadań](ui/pl_wizard_tasks.png)
 
-1. **Opisz słowami** — napisz własnymi słowami, co trzeba zrobić, kto i jak długo; AI
+1. **Opisz słowami**: napisz własnymi słowami, co trzeba zrobić, kto i jak długo; AI
    odczyta zadania i zespół, a Ty je sprawdzisz przed użyciem (wymaga skonfigurowanego AI).
    AI używa nazw ról z kroku 2: rola, której nikt w zespole nie ma, jest wymieniona nad listą i
    oznaczona w tabeli *(nikt w zespole)*, a plan powstanie dopiero, gdy zmienisz te osoby albo
    dodasz rolę do zespołu. Model lokalny może potrzebować minuty lub dwóch; strona odświeży się
    sama.
-2. **Zaimportuj arkusz** — pobierz **szablon zadań (CSV)**, wypełnij go w Excelu, LibreOffice albo
+2. **Zaimportuj arkusz**: pobierz **szablon zadań (CSV)**, wypełnij go w Excelu, LibreOffice albo
    Arkuszach Google i wgraj. Jeden wiersz to jedno zadanie:
 
    | id | name | duration_days | predecessors | optional | crew:Programista backendu | crew:Tester |
@@ -107,7 +107,7 @@ Zadania możesz wprowadzić na trzy sposoby (trzy karty u góry):
    skończyć wcześniej (kilka oddziel spacją lub przecinkiem), `optional` = `tak` (albo `yes`)
    dla zadania, z którego można zrezygnować, a kolumny `crew:` mówią, ile osób z danej roli potrzeba (nazwy ról jak w kroku
    2). Błędy są wypisane z numerami wierszy; zapisz plik jako CSV (UTF-8).
-3. **Wpisz ręcznie** — tabela: nazwa, dni robocze, **Osoby** (kliknij, aby podać liczbę osób z
+3. **Wpisz ręcznie**: tabela: nazwa, dni robocze, **Osoby** (kliknij, aby podać liczbę osób z
    każdej roli), **Po zadaniach** (kliknij i zaznacz zadania po nazwach), czy opcjonalne; usuwanie
    jest w menu **⋯** na końcu wiersza. Problemy (np. pętla zależności, za mało osób w roli, termin
    wcześniejszy niż najkrótszy możliwy czas) są wypisane od razu, zwykłym językiem.
@@ -122,16 +122,16 @@ przegląd projektu.
 
 - **Szansa na dotrzymanie terminu** z oceną: *Na dobrej drodze* (80 % i więcej), *Wymaga uwagi*
   (50–79 %), *Termin zagrożony* (poniżej 50 %). Strzałka pod spodem pokazuje zmianę od
-  poprzedniego raportu statusu, a pasek — dziś, najbardziej prawdopodobny koniec, termin i zły
+  poprzedniego raportu statusu, a pasek: dziś, najbardziej prawdopodobny koniec, termin i zły
   scenariusz na jednej osi. **Jak liczymy?** wyjaśnia, skąd bierze się ta liczba.
 - **Termin**, **Najbardziej prawdopodobny koniec** (połowa scenariuszy kończy się wcześniej,
   połowa później) i **Zły scenariusz (1 na 10 później)**, każdy z odległością od terminu w dniach
   roboczych.
-- **Budżet** — np. „27 z 84 jednostek kosztu (osobodni)”, ile wydano i jaki jest oczekiwany koszt
+- **Budżet**: np. „27 z 84 jednostek kosztu (osobodni)”, ile wydano i jaki jest oczekiwany koszt
   w procentach budżetu. Pod **Szczegóły**: oczekiwany koszt całkowity i szansa na zmieszczenie się
   w budżecie. Jednostka kosztu to domyślnie osobodzień; jeśli w ustawieniach projektu podasz
   dzienne stawki (np. w złotych), koszty są w Twojej jednostce.
-- **Czeka na Twoją decyzję** — rekomendacje, które wymagają zgody (rozdział 5), z przyciskiem
+- **Czeka na Twoją decyzję**: rekomendacje, które wymagają zgody (rozdział 5), z przyciskiem
   **Przejrzyj i zdecyduj**. Jest to wtedy jedyny wyróżniony przycisk na stronie; gdy nic nie czeka,
   wyróżniony jest **Nowy raport statusu**.
 
@@ -185,7 +185,7 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
 
 ![Raport statusu](ui/pl_checkin.png)
 
-1. **Stan na koniec dnia** — dzień, którego dotyczy raport (zwykle dziś). Pod polem widać datę
+1. **Stan na koniec dnia**: dzień, którego dotyczy raport (zwykle dziś). Pod polem widać datę
    słownie. Data ponad tydzień od dziś wymaga potwierdzenia: raporty następują po sobie, więc
    pomyłka w roku zablokowałaby kolejne. Przy dacie sprzed startu projektu strona o tym
    przypomina, ale raport można zapisać.
@@ -194,8 +194,8 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    kliknij **Przetwórz wiadomość**. AI rozumie postęp („zrobiono około 15 %”, „w połowie”),
    zakończenie z datą („skończył się wczoraj”), rozpoczęcie („ruszyło w poniedziałek”),
    nieobecności, wydłużone i nowe zadania. Daty liczy aplikacja według kalendarza projektu (ze
-   świętami), nie AI: „od jutra” to następny dzień roboczy, „do środy” — nieobecność przez całą
-   środę i powrót w następnym dniu roboczym, „wraca w środę” — powrót tego dnia. Nieobecność
+   świętami), nie AI: „od jutra” to następny dzień roboczy, „do środy” to nieobecność przez całą
+   środę i powrót w następnym dniu roboczym, „wraca w środę” to powrót tego dnia. Nieobecność
    zapowiedziana na później (np. urlop za dwa tygodnie) liczy się w prognozie od razu, od swojego
    pierwszego dnia. Nazwy zadań
    mogą być odmienione i pisane małą literą („z bazy danych i API”). Pod **Tak to rozumiem:**
@@ -212,28 +212,28 @@ w razie ważnej zmiany od razu. Kliknij **Nowy raport statusu**.
    brak odpowiedzi na czas), a formularz wypełnisz ręcznie.
    - **Nagraj głosem** (gdy w Ustawieniach jest klucz Groq): kliknij, mów (najwyżej 90 sekund,
      licznik pokazuje czas), kliknij **Zatrzymaj**. Po chwili tekst pojawi się w polu: przeczytaj
-     go, popraw i dopiero wtedy kliknij **Przetwórz wiadomość** — wcześniej nic nie jest
+     go, popraw i dopiero wtedy kliknij **Przetwórz wiadomość**: wcześniej nic nie jest
      przetwarzane. Nagranie trafia do Groq (USA), który zamienia je na tekst; ani nagrania, ani
      tekstu Sentinel nie zapisuje. Przeglądarka zapyta o zgodę na mikrofon; nagrywanie działa na
      stronie https albo na tym samym komputerze (localhost). Tak samo można nagrać opis projektu
      przy **Opisz słowami**.
-3. **Zadania w toku i najbliższe** — przy każdym: *Nierozpoczęte*, *W toku* z wykonaną częścią
+3. **Zadania w toku i najbliższe**: przy każdym: *Nierozpoczęte*, *W toku* z wykonaną częścią
    (suwak albo liczba, w procentach) albo *Gotowe* z datą zakończenia. Postęp zapisuje się w
    pełnych dniach pracy, więc przy suwaku widać, co się zapisze, np. „60 % → zapisze się 67 %, 2 z
    3 dni”. Data zakończenia podąża za datą raportu, dopóki jej nie zmienisz. Opcjonalnie: kiedy zadanie
    się zaczęło i kto nad nim pracuje (domyślnie Sentinel przyjmuje plan i wolne osoby). Zadań, o
    których nic nie piszesz, nie trzeba ruszać.
-4. **Nieobecności** (**Dodaj**) — osoba, od kiedy i (jeśli wiadomo) kiedy wraca. **Tylko kiedy, nigdy
+4. **Nieobecności** (**Dodaj**): osoba, od kiedy i (jeśli wiadomo) kiedy wraca. **Tylko kiedy, nigdy
    dlaczego**: nie ma tu miejsca na powód nieobecności.
-5. **Zadania, które urosły** (**Dodaj**) — ile dodatkowych dni roboczych potrzebuje zadanie w toku,
+5. **Zadania, które urosły** (**Dodaj**): ile dodatkowych dni roboczych potrzebuje zadanie w toku,
    także takie, które w tym raporcie oznaczasz jako *W toku*. Dla zadania nierozpoczętego to nowy,
    większy szacunek. Budżet domyślny zostaje bez zmian.
-6. **Nowe zadanie** (**Dodaj**) — nazwa, dni robocze, po czym następuje i przed czym musi być
+6. **Nowe zadanie** (**Dodaj**): nazwa, dni robocze, po czym następuje i przed czym musi być
    gotowe.
 
 Na dole widać liczbę zmian. Kliknij **Zapisz raport** (bez żadnej zmiany przycisk mówi **Zapisz
-raport (bez zmian)** — taki raport też ma sens: znaczy, że nic się nie zmieniło). Po kilku sekundach
-przegląd pokazuje nową szansę, a jeśli potrzebna jest zmiana — rekomendację. Raport, w którym
+raport (bez zmian)**; taki raport też ma sens, bo znaczy, że nic się nie zmieniło). Po kilku sekundach
+przegląd pokazuje nową szansę, a jeśli potrzebna jest zmiana, także rekomendację. Raport, w którym
 żadne zadanie w toku nie ma postępu, najpierw pyta: „Czy od <data> nic się nie posunęło?”.
 Odpowiedz **Tak, brak postępu** albo **Uzupełnij postęp**. Gdy wyjdziesz z
 nieskończonego raportu (zakładka, menu, zmiana języka), przeglądarka najpierw zapyta, czy na pewno.
@@ -288,7 +288,7 @@ pyta jeszcze o potwierdzenie, a **Zdecyduj później** zostawia propozycję w cz
 decyzję” do następnego raportu, który liczy wszystko od nowa.
 Zatwierdzona zmiana od razu trafia do planu (np. zastępca do zespołu zadania, osoba tymczasowa na
 wskazaną liczbę dni). Oznaczenie **może poczekać** znaczy, że do realnego ryzyka zostało jeszcze
-kilka dni. Rekomendacja „Bez zmian — plan wciąż jest najlepszy” znaczy, że żadna sprawdzona zmiana
+kilka dni. Rekomendacja „Bez zmian: plan wciąż jest najlepszy” znaczy, że żadna sprawdzona zmiana
 nie pomaga wyraźnie bardziej niż obecny plan. Przegląd mówi wtedy wprost, czy zmiana nie jest
 potrzebna, czy też Sentinel sprawdził N możliwości i żadna nie pomaga wystarczająco (z linkiem do
 porównania). Po zmianie autonomii komunikat mówi, co Sentinel od następnej analizy zrobi sam, a o
@@ -319,7 +319,7 @@ raporcie Sentinel nie proponuje zmian, mówi o tym wiersz w tym raporcie, a nie 
 
 Symulator pozwala zobaczyć Sentinela w działaniu bez prawdziwego projektu: wybierz przykładowy
 projekt (mały: 30 zadań, średni: 60 zadań), to, jak burzliwy jest zespół, i kto zarządza
-projektem — **Sentinel** albo **Nikt nie reaguje**. Kliknij **Rozpocznij symulację**, a potem
+projektem: **Sentinel** albo **Nikt nie reaguje**. Kliknij **Rozpocznij symulację**, a potem
 przewijaj o **+1 dzień**, **+5 dni**, **+10 dni** albo **Do końca** (ten bieg można przerwać
 przyciskiem **Anuluj**; możesz też opuścić stronę, a przebieg trwa dalej).
 
@@ -340,7 +340,7 @@ przebieg to jeden możliwy los projektu; przypadek też ma znaczenie, więc wart
 ## 7. Prywatność
 
 - Sentinel zapisuje tylko **dostępność** ludzi (od kiedy do kiedy ktoś jest nieobecny), **nigdy
-  powodu** nieobecności — nie ma na niego pola (RODO, art. 9).
+  powodu** nieobecności; nie ma na niego pola (RODO, art. 9).
 - Dane projektu są na serwerze, na którym działa Sentinel (Twój komputer albo serwer firmy).
   Bez AI nic go nie opuszcza.
 - AI jest opcjonalne. **Model lokalny (Ollama)** działa na Waszym sprzęcie i nic nie wysyła na
@@ -364,38 +364,38 @@ startowej; „Poprzedni wygląd” w menu wraca do dotychczasowego). Projekt otw
 wyglądzie widać w drugim. Kolory pokazują stan, ale zawsze z ikoną i słowem; szansę podajemy
 jako „39 na 100” z siatką 10 × 10 kropek.
 
-- **Start** — wszystkie decyzje do podjęcia, ułożone według daty ważności, kafelki projektów
+- **Start**: wszystkie decyzje do podjęcia, ułożone według daty ważności, kafelki projektów
   i ostatnie zdarzenia.
-- **Pulpit** projektu — werdykt („Nie zdążymy bez zmian · Spóźnimy się o ok. 2 dni robocze”),
+- **Pulpit** projektu: werdykt („Nie zdążymy bez zmian · Spóźnimy się o ok. 2 dni robocze”),
   szansa na termin, koniec projektu i budżet w dniach pracy, a pod spodem decyzja do podjęcia.
-- **Raport** — opisz lub podyktuj, co się wydarzyło (🎤), a Sentinel zamieni to na karty do
+- **Raport**: opisz lub podyktuj, co się wydarzyło (🎤), a Sentinel zamieni to na karty do
   potwierdzenia; „Postęp zgodny z planem” albo „Wypełnij formularz” to inne drogi. „Wpływ na
   projekt” pokazuje skutek, zanim cokolwiek zapiszesz.
-- **Decyzja** — skutek, uzasadnienie, kogo dotyczy i koszt zwłoki; „Zatwierdź”, „Odrzuć” (z
+- **Decyzja**: skutek, uzasadnienie, kogo dotyczy i koszt zwłoki; „Zatwierdź”, „Odrzuć” (z
   powodem), „Popraw” albo „Odłóż decyzję”. **Każdą zmianę zatwierdzasz Ty**: w nowym wyglądzie
   Sentinel niczego nie zmienia sam.
-- **Dziennik** — kto (Ty albo Sentinel) i co zrobił, dzień po dniu, z filtrami; rozwiń wpis
+- **Dziennik**: kto (Ty albo Sentinel) i co zrobił, dzień po dniu, z filtrami; rozwiń wpis
   (▸), by zobaczyć decyzję w tamtej chwili i jej los; wykres „Szansa w czasie” i „Pobierz
   dziennik (CSV)”.
-- **Plan** — „Harmonogram” (wykres Gantta z dniem dzisiejszym, terminem i pasem prognozy;
+- **Plan**: „Harmonogram” (wykres Gantta z dniem dzisiejszym, terminem i pasem prognozy;
   zadania z głównych ryzyk na pomarańczowo, nieobecności zakreskowane), „Zadania” (zadanie,
   które się jeszcze nie zaczęło, poprawisz przyciskiem „Popraw”) i „Zespół” (nieobecności,
-  bieżące i następne zadania, obciążenie w przyszłym tygodniu — **nigdy ocena czyjejś pracy**).
-- **Laboratorium** — „Co jeśli?” sprawdza na wybranym projekcie nieobecność, dłuższe zadanie
+  bieżące i następne zadania, obciążenie w przyszłym tygodniu, **nigdy ocena czyjejś pracy**).
+- **Laboratorium**: „Co jeśli?” sprawdza na wybranym projekcie nieobecność, dłuższe zadanie
   albo nowe zadanie i niczego nie zapisuje; „Dodaj do raportu” przenosi te zmiany do raportu.
   „Symulator” pokazuje przykładowy projekt dzień po dniu: Sentinel obok tego samego projektu
   bez reakcji, „+1 dzień”, „+5 dni” albo „Do końca”, a na końcu jedno zdanie z wynikiem.
 - **Na telefonie i tablecie** nowy wygląd mieści się na ekranie: menu jest u góry, karty jedna
   pod drugą, tabele i zakładki przewija się w bok. Na dużym monitorze widok się powiększa.
-- **Ustawienia** — wygląd (jasny, ciemny, systemowy), język i model AI („Chmura (zalecany)”
-  albo „Lokalny”; klucze tylko we własnej instalacji). **Ustawienia projektu** — podstawy,
+- **Ustawienia**: wygląd (jasny, ciemny, systemowy), język i model AI („Chmura (zalecany)”
+  albo „Lokalny”; klucze tylko we własnej instalacji). **Ustawienia projektu**: podstawy,
   zespół, dni wolne w firmie, **kalendarz**, przypomnienie o raporcie (domyślnie czwartek
   17:00), eksport i „Usuń projekt”.
-- **Kalendarz** — „Utwórz link do kalendarza” daje tajny link, który dodasz w Kalendarzu Google
+- **Kalendarz**: „Utwórz link do kalendarza” daje tajny link, który dodasz w Kalendarzu Google
   („Inne kalendarze” → „+” → „Z adresu URL”) albo w iCloud (Plik → Nowa subskrypcja
   kalendarza). Kalendarz pokaże termin, początki i końce zadań, nieobecności (same daty, nigdy
   powód), daty ważności decyzji i przypomnienie o raporcie. **Kto ma ten link, widzi imiona
-  osób i daty nieobecności** — „Unieważnij link” natychmiast go wyłącza.
+  osób i daty nieobecności**. „Unieważnij link” natychmiast go wyłącza.
 
 ### Wersja 3: Zasady AI, Raporty i Finanse (od 2.0.0)
 
@@ -404,7 +404,7 @@ Uprawnienia AI, Ludzie, Źródła) i **Inne**. Przy każdej funkcji, za którą 
 projektowa, jest punkt **ⓘ N**: otwiera panel „Dowód” z tą decyzją i badaniami za nią i przeciw
 niej (cytat pokazujemy tylko wtedy, gdy kod znalazł go w źródle).
 
-- **Raporty** — „Nowy raport”: wklej albo podyktuj tekst (🎤), wybierz odbiorców („Tylko
+- **Raporty**: „Nowy raport”: wklej albo podyktuj tekst (🎤), wybierz odbiorców („Tylko
   redakcja”, „Zarząd”, „Finanse”, „Zespół”) i kliknij „Redaguj”. Dla każdego odbiorcy AI
   przygotuje wersję. **Zmiany wylicza kod, nie AI**: usunięte słowa są czerwone i przekreślone,
   dodane zielone i podkreślone; każdą zmianę przyjmiesz (✓) albo odrzucisz (✕), także wszystkie
@@ -415,7 +415,7 @@ niej (cytat pokazujemy tylko wtedy, gdy kod znalazł go w źródle).
   strona do druku, schowek. **Raport zostaje w Sentinelu dopiero po kliknięciu „Zapisz”**;
   wcześniej szkic jest tylko w pamięci serwera. Tekst trafia do dostawcy AI wybranego w
   Ustawieniach. Liczby zapisane słownie nie są sprawdzane.
-- **Finanse** — portfel projektów w dniach pracy: budżet, wydano, prognoza na koniec,
+- **Finanse**: portfel projektów w dniach pracy: budżet, wydano, prognoza na koniec,
   odchylenie i stan („W budżecie”, „Zagrożony”, „Przekroczenie bez zmian”, „Budżet
   przekroczony”), wszystko policzone przez kod. „Streszczenie dla zarządu (AI)” powstaje z
   arkusza faktów policzonego przez kod i jest sprawdzane strażnikiem faktów; nie jest zapisywane.
@@ -423,11 +423,11 @@ niej (cytat pokazujemy tylko wtedy, gdy kod znalazł go w źródle).
   „Zatwierdź wniosek” i potwierdzasz. Wtedy budżety obu projektów zmieniają się, a Dziennik to
   zapisuje. Gdy wniosku nie da się zastosować (np. projekt wydał już więcej, niż by mu zostało),
   zostaje zapisany jako „zatwierdzony, nie zastosowany” z powodem.
-- **Mapa granic** — dwanaście procesów firmy w trzech strefach („AI samodzielnie”, „AI z
+- **Mapa granic**: dwanaście procesów firmy w trzech strefach („AI samodzielnie”, „AI z
   człowiekiem”, „tylko człowiek”) według sześciu kryteriów. Po zaimportowaniu ankiety
   (`docs/research/survey.md`) pojawia się przełącznik „Nasza mapa” / „Co odpowiedzieli ludzie
   (N = …)” z odpowiedziami i zgodnością z naszą mapą (sondaż, próba wygodna).
-- **Uprawnienia AI**, **Ludzie**, **Źródła** — co AI może, a czego nie (z próbą ataku), czego
+- **Uprawnienia AI**, **Ludzie**, **Źródła**: co AI może, a czego nie (z próbą ataku), czego
   celowo nie ma w Sentinelu (np. oceny wydajności) i wszystkie źródła z filtrami.
 
 ## 9. Najczęstsze pytania
@@ -447,7 +447,7 @@ tymczasowa kosztuje półtora osobodnia dziennie. Własne stawki ustawisz w usta
 projektu (**Koszt dnia pracy**).
 
 **Czy mogę zmienić zespół albo zadania po pierwszym raporcie?** Nazwy, termin, budżet i
-ustawienia — zawsze. Strukturę planu po pierwszym raporcie zmieniają raporty statusu (nowe
+ustawienia: zawsze. Strukturę planu po pierwszym raporcie zmieniają raporty statusu (nowe
 zadania, dłuższe zadania, nieobecności) i zatwierdzone rekomendacje.
 
 **Jak pobrać dane?** W ustawieniach projektu: plan w CSV, cały projekt w JSON i raport dla
@@ -460,7 +460,7 @@ i objaśnić decyzję; objaśnienie ma oznaczenie, czy zgadza się z danymi.
 
 Szczegóły, kopie zapasowe i wersja demonstracyjna: [deploy.md](deploy.md) (po angielsku).
 
-**Ważne:** aplikacja nie ma kont użytkowników — każdy, kto otworzy jej adres, widzi wszystkie
+**Ważne:** aplikacja nie ma kont użytkowników: każdy, kto otworzy jej adres, widzi wszystkie
 projekty. Udostępniaj ją tylko w sieci firmowej (VPN) albo za serwerem pośredniczącym z
 logowaniem.
 
@@ -479,7 +479,7 @@ Dane (projekty, ustawienia, klucz AI) są w wolumenie `sentinel-data`; aktualiza
 **Laptop (bez Dockera):** zainstaluj [uv](https://docs.astral.sh/uv/), potem
 `uv sync` i `uv run sentinel ui` → http://127.0.0.1:8000.
 
-**AI — możliwości i koszty** (wybór na stronie **Ustawienia** aplikacji; klucz zostaje na
+**AI: możliwości i koszty** (wybór na stronie **Ustawienia** aplikacji; klucz zostaje na
 serwerze i nie jest więcej wyświetlany):
 
 | Możliwość | Koszt | Czy dane wychodzą z firmy? |

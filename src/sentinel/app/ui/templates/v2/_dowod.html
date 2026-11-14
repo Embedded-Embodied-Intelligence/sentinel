@@ -1,18 +1,35 @@
-{# The content of the "Dowód" panel (v3 spec section 2): a decision with its basis, or a cell of
-   Mapa granic with its zone and reason; then the evidence, supporting first. #}
+{# The content of the "Dowód" panel (v3 spec section 2): one or more decisions with their basis,
+   or a cell of Mapa granic with its zone and reason; then a one-line count and the evidence,
+   short (WP21): the first item of each stance, the rest one click away. #}
 {% import "v2/_macros.html" as m %}
 {% import "v2/_ev.html" as ev %}
+{% set lines = panel.lines if panel.lines is defined else [] %}
 <div class="dowod-head">
   <p class="overline">{{ t("v2.ev.panel") }}{% if panel.decision %} · {{ panel.decision }}{% endif %}</p>
   <button type="button" class="dowod-close" data-dowod-close aria-label="{{ t('v2.ev.close') }}">{{ icon("x", 20) }}</button>
 </div>
-<h2 id="dowod-title" class="dowod-title">{% if panel.decision %}{{ t("v2.ev.decision") }}{% else %}{{ panel.title }}{% endif %}</h2>
+<h2 id="dowod-title" class="dowod-title">{% if lines | length > 1 %}{{ t("v2.ev.decisions") }}{% elif panel.decision %}{{ t("v2.ev.decision") }}{% else %}{{ panel.title }}{% endif %}</h2>
 {% if panel.question %}<p class="muted">{{ panel.question }}</p>{% endif %}
+{% if lines | length > 1 %}
+<ul class="dowod-lines">{% for line in lines %}<li><p class="dowod-lead">{{ line.text }}</p><p class="dowod-basis small"><span class="muted">{{ line.id }} · {{ t("v2.ev.basis") }}</span> <span class="basis basis-{{ line.basis }}">{{ t("v2.ev.basis." ~ line.basis) }}</span></p></li>{% endfor %}</ul>
+{% else %}
 <p class="dowod-lead">{{ panel.lead }}</p>
 {% if panel.basis %}<p class="dowod-basis"><span class="muted small">{{ t("v2.ev.basis") }}</span> <span class="basis basis-{{ panel.basis }}">{{ t("v2.ev.basis." ~ panel.basis) }}</span></p>{% endif %}
+{% endif %}
 {% if panel.zone %}<p>{{ m.zone(t, panel.zone) }}</p>{% endif %}
-<h3 class="overline dowod-items">{{ t("v2.ev.items", n=panel.cards | length) }}</h3>
+{% if panel.counts is defined %}
+{% set total = panel.cards | length %}
+<p class="dowod-count"><strong>{{ t.plural("v2.ev.count", total) }}</strong>{% if panel.counts | length == 1 %}: {{ t("v2.ev.count.only." ~ ("one" if total == 1 else "two" if total == 2 else "all") ~ "." ~ panel.counts[0][0]) }}{% else %}{% for stance, k in panel.counts %}{{ ": " if loop.first else ", " }}{{ t.plural("v2.ev.count." ~ stance, k) }}{% endfor %}{% endif %}</p>
 <div class="stack">
-{% for c in panel.cards %}{{ ev.card(t, c, 4) }}{% endfor %}
+{% for c in panel.shown %}{{ ev.card(t, c, 3) }}{% endfor %}
 </div>
+{% if panel.more %}
+<details class="dowod-rest">
+  <summary>{{ t("v2.ev.rest", n=panel.more | length) }}</summary>
+  <div class="stack">{% for c in panel.more %}{{ ev.card(t, c, 3) }}{% endfor %}</div>
+</details>
+{% endif %}
+{% else %}
+<div class="stack">{% for c in panel.cards %}{{ ev.card(t, c, 3) }}{% endfor %}</div>
+{% endif %}
 <p class="dowod-foot small"><a href="/v2/sources">{{ t("v2.ev.all_sources") }} ›</a></p>

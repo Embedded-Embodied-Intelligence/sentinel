@@ -39,7 +39,7 @@
     <h2 id="import-title" class="section-title-sm">{{ t("setup.tab.import") }}</h2>
     <ol class="how-to">
       <li>{{ t("setup.import.step1") }} <a href="/api/templates/tasks.csv" download>{{ t("setup.import.template") }}</a></li>
-      <li>{{ t("setup.import.step2", roles=roles | join(", ") if roles else "–") }}</li>
+      <li>{{ t("setup.import.step2", roles=roles | join(", ") if roles else t("value.none")) }}</li>
       <li>{{ t("setup.import.step3") }}</li>
     </ol>
     <form class="form-stack" hx-post="/projects/{{ project_id }}/setup/import" hx-encoding="multipart/form-data" hx-target="#import-result" novalidate>
@@ -83,7 +83,7 @@
         <td class="cell-days" data-label="{{ t('setup.tasks.days') }}">{{ task.duration }}</td>
         <td class="cell-people" data-label="{{ t('setup.describe.people') }}">{{ crew_text(task) }}</td>
         <td class="cell-after" data-label="{{ t('setup.tasks.after') }}">{{ after_names(task) }}</td>
-        <td class="cell-opt" data-label="{{ t('setup.tasks.optional') }}">{% if task.optional %}{{ t("common.yes") }}{% else %}–{% endif %}</td>
+        <td class="cell-opt" data-label="{{ t('setup.tasks.optional') }}">{% if task.optional %}{{ t("common.yes") }}{% else %}{{ t("common.no") }}{% endif %}</td>
         <td class="cell-menu"></td>
       </tr>
       {% else %}
@@ -93,11 +93,11 @@
         <td class="cell-name" data-label="{{ t('setup.tasks.name') }}"><label class="vh" for="tn-{{ task.key }}">{{ t("setup.tasks.name_of", n=n) }}</label><input id="tn-{{ task.key }}" name="task_name" value="{{ task.name }}" maxlength="120" autocomplete="off"{% if focus == task.key %} autofocus{% endif %}{% if task.description %} title="{{ task.description }}"{% endif %}><input type="hidden" name="description_{{ task.key }}" value="{{ task.description or '' }}">{% if task.description %}<span class="caption task-description">{{ task.description }}</span>{% endif %}</td>
         <td class="cell-days" data-label="{{ t('setup.tasks.days') }}"><label class="vh" for="td-{{ task.key }}">{{ t("setup.tasks.days_of", n=n) }}</label><input id="td-{{ task.key }}" class="input-days" name="task_days" value="{{ task.duration if task.duration else '' }}" inputmode="numeric"></td>
         <td class="cell-people" data-label="{{ t('setup.describe.people') }}">
-          <details class="pop" data-empty="–">
+          <details class="pop" data-empty="{{ t("value.none") }}">
             <summary><span class="vh">{{ t("setup.tasks.people_row", n=n) }}: </span><span class="pop-value">{{ crew_text(task) }}</span></summary>
             <div class="pop-body">
               {% for role in roles %}
-              <div class="crew-row"><label for="c-{{ task.key }}-{{ loop.index0 }}">{{ role }}<span class="vh"> — {{ t("setup.tasks.people_of", role=role, n=n) }}</span></label><input id="c-{{ task.key }}-{{ loop.index0 }}" name="crew_{{ task.key }}_{{ loop.index0 }}" value="{{ crew_of(task, role) }}" inputmode="numeric" data-crew-input data-role="{{ role }}"></div>
+              <div class="crew-row"><label for="c-{{ task.key }}-{{ loop.index0 }}">{{ role }}<span class="vh">: {{ t("setup.tasks.people_of", role=role, n=n) }}</span></label><input id="c-{{ task.key }}-{{ loop.index0 }}" name="crew_{{ task.key }}_{{ loop.index0 }}" value="{{ crew_of(task, role) }}" inputmode="numeric" data-crew-input data-role="{{ role }}"></div>
               {% endfor %}
               {% for role, count in other_roles(task) %}
               <div class="crew-row"><label for="co-{{ task.key }}-{{ loop.index0 }}">{{ role }}<span class="option-note">{{ t("setup.tasks.role_outside") }}</span></label><input type="hidden" name="other_role_{{ task.key }}" value="{{ role }}"><input id="co-{{ task.key }}-{{ loop.index0 }}" name="other_count_{{ task.key }}" value="{{ count }}" inputmode="numeric" data-crew-input data-role="{{ role }}"></div>
@@ -106,7 +106,7 @@
           </details>
         </td>
         <td class="cell-after" data-label="{{ t('setup.tasks.after') }}">
-          <details class="pop" data-after-picker data-row="{{ n }}" data-empty="–">
+          <details class="pop" data-after-picker data-row="{{ n }}" data-empty="{{ t("value.none") }}">
             <summary><span class="vh">{{ t("setup.tasks.after_of", n=n) }}: </span><span class="pop-value">{{ after_names(task) }}</span></summary>
             <input type="hidden" name="after_{{ task.key }}" value="{{ after_numbers(task) }}" data-after-value>
             <div class="pop-body" data-after-body></div>

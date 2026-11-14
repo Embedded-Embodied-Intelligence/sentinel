@@ -23,13 +23,40 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     "v2.ev.basis.normative": ("law and standards", "prawo i normy"),
     "v2.ev.basis.theoretical": ("theory", "teoria"),
     "v2.ev.items": ("Evidence ({n})", "Dowody ({n})"),
+    # WP21: one point per block, a short panel with a one-line count, details one click away
+    "v2.ev.points": ("Evidence for these decisions ({n})", "Dowody dla tych decyzji ({n})"),
+    "v2.ev.decisions": ("Decisions", "Decyzje"),
+    "v2.ev.count.one": ("{n} source", "{n} dowód"),
+    "v2.ev.count.few": ("{n} sources", "{n} dowody"),
+    "v2.ev.count.many": ("{n} sources", "{n} dowodów"),
+    "v2.ev.count.wspiera.one": ("{n} supports", "{n} wspiera"),
+    "v2.ev.count.wspiera.few": ("{n} support", "{n} wspierają"),
+    "v2.ev.count.wspiera.many": ("{n} support", "{n} wspiera"),
+    "v2.ev.count.podwaza.one": ("{n} challenges", "{n} podważa"),
+    "v2.ev.count.podwaza.few": ("{n} challenge", "{n} podważają"),
+    "v2.ev.count.podwaza.many": ("{n} challenge", "{n} podważa"),
+    "v2.ev.count.niuansuje.one": ("{n} adds nuance", "{n} niuansuje"),
+    "v2.ev.count.niuansuje.few": ("{n} add nuance", "{n} niuansują"),
+    "v2.ev.count.niuansuje.many": ("{n} add nuance", "{n} niuansuje"),
+    "v2.ev.count.only.one.wspiera": ("supports", "wspiera"),
+    "v2.ev.count.only.one.podwaza": ("challenges", "podważa"),
+    "v2.ev.count.only.one.niuansuje": ("adds nuance", "niuansuje"),
+    "v2.ev.count.only.two.wspiera": ("both support", "oba wspierają"),
+    "v2.ev.count.only.two.podwaza": ("both challenge", "oba podważają"),
+    "v2.ev.count.only.two.niuansuje": ("both add nuance", "oba niuansują"),
+    "v2.ev.count.only.all.wspiera": ("all support", "wszystkie wspierają"),
+    "v2.ev.count.only.all.podwaza": ("all challenge", "wszystkie podważają"),
+    "v2.ev.count.only.all.niuansuje": ("all add nuance", "wszystkie niuansują"),
+    "v2.ev.more": ("Study details", "Szczegóły badania"),
+    "v2.ev.more_text": ("Text details", "Szczegóły tekstu"),
+    "v2.ev.rest": ("More evidence ({n})", "Więcej dowodów ({n})"),
     "v2.ev.all_sources": ("All sources", "Wszystkie źródła"),
     "v2.ev.stance.wspiera": ("supports", "wspiera"),
     "v2.ev.stance.podwaza": ("challenges", "podważa"),
     "v2.ev.stance.niuansuje": ("nuances", "niuansuje"),
     "v2.ev.unverified": (
-        "Quote not verified — summary only",
-        "Cytat niezweryfikowany — tylko streszczenie",
+        "Quote not verified: summary only",
+        "Cytat niezweryfikowany: tylko streszczenie",
     ),
     "v2.ev.did": ("What the researchers did", "Co zrobili badacze"),
     "v2.ev.text": ("What the text says", "Co mówi ten tekst"),
@@ -41,10 +68,10 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     # ---- Źródła (section 2)
     "v2.src.title": ("Sources", "Źródła"),
     "v2.src.lead": (
-        "Every piece of evidence behind Sentinel's decisions, for and against them. Quotes are "
-        "shown only when code found them in the source.",
-        "Wszystkie dowody za decyzjami Sentinela i przeciw nim. Cytat pokazujemy tylko wtedy, "
-        "gdy kod znalazł go w źródle.",
+        "All evidence for and against Sentinel's decisions; a quote shows only when code found it "
+        "in the source.",
+        "Wszystkie dowody za decyzjami Sentinela i przeciw nim; cytat widać tylko, gdy kod "
+        "znalazł go w źródle.",
     ),
     "v2.src.filters": ("Filter the sources", "Filtruj źródła"),
     "v2.src.search": ("Search", "Szukaj"),
@@ -74,9 +101,9 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     # ---- Mapa granic (section 3)
     "v2.map.title": ("Boundary map", "Mapa granic"),
     "v2.map.thesis": (
-        "Instead of a single criterion, “AI where it saves time”, six questions decide whether AI "
-        "works alone, with a person, or not at all.",
-        "Zamiast jednego kryterium »AI tam, gdzie oszczędza czas« — sześć pytań decyduje, czy AI "
+        "Not “AI where it saves time”, but six questions decide whether AI works alone, with a "
+        "person or never.",
+        "Nie jedno kryterium »AI tam, gdzie oszczędza czas«, lecz sześć pytań decyduje, czy AI "
         "pracuje sama, z człowiekiem, czy wcale.",
     ),
     "v2.map.criteria": ("Six questions", "Sześć pytań"),
@@ -84,10 +111,13 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     "v2.map.zones": ("Zones:", "Strefy:"),
     "v2.map.table": ("Twelve company processes", "Dwanaście procesów firmy"),
     "v2.map.hint": (
-        "Choose a cell for its reason and evidence, a process for where it lives in Sentinel.",
-        "Wybierz komórkę, by zobaczyć powód i dowody, a proces, by zobaczyć, gdzie jest w "
-        "Sentinelu.",
+        "Choose a criterion for its reason and evidence, a process for its place in Sentinel.",
+        "Wybierz kryterium, by zobaczyć powód i dowody, a proces, by zobaczyć jego miejsce.",
     ),
+    # WP21: a compact map by default, every criterion on request
+    "v2.map.deciding": ("Deciding criteria", "Kryteria rozstrzygające"),
+    "v2.map.all": ("Show all criteria", "Pokaż wszystkie kryteria"),
+    "v2.map.compact": ("Show deciding criteria", "Pokaż kryteria rozstrzygające"),
     "v2.map.process": ("Process", "Proces"),
     "v2.map.zone": ("Zone", "Strefa"),
     "v2.map.open": ("Open", "Otwórz"),
@@ -104,10 +134,10 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     # ---- Uprawnienia AI (section 4)
     "v2.perm.title": ("AI permissions", "Uprawnienia AI"),
     "v2.perm.lead": (
-        "The language model in Sentinel works on text and nothing else. Everything it returns is "
-        "checked by code, and every change waits for you.",
-        "Model językowy w Sentinelu pracuje na tekście i na niczym więcej. Wszystko, co zwraca, "
-        "sprawdza kod, a każda zmiana czeka na Ciebie.",
+        "The language model works on text only; code checks all it returns, and every change "
+        "waits for you.",
+        "Model językowy pracuje tylko na tekście; kod sprawdza wszystko, co zwraca, a każda "
+        "zmiana czeka na Ciebie.",
     ),
     "v2.perm.may": ("What AI may do", "Co AI może"),
     "v2.perm.may_not": ("What AI may not do", "Czego AI nie może"),
@@ -167,10 +197,10 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
         "Brak wywołań od uruchomienia serwera.",
     ),
     "v2.perm.calls.note": (
-        "Only when, what for, where and how long: never the content. The list lives in memory "
-        "and disappears when the server restarts.",
-        "Tylko kiedy, po co, dokąd i jak długo: nigdy treść. Lista jest w pamięci i znika po "
-        "ponownym uruchomieniu serwera.",
+        "Only when, what for, where and how long, never the content; the list is gone after a "
+        "server restart.",
+        "Tylko kiedy, po co, dokąd i jak długo, nigdy treść; lista znika po ponownym uruchomieniu "
+        "serwera.",
     ),
     "v2.perm.col.time": ("Time", "Godzina"),
     "v2.perm.col.role": ("What for", "Po co"),
@@ -273,10 +303,10 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     ),
     "v2.psettings.assessment": ("My assessment first", "Najpierw moja ocena"),
     "v2.psettings.assessment_hint": (
-        "Before Sentinel shows a recommendation, you choose what you would do. Thinking first "
-        "lowers blind trust in AI, though many find it tiresome: you can always skip it.",
-        "Zanim Sentinel pokaże rekomendację, wybierasz własne działanie. Namysł zmniejsza "
-        "ślepe zaufanie do AI, choć wielu osobom przeszkadza: zawsze możesz go pominąć.",
+        "Before a recommendation, you choose your own action; this lowers blind trust in AI, and "
+        "you can skip it.",
+        "Zanim zobaczysz rekomendację, wybierasz własne działanie; to zmniejsza ślepe zaufanie do "
+        "AI, a krok można pominąć.",
     ),
     "v2.psettings.assessment_save": ("Save", "Zapisz"),
     "v2.psettings.saved.assessment": ("Saved.", "Zapisano."),
@@ -291,18 +321,16 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     "v2.people.absent.mood": ("Mood and emotion analysis", "Analiza nastroju i emocji"),
     "v2.people.absent.reasons": ("Reasons for absence", "Powody nieobecności"),
     "v2.people.why.performance": (
-        "Rating workers with AI is high risk under the AI Act, and a score that becomes a target "
-        "stops telling the truth.",
-        "Ocena pracowników przez AI to według AI Act wysokie ryzyko, a wskaźnik, który staje się "
-        "celem, przestaje mówić prawdę.",
+        "High risk under the AI Act, and a score that becomes a target stops telling the truth.",
+        "Według AI Act to wysokie ryzyko, a wskaźnik, który staje się celem, przestaje mówić "
+        "prawdę.",
     ),
     "v2.people.why.ranking": (
         "A substitution is a decision about tasks and availability; whom to ask is your choice.",
         "Zastępstwo to decyzja o zadaniach i dostępności; kogo poprosić, wybierasz Ty.",
     ),
     "v2.people.why.mood": (
-        "Inferring emotions at work is prohibited by the AI Act; the model's format has no field "
-        "for it.",
+        "The AI Act prohibits inferring emotions at work; the model's format has no field for it.",
         "AI Act zakazuje wnioskowania o emocjach w pracy; format odpowiedzi modelu nie ma na to "
         "pola.",
     ),

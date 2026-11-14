@@ -12,7 +12,7 @@
   <div id="forecast" hx-get="/projects/{{ view.id }}/forecast{% if flash_key %}?toast={{ flash_key }}{% endif %}" hx-trigger="load" hx-swap="innerHTML">
     <div class="headline">
       <p class="hero-label">{{ t("overview.chance_title") }}</p>
-      <p class="headline-number skeleton" aria-hidden="true">— %</p>
+      <p class="headline-number skeleton" aria-hidden="true">… %</p>
       <p class="loading-line" role="status"><span class="spinner" aria-hidden="true"></span>{{ t("overview.calculating") }}</p>
     </div>
   </div>

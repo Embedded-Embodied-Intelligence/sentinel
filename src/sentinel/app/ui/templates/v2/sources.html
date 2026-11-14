@@ -18,7 +18,7 @@
 <details class="card src-item src-{{ c.stance }}" id="src-{{ c.id }}">
   <summary><span class="src-id num">{{ c.id }}</span><span class="src-title">{{ c.title }}</span><span class="src-meta small">{{ t("v2.ev.stance." ~ c.stance) }} · {{ t("v2.kind." ~ c.kind) }}{% if not c.verified %} · {{ t("v2.src.summary_only") }}{% endif %}</span></summary>
   <div class="src-body">
-  {{ ev.card(t, c, 2) }}
+  {{ ev.card(t, c, 2, full=True) }}
   <p class="small src-used"><span class="muted">{{ t("v2.src.used_by") }}</span> {% for d in c.decisions %}<button type="button" class="link-button" data-dowod="/v2/dowod/{{ d }}" aria-haspopup="dialog">{{ t("v2.src.decision", id=d) }}</button>{% if not loop.last %}, {% endif %}{% endfor %}</p>
   </div>
 </details>

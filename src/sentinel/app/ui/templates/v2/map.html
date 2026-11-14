@@ -3,13 +3,15 @@
 {% block content %}
 <header class="v2-head"><h1>{{ t("v2.map.title") }} {{ m.dowod(t, "D20") }}</h1></header>
 <p class="lead map-thesis">{{ t("v2.map.thesis") }}</p>
-<section class="card stack-sm" aria-labelledby="crit-title">
-  <h2 id="crit-title" class="overline">{{ t("v2.map.criteria") }}</h2>
+{% set full = full if full is defined else false %}
+{# The six questions as a compact legend (WP21): their numbers and short names; the full
+   questions one click away. #}
+<details class="card crit-fold" data-fold="map-criteria">
+  <summary><h2 id="crit-title" class="overline">{{ t("v2.map.criteria") }}</h2><span class="crit-short">{% for c in criteria %}<span><span class="crit-no">{{ c.id }}</span> {{ c.short_en if t.lang == "en" else c.short_pl }}</span>{% endfor %}</span></summary>
   <ol class="crit-legend">
-  {% for c in criteria %}<li><strong>{{ c.short_en if t.lang == "en" else c.short_pl }}</strong> — {{ c.question_en if t.lang == "en" else c.question_pl }}{% if c.normative %} <span class="tag">{{ t("v2.map.normative") }}</span>{% endif %}</li>{% endfor %}
+  {% for c in criteria %}<li><strong>{{ c.short_en if t.lang == "en" else c.short_pl }}:</strong> {{ c.question_en if t.lang == "en" else c.question_pl }}{% if c.normative %} <span class="tag">{{ t("v2.map.normative") }}</span>{% endif %}</li>{% endfor %}
   </ol>
-  <p class="zone-legend"><span class="muted small">{{ t("v2.map.zones") }}</span> {% for z in zones %}{{ m.zone(t, z) }} {% endfor %}</p>
-</section>
+</details>
 {% if survey %}
 <nav class="section" aria-label="{{ t('v2.map.view') }}"><ul class="v2-tabs">
   <li><a href="{{ prefix }}/map"{% if not survey.shown %} aria-current="page"{% endif %}>{{ t("v2.map.ours") }}</a></li>
@@ -38,23 +40,34 @@
   </table>
   </div>
   <h3 class="overline">{{ t("v2.map.weights") }}</h3>
-  <ul class="plain">{% for c, mean in survey.weights %}<li>{{ c.id }}. {{ c.short_en if t.lang == "en" else c.short_pl }}: <strong>{{ "–" if mean is none else t.decimal(mean) }}</strong></li>{% endfor %}</ul>
+  <ul class="plain">{% for c, mean in survey.weights %}<li>{{ c.id }}. {{ c.short_en if t.lang == "en" else c.short_pl }}: <strong>{{ t("value.none") if mean is none else t.decimal(mean) }}</strong></li>{% endfor %}</ul>
   <p class="muted small">{{ t("v2.map.survey_note") }}</p>
 </section>
 {% else %}
 <section class="card section map-card" aria-labelledby="map-table-title">
-  <div class="section-head"><h2 id="map-table-title" class="overline">{{ t("v2.map.table") }}</h2><span class="muted small">{{ t("v2.map.hint") }}</span></div>
+  <div class="section-head"><h2 id="map-table-title" class="overline">{{ t("v2.map.table") }}</h2><a class="btn btn-quiet map-switch" href="{{ prefix }}/map{% if not full %}?view=all{% endif %}" aria-pressed="{{ 'true' if full else 'false' }}" role="button">{{ t("v2.map.compact" if full else "v2.map.all") }}</a></div>
+  <p class="muted small">{{ t("v2.map.hint") }}</p>
+  {% if full %}<p class="zone-legend">{% for z in zones %}{{ m.zone(t, z) }} {% endfor %}</p>{% endif %}
   <div class="table-wrap">
-  <table class="table map-table">
-    <thead><tr><th scope="col">{{ t("v2.map.process") }}</th>{% for c in criteria %}<th scope="col" class="crit-col"><span class="crit-head" tabindex="0" title="{{ c.question_en if t.lang == 'en' else c.question_pl }}" aria-describedby="crit-q-{{ c.id }}">{{ c.id }}. {{ c.short_en if t.lang == "en" else c.short_pl }}</span><span class="vh" id="crit-q-{{ c.id }}">{{ c.question_en if t.lang == "en" else c.question_pl }}</span></th>{% endfor %}<th scope="col">{{ t("v2.map.zone") }}</th></tr></thead>
+  <table class="table map-table{% if full %} map-full{% else %} map-compact{% endif %}">
+    {% if full %}
+    <thead><tr><th scope="col" class="map-proc-col">{{ t("v2.map.process") }}</th>{% for c in criteria %}<th scope="col" class="crit-col"><span class="crit-no crit-head" tabindex="0" title="{{ c.id }}. {{ c.short_en if t.lang == 'en' else c.short_pl }}: {{ c.question_en if t.lang == 'en' else c.question_pl }}" aria-describedby="crit-q-{{ c.id }}">{{ c.id }}</span><span class="vh">{{ c.short_en if t.lang == "en" else c.short_pl }}</span><span class="vh" id="crit-q-{{ c.id }}">{{ c.question_en if t.lang == "en" else c.question_pl }}</span></th>{% endfor %}<th scope="col" class="map-zone-col">{{ t("v2.map.zone") }}</th></tr></thead>
+    {% else %}
+    <thead><tr><th scope="col" class="map-proc-col">{{ t("v2.map.process") }}</th><th scope="col" class="map-zone-col">{{ t("v2.map.zone") }}</th><th scope="col">{{ t("v2.map.deciding") }}</th></tr></thead>
+    {% endif %}
     <tbody>
     {% for row in rows %}
     <tr>
       <th scope="row" class="map-proc"><details class="proc"><summary>{{ row.name }}</summary><div class="proc-where small"><p>{{ row.reason }}</p><p>{% if row.process.screen is none %}{{ icon("minus", 16) }} {% endif %}{{ row.where }}{% if row.href %} <a href="{{ row.href }}">{{ t("v2.map.open") }} ›</a>{% endif %}</p></div></details></th>
-      {% for cell, reason in row.cells %}{% set crit = criteria[cell.criterion - 1] %}
-      <td><button type="button" class="map-cell" data-dowod="/v2/dowod/cell/{{ row.process.id }}/{{ cell.criterion }}" aria-haspopup="dialog" aria-label="{{ t('v2.map.cell', process=row.name, criterion=(crit.short_en if t.lang == 'en' else crit.short_pl), zone=t('v2.zone.short.' ~ cell.zone)) }}">{{ m.zone(t, cell.zone, small=True) }}</button></td>
+      {% if full %}
+      {% for cell, reason in row.cells %}{% set crit = criteria[cell.criterion - 1] %}{% set word = t('v2.zone.short.' ~ cell.zone) %}
+      <td><button type="button" class="map-cell zone-{{ cell.zone }}" data-dowod="/v2/dowod/cell/{{ row.process.id }}/{{ cell.criterion }}" aria-haspopup="dialog" title="{{ word }}" aria-label="{{ t('v2.map.cell', process=row.name, criterion=(crit.short_en if t.lang == 'en' else crit.short_pl), zone=word) }}">{{ m.zone_icons(cell.zone) }}</button></td>
       {% endfor %}
+      <td>{{ m.zone(t, row.process.zone, small=True) }}</td>
+      {% else %}
       <td>{{ m.zone(t, row.process.zone) }}</td>
+      <td><span class="crit-dots">{% for cell, reason in row.cells if cell.zone == row.process.zone %}{% set crit = criteria[cell.criterion - 1] %}{% set name = crit.short_en if t.lang == "en" else crit.short_pl %}<button type="button" class="crit-dot zone-{{ cell.zone }}" data-dowod="/v2/dowod/cell/{{ row.process.id }}/{{ cell.criterion }}" aria-haspopup="dialog" title="{{ cell.criterion }}. {{ name }}" aria-label="{{ t('v2.map.cell', process=row.name, criterion=name, zone=t('v2.zone.short.' ~ cell.zone)) }}">{{ cell.criterion }}</button>{% endfor %}</span></td>
+      {% endif %}
     </tr>
     {% endfor %}
     </tbody>

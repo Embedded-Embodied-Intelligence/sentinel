@@ -40,7 +40,7 @@
       {% if chance is not none %}
       <div class="headline-line"><span class="sim-chance-value">{{ t.pct(chance) }}</span>{{ ui.badge(chance_level, t("chance.level." ~ chance_level)) }}</div>
       <p class="caption">{{ t("sim.chance_from", date=t.date(chance_date)) }}</p>
-      {% else %}<p class="sim-chance-value">–</p><p class="caption">{{ t("sim.chance_none") }}</p>{% endif %}
+      {% else %}<p class="sim-chance-value">{{ t("value.none") }}</p><p class="caption">{{ t("sim.chance_none") }}</p>{% endif %}
     </div>
   </div>
   <span class="progress" aria-hidden="true"><span style="width: {{ [100, 100 * sim.days / total_days] | min | round(1) }}%"></span></span>

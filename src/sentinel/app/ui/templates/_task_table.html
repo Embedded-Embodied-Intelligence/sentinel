@@ -6,8 +6,8 @@
   <tbody>
   {% for task in view.tasks %}
   <tr><td>{{ task.name }}{% if task.added %} {{ ui.badge("neutral", t("chart.new")) }}{% endif %}</td><td>{{ task.state_text }}{% if task.percent is not none %} ({{ task.percent | round | int }} %){% endif %}</td>
-  <td>{% if task.state == "done" %}{{ t.date(task.start) }} – {{ t.date(task.finish) }}{% elif task.start %}{{ t("chart.since", date=t.date(task.start)) }}{% if task.expected_finish %} – {{ t.date(task.expected_finish) }}{% endif %}{% elif task.planned_start %}{{ t.date(task.planned_start) }} – {{ t.date(task.planned_finish) }}{% else %}–{% endif %}</td>
-  <td>{{ task.crew_names | join(", ") or "–" }}</td></tr>
+  <td>{% if task.state == "done" %}{{ t.date(task.start) }} – {{ t.date(task.finish) }}{% elif task.start %}{{ t("chart.since", date=t.date(task.start)) }}{% if task.expected_finish %} – {{ t.date(task.expected_finish) }}{% endif %}{% elif task.planned_start %}{{ t.date(task.planned_start) }} – {{ t.date(task.planned_finish) }}{% else %}{{ t("value.none") }}{% endif %}</td>
+  <td>{{ task.crew_names | join(", ") or t("value.none") }}</td></tr>
   {% endfor %}
   </tbody>
 </table>

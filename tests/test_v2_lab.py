@@ -52,7 +52,7 @@ def test_what_if_shows_the_effect_and_adds_to_the_report(lab_site: Site) -> None
     events = len(lab_site.services.store.events(LOCAL_SESSION, pid))
     effect = client.post(f"/v2/lab/whatif/{pid}", data=SCENARIO, headers=headers).text
     shown = text_of(effect)
-    assert "Szansa 39 → 3 na 100 ▼ gorzej" in shown and "Nic nie zostało zapisane." in shown
+    assert "Szansa 39 → 3 na 100 ▼ gorzej" in shown and "Nic nie zapisano;" in shown
     assert len(lab_site.services.store.events(LOCAL_SESSION, pid)) == events  # nothing saved
     found = re.search(r'href="([^"]+/report\?[^"]+)"', effect)
     assert found is not None

@@ -3,14 +3,13 @@
 {% block content %}
 <header class="v2-head"><h1>{{ t("v2.people.title") }}</h1></header>
 <section class="stack" aria-labelledby="absent-title">
-  <div class="titled"><h2 id="absent-title">{{ t("v2.people.absent") }}</h2>{{ m.dowod(t, "D18") }}</div>
+  <div class="titled"><h2 id="absent-title">{{ t("v2.people.absent") }}</h2>{{ m.dowod(t, (["D18"] + absent | map("last") | list) | unique | join("+")) }}</div>
   <div class="absent-grid">
   {% for key, name, d in absent %}
     <article class="card absent-card">
       <p class="struck" aria-hidden="true">{{ icon(name, 24) }}</p>
       <h3>{{ t("v2.people.absent." ~ key) }}</h3>
       <p>{{ t("v2.people.why." ~ key) }}</p>
-      <p>{{ m.dowod(t, d) }}</p>
     </article>
   {% endfor %}
   </div>
@@ -29,8 +28,8 @@
       <tr>
         <th scope="row">{{ p.name }}</th>
         <td>{{ p.role }}{% if p.temporary %} · {{ t("v2.plan.temporary") }}{% endif %}</td>
-        <td>{% if p.absences %}<ul class="plain">{% for a in p.absences %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
-        <td>{% if not team.days %}–{% elif p.days == 0 %}{{ t("v2.people.away_all") }}{% else %}<span class="load"><span class="bar" aria-hidden="true"><span style="width: {{ (100 * p.busy / p.days) | round | int }}%"></span></span>{{ t.plural("v2.plan.load", p.days, busy=p.busy) }}</span>{% endif %}</td>
+        <td>{% if p.absences %}<ul class="plain">{% for a in p.absences %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}<span class="muted">{{ t("value.none") }}</span>{% endif %}</td>
+        <td>{% if not team.days %}<span class="muted">{{ t("value.none") }}</span>{% elif p.days == 0 %}{{ t("v2.people.away_all") }}{% else %}<span class="load"><span class="bar" aria-hidden="true"><span style="width: {{ (100 * p.busy / p.days) | round | int }}%"></span></span>{{ t.plural("v2.plan.load", p.days, busy=p.busy) }}</span>{% endif %}</td>
       </tr>
       {% endfor %}
       </tbody>

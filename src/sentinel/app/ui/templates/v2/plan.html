@@ -34,9 +34,9 @@
     <tr id="task-{{ row.key }}" class="{% if row.risk %}is-risk{% endif %}{% if row.state == 'removed' %} is-removed{% endif %}">
       <th scope="row">{% if row.risk %}<span class="risk-word">{{ icon("alert", 16) }}{{ t("v2.plan.risk") }}</span> {% endif %}{{ row.name }}{% if row.added %} <span class="muted">{{ t("chart.new") }}</span>{% endif %}</th>
       <td><span class="tstate tstate-{{ row.state }}">{{ row.state_text }}</span>{% if row.percent is not none and row.state != "done" %}<span class="nowrap"><span class="bar" aria-hidden="true"><span style="width: {{ row.percent }}%"></span></span><span class="num">{{ row.percent }} %</span></span>{% endif %}</td>
-      <td class="nowrap">{% if row.end %}{{ t.date(row.end) }}{% else %}–{% endif %}</td>
-      <td>{{ row.people or "–" }}</td>
-      <td>{{ row.after or "–" }}</td>
+      <td class="nowrap">{% if row.end %}{{ t.date(row.end) }}{% else %}<span class="muted">{{ t("value.none") }}</span>{% endif %}</td>
+      <td>{{ row.people or t("value.none") }}</td>
+      <td>{{ row.after or t("value.none") }}</td>
       <td>{% if row.task %}<button type="button" class="btn btn-quiet" data-toggle="fix-{{ row.key }}" aria-expanded="{{ 'true' if editing == row.key else 'false' }}" aria-controls="fix-{{ row.key }}">{{ icon("pencil", 20) }}{{ t("v2.adjust") }}</button>{% endif %}</td>
     </tr>
     {% if row.task %}
@@ -79,10 +79,10 @@
     {% for p in people %}
     <tr>
       <th scope="row">{{ p.name }}<span class="muted">{{ p.role }}{% if p.temporary %} · {{ t("v2.plan.temporary") }}{% endif %}</span></th>
-      <td>{% if p.absences %}<ul class="plain">{% for a in p.absences %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
-      <td>{% if p.now %}<ul class="plain">{% for name in p.now %}<li>{{ name }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
-      <td>{% if p.next %}<ul class="plain">{% for name in p.next %}<li>{{ name }}</li>{% endfor %}</ul>{% else %}–{% endif %}</td>
-      <td>{% if not week %}–{% elif p.days == 0 %}{{ t("v2.plan.load_away") }}{% else %}<span class="load"><span class="bar" aria-hidden="true"><span style="width: {{ (100 * p.busy / p.days) | round | int }}%"></span></span>{{ t.plural("v2.plan.load", p.days, busy=p.busy) }}</span>{% endif %}</td>
+      <td>{% if p.absences %}<ul class="plain">{% for a in p.absences %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}<span class="muted">{{ t("value.none") }}</span>{% endif %}</td>
+      <td>{% if p.now %}<ul class="plain">{% for name in p.now %}<li>{{ name }}</li>{% endfor %}</ul>{% else %}<span class="muted">{{ t("value.none") }}</span>{% endif %}</td>
+      <td>{% if p.next %}<ul class="plain">{% for name in p.next %}<li>{{ name }}</li>{% endfor %}</ul>{% else %}<span class="muted">{{ t("value.none") }}</span>{% endif %}</td>
+      <td>{% if not week %}<span class="muted">{{ t("value.none") }}</span>{% elif p.days == 0 %}{{ t("v2.plan.load_away") }}{% else %}<span class="load"><span class="bar" aria-hidden="true"><span style="width: {{ (100 * p.busy / p.days) | round | int }}%"></span></span>{{ t.plural("v2.plan.load", p.days, busy=p.busy) }}</span>{% endif %}</td>
     </tr>
     {% endfor %}
     </tbody>

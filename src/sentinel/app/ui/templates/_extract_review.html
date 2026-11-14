@@ -15,7 +15,7 @@
     <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t("setup.tasks.name") }}</th><th scope="col" class="num">{{ t("setup.tasks.days") }}</th><th scope="col">{{ t("setup.describe.people") }}</th><th scope="col">{{ t("setup.tasks.after") }}</th><th scope="col">{{ t("setup.tasks.optional") }}</th></tr></thead>
     <tbody>
     {% for task in tasks %}
-    <tr><td class="num">{{ loop.index }}</td><td>{{ task.name }}{% if task.description %}<span class="caption task-description">{{ task.description }}</span>{% endif %}</td><td class="num">{{ task.duration }}</td><td>{{ crew_text(task) }}</td><td>{{ after_names(task) }}</td><td>{% if task.optional %}{{ t("common.yes") }}{% else %}–{% endif %}</td></tr>
+    <tr><td class="num">{{ loop.index }}</td><td>{{ task.name }}{% if task.description %}<span class="caption task-description">{{ task.description }}</span>{% endif %}</td><td class="num">{{ task.duration }}</td><td>{{ crew_text(task) }}</td><td>{{ after_names(task) }}</td><td>{% if task.optional %}{{ t("common.yes") }}{% else %}{{ t("common.no") }}{% endif %}</td></tr>
     {% endfor %}
     </tbody>
   </table>

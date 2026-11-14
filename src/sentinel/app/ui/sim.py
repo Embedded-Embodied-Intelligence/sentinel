@@ -77,7 +77,7 @@ class CompareRow:
 
     label: str
     values: tuple[str, ...]
-    difference: str = "–"
+    difference: str = ""
     tone: str = ""  # good, bad or none
 
 
@@ -98,8 +98,9 @@ def compare_rows(sides: Sequence[SimSide], texts: Texts) -> list[CompareRow]:
     main = sides[0]
     other = sides[1] if len(sides) > 1 else None
     rows = []
-    finish_gap, late_gap = ("–", ""), ("–", "")
-    cost_diff, cost_tone = "–", ""
+    none = texts("value.none")
+    finish_gap, late_gap = (none, ""), (none, "")
+    cost_diff, cost_tone = none, ""
     if other is not None:
         if main.makespan is not None and other.makespan is not None:
             finish_gap = later(other.makespan - main.makespan)
@@ -110,7 +111,7 @@ def compare_rows(sides: Sequence[SimSide], texts: Texts) -> list[CompareRow]:
     rows.append(
         CompareRow(
             texts("sim.col.finish"),
-            tuple(texts.date(s.finish) if s.finish else "–" for s in sides),
+            tuple(texts.date(s.finish) if s.finish else texts("value.none") for s in sides),
             *finish_gap,
         )
     )

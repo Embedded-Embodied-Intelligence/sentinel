@@ -4,6 +4,7 @@ only), Źródła (the whole registry) and Mapa granic (twelve processes, six cri
 zones). The data ship with the package (`sentinel.evidence`, ADR-0037); the texts we wrote come
 in Polish and English, quotes never translated."""
 
+import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -144,10 +145,26 @@ def decision_of(ident: str) -> Decision:
     raise AppError("not_found", "not_found")
 
 
-def evidence_count(ident: str) -> int:
-    """The number N of the point "ⓘ N" of a decision (0 for an unknown id)."""
+def idents(ident: str) -> list[str]:
+    """The decisions of a point: one id ("D14") or several merged into one point of a block
+    ("D05+D24", WP21; a "+" in a query arrives as a space)."""
+    return [part for part in re.split(r"[+,\s]+", ident) if part]
+
+
+def evidence_of(ident: str) -> list[str]:
+    """The evidence items of a point's decisions, each once, in the decisions' order."""
     _, decisions, _ = research()
-    return next((len(d.evidence) for d in decisions if d.id == ident), 0)
+    wanted = idents(ident)
+    found: list[str] = []
+    for decision in decisions:
+        if decision.id in wanted:
+            found += [e for e in decision.evidence if e not in found]
+    return found
+
+
+def evidence_count(ident: str) -> int:
+    """The number N of the point "ⓘ N" of one or more decisions (0 for unknown ids)."""
+    return len(evidence_of(ident))
 
 
 def cards_of(ids: Sequence[str], lang: str) -> list[Card]:
@@ -156,9 +173,20 @@ def cards_of(ids: Sequence[str], lang: str) -> list[Card]:
 
 
 @dataclass(frozen=True)
+class Line:
+    """A decision as the panel lists it: its id, its sentence in the page's language, its basis."""
+
+    id: str
+    text: str
+    basis: str
+
+
+@dataclass(frozen=True)
 class Panel:
-    """What the "Dowód" panel shows: a decision (its sentence and basis), or a cell of the map
-    (the process, the criterion's question, the zone and the reason); then the evidence."""
+    """What the "Dowód" panel shows: one or more decisions (each sentence and basis), or a cell
+    of the map (the process, the criterion's question, the zone and the reason); then the
+    evidence, short (WP21): a one-line count, then the first item of each stance, the rest one
+    click away, so a challenging item is never hidden."""
 
     title: str
     lead: str
@@ -167,19 +195,44 @@ class Panel:
     question: str | None
     cards: list[Card]
     decision: str | None
+    lines: tuple[Line, ...] = ()
+
+    @property
+    def counts(self) -> list[tuple[str, int]]:
+        """The number of items of each stance present, in the panel's order."""
+        found = [(s, sum(c.stance == s for c in self.cards)) for s in STANCES]
+        return [(stance, n) for stance, n in found if n]
+
+    @property
+    def shown(self) -> list[Card]:
+        """All items when there are at most three, else the first of each stance."""
+        if len(self.cards) <= SHORT:
+            return self.cards
+        return [next(c for c in self.cards if c.stance == s) for s, _ in self.counts]
+
+    @property
+    def more(self) -> list[Card]:
+        """The items behind "Pokaż wszystkie dowody", in the panel's order."""
+        return [c for c in self.cards if c not in self.shown]
+
+
+SHORT = 3  # a panel with more items shows the first of each stance (WP21)
 
 
 def decision_panel(ident: str, lang: str) -> Panel:
-    decision = decision_of(ident)
-    text = decision.text_en if lang == "en" else decision.text_pl
+    """The panel of one decision, or of the decisions of one block merged into one point."""
+    wanted = idents(ident)
+    found = [decision_of(i) for i in wanted]
+    lines = tuple(Line(d.id, d.text_en if lang == "en" else d.text_pl, d.basis) for d in found)
     return Panel(
-        title=ident,
-        lead=text,
-        basis=decision.basis,
+        title=" · ".join(wanted),
+        lead=lines[0].text,
+        basis=lines[0].basis,
         zone=None,
         question=None,
-        cards=cards_of(decision.evidence, lang),
-        decision=ident,
+        cards=cards_of(evidence_of(ident), lang),
+        decision=" · ".join(wanted),
+        lines=lines,
     )
 
 
@@ -383,6 +436,7 @@ def router(ui: Ui) -> APIRouter:
             criteria=boundary.criteria,
             rows=map_rows(ui, request, t.lang),
             zones=ZONES,
+            full=request.query_params.get("view") == "all",  # every criterion (WP21)
             survey=survey_view(boundary, request.query_params.get("view") == "survey", t.lang),
         )
 

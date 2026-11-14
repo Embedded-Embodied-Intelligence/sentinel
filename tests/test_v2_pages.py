@@ -120,7 +120,7 @@ def test_the_overview_says_the_spec_example(site: Site) -> None:
     assert "Nie zdążymy bez zmian" in text
     assert "Spóźnimy się o ok. 2 dni robocze." in text
     assert "Główna przyczyna: „API katalogu produktów” potrwa dłużej." in text
-    assert "39 na 100" in text and "W 78 z nich — czyli 39 na 100" in text
+    assert "39 na 100" in text and "W 78 z nich (39 na 100)" in text
     assert "najpewniej wt. 22 gru" in text and "w złym razie wt. 5 sty 2027" in text
     assert "wydane 27 z 84 dni pracy" in text and "na koniec ok. 92 (+9 %)" in text
     assert "Decyzja do podjęcia" in text and "Szansa 39 → 57 na 100" in text
@@ -178,9 +178,9 @@ def test_the_plan_shows_the_schedule_tasks_and_team(site: Site) -> None:
     assert fixable and all("nierozpoczęte" in row for key, row in rows if key in fixable)
     team = text_of(site.client.get(base, params={"lang": "pl", "view": "team"}).text)
     assert "Przyszły tydzień: pon. 16 lis – pt. 20 lis" in team
-    assert "Bartosz Kowalski Programista backendu czw. 12 lis – wraca pon. 23 lis" in team
+    assert "Bartosz Kowalski Programista backendu czw. 12 lis, wraca pon. 23 lis" in team
     assert "nieobecność cały tydzień" in team and "ok. 5 z 5 dni" in team
-    assert "Sentinel nie mierzy niczyjej wydajności" in team
+    assert "to obciążenie, nie ocena" in team
 
 
 @pytest.mark.slow  # a few seconds of forecasts (default run: 90 s)
@@ -370,7 +370,8 @@ def test_the_decision_page_reads_as_the_brief(site: Site) -> None:
         "Decyzja do podjęcia" in text
         and "Cezary zastępuje Bartosza w „API katalogu produktów”" in text
     )
-    who = text[text.index("Kogo dotyczy") : text.index("Koszt zwłoki")]
+    # "Kogo dotyczy" opens "Szczegóły" (WP21), after the decision's own rows.
+    who = text[text.index("Kogo dotyczy") : text.index("Wszystkie rozważone możliwości")]
     assert who.startswith("Kogo dotyczy Zastępstwo: Cezary Mazur przejmuje udział osoby nieobecnej")
     assert "Bartosz Kowalski: po powrocie wraca do swoich zadań" in who
     assert "za osobę" not in who and who.count("Cezary") == 1  # nothing twice (WP17)
@@ -673,13 +674,14 @@ def test_a_wrong_or_revoked_link_finds_nothing(site: Site) -> None:
 
 # ---- v3 (WP19): the research layer
 
-POINT = re.compile(r'data-decision="(D\d\d)"[^>]*aria-label="[^"(]*\((\d+)\)"')
+POINT = re.compile(r'data-decision="(D\d\d(?: D\d\d)*)"[^>]*aria-label="[^"(]*\((\d+)\)"')
 QUOTE = re.compile(r'<blockquote class="ev-quote" lang="(\w+)">(.*?)</blockquote>', re.S)
 
 
 def test_every_decision_with_a_screen_has_its_point(site: Site) -> None:
     """A "Dowód" point for every decision of the catalogue whose screen exists, its N the
-    decision's number of evidence items (v3 spec section 2)."""
+    decision's number of evidence items (v3 spec section 2); a point of a block may merge the
+    block's decisions (WP21), its N then the number of their items together."""
     pid = site.project
     seq = seq_of(site)
     paths = [
@@ -703,15 +705,16 @@ def test_every_decision_with_a_screen_has_its_point(site: Site) -> None:
         "/v2/reports/new",
         "/v2/finance",
     ]
-    counts = {d.id: len(d.evidence) for d in load_decisions()}
-    found: dict[str, int] = {}
+    evidence = {d.id: d.evidence for d in load_decisions()}
+    found: set[str] = set()
     for path in paths:
-        for ident, n in POINT.findall(
+        for idents, n in POINT.findall(
             site.client.get(path + "&lang=pl" if "?" in path else path + "?lang=pl").text
         ):
-            found[ident] = int(n)
-    assert set(found) == set(counts)
-    assert all(found[ident] == counts[ident] for ident in found)
+            items = {e for ident in idents.split() for e in evidence[ident]}
+            assert int(n) == len(items), (path, idents)
+            found |= set(idents.split())
+    assert found == set(evidence)
 
 
 @pytest.mark.parametrize("language", LANGUAGES)

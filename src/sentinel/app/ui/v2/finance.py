@@ -92,7 +92,7 @@ def sheet(t: TextsV2, rows: list[Row]) -> str:
             forecast=r.forecast,
             deviation=r.deviation,
             share=r.share,
-            chance="–" if r.chance is None else r.chance,
+            chance=t("value.none") if r.chance is None else r.chance,
         )
         for r in rows
     ]

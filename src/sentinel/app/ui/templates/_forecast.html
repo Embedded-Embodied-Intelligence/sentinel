@@ -39,7 +39,7 @@
 </div>
 <div id="kpis" hx-swap-oob="true">
 <dl class="kpis">
-  <div><dt>{{ t("overview.deadline") }}</dt><dd><span class="kpi-value">{% if f.deadline %}{{ t.date(f.deadline) }}{% else %}–{% endif %}</span></dd></div>
+  <div><dt>{{ t("overview.deadline") }}</dt><dd><span class="kpi-value">{% if f.deadline %}{{ t.date(f.deadline) }}{% else %}{{ t("value.none") }}{% endif %}</span></dd></div>
   <div><dt>{{ t("overview.likely") }}</dt><dd><span class="kpi-value">{{ t.date(f.p50) }}</span>{% if likely_gap %}<span class="kpi-sub {{ likely_gap.tone }}">{{ icon(likely_gap.icon, 14) }}{{ likely_gap.text }}</span>{% endif %}</dd></div>
   <div><dt>{{ t("overview.bad_case") }}</dt><dd><span class="kpi-value">{{ t.date(f.p90) }}</span>{% if bad_gap %}<span class="kpi-sub {{ bad_gap.tone }}">{{ icon(bad_gap.icon, 14) }}{{ bad_gap.text }}</span>{% endif %}</dd></div>
   <div><dt>{{ t("overview.budget") }}</dt><dd>
@@ -57,7 +57,7 @@
         {% if f.p_within_budget is not none %}<p>{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</p>{% endif %}
       </div>
     </details>
-    {% else %}<span class="kpi-value">–</span>{% endif %}
+    {% else %}<span class="kpi-value">{{ t("value.none") }}</span>{% endif %}
   </dd></div>
 </dl>
 </div>

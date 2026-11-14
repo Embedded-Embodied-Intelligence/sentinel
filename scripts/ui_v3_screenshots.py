@@ -100,6 +100,7 @@ def seed(services: Services, language: Any) -> dict[str, str]:
 def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
     live = f"/v2/projects/{ids['showcase']}"
     return [
+        Shot("overview", live),  # WP21
         Shot("map", "/v2/map"),
         Shot(
             "map_cell", "/v2/map", clicks=(".map-cell[data-dowod$='/P06/3']",), wait="#dowod[open]"

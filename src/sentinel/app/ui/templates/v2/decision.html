@@ -1,7 +1,6 @@
 {% extends "v2/base.html" %}
 {% import "v2/_macros.html" as m %}
 {% block content %}
-<p><a class="back" href="{{ prefix }}/projects/{{ view.id }}">‹ {{ t("v2.dec.back") }}</a></p>
 <article class="card brief" aria-labelledby="dec-title">
   <header class="stack-sm">
     <p class="overline">
@@ -11,8 +10,10 @@
       {% if validity and validity.expires_tomorrow %}<span class="expires">{{ icon("clock", 16) }} {{ t("v2.decision.expires") }}</span>{% endif %}
     </p>
     <h2 id="dec-title" class="decision-title" style="font-size:24px;line-height:32px">{% if own and own.asking %}{{ t("v2.own.title") }}{% else %}{{ rec.headline if rec.headline is defined else rec.title }}{% endif %}</h2>
-    {% if pending and not (own and own.asking) %}<p class="notice">{{ icon("info", 20) }}<span>{{ t("v2.dec.need." ~ need) }}</span> {{ m.dowod(t, "D03") }}</p>{% endif %}
-    {% if own and not own.asking and own.choice %}<p class="own-line">{{ icon("person", 20) }}<span>{{ t("v2.own.line", mine=own.choice, sentinel=own.sentinel) }}</span> {{ m.dowod(t, "D21") }}</p>{% endif %}
+    {# One point for the header (WP21): the approval it needs and, after "Twoja ocena", the choice. #}
+    {% set chose = own and not own.asking and own.choice %}
+    {% if pending and not (own and own.asking) %}<p class="dec-need">{{ icon("info", 20) }}<span>{{ t("v2.dec.need." ~ need) }}</span>{{ m.dowod(t, "D03+D21" if chose else "D03") }}</p>{% endif %}
+    {% if chose %}<p class="own-line">{{ icon("person", 20) }}<span>{{ t("v2.own.line", mine=own.choice, sentinel=own.sentinel) }}</span>{% if not pending %} {{ m.dowod(t, "D21") }}{% endif %}</p>{% endif %}
   </header>
   {% if own and own.asking %}
   <section class="brief-row own-step stack-sm" aria-labelledby="own-hint">
@@ -33,10 +34,6 @@
   <section class="brief-row" aria-labelledby="why-title">
     <div class="titled"><h3 id="why-title" class="overline">{{ t("v2.dec.reasoning") }}</h3>{{ m.dowod(t, "D05") }}</div>
     <p>{{ reasoning | join(" ") }}</p>
-  </section>
-  <section class="brief-row" aria-labelledby="who-title">
-    <h3 id="who-title" class="overline">{{ t("v2.dec.who") }}</h3>
-    <ul class="list">{% for line in who %}<li>{{ line }}</li>{% endfor %}</ul>
   </section>
   {% if pending %}
   <section class="brief-row" aria-labelledby="delay-title">
@@ -64,7 +61,11 @@
 {% if not (own and own.asking) %}
 <details class="card more section" id="details">
   <summary>{{ t("v2.details") }}</summary>
-  <section class="stack" aria-labelledby="options-title">
+  <section class="stack" aria-labelledby="who-title">
+    <h3 id="who-title">{{ t("v2.dec.who") }}</h3>
+    <ul class="list">{% for line in who %}<li>{{ line }}</li>{% endfor %}</ul>
+  </section>
+  <section class="stack section" aria-labelledby="options-title">
     <div class="titled"><h3 id="options-title">{{ t("v2.options.title") }}</h3>{{ m.dowod(t, "D24") }}</div>
     <table class="table">
       <thead><tr><th scope="col">{{ t("v2.options.option") }}</th><th scope="col">{{ t("v2.options.chance") }}</th><th scope="col">{{ t("v2.options.end") }}</th><th scope="col">{{ t("v2.options.budget") }}</th></tr></thead>

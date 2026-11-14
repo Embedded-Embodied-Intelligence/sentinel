@@ -19,7 +19,7 @@
       {% else %}<p class="lead">{{ t("overview.no_deadline") }}</p>{% endif %}
     </div>
     <dl class="kpis">
-      <div><dt>{{ t("overview.deadline") }}</dt><dd><span class="kpi-value">{% if f.deadline %}{{ t.date(f.deadline) }}{% else %}–{% endif %}</span></dd></div>
+      <div><dt>{{ t("overview.deadline") }}</dt><dd><span class="kpi-value">{% if f.deadline %}{{ t.date(f.deadline) }}{% else %}{{ t("value.none") }}{% endif %}</span></dd></div>
       <div><dt>{{ t("overview.likely") }}</dt><dd><span class="kpi-value">{{ t.date(f.p50) }}</span>{% if likely_gap %}<span class="kpi-sub {{ likely_gap.tone }}">{{ icon(likely_gap.icon, 14) }}{{ likely_gap.text }}</span>{% endif %}</dd></div>
       <div><dt>{{ t("overview.bad_case") }}</dt><dd><span class="kpi-value">{{ t.date(f.p90) }}</span>{% if bad_gap %}<span class="kpi-sub {{ bad_gap.tone }}">{{ icon(bad_gap.icon, 14) }}{{ bad_gap.text }}</span>{% endif %}</dd></div>
       <div><dt>{{ t("overview.budget") }}</dt><dd>
@@ -28,7 +28,7 @@
         <span class="kpi-value">{{ parts[0] }}</span> <span class="kpi-unit">{{ parts[1] }}{% if view.person_days %} {{ t("cost.person_days") }}{% endif %}</span>
         <span class="kpi-sub{% if over_budget %} warn{% endif %}">{% if over_budget %}{{ icon("alert", 14) }}{% endif %}{{ t("overview.expected_cost") }}: {{ t.cost(f.expected_cost) }} ({{ t("overview.expected_share", share=t.share(f.expected_cost / f.budget)) }})</span>
         {% if f.p_within_budget is not none %}<span class="kpi-sub">{{ t("overview.within_budget", p=t.pct(f.p_within_budget)) }}</span>{% endif %}
-        {% else %}<span class="kpi-value">–</span>{% endif %}
+        {% else %}<span class="kpi-value">{{ t("value.none") }}</span>{% endif %}
       </dd></div>
     </dl>
     <p class="caption">{{ t("overview.forecast_note", futures=f.rollouts) }}</p>

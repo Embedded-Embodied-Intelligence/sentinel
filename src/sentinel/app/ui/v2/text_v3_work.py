@@ -12,16 +12,15 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     # ---- Raporty (section 7)
     "v2.rep.title": ("Reports", "Raporty"),
     "v2.rep.lead": (
-        "Write or dictate a report and AI edits it for the people who will read it. You see "
-        "every change and decide on each; code checks that numbers, dates and names survive.",
-        "Napisz lub podyktuj raport, a AI zredaguje go dla odbiorców. Widzisz każdą zmianę i o "
-        "każdej decydujesz; kod sprawdza, czy liczby, daty i nazwy przetrwały.",
+        "Write or dictate a report; AI edits it for its readers, and you decide on every change.",
+        "Napisz lub podyktuj raport; AI zredaguje go dla odbiorców, a Ty zdecydujesz o każdej "
+        "zmianie.",
     ),
     "v2.rep.new": ("New report", "Nowy raport"),
     "v2.rep.list": ("Saved reports", "Zapisane raporty"),
     "v2.rep.none": (
-        "No saved reports yet. A report is kept only when you save it.",
-        "Nie ma jeszcze zapisanych raportów. Raport zostaje tylko wtedy, gdy go zapiszesz.",
+        "No saved reports yet; a report is kept only when you save it.",
+        "Nie ma jeszcze zapisanych raportów; raport zostaje tylko wtedy, gdy go zapiszesz.",
     ),
     "v2.rep.col.title": ("Report", "Raport"),
     "v2.rep.col.date": ("Date", "Data"),
@@ -62,10 +61,10 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
         "zadania, terminy i kto co robi",
     ),
     "v2.rep.privacy": (
-        "Your text goes to the AI provider chosen in Settings. Sentinel keeps it only if you "
-        "save the report.",
-        "Tekst trafia do dostawcy AI wybranego w Ustawieniach. Sentinel zachowa go tylko "
-        "wtedy, gdy zapiszesz raport.",
+        "Your text goes to the AI provider set in Settings; Sentinel keeps it only if you save "
+        "the report.",
+        "Tekst trafia do dostawcy AI z Ustawień; Sentinel zachowa go tylko wtedy, gdy zapiszesz "
+        "raport.",
     ),
     "v2.rep.no_ai": (
         "Editing needs AI. Turn it on in Settings.",
@@ -81,10 +80,10 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     "v2.rep.version_of": ("Version: {audience}", "Wersja: {audience}"),
     "v2.rep.tracked": ("Tracked changes", "Śledzenie zmian"),
     "v2.rep.tracked_hint": (
-        "Deleted text is red and struck through, added text green and underlined. Code "
-        "compares your text with AI's version word by word; AI does not describe its changes.",
-        "Usunięty tekst jest czerwony i przekreślony, dodany zielony i podkreślony. Kod "
-        "porównuje Twój tekst z wersją AI słowo po słowie; AI nie opisuje swoich zmian.",
+        "Deleted text is red and struck through, added text green and underlined; code finds the "
+        "changes, not AI.",
+        "Usunięty tekst jest czerwony i przekreślony, dodany zielony i podkreślony; zmiany "
+        "wylicza kod, nie AI.",
     ),
     "v2.rep.count.one": ("{accepted} of {n} change accepted", "przyjęte: {accepted} z {n} zmiany"),
     "v2.rep.count.few": (
@@ -111,10 +110,8 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     "v2.rep.original": ("Your text", "Twój tekst"),
     "v2.rep.guard": ("Fact guard", "Strażnik faktów"),
     "v2.rep.guard_hint": (
-        "Code finds the numbers, percentages, amounts, dates, people, tasks and projects of "
-        "your text and checks each of them in this version.",
-        "Kod znajduje w Twoim tekście liczby, procenty, kwoty, daty, osoby, zadania i projekty "
-        "i sprawdza każde z nich w tej wersji.",
+        "Code checks every number, date, amount and name of your text in this version.",
+        "Kod sprawdza w tej wersji każdą liczbę, datę, kwotę i nazwę z Twojego tekstu.",
     ),
     "v2.rep.guard_counts": (
         "{unchanged} unchanged · {changed} changed · {omitted} omitted",
@@ -189,10 +186,9 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     # ---- Finanse (section 8)
     "v2.fin.title": ("Finance", "Finanse"),
     "v2.fin.lead": (
-        "Your projects' budgets, computed by code from the plan and the forecast. AI may "
-        "summarise them; it has no right to approve or change a figure.",
-        "Budżety Twoich projektów, policzone przez kod z planu i prognozy. AI może je "
-        "streścić; nie ma prawa zatwierdzić ani zmienić żadnej liczby.",
+        "Budgets computed by code; AI may summarise them but cannot approve or change any figure.",
+        "Budżety policzone przez kod; AI może je streścić, ale nie zatwierdzi ani nie zmieni "
+        "żadnej liczby.",
     ),
     "v2.fin.portfolio": ("Portfolio", "Portfel projektów"),
     "v2.fin.unit": ("in work-days (person-days)", "w dniach pracy (osobodniach)"),
@@ -220,8 +216,8 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     "v2.fin.chance": ("{n} in 100 within budget", "{n} na 100 w budżecie"),
     "v2.fin.total": ("All projects", "Wszystkie projekty"),
     "v2.fin.none": (
-        "No project with a plan yet. Finance shows the projects that have one.",
-        "Nie ma jeszcze projektu z planem. Finanse pokazują projekty, które go mają.",
+        "Finance shows projects with a plan, and there is none yet.",
+        "Finanse pokazują projekty z planem, a takiego jeszcze nie ma.",
     ),
     "v2.fin.legend": (
         "Bar: spent (dark), forecast at the end (light), the line is the budget.",
@@ -260,8 +256,8 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     ),
     "v2.fin.move": ("Move budget", "Przesuń budżet"),
     "v2.fin.move_hint": (
-        "This creates a request. Only a person approves it.",
-        "To tworzy wniosek. Zatwierdza go tylko człowiek.",
+        "This creates a request that only a person approves.",
+        "To tworzy wniosek, który zatwierdza tylko człowiek.",
     ),
     "v2.fin.move_two": (
         "Moving a budget needs two projects with a plan.",
@@ -343,8 +339,8 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     "v2.map.dont_know": ("don't know", "nie wiem"),
     "v2.map.share": ("{zone}: {n} of {total}", "{zone}: {n} z {total}"),
     "v2.map.weights": (
-        "How much each criterion matters (1–5, mean of the answers)",
-        "Waga kryteriów (1–5, średnia odpowiedzi)",
+        "Criterion weights (mean, 1–5)",
+        "Waga kryteriów (średnia, 1–5)",
     ),
     "v2.map.tie": ("tie", "remis"),
 }
