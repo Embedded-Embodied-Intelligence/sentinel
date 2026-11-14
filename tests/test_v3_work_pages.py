@@ -150,7 +150,9 @@ def test_rejecting_the_changed_number_restores_the_fact(site: Site) -> None:
         headers=site.headers,
     )
     text = text_of(response.text)
-    assert "15 % → 20 %" not in text and "zmienione: 0" in text
+    # WP21: nothing left to look at on top; the fact joins the folded "bez zmian"
+    assert "15 % → 20 %" not in text and 'id="guard-flagged"' not in response.text
+    assert "bez zmian 15 %" in text  # listed among the facts kept
     response = site.client.post(
         f"{base}/decide", data={"a": "board", "accept": "1"}, headers=site.headers
     )
