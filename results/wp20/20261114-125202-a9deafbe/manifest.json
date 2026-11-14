@@ -1,0 +1,249 @@
+{
+  "run_id": "20261114-125202-a9deafbe",
+  "status": "completed",
+  "smoke": false,
+  "command": "python -m sentinel.experiments.rq6_study --config configs/wp20_rq6.toml --out results/wp20 --replay ollama=data/llm_cache/rq6/ollama.jsonl",
+  "config_path": "configs/wp20_rq6.toml",
+  "config": {
+    "name": "wp20_rq6",
+    "base_seed": 2026,
+    "corpus": "configs/wp20_rq6_corpus.json",
+    "own_dir": "data/rq6/own",
+    "cache_dir": "data/llm_cache/rq6",
+    "store_prompts": true,
+    "backends": [
+      "ollama",
+      "openrouter"
+    ],
+    "audiences": [
+      "edit",
+      "board",
+      "finance",
+      "team"
+    ],
+    "conditions": [
+      "plain",
+      "self_report"
+    ],
+    "redaction": {
+      "prompt_version": "v1",
+      "max_tokens": 8192,
+      "temperature": 0.0
+    },
+    "backend": {
+      "ollama": {
+        "kind": "ollama",
+        "model": "qwen2.5:7b",
+        "digest": "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730",
+        "num_ctx": 8192
+      },
+      "groq": {
+        "kind": "groq",
+        "model": "openai/gpt-oss-120b",
+        "tokens_per_minute": 8000,
+        "tokens_per_day": 200000,
+        "response_format": "json_schema",
+        "max_wait_s": 900,
+        "options": {
+          "reasoning_effort": "low",
+          "include_reasoning": false
+        }
+      },
+      "openrouter": {
+        "kind": "openrouter",
+        "model": "openai/gpt-oss-120b",
+        "response_format": "json_schema",
+        "max_wait_s": 900,
+        "provider": {
+          "order": [
+            "groq"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true
+        },
+        "options": {
+          "reasoning_effort": "low",
+          "include_reasoning": false
+        }
+      },
+      "fake": {
+        "kind": "fake",
+        "model": "oracle-editor-v1",
+        "error_rate": 0.3
+      }
+    },
+    "summary": {
+      "bootstrap_resamples": 2000,
+      "bootstrap_seed": 2026,
+      "table": "table_wp20_rq6"
+    }
+  },
+  "config_hash": "a9deafbe40e26a93644c7329ffcda6d645c32556eadba99825a0dbd581af9b6c",
+  "limit": null,
+  "backends": [
+    "ollama",
+    "openrouter"
+  ],
+  "cache_mode": "auto",
+  "cache_file": null,
+  "replay": {
+    "ollama": "data/llm_cache/rq6/ollama.jsonl"
+  },
+  "git_commit": "c2854e18881df15e28f39f080fe92703a14954c8",
+  "git_dirty": false,
+  "start_utc": "2026-11-14T12:52:02+00:00",
+  "end_utc": "2026-11-14T13:03:29+00:00",
+  "duration_s": 687.3,
+  "python": "3.12.15",
+  "packages": {
+    "numpy": "2.5.4",
+    "ortools": "9.15.6755",
+    "pydantic": "2.14.1",
+    "psplib": "0.4.0",
+    "matplotlib": "3.11.2"
+  },
+  "platform": "Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "Intel(R) Core(TM) i5-6600K CPU @ 3.50GHz",
+  "cpu_count": 4,
+  "hostname": "DESKTOP-JHBU14Q",
+  "llm": {
+    "ollama": {
+      "kind": "ollama",
+      "model": "qwen2.5:7b",
+      "reported_models": [
+        "qwen2.5:7b"
+      ],
+      "digest": "sha256:2bada8a7450677000f678be90653b85d364de7db25eb5ea54136ada5f3933730",
+      "cache_file": "data/llm_cache/rq6/ollama.jsonl",
+      "cache_mode": "replay",
+      "store_prompts": true,
+      "stats": {
+        "calls": 239,
+        "cache_hits": 239,
+        "backend_calls": 0,
+        "hit_rate": 1.0,
+        "prompt_tokens": 201494,
+        "completion_tokens": 214354,
+        "latency_s": 15637.767
+      },
+      "recorded_utc": [
+        "2026-11-14T07:23:08+00:00",
+        "2026-11-14T12:42:46+00:00"
+      ]
+    },
+    "openrouter": {
+      "kind": "openrouter",
+      "model": "openai/gpt-oss-120b",
+      "reported_models": [
+        "openai/gpt-oss-120b"
+      ],
+      "digest": null,
+      "cache_file": "data/llm_cache/rq6/openrouter.jsonl",
+      "cache_mode": "auto",
+      "store_prompts": true,
+      "stats": {
+        "calls": 240,
+        "cache_hits": 0,
+        "backend_calls": 240,
+        "hit_rate": 0.0,
+        "prompt_tokens": 215476,
+        "completion_tokens": 207847,
+        "latency_s": 566.315
+      },
+      "recorded_utc": [
+        "2026-11-14T12:52:04+00:00",
+        "2026-11-14T13:03:28+00:00"
+      ],
+      "retries": 36,
+      "rate_limit_wait_s": null,
+      "system_fingerprints": [
+        "fp_02b0d31eca",
+        "fp_4200b3f836",
+        "fp_47082602e2",
+        "fp_49bfac06f1",
+        "fp_5a93aea882",
+        "fp_64b2f1c926",
+        "fp_854fa9be4c",
+        "fp_87b3c396db",
+        "fp_8ea50c0161",
+        "fp_96d96a151c",
+        "fp_c800245357",
+        "fp_ca5edfaab2",
+        "fp_dee443f41b",
+        "fp_e5b4e54fbb",
+        "fp_f640395b96",
+        "fp_fe269835c7"
+      ],
+      "reported_limit_tokens": [],
+      "reported_limit_requests": [],
+      "provider_routing": {
+        "order": [
+          "groq"
+        ],
+        "allow_fallbacks": false,
+        "require_parameters": true
+      },
+      "providers": {
+        "Groq": 240
+      },
+      "recorded_cost": 0.153362
+    }
+  },
+  "cache_hit_rate": 0.499,
+  "bundle": {
+    "file": "llm_cache.jsonl.gz",
+    "entries": 479,
+    "bytes": 158333
+  },
+  "corpus": {
+    "path": "configs/wp20_rq6_corpus.json",
+    "sha256": "174c523898ce911c4e18b413f738fd1e492eff7d385cb5df73bb335c67d4ea3f",
+    "synthetic": true
+  },
+  "own_reports": 0,
+  "prompts": {
+    "redact": {
+      "version": "v1",
+      "sha256": "ed714c66d7b06959a89909d7eac515db81657b8427a8b1289102d5c3ee7677c3"
+    },
+    "redact_format": {
+      "version": "v1",
+      "sha256": "ee4e3e895927679717ae7b53936e8d8cdff120f98def81eff4d80dc09b0889a5"
+    },
+    "redact_format_changes": {
+      "version": "v1",
+      "sha256": "e058acb276282a338ec5cc515e28b98ba42f000d23a43eb6449f09901a0ddef5"
+    },
+    "redact_style_edit": {
+      "version": "v1",
+      "sha256": "194fe79d4ae2dac6ff14901115f1f5b18ff64dfc884b716f8c93a3657fba1df7"
+    },
+    "redact_style_board": {
+      "version": "v1",
+      "sha256": "0a298629e349a6d3b002674c795f33aa43f6464ba5af09f5d3eb922a6a335369"
+    },
+    "redact_style_finance": {
+      "version": "v1",
+      "sha256": "2fc2ea562370391290de7430317e782ddd077f9c7de93bee888b1035592c40b4"
+    },
+    "redact_style_team": {
+      "version": "v1",
+      "sha256": "fa9f2d2ada19655ba414b7cfeaa22ffe3de679f6fef13e853264c8381aa3127e"
+    }
+  },
+  "seeds": {
+    "base_seed": 2026
+  },
+  "seed_rule": "LLM seed of an edit: runs.derive_seed(base_seed, 'llm', 'rq6', report id, audience), shared by the backends and the two conditions",
+  "n_reports": 30,
+  "n_rows": 480,
+  "n_model_errors": 1,
+  "outputs": [
+    "results.csv",
+    "summary.md",
+    "table_wp20_rq6.tex",
+    "fig_rq6.pdf",
+    "fig_rq6.png",
+    "llm_cache.jsonl.gz"
+  ]
+}

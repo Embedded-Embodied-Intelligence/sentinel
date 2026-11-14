@@ -1,0 +1,14 @@
+# Paper artifacts of RQ6 (WP20): the editing study's full run, kept apart from
+# configs/paper.toml so that the earlier artifacts stay byte for byte as they are.
+# Written by `uv run sentinel paper --pin-rq6 <run>`; `sentinel paper` and
+# `sentinel reproduce --check` read it when it exists.
+name = "paper_rq6"
+out_dir = "paper/generated/rq6"
+
+[runs.rq6]  # RQ6: editing for audiences, both backends (WP20)
+path = "results/wp20/20261114-125202-a9deafbe"
+
+[runs.rq6.sha256]
+"manifest.json" = "f33a4c89f76756f75504444c51cdfe8921d56224b772d9c257084c3270731170"  # pragma: allowlist secret
+"results.csv" = "98be7345d9c068fd2a2f72f349a63f9697c684947a6decc096a3b99f932284bf"  # pragma: allowlist secret
+"llm_cache.jsonl.gz" = "613fc50814257db3d237d9c46602210049e1a326edc391c1e4b692499892ba20"  # pragma: allowlist secret
