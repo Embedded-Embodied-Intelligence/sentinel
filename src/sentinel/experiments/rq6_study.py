@@ -13,10 +13,14 @@ inventions), omitted facts (reported, not an error); and the length. In `self_re
 model's list is located in the two texts and compared with the code diff
 (`sentinel.interpret.tracked`): the share of the diff's changes it reports, the reported changes
 that are in no change of the diff or cannot be found, and the share of the changed facts it
-reports. Intervals: 95 % cluster bootstrap over reports. Outputs: `results.csv` (one row per
-report, audience, backend and condition; no text), `summary.md`, the LaTeX table, the figure
-`fig_rq6.pdf`/`.png`, `manifest.json` and the replay bundle (none when a report of a person is
-in the run).
+reports. An edit the backend could not answer (`LlmError`: an HTTP error, a timeout, a cache
+miss in replay) or whose answer violates its schema is a row with outcome `model_error` and a
+short error kind, and the run goes on; the failure rate is its own measure and the fact
+measures are over the successful edits, with their count. A rate limit or missing credits
+(`QuotaExhausted`) still stop the run, which resumes from the cache. Intervals: 95 % cluster
+bootstrap over reports. Outputs: `results.csv` (one row per report, audience, backend and
+condition; no text), `summary.md`, the LaTeX table, the figure `fig_rq6.pdf`/`.png`,
+`manifest.json` and the replay bundle (none when a report of a person is in the run).
 """
 
 import csv
@@ -65,12 +69,22 @@ from sentinel.interpret.redaction import (
     redact_reporting,
 )
 from sentinel.interpret.tracked import Diff, diff, tokenize
-from sentinel.llm import LlmResponse, load_prompt
+from sentinel.llm import (
+    CacheMiss,
+    LlmError,
+    LlmResponse,
+    QuotaExhausted,
+    RequestTooLarge,
+    load_prompt,
+)
+from sentinel.llm.http import TransportError, TransportTimeout
 
 RESULTS_FILE = "results.csv"
 SUMMARY_FILE = "summary.md"
 FIGURE = "fig_rq6"
 Condition = Literal["plain", "self_report"]
+OK = "ok"
+MODEL_ERROR = "model_error"  # the backend failed or its answer violates the schema
 COLUMNS = (
     "report",
     "source",
@@ -78,7 +92,8 @@ COLUMNS = (
     "condition",
     "backend",
     "model",
-    "valid",
+    "outcome",
+    "error",
     "facts",
     "unchanged",
     "changed",
@@ -249,6 +264,37 @@ def self_report(
     }
 
 
+def error_kind(exc: LlmError) -> str:
+    """A short code for a call the backend could not answer, never its message (which may quote
+    the answer)."""
+    if isinstance(exc, CacheMiss):
+        return "cache_miss"
+    if isinstance(exc, RequestTooLarge):
+        return "too_large"
+    if isinstance(exc, TransportTimeout):
+        return "timeout"
+    if isinstance(exc, TransportError):
+        return "transport"
+    return "backend" if exc.status is None else f"http_{exc.status}"
+
+
+def error_row(
+    report: Report, audience: Audience, condition: Condition, backend: str, model: str, kind: str
+) -> Row:
+    """An edit the backend could not answer: its outcome and error kind, no measure."""
+    return dict.fromkeys(COLUMNS) | {
+        "report": report.id,
+        "source": report.source,
+        "audience": audience,
+        "condition": condition,
+        "backend": backend,
+        "model": model,
+        "outcome": MODEL_ERROR,
+        "error": kind,
+        "words_report": len(report.text.split()),
+    }
+
+
 def result_row(
     report: Report,
     audience: Audience,
@@ -257,22 +303,25 @@ def result_row(
     model: str,
     response: LlmResponse[Any],
 ) -> Row:
-    """The fact guard of one version and, in `self_report`, the model's list against the diff."""
-    row: Row = {
+    """The fact guard of one version and, in `self_report`, the model's list against the diff;
+    an answer against the schema is a model error with the kind of its violation. Every row
+    has every column (None where nothing was measured), as `read_rows` gives it back."""
+    row: Row = dict.fromkeys(COLUMNS) | {
         "report": report.id,
         "source": report.source,
         "audience": audience,
         "condition": condition,
         "backend": backend,
         "model": model,
-        "valid": response.value is not None,
+        "outcome": OK,
         "words_report": len(report.text.split()),
         "prompt_tokens": response.prompt_tokens,
         "completion_tokens": response.completion_tokens,
         "latency_s": round(response.latency_s, 3),
     }
     if response.value is None:
-        return row
+        kind = response.error.kind if response.error is not None else "schema"
+        return row | {"outcome": MODEL_ERROR, "error": kind}
     version = response.value.text
     found = diff(report.text, version)
     guard = check(
@@ -294,11 +343,12 @@ def result_row(
 
 
 def execute(config: Rq6Config, reports: Sequence[Report], clients: Clients) -> list[Row]:
-    """Edit every report for every audience with every backend in both conditions."""
+    """Edit every report for every audience with every backend in both conditions; a failed
+    edit is recorded as a model error and the run goes on."""
     rows: list[Row] = []
     started = last = time.monotonic()
     total = len(reports) * len(config.audiences) * len(config.conditions) * len(clients.clients)
-    done = 0
+    done = errors = 0
     for report in reports:
         for audience in config.audiences:
             seed = item_seed(config.base_seed, "rq6", report.id, audience)
@@ -310,23 +360,37 @@ def execute(config: Rq6Config, reports: Sequence[Report], clients: Clients) -> l
                         answer = oracle_answer(report, audience, condition, backend.error_rate)
                         clients.oracles[name].register(report.text, _fixed(answer))
                     call = redact_reporting if condition == "self_report" else redact
-                    response = call(
-                        client,
-                        report.text,
-                        audience,
-                        language="pl",
-                        seed=seed,
-                        settings=config.redaction,
-                    )
-                    rows.append(
-                        result_row(report, audience, condition, name, client.model, response)
-                    )
+                    try:
+                        response = call(
+                            client,
+                            report.text,
+                            audience,
+                            language="pl",
+                            seed=seed,
+                            settings=config.redaction,
+                        )
+                    except QuotaExhausted:
+                        raise  # not a failure of this edit: the run stops and resumes later
+                    except LlmError as exc:
+                        kind = error_kind(exc)
+                        row = error_row(report, audience, condition, name, client.model, kind)
+                    else:
+                        row = result_row(report, audience, condition, name, client.model, response)
+                    rows.append(row)
                     done += 1
+                    if row["outcome"] == MODEL_ERROR:
+                        errors += 1
+                        print(
+                            f"model error ({row['error']}): {name} {report.id} {audience} "
+                            f"{condition}",
+                            flush=True,
+                        )
                     now = time.monotonic()
                     if now - last >= PROGRESS_INTERVAL_S or done == total:
                         print(
-                            f"[{format_duration(now - started)}] {done}/{total} edits; last: "
-                            f"{name} {report.id} {audience} {condition}",
+                            f"[{format_duration(now - started)}] {done}/{total} edits, "
+                            f"{errors} model errors; last: {name} {report.id} {audience} "
+                            f"{condition}",
                             flush=True,
                         )
                         last = now
@@ -376,6 +440,26 @@ def _share_of(rows: Sequence[Row], test: str, weights: FloatArray, ids: Mapping[
     return _ratio(flagged, "_hit", None, weights, ids)
 
 
+def _error_share(rows: Sequence[Row], weights: FloatArray, ids: Mapping[str, int]) -> str:
+    """The share (in %) of edits that ended in a model error, with its interval."""
+    flagged = [dict(r, _hit=int(r["outcome"] == MODEL_ERROR)) for r in rows]
+    return _ratio(flagged, "_hit", None, weights, ids)
+
+
+def _ok(rows: Sequence[Row]) -> list[Row]:
+    """The successful edits, over which the fact measures are computed."""
+    return [r for r in rows if r["outcome"] == OK]
+
+
+def _kinds(rows: Sequence[Row]) -> str:
+    """The error kinds of the model errors with their counts, e.g. `http_500: 2, schema: 1`."""
+    counts: dict[str, int] = {}
+    for row in rows:
+        if row["outcome"] == MODEL_ERROR:
+            counts[str(row["error"])] = counts.get(str(row["error"]), 0) + 1
+    return ", ".join(f"{kind}: {n}" for kind, n in sorted(counts.items())) or "-"
+
+
 def _groups(rows: Sequence[Row], condition: str) -> list[tuple[str, str, list[Row]]]:
     out = []
     for backend in dict.fromkeys(r["backend"] for r in rows):
@@ -388,8 +472,9 @@ def _groups(rows: Sequence[Row], condition: str) -> list[tuple[str, str, list[Ro
 
 
 def summary_markdown(run_id: str, rows: Sequence[Row], config: Rq6Config, own: int) -> str:
-    """Per backend and audience (and over all audiences): the facts of the versions in both
-    conditions, and the model's list of changes against the code diff."""
+    """Per backend and condition the model errors; per backend and audience (and over all
+    audiences) the facts of the successful versions in both conditions, and the model's list of
+    changes against the code diff."""
     reports = sorted({r["report"] for r in rows})
     ids = {report: i for i, report in enumerate(reports)}
     weights = resamples(len(reports), config.summary, "rq6")
@@ -402,8 +487,23 @@ def summary_markdown(run_id: str, rows: Sequence[Row], config: Rq6Config, own: i
         f"added by hand), {facts} facts; audiences {', '.join(config.audiences)}. Shares and "
         "rates with 95 % cluster-bootstrap intervals over reports "
         f"({config.summary.bootstrap_resamples} resamples). A changed fact is the dangerous "
-        "error; an omitted fact is reported, not an error.",
+        "error; an omitted fact is reported, not an error. A model error (the backend could "
+        "not answer, or its answer violates the schema) is its own measure, in % of all "
+        "edits; the fact measures are over the successful edits.",
+        "",
+        "## Model errors",
+        "",
+        "| Backend | Condition | Edits | Model errors | Successful edits | Kinds |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
+    for backend in dict.fromkeys(r["backend"] for r in rows):
+        for condition in config.conditions:
+            mine = [r for r in rows if r["backend"] == backend and r["condition"] == condition]
+            if mine:
+                lines.append(
+                    f"| {backend} | {condition} | {len(mine)} | "
+                    f"{_error_share(mine, weights, ids)} | {len(_ok(mine))} | {_kinds(mine)} |"
+                )
     for condition, title in (
         ("plain", "Facts in the edited versions (the application's prompt)"),
         ("self_report", "Facts when the model also lists its changes"),
@@ -416,15 +516,16 @@ def summary_markdown(run_id: str, rows: Sequence[Row], config: Rq6Config, own: i
             "",
             f"Condition {condition}",
             "",
-            "| Backend | Audience | Valid | With a changed fact | Changed per 100 facts | "
-            "With a new fact | New per version | Omitted per 100 facts | Length ratio |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| Backend | Audience | Edits | Model errors | Successful edits | "
+            "With a changed fact | Changed per 100 facts | With a new fact | New per version | "
+            "Omitted per 100 facts | Length ratio |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
         for backend, audience, mine in _groups(rows, condition):
-            valid = [r for r in mine if r["valid"]]
+            valid = _ok(mine)
             lines.append(
-                f"| {backend} | {audience} | {_share_of(mine, 'valid', weights, ids)} | "
-                f"{_share_of(valid, 'changed', weights, ids)} | "
+                f"| {backend} | {audience} | {len(mine)} | {_error_share(mine, weights, ids)} | "
+                f"{len(valid)} | {_share_of(valid, 'changed', weights, ids)} | "
                 f"{_ratio(valid, 'changed', 'facts', weights, ids)} | "
                 f"{_share_of(valid, 'new', weights, ids)} | "
                 f"{_ratio(valid, 'new', None, weights, ids, scale=1.0, digits=2)} | "
@@ -438,14 +539,15 @@ def summary_markdown(run_id: str, rows: Sequence[Row], config: Rq6Config, own: i
             "",
             "Condition self_report",
             "",
-            "| Backend | Audience | Diff changes per version | Listed per version | "
-            "Diff changes listed | Listed not in the diff | Changed facts listed |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| Backend | Audience | Successful edits | Diff changes per version | "
+            "Listed per version | Diff changes listed | Listed not in the diff | "
+            "Changed facts listed |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
         for backend, audience, mine in _groups(rows, "self_report"):
-            valid = [r for r in mine if r["valid"]]
+            valid = _ok(mine)
             lines.append(
-                f"| {backend} | {audience} | "
+                f"| {backend} | {audience} | {len(valid)} | "
                 f"{_ratio(valid, 'code_changes', None, weights, ids, scale=1.0, digits=2)} | "
                 f"{_ratio(valid, 'reported', None, weights, ids, scale=1.0, digits=2)} | "
                 f"{_ratio(valid, 'code_reported', 'code_changes', weights, ids)} | "
@@ -453,39 +555,49 @@ def summary_markdown(run_id: str, rows: Sequence[Row], config: Rq6Config, own: i
                 f"{_ratio(valid, 'fact_changes_reported', 'changed', weights, ids)} |"
             )
     tokens = sum(int(r["prompt_tokens"] or 0) + int(r["completion_tokens"] or 0) for r in rows)
-    lines += ["", f"Tokens: {tokens} in {len(rows)} calls."]
+    errors = len(rows) - len(_ok(rows))
+    lines += ["", f"Tokens: {tokens} in {len(rows)} edits ({errors} model errors)."]
     return "\n".join(lines) + "\n"
 
 
 def latex_table(run_id: str, rows: Sequence[Row], config: Rq6Config) -> str:
-    """Per backend over all audiences, condition plain: versions with a changed fact, changed,
-    new and omitted facts, and the share of the diff's changes the model lists (booktabs)."""
+    """Per backend and audience (and over all audiences): in condition plain the successful
+    edits, the model errors, versions with a changed fact, changed, new and omitted facts; in
+    self_report the successful edits, the model errors and the share of the diff's changes the
+    model lists (booktabs)."""
     reports = sorted({r["report"] for r in rows})
     ids = {report: i for i, report in enumerate(reports)}
     weights = resamples(len(reports), config.summary, "rq6")
     lines = [
         f"% Generated by sentinel.experiments.rq6_study from run {run_id}; do not edit.",
-        "\\begin{tabular}{llrrrrr}",
+        "% n: successful edits, over which the measures are computed; Errors: model errors in "
+        "% of all edits.",
+        "\\begin{tabular}{llrrrrrrrrr}",
         "\\toprule",
-        "Backend & Audience & Changed (\\%) & Changed/100 & New/version & Omitted/100 & "
-        "Listed (\\%) \\\\",
+        " & & \\multicolumn{6}{c}{plain} & \\multicolumn{3}{c}{self\\_report} \\\\",
+        "\\cmidrule(lr){3-8}\\cmidrule(lr){9-11}",
+        "Backend & Audience & n & Errors (\\%) & Changed (\\%) & Changed/100 & New/version & "
+        "Omitted/100 & n & Errors (\\%) & Listed (\\%) \\\\",
         "\\midrule",
     ]
     for backend, audience, mine in _groups(rows, "plain"):
-        valid = [r for r in mine if r["valid"]]
-        listed = [
+        reporting = [
             r
             for r in rows
-            if r["valid"]
-            and r["condition"] == "self_report"
+            if r["condition"] == "self_report"
             and r["backend"] == backend
             and (audience == "all" or r["audience"] == audience)
         ]
+        valid, listed = _ok(mine), _ok(reporting)
         cells = [
+            str(len(valid)),
+            _error_share(mine, weights, ids),
             _share_of(valid, "changed", weights, ids),
             _ratio(valid, "changed", "facts", weights, ids),
             _ratio(valid, "new", None, weights, ids, scale=1.0, digits=2),
             _ratio(valid, "omitted", "facts", weights, ids),
+            str(len(listed)) if reporting else "-",
+            _error_share(reporting, weights, ids) if reporting else "-",
             _ratio(listed, "code_reported", "code_changes", weights, ids) if listed else "-",
         ]
         values = " & ".join(c.split(" [")[0] for c in cells)
@@ -536,7 +648,7 @@ def write_figure(
                 mine = [
                     r
                     for r in rows
-                    if r["valid"]
+                    if r["outcome"] == OK
                     and r["condition"] == "plain"
                     and r["backend"] == backend
                     and r["audience"] == audience
@@ -647,6 +759,7 @@ def run(args: Any, command: str) -> Path:
             "seed_rule": SEED_RULE,
             "n_reports": len(reports),
             "n_rows": len(rows),
+            "n_model_errors": len(rows) - len(_ok(rows)),
         },
     )
     runs.write_json(run_dir / "manifest.json", data)

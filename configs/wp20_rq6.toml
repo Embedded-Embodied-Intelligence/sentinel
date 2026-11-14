@@ -4,8 +4,14 @@
 # "plain" (the application's prompt, the edited text only) and "self_report" (the same prompt
 # asking also for the model's list of changes). The fact guard compares each version with the
 # report, and the model's list is compared with the code diff.
-# Ollama run:  uv run python -m sentinel.experiments.rq6_study --config configs/wp20_rq6.toml --out results/wp20 --backend ollama
-# Both backends (Ollama replayed from its cache, OpenRouter live and resumable; Groq: --backend groq):
+# An edit the backend cannot answer, or whose answer violates the schema, is recorded as a
+# model error (its kind only) and the run goes on; a rate limit or missing credits stop it.
+# Ollama run (in tmux; about 66 s per edit on the server, about 4.5 h for its 240 edits; the
+# cache makes a rerun resume where it stopped):
+#              uv run python -m sentinel.experiments.rq6_study --config configs/wp20_rq6.toml --out results/wp20 --backend ollama
+# Both backends (Ollama replayed from its cache, OpenRouter live and resumable, about 20 min;
+# an Ollama edit that failed is not cached and counts as a model error "cache_miss"; Groq:
+# --backend groq):
 #              uv run python -m sentinel.experiments.rq6_study --config configs/wp20_rq6.toml --out results/wp20 --replay ollama=data/llm_cache/rq6/ollama.jsonl
 # Smoke on the scripted editor: --backend fake --limit 2
 name = "wp20_rq6"

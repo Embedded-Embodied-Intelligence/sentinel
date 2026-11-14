@@ -5,6 +5,23 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 2.0.1 — 2026-11-14 (WP20 hotfix: RQ6 survives a failed edit)
+
+No change to the existing research results (`sentinel reproduce --check`: 117 of 117 files).
+
+- **RQ6** (`sentinel.experiments.rq6_study`): an edit the backend cannot answer (an HTTP error
+  such as Ollama's 500 "token repeat limit reached", a timeout, a cache miss in replay) or whose
+  answer violates its schema is a row with outcome `model_error` and a short error kind (no
+  prompt or answer text), and the run goes on; before, the first such error stopped the full
+  Ollama run after 67 of 240 edits. A rate limit or missing credits still stop the run, which
+  resumes from the cache.
+- The summary, its LaTeX table and the paper's `tab_rq6.tex` report the model errors per
+  backend and condition as their own measure (and per audience); the fact measures are over the
+  successful edits, with their count. The request parameters are unchanged, so the edits
+  already in the cache stay valid and a rerun resumes from them.
+- The time estimate of the Ollama run is corrected: about 66 s per edit on the server, about
+  4.5 h for its 240 edits (`configs/wp20_rq6.toml`, the WP20 report).
+
 ## 2.0.0 — 2026-11-14 (WP20, v3 part 2: Raporty, Finanse, RQ6, the survey; the v3 interface complete)
 
 No change to the existing research results (`sentinel reproduce --check`: the 117 files of

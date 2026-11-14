@@ -57,17 +57,28 @@ AUDIENCE_NAMES = {
 }
 HEADERS = {
     "en": (
-        r"Model & Audience & Changed fact & Changed/100 & New fact & Omitted/100 & "
-        r"Diff listed \\"
+        r" & & \multicolumn{6}{c}{The application's prompt} & "
+        r"\multicolumn{3}{c}{With the list of changes} \\",
+        r"\cmidrule(lr){3-8}\cmidrule(lr){9-11}",
+        r"Model & Audience & $n$ & Errors & Changed fact & Changed/100 & New fact & "
+        r"Omitted/100 & $n$ & Errors & Diff listed \\",
     ),
     "pl": (
-        r"Model & Odbiorca & Zmieniony fakt & Zmienione/100 & Nowy fakt & Pominięte/100 & "
-        r"Zmiany na liście \\"
+        r" & & \multicolumn{6}{c}{Prompt aplikacji} & \multicolumn{3}{c}{Z listą zmian} \\",
+        r"\cmidrule(lr){3-8}\cmidrule(lr){9-11}",
+        r"Model & Odbiorca & $n$ & Błędy & Zmieniony fakt & Zmienione/100 & Nowy fakt & "
+        r"Pominięte/100 & $n$ & Błędy & Zmiany na liście \\",
     ),
 }
 NOTES = {
-    "en": "shares of versions in %; per 100 facts; intervals: 95 % cluster bootstrap",
-    "pl": "udziały wersji w %; na 100 faktów; przedziały: 95 % bootstrap po raportach",
+    "en": (
+        "n: successful edits, over which the measures are computed; errors: model errors in % "
+        "of all edits; shares of versions in %; per 100 facts; intervals: 95 % cluster bootstrap"
+    ),
+    "pl": (
+        "n: udane redakcje, z których liczone są miary; błędy: błędy modelu w % wszystkich "
+        "redakcji; udziały wersji w %; na 100 faktów; przedziały: 95 % bootstrap po raportach"
+    ),
 }
 PLAIN = "Facts in the edited versions (the application's prompt)"
 SELF = "Facts when the model also lists its changes"
@@ -90,40 +101,42 @@ def _backends(table: Table) -> list[str]:
 
 
 def build_macros(run: Run) -> list[Macro]:
-    """Every RQ6 macro: per backend and audience the facts of both conditions and the model's
-    list against the diff, and the run's size."""
+    """Every RQ6 macro: per backend and audience the edits, model errors and successful edits
+    of both conditions, the facts of the successful versions and the model's list against the
+    diff (a measure without a successful edit has no macro), and the run's size."""
     catalog = Catalog()
     plain, self_report, listed = _tables(run)
     backends = _backends(plain)
+
+    def measure(name: str, table: Table, column: str, row: Mapping[str, str], ci: bool) -> None:
+        if table.cell(column, **row).text != "-":
+            catalog.cell(name, table, column, row, ci=ci)
+
     for backend in backends:
         for audience, a_key in AUDIENCES.items():
             row = {"Backend": backend, "Audience": audience}
             stem = f"{BACKENDS[backend]}{a_key}"
             for table, prefix in ((plain, "RQsix"), (self_report, "RQsixSelf")):
-                catalog.cell(f"{prefix}Valid{stem}", table, "Valid", row)
-                catalog.cell(
-                    f"{prefix}ChangedVersions{stem}", table, "With a changed fact", row, ci=True
-                )
-                catalog.cell(
-                    f"{prefix}ChangedPerHundred{stem}", table, "Changed per 100 facts", row, ci=True
-                )
-                catalog.cell(f"{prefix}NewVersions{stem}", table, "With a new fact", row, ci=True)
-                catalog.cell(f"{prefix}NewPerVersion{stem}", table, "New per version", row)
-                catalog.cell(
-                    f"{prefix}OmittedPerHundred{stem}", table, "Omitted per 100 facts", row, ci=True
-                )
-                catalog.cell(f"{prefix}Length{stem}", table, "Length ratio", row)
-            catalog.cell(f"RQsixDiffChanges{stem}", listed, "Diff changes per version", row)
-            catalog.cell(f"RQsixListedPerVersion{stem}", listed, "Listed per version", row)
-            catalog.cell(f"RQsixDiffListed{stem}", listed, "Diff changes listed", row, ci=True)
-            catalog.cell(
-                f"RQsixListedNotInDiff{stem}", listed, "Listed not in the diff", row, ci=True
-            )
-            cell = listed.cell("Changed facts listed", **row)
-            if cell.text != "-":
-                catalog.cell(
-                    f"RQsixChangedFactsListed{stem}", listed, "Changed facts listed", row, ci=True
-                )
+                catalog.cell(f"{prefix}Edits{stem}", table, "Edits", row)
+                catalog.cell(f"{prefix}Errors{stem}", table, "Model errors", row, ci=True)
+                catalog.cell(f"{prefix}Successful{stem}", table, "Successful edits", row)
+                for name, column, ci in (
+                    ("ChangedVersions", "With a changed fact", True),
+                    ("ChangedPerHundred", "Changed per 100 facts", True),
+                    ("NewVersions", "With a new fact", True),
+                    ("NewPerVersion", "New per version", False),
+                    ("OmittedPerHundred", "Omitted per 100 facts", True),
+                    ("Length", "Length ratio", False),
+                ):
+                    measure(f"{prefix}{name}{stem}", table, column, row, ci)
+            for name, column, ci in (
+                ("DiffChanges", "Diff changes per version", False),
+                ("ListedPerVersion", "Listed per version", False),
+                ("DiffListed", "Diff changes listed", True),
+                ("ListedNotInDiff", "Listed not in the diff", True),
+                ("ChangedFactsListed", "Changed facts listed", True),
+            ):
+                measure(f"RQsix{name}{stem}", listed, column, row, ci)
     manifest = run.manifest
     path = (run.path / "manifest.json").as_posix()
     catalog.add("RQsixReports", str(manifest["n_reports"]), f"{path} | field n_reports")
@@ -134,26 +147,36 @@ def build_macros(run: Run) -> list[Macro]:
 
 
 def tab_rq6(run: Run, language: Language) -> str:
-    """Per model and audience, the application's prompt: versions with a changed fact, changed
-    facts per 100, versions with a new fact, omitted per 100, and the share of the diff's
-    changes the model lists when asked."""
-    plain, _, listed = _tables(run)
+    """Per model and audience: with the application's prompt the successful edits, the model
+    errors, versions with a changed fact, changed facts per 100, versions with a new fact and
+    omitted per 100; when the model also lists its changes the successful edits, the model
+    errors and the share of the diff's changes it lists."""
+    plain, self_report, listed = _tables(run)
     code = language.code
+
+    def num(table: Table, column: str, row: Mapping[str, str], ci: bool = False) -> str:
+        cell = table.cell(column, **row).text
+        return "--" if cell == "-" else _num(_get(table, column, row), language, ci=ci)
+
     body = []
     for backend in _backends(plain):
         for audience in AUDIENCES:
             row = {"Backend": backend, "Audience": audience}
             cells = [
-                _num(_get(plain, "With a changed fact", row), language, ci=True),
-                _num(_get(plain, "Changed per 100 facts", row), language),
-                _num(_get(plain, "With a new fact", row), language, ci=True),
-                _num(_get(plain, "Omitted per 100 facts", row), language),
-                _num(_get(listed, "Diff changes listed", row), language, ci=True),
+                num(plain, "Successful edits", row),
+                num(plain, "Model errors", row),
+                num(plain, "With a changed fact", row, ci=True),
+                num(plain, "Changed per 100 facts", row),
+                num(plain, "With a new fact", row, ci=True),
+                num(plain, "Omitted per 100 facts", row),
+                num(self_report, "Successful edits", row),
+                num(self_report, "Model errors", row),
+                num(listed, "Diff changes listed", row, ci=True),
             ]
             name = f"{MODELS[backend]} & {AUDIENCE_NAMES[code][audience]}"
             body.append(f"{name} & " + " & ".join(cells) + r" \\")
     text = _tabular(
-        "llrrrrr", [HEADERS[code]], body, [f"from {run.path.as_posix()}; {NOTES[code]}"]
+        "llrrrrrrrrr", list(HEADERS[code]), body, [f"from {run.path.as_posix()}; {NOTES[code]}"]
     )
     return text.replace("configs/paper.toml", DEFAULT_CONFIG.as_posix())
 
