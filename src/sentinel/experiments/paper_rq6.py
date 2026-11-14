@@ -207,12 +207,11 @@ def generate(
     macros = build_macros(run)
     rows = read_rows(run.path / rq6_study.RESULTS_FILE)
     study = rq6_study.Rq6Config.model_validate(run.manifest["config"])
+    shown = _record(config_path)["path"]  # relative, as in MANIFEST.json (an absolute path too)
     written: list[Path] = []
     for language, folder in ((ENGLISH, target), (POLISH_LANGUAGE, target / "pl")):
         folder.mkdir(parents=True, exist_ok=True)
-        numbers = numbers_tex(macros, language).replace(
-            "configs/paper.toml", config_path.as_posix()
-        )
+        numbers = numbers_tex(macros, language).replace("configs/paper.toml", shown)
         texts = {"numbers.tex": numbers, "tab_rq6.tex": tab_rq6(run, language)}
         for name, text in texts.items():
             (folder / name).write_text(text, encoding="utf-8")

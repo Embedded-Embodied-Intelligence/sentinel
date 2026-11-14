@@ -119,6 +119,26 @@ def test_an_edit_shows_tracked_changes_and_the_fact_guard(site: Site) -> None:
         assert f'data-dowod="/v2/dowod/{decision}"' in html
 
 
+@pytest.mark.parametrize("message", ["", "board"])
+def test_the_draft_page_renders_while_the_edit_runs(site: Site, message: str) -> None:
+    """The draft page with a running job (before and after the job names its audience) shows
+    the polled wait, whether or not the edit has finished by the time the page renders."""
+    base = new_draft(site)
+    store = site.services.store
+    job = store.create_job(LOCAL_SESSION, None, "redact")
+    try:
+        store.update_job(job.id, status="running", message=message)
+        response = site.client.get(base, params={"job": job.id, "lang": "pl"})
+        assert response.status_code == 200, response.text
+        assert problems(response.text) == []
+        assert f"{base}/wait?job={job.id}" in response.text
+        text = text_of(response.text)
+        assert "AI redaguje raport…" in text
+        assert ("Teraz: Zarząd" in text) == bool(message)
+    finally:
+        store.update_job(job.id, status="done")
+
+
 def test_rejecting_the_changed_number_restores_the_fact(site: Site) -> None:
     base = new_draft(site)
     html = site.client.get(base).text

@@ -491,6 +491,7 @@ def synthetic_run(tmp_path: Path) -> Path:
     return write_run(tmp_path / "synthetic", synthetic_rows(), config_text)
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_summary_cli_on_a_tiny_synthetic_csv(
     synthetic_run: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -540,6 +541,7 @@ def test_synthetic_scores_by_hand(synthetic_run: Path) -> None:
     assert int(pit.sum()) == 5
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_synthetic_skill_discrimination_coverage_and_plan_stage(synthetic_run: Path) -> None:
     """At f = 0 and f = 0.4 one of the two forecasts is on time, so vague (p = 0.5) is the
     base-rate forecaster of those cells: BSS 0. Pooled over checkpoints (base rate 0.4) its BSS

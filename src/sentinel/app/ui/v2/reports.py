@@ -83,6 +83,11 @@ def label(t: TextsV2, audience: str) -> str:
     return t(f"v2.rep.aud.{audience}")
 
 
+def working_on(t: TextsV2, message: str) -> str:
+    """The audience the editing job is on, as a label; empty while the job waits to start."""
+    return label(t, message) if message in REPORT_AUDIENCES else ""
+
+
 def _pieces(segments: list[Segment], rejected: frozenset[int]) -> list[Piece]:
     return [
         Piece(s.kind, s.original, s.version, s.change, s.change not in rejected) for s in segments
@@ -163,7 +168,9 @@ def router(ui: Ui) -> APIRouter:
     def session(request: Request) -> str:
         return ui.session(request)
 
-    def draft_page(request: Request, draft: reports.Draft, job: str | None = None) -> Response:
+    def draft_page(
+        request: Request, draft: reports.Draft, job: str | None = None, now: str = ""
+    ) -> Response:
         t = texts(request)
         audience = current_audience(request, draft)
         base = f"{BASE}/draft/{draft.id}"
@@ -174,6 +181,7 @@ def router(ui: Ui) -> APIRouter:
             "draft": draft,
             "base": base,
             "job": job,
+            "now": now,
             "tabs": tabs(t, draft, audience, base),
             "editor": editor(t, draft, audience, working),
             "readonly": False,
@@ -250,11 +258,14 @@ def router(ui: Ui) -> APIRouter:
     def draft_view(request: Request, draft_id: str) -> Response:
         draft = services.draft(session(request), draft_id)
         job_id = request.query_params.get("job")
+        now = ""
         if job_id:
             job = services.job(session(request), job_id, ui.language(request))
-            if job.status not in ("queued", "running"):
+            if job.status in ("queued", "running"):
+                now = working_on(texts(request), job.message)
+            else:
                 job_id = None
-        return draft_page(request, draft, job_id or None)
+        return draft_page(request, draft, job_id or None, now)
 
     @routes.get(BASE + "/draft/{draft_id}/wait")
     def wait(request: Request, draft_id: str) -> Response:
@@ -264,15 +275,13 @@ def router(ui: Ui) -> APIRouter:
             session(request), request.query_params.get("job", ""), ui.language(request)
         )
         if job.status in ("queued", "running"):
-            t = texts(request)
-            current = job.message if job.message in REPORT_AUDIENCES else ""
             return page(
                 ui,
                 request,
                 "_report_wait.html",
                 base=f"{BASE}/draft/{draft.id}",
                 job=job.id,
-                now=label(t, current) if current else "",
+                now=working_on(texts(request), job.message),
             )
         return ui.redirect(request, f"{BASE}/draft/{draft.id}")
 

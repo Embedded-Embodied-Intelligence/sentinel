@@ -14,6 +14,7 @@ pytestmark = pytest.mark.data
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_worlds_reproduce_the_wp2b_makespans(psplib_root: Path, tmp_path: Path) -> None:
     """Replications 0-1 of j301_1 and j601_1 in all four scenarios have the WP2b seeds and
     makespans (committed WP2b results); forecasts use 10 rollouts to keep the test short."""

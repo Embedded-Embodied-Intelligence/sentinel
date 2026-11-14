@@ -187,6 +187,7 @@ def _expected(case: str) -> list[dict[str, Any]]:
     return outcomes
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_full_autonomy_runs_are_unchanged_on_a_synthetic_instance() -> None:
     """Three seeds on the synthetic instance: result, decision records and counts unchanged."""
     assert _run("synthetic") == _expected("synthetic")

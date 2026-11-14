@@ -32,14 +32,14 @@ Reversibility and stakes: whether an error can be undone cheaply before it does 
 Verifiability: whether a person or code can check the output cheaply and reliably before it is used.
 
 - Test question: „Czy wynik AI można szybko sprawdzić (kodem albo okiem człowieka)?”
-- Evidence: E03, E04, E06, E07, E11, E13, E14, E29, E30, E36, E37, E39, E47, E49
+- Evidence: E03, E04, E06, E07, E11, E13, E14, E29, E30, E36, E37, E39, E47, E49, E53, E54
 
 ### 3. Praca językowa czy liczby i osąd
 
 Language work or numbers and judgment: whether the task is language work inside the model's frontier (editing, summarising, text to data) or computation, new judgment or strategy outside it.
 
 - Test question: „Czy to praca na tekście, czy liczenie, nowy osąd albo strategia?”
-- Evidence: E01, E02, E05, E14, E15, E43, E44, E47, E48, E51
+- Evidence: E01, E02, E05, E14, E15, E43, E44, E47, E48, E51, E53, E54
 
 ### 4. Wpływ na ludzi i pieniądze
 

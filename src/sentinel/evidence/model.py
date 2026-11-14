@@ -13,12 +13,14 @@ Module = Literal["raporty", "projekty", "finanse", "ludzie", "uprawnienia", "map
 Stance = Literal["wspiera", "podwaza", "niuansuje"]
 # empirical: a study with data; theoretical: theory, a review of ideas or a vision; law: a
 # legal text; standard: a security, risk or accessibility standard; industry: a vendor's text;
-# own: a result of Sentinel's own study (paper/generated/numbers.tex).
+# own: a result of Sentinel's own study (paper/generated/numbers.tex; RQ6: its rq6/ folder).
 Kind = Literal["empirical", "theoretical", "law", "standard", "industry", "own"]
 Zone = Literal["ai_samodzielnie", "ai_z_czlowiekiem", "tylko_czlowiek"]
 Basis = Literal["empirical", "normative", "theoretical"]
 MAX_QUOTE_SENTENCES = 3
 NUMBERS_FILE = "paper/generated/numbers.tex"
+RQ6_NUMBERS_FILE = "paper/generated/rq6/numbers.tex"  # RQ6 has its own paper artifacts (WP20)
+NUMBERS_FILES = (NUMBERS_FILE, RQ6_NUMBERS_FILE)
 SHA256 = re.compile(r"[0-9a-f]{64}")
 ZONE_ORDER: dict[Zone, int] = {"ai_samodzielnie": 0, "ai_z_czlowiekiem": 1, "tylko_czlowiek": 2}
 
@@ -43,7 +45,7 @@ class Source(_Frozen):
 
 
 class Figure(_Frozen):
-    """A number of Sentinel's own study: a macro of paper/generated/numbers.tex and its value."""
+    """A number of Sentinel's own study: a macro of its item's numbers file and its value."""
 
     macro: str = Field(pattern=r"^[A-Za-z]+$")
     value: str
@@ -161,8 +163,8 @@ class EvidenceItem(_Frozen):
         if self.kind == "own":
             if not self.figures or not self.run_ids or self.runs is None or not self.caveats_pl:
                 raise ValueError(f"{self.id}: own evidence has figures, run ids, runs, caveats")
-            if self.quote is not None or self.verification.source_file != NUMBERS_FILE:
-                raise ValueError(f"{self.id}: own evidence is checked against {NUMBERS_FILE}")
+            if self.quote is not None or self.verification.source_file not in NUMBERS_FILES:
+                raise ValueError(f"{self.id}: own evidence is checked against {NUMBERS_FILES}")
         elif self.figures or self.run_ids or self.runs is not None:
             raise ValueError(f"{self.id}: only own evidence has figures and runs")
 

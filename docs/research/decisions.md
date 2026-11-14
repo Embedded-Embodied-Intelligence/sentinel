@@ -30,9 +30,9 @@ interface's "Dowód" points and the presentation read the same ids.
 | D11 | Speech is transcribed into a draft whose recognised items appear as "Do potwierdzenia" cards, unchecked by default. | Raport · 🎤 and the cards | E03+, E39+, E47~ | current | empirical |
 | D12 | The language model is local (Ollama) or in the cloud (Groq, OpenRouter) by the user's choice, with no tools in either case; caches of real messages keep no prompts. | Ustawienia · Model AI | E32+, E42+ | current | normative |
 | D13 | Every number the manager sees (chance, finish date, budget, effect of a decision) comes from the schedule code and the Monte Carlo simulation, never from the language model. | Pulpit; Raport · Wpływ na projekt; Decyzja · Skutek | E14+, E15+, E48+, E49+, E50+ | current | empirical |
-| D14 | Raporty: AI edits a report a person wrote in tracked-changes mode, and each change is accepted or rejected on its own. | Raporty · Śledzenie zmian (v3) | E01+, E04+, E05~, E43− | current | empirical |
-| D15 | Raporty: a fact guard in code checks that numbers, dates and names survive the edit and marks every one that changed. | Raporty · Strażnik faktów (v3) | E03+, E14+, E15+ | current | empirical |
-| D16 | Raporty: versions of a report for different audiences are tracked-changes edits of the person's text, each reviewed like the first. | Raporty · Wersje dla odbiorców (v3) | E01+, E02~, E05~, E43− | current | empirical |
+| D14 | Raporty: AI edits a report a person wrote in tracked-changes mode, and each change is accepted or rejected on its own. | Raporty · Śledzenie zmian (v3) | E01+, E04+, E05~, E43−, E53+ | current | empirical |
+| D15 | Raporty: a fact guard in code checks that numbers, dates and names survive the edit and marks every one that changed. | Raporty · Strażnik faktów (v3) | E03+, E14+, E15+, E53+ | current | empirical |
+| D16 | Raporty: versions of a report for different audiences are tracked-changes edits of the person's text, each reviewed like the first. | Raporty · Wersje dla odbiorców (v3) | E01+, E02~, E05~, E43−, E54~ | current | empirical |
 | D17 | Finanse: AI summarises the budget and its deviations from numbers computed by code and has no right to approve or change a figure. | Finanse · Podsumowanie (v3) | E02~, E14+, E15+, E16~*, E17+ | current | empirical |
 | D18 | Ludzie: features deliberately absent, each named with its reason: performance scores, a ranking of people for substitution, mood or emotion analysis, reasons for absence. | Ludzie · Czego tu celowo nie ma (v3) | E18+, E19+, E20+, E22+*, E32+, E46~ | current | normative |
 | D19 | Uprawnienia AI: the language model has no tools and no permissions; it returns JSON validated against a schema, which code compiles and a person approves. | Uprawnienia AI (v3) | E09−, E23+, E24+, E25~, E33+* | current | normative |
@@ -53,6 +53,10 @@ interface's "Dowód" points and the presentation read the same ids.
   of correctness) challenges D05 and D22, E43 (co-writing shifts opinions) challenges D14 and
   D16, E44 (human–AI teams are on average worse than the better of the two) challenges D03 and
   D20, and our own E52 (waiting for approval costs on-time finishes in simulation) nuances D03.
+- Our own RQ6 (WP20, one run, two items): E53 supports D14 and D15 (the models rarely change a
+  fact, and their own lists of changes miss real changes and name ones that did not happen, so
+  code computes the changes and the guard checks the facts); E54 nuances D16 (the cloud model
+  added a fact in some versions, and the shorter versions leave out more facts).
 - D21 is current since WP19: E07 shows that cognitive forcing reduces over-reliance but is rated
   worst by its users, so the step can be skipped ("Pokaż od razu") and switched off in the
   project settings ("Najpierw moja ocena", on by default); a usability test is still open.

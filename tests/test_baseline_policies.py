@@ -376,6 +376,7 @@ def test_operations_act_alike_in_a_resumed_run_and_in_the_world(build: Builder) 
     assert checked >= 3
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_perfect_information_rollout_after_subst_and_reseq_reproduces_the_makespan(
     build: Builder,
 ) -> None:

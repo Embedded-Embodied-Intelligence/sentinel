@@ -77,6 +77,7 @@ def test_config_rejects_invalid_values(
         StudyConfig.model_validate(raw)
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_smoke_run_writes_all_outputs(fake_study: Path, tmp_path: Path) -> None:
     out = tmp_path / "results"
     assert study.main(["--config", str(fake_study), "--out", str(out), "--limit", "2"]) == 0
@@ -132,6 +133,7 @@ def test_smoke_run_writes_all_outputs(fake_study: Path, tmp_path: Path) -> None:
     assert "## TINY" in (run_dir / "summary.md").read_text(encoding="utf-8")
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_replications_override_counts_as_smoke(fake_study: Path, tmp_path: Path) -> None:
     out = tmp_path / "results"
     argv = ["--config", str(fake_study), "--out", str(out), "--replications", "1"]
@@ -204,6 +206,7 @@ def test_wilson_interval(successes: int, n: int, expected: tuple[float, float]) 
     assert (low, high) == pytest.approx(expected, abs=1e-4)
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_summaries_can_be_regenerated(fake_study: Path, tmp_path: Path) -> None:
     out = tmp_path / "results"
     assert study.main(["--config", str(fake_study), "--out", str(out), "--limit", "1"]) == 0

@@ -30,7 +30,7 @@ from sentinel.evidence import (
     sentence_count,
 )
 from sentinel.evidence.load import ROOT
-from sentinel.evidence.model import NUMBERS_FILE, basis
+from sentinel.evidence.model import NUMBERS_FILE, RQ6_NUMBERS_FILE, basis
 from sentinel.evidence.text import markup_text
 
 MODULES = ("raporty", "projekty", "finanse", "ludzie", "uprawnienia", "mapa")
@@ -91,23 +91,29 @@ def test_a_highlight_outside_its_quote_or_a_long_quote_is_refused(registry: Regi
 
 
 def test_our_own_figures_are_the_paper_numbers(registry: Registry) -> None:
-    numbers_path = ROOT / NUMBERS_FILE
-    macros = {}
-    for line in numbers_path.read_text(encoding="utf-8").splitlines():
-        if match := MACRO.match(line):
-            macros[match[1]] = (
-                match[2].replace("\\ensuremath{+}", "+").replace("\\ensuremath{-}", "-")
-            )
-    digest = hashlib.sha256(numbers_path.read_bytes()).hexdigest()
-    paper = tomllib.loads((ROOT / "configs" / "paper.toml").read_text(encoding="utf-8"))
-    run_ids = {run["path"].rsplit("/", 1)[-1] for run in paper["runs"].values()}
+    """Each own figure is a macro of its numbers file (RQ6 has its own), from a pinned run."""
+    configs = {NUMBERS_FILE: "paper.toml", RQ6_NUMBERS_FILE: "paper_rq6.toml"}
     own = [item for item in registry.items if item.kind == "own"]
     assert len(own) >= 5
-    for item in own:
-        assert item.verification.sha256 == digest, f"{item.id}: numbers.tex changed"
-        for figure in item.figures:
-            assert macros.get(figure.macro) == figure.value, (item.id, figure.macro)
-        assert set(item.run_ids) <= run_ids, item.id
+    assert {item.verification.source_file for item in own} == set(configs)
+    for name, config in configs.items():
+        numbers_path = ROOT / name
+        macros = {}
+        for line in numbers_path.read_text(encoding="utf-8").splitlines():
+            if match := MACRO.match(line):
+                macros[match[1]] = (
+                    match[2].replace("\\ensuremath{+}", "+").replace("\\ensuremath{-}", "-")
+                )
+        digest = hashlib.sha256(numbers_path.read_bytes()).hexdigest()
+        paper = tomllib.loads((ROOT / "configs" / config).read_text(encoding="utf-8"))
+        run_ids = {run["path"].rsplit("/", 1)[-1] for run in paper["runs"].values()}
+        for item in own:
+            if item.verification.source_file != name:
+                continue
+            assert item.verification.sha256 == digest, f"{item.id}: {name} changed"
+            for figure in item.figures:
+                assert macros.get(figure.macro) == figure.value, (item.id, figure.macro)
+            assert set(item.run_ids) <= run_ids, item.id
 
 
 def test_decisions_and_items_point_at_each_other(registry: Registry) -> None:
@@ -205,7 +211,7 @@ def test_the_built_wheel_carries_and_loads_the_research_data(tmp_path: Path) -> 
         text=True,
         cwd=tmp_path,
     )
-    assert done.stdout.split() == ["52", "24", "12"]
+    assert done.stdout.split() == ["54", "24", "12"]
 
 
 def test_every_cell_of_the_boundary_map_has_a_zone_reason_and_evidence(registry: Registry) -> None:

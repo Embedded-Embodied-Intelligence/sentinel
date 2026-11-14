@@ -5,6 +5,26 @@ All releases of Sentinel, newest first, compiled from the work package reports i
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
 identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
 
+## 2.0.2 — 2026-11-14 (WP20 follow-up: the draft page while an edit runs; RQ6 in the registry)
+
+No change to the research results (`sentinel reproduce --check`: 117 of 117 files, and the
+pinned RQ6 run and its paper artifacts identical).
+
+- **Raporty**: opening a draft while its editing job is still running no longer fails with
+  an error page; the page shows the waiting notice with the audience being edited ("Teraz:
+  Zarząd"), as the polled notice does. A page test renders the draft with a running job, so
+  this no longer depends on the job finishing first.
+- **Evidence registry**: our RQ6 result (run `20261114-125202-a9deafbe`) as two own items,
+  their figures checked against `paper/generated/rq6/numbers.tex`: E53 supports D14 and D15
+  (the models rarely change a fact; their own lists of changes miss real changes and name
+  ones that did not happen) and E54 nuances D16 (the cloud model added facts in some versions;
+  the shorter versions leave out more facts). Own items may now cite RQ6's numbers file.
+- RQ6's paper artifacts name their config relative to the working directory, as their
+  `MANIFEST.json` does: called with an absolute path (as the repository's reproduce test does),
+  `numbers.tex` named the absolute path and differed from the pinned files.
+- Nine research tests of 1–2 s moved from the default test run to `-m slow` (the default run
+  had grown past 90 s on the server).
+
 ## 2.0.1 — 2026-11-14 (WP20 hotfix: RQ6 survives a failed edit)
 
 No change to the existing research results (`sentinel reproduce --check`: 117 of 117 files).

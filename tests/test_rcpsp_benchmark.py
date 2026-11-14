@@ -124,6 +124,7 @@ def test_aborted_run_writes_manifest_and_fails(
     assert not (run_dir / "results.csv").exists()
 
 
+@pytest.mark.slow  # 1-2 s: out of the default run since 2.0.2 (90 s budget), in -m slow
 def test_smoke_run_writes_all_outputs(fake_set: Path, tmp_path: Path) -> None:
     out = tmp_path / "results"
     assert bench.main(["--config", str(fake_set), "--out", str(out), "--limit", "2"]) == 0
