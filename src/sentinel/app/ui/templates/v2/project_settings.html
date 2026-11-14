@@ -30,7 +30,6 @@
 
 <section class="card stack" aria-labelledby="days-off-title">
   <h2 id="days-off-title">{{ t("v2.psettings.days_off") }}</h2>
-  <p class="muted">{{ t("v2.psettings.holidays") }}</p>
   {% if tracking %}
   {% if view.definition.settings.days_off %}<p>{% for day in view.definition.settings.days_off %}{{ t.date(day) }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% else %}<p>{{ t("v2.psettings.days_off_none") }}</p>{% endif %}
   <p class="hint">{{ t("v2.psettings.days_off_fixed") }}</p>

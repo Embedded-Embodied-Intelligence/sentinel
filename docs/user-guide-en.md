@@ -360,7 +360,8 @@ a 10 × 10 dot grid.
   recent events.
 - A project's **Overview**: the verdict ("Late without changes · about 2 working days late"),
   the chance of the deadline, the project end and the budget in work-days, and below them the
-  decision to make.
+  decision to make. Further down, four sections fold: "Time reserve" and "Next 7 days" open,
+  "Causes of the change" and "Main risks" closed; the browser remembers which you open.
 - **Report**: describe or dictate what happened (🎤) and Sentinel turns it into cards to
   confirm; "Progress as planned" and "Fill in the form" are the other ways. "Effect on the
   project" shows the result before anything is saved.
@@ -394,16 +395,21 @@ a 10 × 10 dot grid.
 
 The menu has three groups: **Work** (Start, Projects, Reports, Finance), **AI rules** (Boundary
 map, AI permissions, People, Sources) and **Other**. Every feature that rests on a design
-decision has a point **ⓘ N**: it opens the "Evidence" panel with that decision and the studies
-for and against it (a quote is shown only when code found it in its source).
+decision has a grey point **ⓘ** (it shows the number of sources on hover or focus; one per
+block). It opens the "Evidence" panel with that decision and the studies for and against it: one
+line on top ("3 sources: 2 support, 1 challenges"), then the quotes with their highlights (a
+quote is shown only when code found it in its source); "Study details" shows in one click what
+the researchers did and what follows for Sentinel. The panel scrolls on its own; the page
+behind stays put.
 
 - **Reports**: "New report": paste or dictate the text (🎤), choose the audiences ("Editing
   only", "Board", "Finance", "Team") and click "Edit". AI writes a version for each audience.
   **Code computes the changes, not AI**: deleted words are red and struck through, added ones
   green and underlined; you accept (✓) or reject (✕) each change, or all at once. Beside it the
   **"Fact guard"** checks numbers, percentages, amounts, dates (also "tomorrow", "by 16
-  November"), people, tasks and projects: ✓ "unchanged", ⚠ "changed" (with both values),
-  "omitted", and "New in this version" lists facts your text did not have. When a version has a
+  November"), people, tasks and projects. On top are ⚠ "changed" (with both values),
+  "omitted" and "New in this version" (facts your text did not have); ✓ "N unchanged" is
+  folded. When a version has a
   ⚠ or a new fact, "Save" and the export ask you to confirm. Export: Markdown, a page for
   printing, the clipboard. **A report stays in Sentinel only when you click "Save"**; until
   then the draft lives in the server's memory only. The text goes to the AI provider chosen in
@@ -416,7 +422,9 @@ for and against it (a quote is shown only when code found it in its source).
   change, and Dziennik records it. A request that cannot be applied (e.g. the source has spent
   more than it would keep) is recorded as "approved, not applied" with the reason.
 - **Boundary map**: twelve company processes in three zones ("AI alone", "AI with a person",
-  "person only") by six criteria. After the survey is imported (`docs/research/survey.md`) a
+  "person only") by six criteria. By default each process has one row: its zone and the
+  deciding criteria (numbers; a click shows the reason and the evidence); "Show all criteria"
+  opens the full table. After the survey is imported (`docs/research/survey.md`) a
   switch "Our map" / "What people answered (N = …)" shows the answers and the agreement with our
   map (an opinion poll, a convenience sample).
 - **AI permissions**, **People**, **Sources**: what AI may and may not do (with an attack

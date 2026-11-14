@@ -117,6 +117,10 @@ CATALOGUE_V3: Mapping[str, tuple[str, str]] = {
     # WP21: a compact map by default, every criterion on request
     "v2.map.deciding": ("Deciding criteria", "Kryteria rozstrzygające"),
     "v2.map.all": ("Show all criteria", "Pokaż wszystkie kryteria"),
+    "v2.map.dot": (  # the visible number first (WCAG 2.5.3)
+        "{n}. {criterion}: {zone}, {process}. Show the reason and the evidence",
+        "{n}. {criterion}: {zone}, {process}. Pokaż powód i dowody",
+    ),
     "v2.map.compact": ("Show deciding criteria", "Pokaż kryteria rozstrzygające"),
     "v2.map.process": ("Process", "Proces"),
     "v2.map.zone": ("Zone", "Strefa"),

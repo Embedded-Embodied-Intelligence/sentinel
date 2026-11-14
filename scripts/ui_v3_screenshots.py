@@ -1,4 +1,5 @@
 """Screenshots of the v3 screens and of an open "Dowód" panel (WP19; docs/design/v3-spec.md).
+WP21 adds Start, Pulpit, Decyzja, the full map, Dziennik, Laboratorium and Ustawienia.
 
 Seeds a data directory with the showcase project in the chosen language, serves the app
 in-process and captures Mapa granic, Uprawnienia AI (with "Próba ataku" run on the recorded
@@ -100,10 +101,13 @@ def seed(services: Services, language: Any) -> dict[str, str]:
 def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
     live = f"/v2/projects/{ids['showcase']}"
     return [
-        Shot("overview", live),  # WP21
+        Shot("start", "/v2"),  # WP21: every calm screen, PL and EN
+        Shot("overview", live),
+        Shot("decision", f"{live}/decisions/{rec}?own=skip"),
         Shot("map", "/v2/map"),
+        Shot("map_all", "/v2/map?view=all"),
         Shot(
-            "map_cell", "/v2/map", clicks=(".map-cell[data-dowod$='/P06/3']",), wait="#dowod[open]"
+            "map_cell", "/v2/map", clicks=(".crit-dot[data-dowod$='/P06/3']",), wait="#dowod[open]"
         ),
         Shot("permissions", "/v2/permissions"),
         Shot(
@@ -128,6 +132,9 @@ def shots_of(ids: dict[str, str], rec: int | None) -> list[Shot]:
         Shot("report_version", f"/v2/reports/draft/{ids['draft']}?a=board", scroll="#result-title"),
         Shot("finance", "/v2/finance"),
         Shot("finance_request", "/v2/finance", scroll="#move-title"),
+        Shot("log", "/v2/log"),  # WP21
+        Shot("lab", "/v2/lab"),
+        Shot("settings", "/v2/settings"),
     ]
 
 

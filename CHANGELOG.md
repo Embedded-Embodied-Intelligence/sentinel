@@ -3,7 +3,32 @@
 All releases of Sentinel, newest first, compiled from the work package reports in
 [`docs/reports/`](docs/reports/). Each release is a zip built by `sentinel release` from a
 clean tree (`dist/`, not committed); none is tagged by the tooling. Research results are
-identical across all releases (`sentinel reproduce --check`: 117 of 117 files).
+identical across all releases (`sentinel reproduce --check`: 117 of 117 files, 128 with RQ6 since 2.0.2).
+
+## 2.1.0 — 2026-11-14 (WP21: calm screens)
+
+No change to the research results (`sentinel reproduce --check`: 128 of 128 files).
+
+- **The "Dowód" panel** stays fixed to the window and scrolls inside itself; the page behind no
+  longer moves and the panel's end is no longer cut off. It opens short: one line counts the
+  evidence ("3 dowody: 2 wspierają, 1 podważa"), each card shows its stance, title, quote and
+  gloss, and "Szczegóły badania" opens the rest of every card in one click. With more than three
+  items the first of each stance shows (a challenging one always) and the others are one click
+  away.
+- **Quiet points**: a small grey "ⓘ", the number on hover and focus; one point per block, the
+  block's decisions listed together in its panel (Uprawnienia AI: 4 points instead of 12).
+- **Pulpit**: the verdict, the three numbers and the decision on top; "Zapas czasu", "Najbliższe
+  7 dni", "Przyczyny zmiany" and "Główne ryzyka" fold (the first two open), remembered in the
+  browser.
+- **Mapa granic** opens compact: one row per process with its zone and the deciding criteria;
+  "Pokaż wszystkie kryteria" shows the full grid with icon-and-colour cells. The six questions
+  are a short legend.
+- **Raporty**: the fact guard shows what changed, what is missing and what is new; "bez zmian:
+  N" is folded. **Decyzja** keeps its actions above the fold; "Kogo dotyczy" moved into
+  "Szczegóły". Shorter helper texts everywhere, one primary action per screen.
+- **No dash as a pause** in the interface, the registry's own texts, decisions, the map or the
+  user guides; a missing value reads "brak" / "none". A text budget (v3 spec section 10,
+  ADR-0039) is checked by tests.
 
 ## 2.0.2 — 2026-11-14 (WP20 follow-up: the draft page while an edit runs; RQ6 in the registry)
 

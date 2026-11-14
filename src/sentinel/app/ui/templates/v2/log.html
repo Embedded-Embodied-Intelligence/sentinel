@@ -12,16 +12,17 @@
   {% if project %}{{ m.dowod(t, "D08") }}{% endif %}
   <a class="btn" href="{{ base }}.csv{{ query(show, picked) }}" download>{{ icon("download", 20) }}{{ t("v2.log.download") }}</a>
 </div>
+{# WP21: the project is chosen in a list, not a second row of pills; the chart shows for one. #}
 {% if projects | length > 1 %}
-<nav aria-label="{{ t('v2.log.projects') }}">
-  <ul class="filters filters-quiet">
-    <li><a href="{{ base }}{{ query(show, none) }}"{% if not picked %} aria-current="true"{% endif %}>{{ t("v2.log.all_projects") }}</a></li>
-    {% for pid, name in projects %}<li><a href="{{ base }}{{ query(show, pid) }}"{% if picked == pid %} aria-current="true"{% endif %}>{{ name }}</a></li>{% endfor %}
-  </ul>
-</nav>
+<form class="log-project" method="get" action="{{ base }}" data-autosubmit aria-label="{{ t('v2.log.projects') }}">
+  <input type="hidden" name="show" value="{{ show }}">
+  <label for="log-project" class="label">{{ t("v2.log.project") }}</label>
+  <select id="log-project" name="project"><option value=""{% if not picked %} selected{% endif %}>{{ t("v2.log.all_projects") }}</option>{% for pid, name in projects %}<option value="{{ pid }}"{% if picked == pid %} selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+  <button type="submit" class="btn btn-quiet">{{ t("v2.log.show") }}</button>
+  {% if not chart and not picked %}<span class="muted small">{{ t("v2.log.chart.pick") }}</span>{% endif %}
+</form>
 {% endif %}
 {% if asked is defined and asked %}<p class="own-agree">{{ icon("person", 20) }}<span>{{ t.plural("v2.own.agree", asked, agreed=agreed) }}</span> {{ m.dowod(t, "D21") }}</p>{% endif %}
-{% if not chart and projects | length > 1 and not picked %}<p class="muted">{{ t("v2.log.chart.pick") }}</p>{% endif %}
 {% if chart %}
 <section class="card section" aria-labelledby="chance-time-title">
   <div class="section-head"><h2 id="chance-time-title" class="overline">{{ t("v2.log.chart.title") }}</h2><span class="muted small">{{ t("v2.log.chart.hint") }}</span></div>

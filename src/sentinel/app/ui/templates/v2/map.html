@@ -66,7 +66,7 @@
       <td>{{ m.zone(t, row.process.zone, small=True) }}</td>
       {% else %}
       <td>{{ m.zone(t, row.process.zone) }}</td>
-      <td><span class="crit-dots">{% for cell, reason in row.cells if cell.zone == row.process.zone %}{% set crit = criteria[cell.criterion - 1] %}{% set name = crit.short_en if t.lang == "en" else crit.short_pl %}<button type="button" class="crit-dot zone-{{ cell.zone }}" data-dowod="/v2/dowod/cell/{{ row.process.id }}/{{ cell.criterion }}" aria-haspopup="dialog" title="{{ cell.criterion }}. {{ name }}" aria-label="{{ t('v2.map.cell', process=row.name, criterion=name, zone=t('v2.zone.short.' ~ cell.zone)) }}">{{ cell.criterion }}</button>{% endfor %}</span></td>
+      <td><span class="crit-dots">{% for cell, reason in row.cells if cell.zone == row.process.zone %}{% set crit = criteria[cell.criterion - 1] %}{% set name = crit.short_en if t.lang == "en" else crit.short_pl %}<button type="button" class="crit-dot zone-{{ cell.zone }}" data-dowod="/v2/dowod/cell/{{ row.process.id }}/{{ cell.criterion }}" aria-haspopup="dialog" title="{{ cell.criterion }}. {{ name }}" aria-label="{{ t('v2.map.dot', n=cell.criterion, process=row.name, criterion=name, zone=t('v2.zone.short.' ~ cell.zone)) }}">{{ cell.criterion }}</button>{% endfor %}</span></td>
       {% endif %}
     </tr>
     {% endfor %}

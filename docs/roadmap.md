@@ -24,6 +24,7 @@
 | WP18 | Evidence registry and boundary criteria: the research layer of v3 (no interface change) | 2026-12-02 | done: `sentinel.evidence` and `docs/research/evidence/registry.json` (52 items: 40 quotes checked by code against their fetched sources, EN and PL legal wording included; 6 results of Sentinel's own study; 6 summary_only with reasons); `scripts/fetch_evidence.py` (pdfminer.six dev-only, ADR-0036); decision catalogue (24 decisions); six boundary criteria and the map of twelve processes; legal dates checked against the Official Journal (Regulation (EU) 2026/1744); release 1.9.0 (not tagged); `reproduce --check` to be confirmed on the server (on the Mac only figure images differ, as before WP18) |
 | WP19 | v3 part 1: the "Dowód" layer at every feature, Mapa granic, Uprawnienia AI, Ludzie, Źródła, "Twoja ocena" (`docs/design/v3-spec.md`) | 2026-12-02 | done: see `docs/reports/WP19.md` |
 | WP20 | v3 part 2: Raporty, Finanse, the survey and RQ6 | 2026-12-02 | done (see `docs/reports/WP20.md`); hotfix 2.0.1: a failed RQ6 edit is a recorded model error; RQ6 full run pinned (`results/wp20/20261114-125202-a9deafbe`); follow-up 2.0.2: the draft page while an edit runs, RQ6 in the registry (E53 supports D14 and D15, E54 nuances D16) |
+| WP21 | Calm screens: the text budget, quiet points, a short panel that scrolls inside itself, no dash as a pause | 2026-12-02 | done (see `docs/reports/WP21.md`), release 2.1.0 |
 
 Milestones: concept presentation ~2026-10-28 (needs WP1 table); submission 2026-12-02.
 

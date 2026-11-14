@@ -70,7 +70,7 @@ def test_progress_as_planned_then_save_replaces_the_decision(fresh: Site) -> Non
     partial = fresh.client.post(
         f"/v2/projects/{pid}/report/impact", data=one, headers=fresh.headers
     )
-    assert "2 zadania w toku bez wieści — czy od pt. 13 lis nic się nie zmieniło?" in text_of(
+    assert "2 zadania w toku bez wieści: czy od pt. 13 lis nic się nie zmieniło?" in text_of(
         partial.text
     )
     saved = fresh.client.post(f"/v2/projects/{pid}/report", data=form, headers=fresh.headers)

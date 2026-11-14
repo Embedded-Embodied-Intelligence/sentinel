@@ -337,6 +337,12 @@ def test_the_presentation_path(demo: Server) -> None:
         expect(panel).to_contain_text("Szansę na termin pokazujemy jako „N na 100”")
         expect(panel.locator("blockquote mark").first).to_be_visible()
         expect(panel.locator(".ev-wspiera")).to_have_count(3)
+        # WP21: a short panel; one click opens the details of every card while it is open
+        expect(panel.locator(".dowod-count")).to_have_text("3 dowody: wszystkie wspierają")
+        expect(panel.get_by_text("Co zrobili badacze").first).to_be_hidden()
+        panel.locator(".ev-more > summary").first.click()
+        expect(panel.locator("details.ev-more[open]")).to_have_count(3)
+        expect(panel.get_by_text("Co zrobili badacze").first).to_be_visible()
         inside = "() => document.getElementById('dowod').contains(document.activeElement)"
         for _ in range(6):  # the page behind is inert: Tab stays in the panel
             page.keyboard.press("Tab")
@@ -346,7 +352,7 @@ def test_the_presentation_path(demo: Server) -> None:
         assert page.evaluate("() => document.activeElement.dataset.decision") == "D01"
         page.get_by_role("link", name="Mapa granic").click()
         expect(page.get_by_role("heading", level=1)).to_contain_text("Mapa granic")
-        page.locator(".map-cell[data-dowod$='/P09/4']").click()
+        page.locator(".crit-dot[data-dowod$='/P09/4']").click()  # the compact map (WP21)
         expect(panel).to_contain_text("Ocena wydajności pracownika")
         expect(panel).to_contain_text("tylko człowiek")
         expect(panel.locator(".ev").first).to_be_visible()
@@ -476,7 +482,9 @@ def test_the_v2_screens_have_no_serious_accessibility_violations(demo: Server, t
         screens += [  # v3 (WP19), with the "Dowód" panel open
             ("overview_panel", href, "[data-decision='D01']"),
             ("map", "/v2/map", None),
-            ("map_panel", "/v2/map", ".map-cell"),
+            ("map_panel", "/v2/map", ".crit-dot"),
+            ("map_all", "/v2/map?view=all", ".map-cell"),  # WP21: the full grid
+            ("sources_panel", "/v2/sources", "[data-dowod]"),
             ("permissions", "/v2/permissions", "[data-attack-run]"),
             ("people", "/v2/people", None),
             ("sources", "/v2/sources", "details.src-item > summary"),
@@ -572,3 +580,128 @@ def test_the_finance_request_waits_for_a_person(demo: Server) -> None:
         page.goto(demo.base + "/v2/log")
         expect(page.locator("main")).to_contain_text("Budżet przesunięty zatwierdzonym wnioskiem")
         chromium.close()
+
+
+PANEL = """() => {
+  const d = document.getElementById('dowod'), b = d.querySelector('.dowod-body');
+  const r = d.getBoundingClientRect();
+  const foot = d.querySelector('.dowod-foot').getBoundingClientRect();
+  return {top: r.top, bottom: r.bottom, scrolled: window.scrollY, end: b.scrollTop + b.clientHeight,
+          height: b.scrollHeight, foot: foot.bottom, view: window.innerHeight};
+}"""
+
+
+def test_a_long_panel_scrolls_inside_itself_to_its_end(demo: Server) -> None:
+    """WP21: the "Dowód" panel is fixed to the viewport at full height and only its body
+    scrolls; the page behind stays put and the panel's last line is reachable, at 1440x900
+    and 1280x800, opened from Pulpit (a decision with nine items, every card opened) and from
+    an item of Źródła."""
+    with sync_api.sync_playwright() as playwright:
+        chromium = browser(playwright)
+        for width, height in ((1440, 900), (1280, 800)):
+            context = chromium.new_context(viewport={"width": width, "height": height})
+            context.set_default_timeout(60_000)
+            page = context.new_page()
+            page.goto(demo.base + "/v2")
+            href = page.locator(".tile").first.get_attribute("href")
+            assert href is not None
+            decision = page.locator(".todo").first.get_attribute("href")
+            assert decision is not None
+            for path, opener in (
+                (decision + "?own=skip", "[data-decision~='D03']"),
+                ("/v2/sources", "#src-E08 [data-dowod]"),
+            ):
+                page.goto(demo.base + path)
+                page.wait_for_load_state("networkidle")
+                if path.endswith("sources"):
+                    page.locator("#src-E08 > summary").click()
+                page.locator(opener).first.click()
+                panel = page.locator("#dowod")
+                expect(panel.locator(".ev").first).to_be_visible()
+                rest = panel.locator("details.dowod-rest > summary")
+                if rest.count():
+                    rest.click()
+                panel.locator(".ev-more > summary").first.click()
+                before = page.evaluate(PANEL)
+                assert before["height"] > height, (width, path, before)  # long enough to scroll
+                page.mouse.move(width - 200, height // 2)
+                for _ in range(40):
+                    page.mouse.wheel(0, 600)
+                page.wait_for_timeout(300)
+                after = page.evaluate(PANEL)
+                assert after["scrolled"] == before["scrolled"], (width, path, after)  # put
+                assert after["top"] == 0 and after["bottom"] == height, (width, path, after)
+                assert after["end"] >= after["height"] - 1, (width, path, after)
+                assert after["foot"] <= height, (width, path, after)  # nothing cut off
+                page.keyboard.press("Escape")
+                expect(panel).to_be_hidden()
+            context.close()
+        chromium.close()
+
+
+BUDGET = """() => {
+  const main = document.getElementById('main'), view = window.innerHeight;
+  const shown = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const content = '.ev-quote, blockquote, .tracked, .report-text, pre, table, .fin-summary-text';
+  const long = [];
+  main.querySelectorAll('p').forEach(p => {
+    if (!shown(p) || p.closest(content) || !p.innerText.trim()) return;  // a graphic, a quote
+    const line = parseFloat(getComputedStyle(p).lineHeight) || 24;
+    const lines = Math.round(p.getBoundingClientRect().height / line);
+    if (lines > 3) long.push(lines + ': ' + p.innerText.slice(0, 60));
+  });
+  const chrome = 'header, nav, .alerts, .v2-demo, script';
+  const blocks = Array.from(main.children).filter(e => shown(e) && !e.matches(chrome))
+    .filter(e => e.getBoundingClientRect().top < view - 48)
+    .map(e => e.tagName.toLowerCase() + '.' + (e.className || '').split(' ')[0]);
+  return {long, blocks};
+}"""
+
+
+def test_every_screen_keeps_the_text_budget_at_1280(demo: Server) -> None:
+    """WP21 (docs/design/v3-spec.md, section 10): at 1280x800 no paragraph a screen shows
+    without a click is longer than 3 lines, and at most four blocks of content (the page's
+    heading and navigation aside) start above the fold."""
+    with sync_api.sync_playwright() as playwright:
+        chromium = browser(playwright)
+        context = chromium.new_context(viewport={"width": 1280, "height": 800}, locale="pl-PL")
+        context.set_default_timeout(60_000)
+        page = context.new_page()
+        page.goto(demo.base + "/v2")
+        href = page.locator(".tile").first.get_attribute("href")
+        decision = page.locator(".todo").first.get_attribute("href")
+        assert href is not None and decision is not None
+        paths = [
+            "/v2",
+            href,
+            href + "/report",
+            decision,
+            decision + "?own=skip",
+            href + "/decisions",
+            href + "/log",
+            href + "/plan",
+            href + "/plan?view=team",
+            href + "/settings",
+            "/v2/reports",
+            "/v2/reports/new",
+            "/v2/finance",
+            "/v2/map",
+            "/v2/map?view=all",
+            "/v2/permissions",
+            "/v2/people",
+            "/v2/sources",
+            "/v2/log",
+            "/v2/lab",
+            "/v2/lab?tab=sim",
+            "/v2/settings",
+        ]
+        over = {}
+        for path in paths:
+            page.goto(demo.base + path)
+            page.wait_for_load_state("networkidle")
+            found = page.evaluate(BUDGET)
+            if found["long"] or len(found["blocks"]) > 4:
+                over[path] = found
+        context.close()
+        chromium.close()
+    assert over == {}

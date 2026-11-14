@@ -1,4 +1,8 @@
 {% import "v2/_macros.html" as m %}
+{# A fact of the guard: its state in icon and word, the fact, how often, its kind. #}
+{% macro fact(f) -%}
+<li class="fact fact-{{ f.state }}"><span class="fact-icon" aria-hidden="true">{% if f.state == "unchanged" %}✓{% elif f.state == "changed" %}⚠{% else %}○{% endif %}</span><span class="fact-word">{{ t("v2.rep.fact." ~ f.state) }}</span><span class="fact-text">{% if f.state == "changed" %}{{ t("v2.rep.fact.was", before=f.text, after=f.after) }}{% else %}{{ f.text }}{% endif %}{% if f.count > 1 %} <span class="muted">{{ t("v2.rep.times", n=f.count) }}</span>{% endif %}</span><span class="fact-kind muted small">{{ f.kind }}</span></li>
+{%- endmacro %}
 {% set e = editor %}
 {% include "v2/_report_tabs.html" %}
 {% if e.error %}
@@ -6,13 +10,14 @@
 {% else %}
 <div class="report-grid">
   <section class="card stack-sm" aria-labelledby="tracked-title">
-    <div class="section-head"><div class="titled"><h2 id="tracked-title">{{ t("v2.rep.tracked") }} · {{ e.label }}</h2>{{ m.dowod(t, "D14") }}</div><span class="muted small" id="change-count">{{ t.plural("v2.rep.count", e.changes, accepted=e.accepted) }}</span></div>
+    <div class="section-head"><div class="titled"><h2 id="tracked-title">{{ t("v2.rep.tracked") }} · {{ e.label }}</h2>{{ m.dowod(t, "D14") }}</div></div>
     <p class="hint">{{ t("v2.rep.tracked_hint") }}</p>
     {% if not e.changes %}<p class="muted">{{ t("v2.rep.no_changes") }}</p>{% endif %}
     {% if e.changes and not readonly %}
     <div class="choices-row">
       <button class="btn btn-quiet" type="button" hx-post="{{ base }}/decide" hx-vals='{"a": "{{ e.audience }}", "accept": "1"}' hx-target="#report-editor" hx-swap="innerHTML">{{ icon("check", 18) }}{{ t("v2.rep.accept_all") }}</button>
       <button class="btn btn-quiet" type="button" hx-post="{{ base }}/decide" hx-vals='{"a": "{{ e.audience }}", "accept": "0"}' hx-target="#report-editor" hx-swap="innerHTML">{{ icon("x", 18) }}{{ t("v2.rep.reject_all") }}</button>
+      <span class="muted small" id="change-count">{{ t.plural("v2.rep.count", e.changes, accepted=e.accepted) }}</span>
     </div>
     {% endif %}
     <div class="tracked" lang="{{ draft.language }}">{% for p in e.pieces %}{% if p.kind == "equal" %}{{ p.original | breaks }}{% else %}<span class="chg{% if not p.accepted %} chg-off{% endif %}" id="chg-{{ p.change }}" data-state="{{ 'accepted' if p.accepted else 'rejected' }}">{% if p.original %}<del>{{ p.original | breaks }}</del>{% endif %}{% if p.version %}<ins>{{ p.version | breaks }}</ins>{% endif %}<span class="vh"> ({{ t("v2.rep.change", n=p.change + 1) }}: {{ t("v2.rep.state." ~ ("accepted" if p.accepted else "rejected")) }})</span>{% if not readonly %}<span class="chg-tools"><button type="button" class="chg-btn chg-yes" aria-pressed="{{ 'true' if p.accepted else 'false' }}" aria-label="{{ t('v2.rep.accept', n=p.change + 1) }}" title="{{ t('v2.rep.accept', n=p.change + 1) }}" hx-post="{{ base }}/decide" hx-vals='{"a": "{{ e.audience }}", "change": "{{ p.change }}", "accept": "1"}' hx-target="#report-editor" hx-swap="innerHTML">✓</button><button type="button" class="chg-btn chg-no" aria-pressed="{{ 'false' if p.accepted else 'true' }}" aria-label="{{ t('v2.rep.reject', n=p.change + 1) }}" title="{{ t('v2.rep.reject', n=p.change + 1) }}" hx-post="{{ base }}/decide" hx-vals='{"a": "{{ e.audience }}", "change": "{{ p.change }}", "accept": "0"}' hx-target="#report-editor" hx-swap="innerHTML">✕</button></span>{% endif %}</span>{% endif %}{% endfor %}</div>
@@ -20,20 +25,28 @@
   <section class="card stack-sm guard" aria-labelledby="guard-title">
     <div class="titled"><h2 id="guard-title">{{ t("v2.rep.guard") }}</h2>{{ m.dowod(t, "D15") }}</div>
     <p class="hint">{{ t("v2.rep.guard_hint") }}</p>
+    {# WP21: what needs a look first (changed, omitted, new); the facts kept, folded. #}
     {% if e.facts %}
-    <p class="small" id="guard-counts">{{ t("v2.rep.guard_counts", unchanged=e.counts.unchanged, changed=e.counts.changed, omitted=e.counts.omitted) }}</p>
-    <ul class="guard-facts">
-    {% for f in e.facts %}
-      <li class="fact fact-{{ f.state }}"><span class="fact-icon" aria-hidden="true">{% if f.state == "unchanged" %}✓{% elif f.state == "changed" %}⚠{% else %}○{% endif %}</span><span class="fact-word">{{ t("v2.rep.fact." ~ f.state) }}</span><span class="fact-text">{% if f.state == "changed" %}{{ t("v2.rep.fact.was", before=f.text, after=f.after) }}{% else %}{{ f.text }}{% endif %}{% if f.count > 1 %} <span class="muted">{{ t("v2.rep.times", n=f.count) }}</span>{% endif %}</span><span class="fact-kind muted small">{{ f.kind }}</span></li>
-    {% endfor %}
-    </ul>
-    {% else %}<p class="muted">{{ t("v2.rep.no_facts") }}</p>{% endif %}
-    <h3 class="overline">{{ t("v2.rep.new_facts") }}</h3>
+    {% set flagged = e.facts | rejectattr("state", "equalto", "unchanged") | list %}
+    {% set kept = e.facts | selectattr("state", "equalto", "unchanged") | list %}
+    {% if flagged %}<ul class="guard-facts" id="guard-flagged">{% for f in flagged %}{{ fact(f) }}{% endfor %}</ul>{% endif %}
     {% if e.new %}
+    <h3 class="overline">{{ t("v2.rep.new_facts") }}</h3>
     <p class="hint">{{ t("v2.rep.new_hint") }}</p>
     <ul class="guard-facts">{% for f in e.new %}<li class="fact fact-new"><span class="fact-icon" aria-hidden="true">⚠</span><span class="fact-text">{{ f.text }}</span><span class="fact-kind muted small">{{ f.kind }}</span></li>{% endfor %}</ul>
-    {% else %}<p class="muted small">{{ t("value.none") }}</p>{% endif %}
-    <p class="muted small">{{ t("v2.rep.words_note") }}{% if e.model_changed or e.model_new %} {{ t("v2.rep.model_all", changed=e.model_changed, new=e.model_new) }}{% endif %}</p>
+    {% endif %}
+    {% if kept %}
+    <details class="guard-kept" id="guard-counts">
+      <summary><span class="fact-icon" aria-hidden="true">✓</span> {{ t("v2.rep.kept", n=kept | length) }}</summary>
+      <ul class="guard-facts">{% for f in kept %}{{ fact(f) }}{% endfor %}</ul>
+    </details>
+    {% endif %}
+    {% else %}<p class="muted">{{ t("v2.rep.no_facts") }}</p>{% endif %}
+    <details class="help">
+      <summary>{{ t("v2.rep.guard_more") }}</summary>
+      <p class="small">{{ t("v2.rep.words_note") }}</p>
+      {% if e.model_changed or e.model_new %}<p class="small">{{ t("v2.rep.model_all", changed=e.model_changed, new=e.model_new) }}.</p>{% endif %}
+    </details>
   </section>
 </div>
 <section class="card stack-sm section" aria-labelledby="result-title">

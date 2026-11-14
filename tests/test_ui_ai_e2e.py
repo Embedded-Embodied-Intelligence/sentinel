@@ -191,7 +191,7 @@ def test_a_role_outside_the_team_stops_the_plan_until_it_is_changed(
     assert view["tasks"][0]["crew"] == {"kierowca": 1}  # nothing is lost on the way
     page.locator("td.cell-people summary").first.click()
     page.locator('input[name="other_count_T1"]').fill("0")
-    page.get_by_label("Tester — ", exact=False).first.fill("1")
+    page.get_by_label("Tester: ", exact=False).first.fill("1")
     page.get_by_role("button", name="Utwórz plan").click()
     page.wait_for_url(re.compile(r"flash=plan_ready"))
     page.context.close()

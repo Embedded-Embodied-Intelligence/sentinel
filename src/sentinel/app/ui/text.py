@@ -1023,10 +1023,10 @@ CATALOGUE: Mapping[str, tuple[str, str]] = {
     ),
     "causes.calculating": ("Finding what moved the chance…", "Ustalam, co zmieniło szansę…"),
     "chart.gap": (
-        "Without disruptions the plan finishes on {plan}; the forecast window starts later "
-        "(most likely finish {likely}) because it counts on the usual overruns and absences.",
-        "Plan bez zakłóceń kończy się {plan}; okno prognozy zaczyna się później (najbardziej "
-        "prawdopodobny koniec {likely}), bo uwzględnia typowe wydłużenia zadań i nieobecności.",
+        "Without disruptions the plan ends {plan}; the forecast (most likely {likely}) counts the "
+        "usual overruns and absences.",
+        "Plan bez zakłóceń kończy się {plan}; prognoza (najpewniej {likely}) liczy typowe "
+        "wydłużenia i nieobecności.",
     ),
     "chart.legend.deadline": ("Deadline", "Termin"),
     "chart.col.people": ("People", "Osoby"),

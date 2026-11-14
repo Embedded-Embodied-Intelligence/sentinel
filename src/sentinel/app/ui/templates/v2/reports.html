@@ -16,7 +16,7 @@
       <th scope="row"><a href="{{ prefix }}/reports/{{ r.id }}">{{ r.title or t("v2.rep.untitled") }}</a></th>
       <td>{{ t.date(r.payload.day | iso_date) }}</td>
       <td>{% for a in r.payload.audiences %}{{ labels[a] }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
-      <td>{{ r.updated.astimezone().strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ t.moment(r.updated) }}</td>
     </tr>
     {% endfor %}
     </tbody>

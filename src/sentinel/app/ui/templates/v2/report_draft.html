@@ -1,16 +1,16 @@
 {% extends "v2/base.html" %}
 {% import "v2/_macros.html" as m %}
 {% block content %}
-<header class="v2-head"><h1>{{ draft.title or t("v2.rep.untitled") }}</h1><span class="muted">{{ t.date(draft.day) }}</span></header>
-<p><a href="{{ prefix }}/reports">‹ {{ t("v2.rep.back") }}</a></p>
+{# WP21: the header carries the date, the way back and whether the draft is saved, in one line. #}
+<header class="v2-head report-head">
+  <div class="stack-sm"><h1>{{ draft.title or t("v2.rep.untitled") }}</h1>
+  <p class="muted small report-state">{{ t.date(draft.day) }}{% if saved %} · {{ t("v2.rep.saved_at", when=t.moment(saved.updated)) }}{% endif %}</p>
+  {% if not saved and not job %}<p class="report-unsaved small" role="status">{{ icon("alert", 16) }} {{ t("v2.rep.memory") }}</p>{% endif %}</div>
+  <a class="back" href="{{ prefix }}/reports">‹ {{ t("v2.rep.back") }}</a>
+</header>
 {% if job %}
 <section class="card">{% include "v2/_report_wait.html" %}</section>
 {% else %}
-{% if saved %}
-<p class="muted">{{ t("v2.rep.saved_at", when=saved.updated.astimezone().strftime("%Y-%m-%d %H:%M")) }}</p>
-{% else %}
-<p class="notice notice-warn" role="status">{{ t("v2.rep.memory") }}</p>
-{% endif %}
 <div id="report-editor">{% include "v2/_report_editor.html" %}</div>
 {% endif %}
 {% endblock %}

@@ -148,6 +148,9 @@ CATALOGUE_V3_WORK: Mapping[str, tuple[str, str]] = {
     ),
     "v2.rep.save": ("Save", "Zapisz"),
     "v2.rep.saved_at": ("Saved {when}", "Zapisano {when}"),
+    # WP21: the guard shows what needs a look; the facts kept are folded
+    "v2.rep.kept": ("{n} unchanged", "bez zmian: {n}"),
+    "v2.rep.guard_more": ("What the guard does not check", "Czego strażnik nie sprawdza"),
     "v2.rep.export_md": ("Export Markdown", "Eksportuj Markdown"),
     "v2.rep.export_html": ("Page for printing", "Strona do druku"),
     "v2.rep.copy": ("Copy to clipboard", "Kopiuj do schowka"),

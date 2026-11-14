@@ -1,13 +1,14 @@
 {% extends "v2/base.html" %}
 {% import "v2/_macros.html" as m %}
 {% block content %}
-<header class="v2-head"><h1>{{ t("v2.lab.title") }}</h1></header>
+{# WP21: the two modes beside the heading, so that the screen starts with its work. #}
+<header class="v2-head"><h1>{{ t("v2.lab.title") }}</h1>
 <nav aria-label="{{ t('v2.lab.tabs') }}" class="log-tools">
   <ul class="filters">
     <li><a href="{{ prefix }}/lab?tab=whatif"{% if tab_shown == "whatif" %} aria-current="true"{% endif %}>{{ t("v2.lab.whatif") }}</a></li>
     <li><a href="{{ prefix }}/lab?tab=sim"{% if tab_shown == "sim" %} aria-current="true"{% endif %}>{{ t("v2.lab.sim") }}</a></li>
   </ul>
-</nav>
+</nav></header>
 {% if tab_shown == "whatif" %}
 <p class="muted">{{ t("v2.lab.whatif_intro") }}</p>
 {% if not projects %}

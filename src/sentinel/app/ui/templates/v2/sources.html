@@ -10,9 +10,8 @@
   <div class="field"><label for="src-criterion">{{ t("v2.src.criterion") }}</label><select id="src-criterion" name="criterion"><option value="">{{ t("v2.src.any") }}</option>{% for c in criteria %}<option value="{{ c.id }}"{% if chosen.criterion == c.id | string %} selected{% endif %}>{{ c.id }}. {{ c.short_en if t.lang == "en" else c.short_pl }}</option>{% endfor %}</select></div>
   <div class="field"><label for="src-stance">{{ t("v2.src.stance") }}</label><select id="src-stance" name="stance"><option value="">{{ t("v2.src.any") }}</option>{% for x in stances %}<option value="{{ x }}"{% if chosen.stance == x %} selected{% endif %}>{{ t("v2.ev.stance." ~ x) }}</option>{% endfor %}</select></div>
   <div class="field"><label for="src-kind">{{ t("v2.src.kind") }}</label><select id="src-kind" name="kind"><option value="">{{ t("v2.src.any") }}</option>{% for x in kinds %}<option value="{{ x }}"{% if chosen.kind == x %} selected{% endif %}>{{ t("v2.kind." ~ x) }}</option>{% endfor %}</select></div>
-  <div class="actions"><button type="submit" class="btn">{{ t("v2.src.apply") }}</button>{% if chosen.values() | select | list %}<a class="btn btn-quiet" href="{{ prefix }}/sources">{{ t("v2.src.clear") }}</a>{% endif %}</div>
+  <div class="actions"><button type="submit" class="btn">{{ t("v2.src.apply") }}</button>{% if chosen.values() | select | list %}<a class="btn btn-quiet" href="{{ prefix }}/sources">{{ t("v2.src.clear") }}</a>{% endif %}<span class="muted small src-count" role="status">{{ t("v2.src.count", n=cards | length, total=total) }}</span></div>
 </form>
-<p class="muted src-count" role="status">{{ t("v2.src.count", n=cards | length, total=total) }}</p>
 <div class="stack src-list">
 {% for c in cards %}
 <details class="card src-item src-{{ c.stance }}" id="src-{{ c.id }}">

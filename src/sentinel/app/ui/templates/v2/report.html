@@ -21,7 +21,7 @@
       {% for key, label, text in hints %}<button type="button" class="hint-chip" data-hint="{{ text }}">{{ label }}</button>{% endfor %}
     </div>
     <div class="actions">
-      {% if llm %}<button type="button" class="btn btn-primary" data-read hx-post="{{ prefix }}/projects/{{ view.id }}/report/read" hx-include="#report-form" hx-target="#cards-message" hx-swap="innerHTML">{{ t("v2.report.read") }}</button>{% endif %}
+      {% if llm %}<button type="button" class="btn" data-read hx-post="{{ prefix }}/projects/{{ view.id }}/report/read" hx-include="#report-form" hx-target="#cards-message" hx-swap="innerHTML">{{ t("v2.report.read") }}</button>{% endif %}
       <button type="button" class="btn" data-planned hx-post="{{ prefix }}/projects/{{ view.id }}/report/planned" hx-include="#report-form" hx-target="#cards-planned" hx-swap="innerHTML">{{ t("v2.report.planned") }}</button>
       <button type="button" class="btn btn-quiet" data-toggle="form-panel" aria-expanded="false" aria-controls="form-panel">{{ icon("pencil", 20) }}{{ t("v2.report.form") }}</button>
     </div>

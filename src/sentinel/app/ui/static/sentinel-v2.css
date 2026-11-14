@@ -891,3 +891,27 @@ label.check input { width: 20px; height: 20px; }
 .map-full .map-cell { display: grid; place-items: center; min-height: 36px; border-radius: 10px; }
 .map-full .map-cell:hover, .map-full .map-cell:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .map-switch { margin-left: auto; }
+.report-head { align-items: flex-start; }
+.report-head h1 { margin: 0; }
+.report-state { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.report-unsaved { display: inline-flex; align-items: center; gap: 4px; color: var(--warn); font-weight: 600; }
+.guard-kept > summary { cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 36px; font-weight: 600; color: var(--good); }
+.guard-kept[open] > summary { margin-bottom: 6px; }
+.v2-head .back { white-space: nowrap; }
+.v2-head .log-tools { margin: 0; }
+.fin-rule { display: flex; align-items: center; gap: 6px; }
+.fin-bar { width: 120px; }
+.fin-table th, .fin-table td { padding-left: 8px; padding-right: 8px; }
+@media (min-width: 761px) {
+  .absent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .absent-card { grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; }
+  .absent-card > .struck { grid-row: span 2; }
+  .absent-card > :not(.struck) { grid-column: 2; }
+}
+.log-project { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 4px 0 0; }
+.log-project .label { margin: 0; }
+.log-project select { min-height: 44px; max-width: 360px; }
+.src-filters { gap: 10px 12px; }
+.src-filters .field { min-width: 0; flex: 0 1 150px; }
+.src-filters .src-q { flex: 1 1 200px; }
+.src-filters .actions { align-items: center; gap: 12px; }
