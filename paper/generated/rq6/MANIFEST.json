@@ -1,0 +1,75 @@
+{
+  "generator": "sentinel.experiments.paper_rq6",
+  "git_commit": "9d414872222273f4574245a0563a335bc410603f",
+  "git_dirty": false,
+  "git_dirty_ignores": [
+    "results",
+    "paper/generated"
+  ],
+  "config": {
+    "path": "configs/paper_rq6.toml",
+    "bytes": 815,
+    "sha256": "825218ef32ee0357c01cddb8956793c17254f8fbec219dd9921730c370ab82ec"
+  },
+  "macros": 469,
+  "inputs": [
+    {
+      "role": "rq6",
+      "run": "results/wp20/20261114-125202-a9deafbe",
+      "files": [
+        {
+          "path": "results/wp20/20261114-125202-a9deafbe/llm_cache.jsonl.gz",
+          "bytes": 158333,
+          "sha256": "613fc50814257db3d237d9c46602210049e1a326edc391c1e4b692499892ba20"
+        },
+        {
+          "path": "results/wp20/20261114-125202-a9deafbe/manifest.json",
+          "bytes": 6649,
+          "sha256": "f33a4c89f76756f75504444c51cdfe8921d56224b772d9c257084c3270731170"
+        },
+        {
+          "path": "results/wp20/20261114-125202-a9deafbe/results.csv",
+          "bytes": 49908,
+          "sha256": "98be7345d9c068fd2a2f72f349a63f9697c684947a6decc096a3b99f932284bf"
+        },
+        {
+          "path": "results/wp20/20261114-125202-a9deafbe/summary.md",
+          "bytes": 6193,
+          "sha256": "3d13309bafcdb102a12e9c4b9008a7f4e3c8c6fdfb233436df7d8b2bc6760047"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "path": "fig_rq6.pdf",
+      "bytes": 14684,
+      "sha256": "59328b74cc26ed08a66eb3f554537768b17b9db8beb94a3588c50a2a0675115a"
+    },
+    {
+      "path": "numbers.tex",
+      "bytes": 119179,
+      "sha256": "57955669498242aaf91fbd91726c9986ec5021cb21d0c606063fac8f66a76edd"
+    },
+    {
+      "path": "pl/fig_rq6.pdf",
+      "bytes": 19165,
+      "sha256": "589874f8ad2bceb5c7dd7369c4de50358010115dbf3980d425cb72882884a06d"
+    },
+    {
+      "path": "pl/numbers.tex",
+      "bytes": 120033,
+      "sha256": "b66cbb3d9d49dcc8f76d1bc60851a689a99380eedfd2eda3c8432f5057f94035"
+    },
+    {
+      "path": "pl/tab_rq6.tex",
+      "bytes": 2279,
+      "sha256": "5a5094d55b5e48352d27989e62b6c97117189984be0eab1984d40265e999f0c9"
+    },
+    {
+      "path": "tab_rq6.tex",
+      "bytes": 2000,
+      "sha256": "86f10d2bd4a53af3d2ddb58c7456a6ee7054ab07b28f5cd61b07d53e818f9ba8"
+    }
+  ]
+}
